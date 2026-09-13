@@ -79,6 +79,7 @@ if [[ -n "$(git status --short)" ]]; then
 fi
 
 sudo -v
+SUDO_KEEPALIVE_PID=""
 compose=(
   sudo docker compose --env-file "$ENV_FILE"
   -f compose.yaml -f compose.production.yaml
@@ -150,6 +151,11 @@ cleanup() {
   local exit_code=$?
   trap - EXIT HUP INT TERM
   set +e
+  if [[ -n "$SUDO_KEEPALIVE_PID" ]]; then
+    kill "$SUDO_KEEPALIVE_PID" >/dev/null 2>&1
+    wait "$SUDO_KEEPALIVE_PID" >/dev/null 2>&1
+    SUDO_KEEPALIVE_PID=""
+  fi
   if ((TEMP_STARTED)); then
     sudo docker rm -f "$TEMP_CLIENT" "$TEMP_OLLAMA" >/dev/null 2>&1
     TEMP_STARTED=0
@@ -164,6 +170,8 @@ trap cleanup EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
+(while sleep 45; do sudo -n -v >/dev/null 2>&1 || exit; done) &
+SUDO_KEEPALIVE_PID=$!
 
 echo "SECTION=PREFLIGHT"
 if (( $(df -Pk "$REPOSITORY_ROOT" | awk 'NR == 2 {print $4}') < MIN_FREE_KIB )); then
@@ -308,6 +316,9 @@ if [[ "$CANONICAL_AFTER" != "$CANONICAL_BEFORE" ]]; then
   exit 1
 fi
 
+kill "$SUDO_KEEPALIVE_PID" >/dev/null 2>&1
+wait "$SUDO_KEEPALIVE_PID" >/dev/null 2>&1 || true
+SUDO_KEEPALIVE_PID=""
 trap - EXIT HUP INT TERM
 echo "SECTION=RESTORED"
 echo "COMMIT=$CURRENT_COMMIT"
