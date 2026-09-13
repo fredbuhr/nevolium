@@ -304,7 +304,9 @@ async def start_research_tool(
     body: ResearchToolRequest,
     session: AsyncSession = Depends(get_session),
 ) -> ResearchToolStarted:
-    parent = await session.get(Task, task_id)
+    # Serialize binding decisions for this parent until the child and invocation commit.
+    # Without the lock, concurrent retries can both observe an empty slot and insert.
+    parent = await session.get(Task, task_id, with_for_update=True)
     if parent is None:
         raise HTTPException(status_code=404, detail="Research task not found")
     task_input = _research_task_input(parent)
@@ -338,12 +340,19 @@ async def start_research_tool(
 
     invocation_id = uuid.uuid5(uuid.NAMESPACE_URL, f"nevolium:research:{parent.id}:slot:{body.slot}:{tool.key}")
     idempotency_key = f"research:{parent.id}:{body.slot}:{tool.key}"
-    existing = await session.scalar(
+    # Keep existing IDs/keys replayable, but bind the slot independently of the tool key.
+    # Exact-key lookup allowed another tool to consume the same slot and exceed max_calls.
+    slot_prefix = f"research:{parent.id}:{body.slot}:"
+    slot_rows = await session.execute(
         select(ToolInvocation).where(
             ToolInvocation.owner_subject == owner_subject,
-            ToolInvocation.idempotency_key == idempotency_key,
-        )
+            ToolInvocation.idempotency_key.startswith(slot_prefix),
+        ).limit(2)
     )
+    existing_slots = list(slot_rows.scalars())
+    if len(existing_slots) > 1:
+        raise HTTPException(status_code=409, detail="Research tool slot has ambiguous historical bindings")
+    existing = existing_slots[0] if existing_slots else None
     if existing is not None:
         if existing.tool_definition_id != tool.id or existing.input_json != body.input:
             raise HTTPException(status_code=409, detail="Research tool slot is already bound to another call")

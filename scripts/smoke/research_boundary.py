@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 import json
 import os
 import time
+from threading import Barrier
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -16,7 +18,7 @@ INTERNAL_TOKEN = os.getenv("NEVOLIUM_INTERNAL_TOKEN", "CHANGE_ME_INTERNAL_TOKEN"
 INTERNAL = {"X-Nevolium-Internal-Token": INTERNAL_TOKEN}
 
 
-def request(method: str, path: str, *, payload: dict[str, Any] | None = None, expected: int = 200, headers: dict[str, str] | None = None) -> Any:
+def request(method: str, path: str, *, payload: dict[str, Any] | None = None, expected: int | tuple[int, ...] = 200, headers: dict[str, str] | None = None) -> Any:
     data = None if payload is None else json.dumps(payload).encode()
     req = urllib.request.Request(
         CORE + path,
@@ -31,7 +33,7 @@ def request(method: str, path: str, *, payload: dict[str, Any] | None = None, ex
     except urllib.error.HTTPError as exc:
         status = exc.code
         body = json.loads(exc.read().decode())
-    if status != expected:
+    if status not in (expected if isinstance(expected, tuple) else (expected,)):
         raise AssertionError(f"{method} {path}: expected {expected}, got {status}: {body}")
     return body
 
@@ -46,6 +48,39 @@ def wait_ready() -> None:
             pass
         time.sleep(1)
     raise RuntimeError("Core did not become ready")
+
+
+def prove_concurrent_slot_binding(project_id: str) -> None:
+    """Use the real Core/PostgreSQL boundary; no Worker or model is needed."""
+    parent = request("POST", "/v1/research/runs", expected=202, payload={
+        "project_id": project_id, "query": "Bound concurrent read-only calls", "max_tool_calls": 2,
+    })
+    path = f"/internal/v1/research/tasks/{parent['task_id']}/tool-invocations"
+    for slot, keys in enumerate((
+        ["researchsmoke.search", "researchsmoke.lookup"] * 4,
+        ["researchsmoke.search"] * 8,
+    )):
+        barrier = Barrier(len(keys))
+
+        def invoke(key: str) -> dict[str, Any]:
+            barrier.wait(timeout=10)
+            return request("POST", path, expected=(200, 409), headers=INTERNAL, payload={
+                "tool_key": key, "input": {"query": "Same logical call"}, "slot": slot,
+            })
+
+        with ThreadPoolExecutor(max_workers=len(keys)) as pool:
+            responses = list(pool.map(invoke, keys))
+        accepted = [row for row in responses if "invocation_id" in row]
+        assert len(accepted) == (4 if slot == 0 else 8), responses
+        assert len({row["invocation_id"] for row in accepted}) == 1, responses
+        assert len({row["task_id"] for row in accepted}) == 1, responses
+        assert len({row["workflow_execution_id"] for row in accepted}) == 1, responses
+        for row in responses:
+            if "invocation_id" not in row:
+                assert row["detail"] == "Research tool slot is already bound to another call", row
+    request("POST", path, expected=422, headers=INTERNAL, payload={
+        "tool_key": "researchsmoke.search", "input": {"query": "Over budget"}, "slot": 2,
+    })
 
 
 def main() -> None:
@@ -81,6 +116,18 @@ def main() -> None:
                     "annotations": {"readOnlyHint": True, "idempotentHint": True},
                 },
                 {
+                    "name": "lookup",
+                    "title": "Lookup",
+                    "description": "Second read-only tool for slot binding regression",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string"}},
+                        "required": ["query"],
+                        "additionalProperties": False,
+                    },
+                    "annotations": {"readOnlyHint": True, "idempotentHint": True},
+                },
+                {
                     "name": "send",
                     "title": "Send",
                     "description": "Side-effecting tool",
@@ -97,6 +144,7 @@ def main() -> None:
     )
     for key, policy in {
         "researchsmoke.search": {"enabled": True, "authority_level": 1, "risk_class": "read", "retry_policy": "safe_retry"},
+        "researchsmoke.lookup": {"enabled": True, "authority_level": 1, "risk_class": "read", "retry_policy": "safe_retry"},
         "researchsmoke.send": {"enabled": True, "authority_level": 2, "risk_class": "write", "retry_policy": "no_retry"},
     }.items():
         request("PATCH", f"/v1/tools/{urllib.parse.quote(key, safe='')}/policy", payload=policy)
@@ -125,7 +173,7 @@ def main() -> None:
 
     context = request("GET", f"/internal/v1/research/tasks/{parent['id']}/context", headers=INTERNAL)
     keys = {tool["key"] for tool in context["tools"]}
-    assert keys == {"researchsmoke.search"}, context
+    assert keys == {"researchsmoke.search", "researchsmoke.lookup"}, context
 
     request(
         "POST",
@@ -149,6 +197,13 @@ def main() -> None:
     )
     assert replay["invocation_id"] == first["invocation_id"], (first, replay)
     assert replay["task_id"] == first["task_id"], (first, replay)
+
+    request(
+        "POST", f"/internal/v1/research/tasks/{parent['id']}/tool-invocations",
+        expected=409, headers=INTERNAL,
+        payload={"tool_key": "researchsmoke.lookup", "input": {"query": "Nevolium"}, "slot": 0},
+    )
+    prove_concurrent_slot_binding(project["id"])
 
     request(
         "POST",
@@ -236,7 +291,7 @@ def main() -> None:
     assert completed["correlation_id"], completed
 
     print(
-        "PASS: Core enforces read/A1 research tools, owner-scoped access and a stable multi-source "
+        "PASS: Core enforces unique concurrent research slots, read/A1 tools, owner-scoped access and a stable multi-source "
         "research result contract"
     )
 

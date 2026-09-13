@@ -54,105 +54,36 @@ préremplissage à 85,28 jetons/s et 1,73 s pour 32 jetons. Le paramètre `local
 au quota Compose et être vérifié dans les journaux Ollama. Cette mesure isolée n'est pas une qualification
 Research : celle-ci exige encore une Task authentifiée distincte, des appels MCP et un artefact sourcé.
 
-La reprise du 13 septembre confirme la CI verte sur `e4d886b…` et la construction de son image sur la
-cible, sans activation. Pour ce palier, suspendre les nouvelles demandes utilisateur, vérifier qu'aucun
-workflow ni réservation modèle non expirée n'est actif, comparer le module gateway de l'image préparée
-au code et conserver l'image Worker précédente. Arrêter proprement le seul Worker avant de recréer
-LiteLLM, puis démarrer l'image Worker déjà construite avec `--no-build --no-deps --pull never`.
-Ne pas redémarrer les bases ou modifier leurs données. Vérifier le fichier LiteLLM réellement monté,
-l'alias local, l'absence de clés de fournisseurs externes, la santé du proxy, le code Worker chargé et
-ses nouveaux pollers Temporal. `running` seul ne prouve ni la disponibilité d'un Worker ni Research.
-Si un contrôle échoue, conserver sa sortie et diagnostiquer avant tout essai métier ; ne pas répéter
-aveuglément le bloc d'activation. Préserver le tag de retour sans modifier les données canoniques.
+### Parcours canonique Research et politique de reprise
 
-L'activation du 13 septembre satisfait ces contrôles : zéro workflow/réservation active, LiteLLM deux
-threads sain, Worker chargé depuis la nouvelle image avec bornes 180/10 s, pollers Workflow/Activity
-présents, Core inchangé et services publics sains. Aucune Task Research n'a été créée par l'opération.
-Le code activé reste `e4d886b…` ; le checkpoint documentaire ultérieur ne requiert aucun rebuild.
+Les incidents et activations successives sont conservés dans le [rapport serveur](archive/server-foundation-2026-09-11.md).
+L'état courant est uniquement dans [PROJECT_STATE](../PROJECT_STATE.md) ; ce protocole ne prescrit
+aucun rejeu d'une ancienne Task ou d'un ancien marqueur. COLD-03/04 sont des échecs conservés ; le
+retour COLD-05 manque lors de l'audit du 13 septembre et doit être lu avant toute autre exécution.
 
-`NEVOLIUM-D04-RESEARCH-WEB-COLD-03` confirme ensuite deux threads et 30,65 s pour un appel modèle froid
-de 2 388 jetons, correctement comptabilisé et réglé. Le planning échoue car le modèle renvoie une liste
-JSON complète sous fence Markdown plutôt que l'objet `ResearchPlan`; aucun outil ni artefact n'est créé.
-Cette Task demeure une preuve d'incident et ne doit pas être rejouée. Le correctif de parsing ne peut
-retirer qu'une fence JSON couvrant toute la réponse et envelopper une liste directe sans changer ses
-éléments. Il ne peut ni extraire du JSON depuis de la prose, ni ajouter un outil, ni demander une seconde
-réponse modèle. Pydantic, l'allowlist et les schémas Core doivent encore refuser tout contenu invalide.
-Le correctif `35303f2…` passe ensuite 10/10 workflows PR, dont les 5/5 jobs D04
-([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). Il n'est pas encore activé sur la cible.
-Sa nouvelle image Worker est désormais construite sur la cible et vérifiée hors réseau. L'image active
-reste celle de `e4d886b…`, conservée sous `rollback-e4d886b9b329` ; aucun conteneur ni Task n'est recréé.
-L'activation doit employer l'image déjà construite sans nouveau build ni pull, après un contrôle frais
-d'inactivité, puis prouver les deux pollers avant toute nouvelle Research.
-Cette activation est désormais réussie : seul le Worker est recréé sur `35303f2…`, les pollers Workflow
-et Activity portent `7@54a82541cbcd`, et les quatre services adjacents gardent leurs conteneurs. L'image
-`e4d886b…` reste disponible sous son tag de rollback, `COLD-03` et sa comptabilité sont inchangés, les
-services publics sont sains et aucune nouvelle Task n'est créée. La prochaine mesure doit être une Task
-froide distincte `COLD-04`, préparée après déchargement explicite du modèle puis examinée avant l'essai chaud.
+Le Worker qualifié utilise 180 s par appel modèle, heartbeat de progression à 30 s, timeout heartbeat
+90 s et activité Research 600 s. La borne proxy par appel est dix secondes sous la borne client.
+Les normalisations existantes traitent seulement une fence complète, une liste complète d'appels et
+l'absence du rationale supérieur ; schémas, allowlist et preuve des citations restent obligatoires.
+Le correctif Core de cette reprise lie un slot à un seul appel même en concurrence ; il conserve les
+identifiants historiques et ne change ni le modèle, ni ces budgets, ni le Worker.
 
-La Task froide unique `NEVOLIUM-D04-RESEARCH-WEB-COLD-04` (`e1c81a97-59d4-4be8-ae12-732d09796085`)
-est ensuite conservée dans son état `failed`. Elle termine en 49,95 s, sans retry, sans appel MCP,
-sans artefact et sans enfant. Son unique réservation est réglée à coût nul ; l'usage observé compte
-2 162 jetons de prompt et 128 jetons de sortie. Ollama confirme le modèle réellement déchargé au départ,
-un chargement de 2,30 s, deux threads, 18,61 s de préremplissage et 6,97 s de génération. La réponse
-modèle est un objet JSON complet : elle contient exactement `web.search` puis `web.fetch`, les deux
-entrées et leurs justifications individuelles, ainsi que le champ supplémentaire `max_tool_calls=2`.
-Elle omet seulement le `rationale` supérieur exigé par `ResearchPlan`, ce qui provoque l'échec
-Pydantic avant toute exécution d'outil. Cette Task ne doit pas être rejouée.
+La qualification nécessite un parcours froid puis chaud, authentifié, avec question factuelle et
+sources publiques, sans reprendre les identifiants des incidents. Le succès exige état terminal,
+appels MCP réels, artefact sourcé, tokens observés et réservations réglées ; Ollama doit confirmer
+les deux threads. Froid/chaud désigne le modèle en mémoire, pas un cache disque purgé.
 
-Le correctif `969fe668d08984b0e6aea38b8ba7f1ff18972b21` normalise uniquement cette enveloppe observée :
-si la réponse complète est un objet, si le champ `rationale` est absent et si `calls` est bien une
-liste, il conserve la liste inchangée et ajoute une note d'audit déterministe. Il ne répare aucune autre
-forme, ne crée aucun appel et ne sollicite jamais une seconde complétion. La régression reprend les deux
-appels exacts de `COLD-04`, vérifie une seule complétion, puis confirme qu'un outil inventé reste refusé
-et qu'une collection `calls` malformée n'est pas normalisée. Le head passe 10/10 workflows PR, dont
-5/5 jobs D04 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). Une nouvelle image
-Worker doit maintenant être construite et vérifiée sans réseau, sans activation ni nouvelle Task.
+Lire d'abord le résultat existant. S'il est complet, ne pas refaire le froid ; passer à la mesure
+chaude manquante. S'il échoue, classer la cause à partir des journaux et sorties conservés. Regrouper
+la correction et les régressions affectées avant une seule activation. Des erreurs répétées de
+format ou de pertinence imposent une qualification du modèle sur des prompts représentatifs,
+plutôt qu'une succession de normalisations assouplissant le contrat. Le petit 0.5B reste un modèle
+de câblage ; aucune hausse de timeout ou ressource ne vaut une amélioration démontrée.
 
-Cette préparation est maintenant réussie. Deux gardes opérateur se sont d'abord arrêtées sans toucher
-aux images ni aux conteneurs : la première sur des chemins Bash privés de continuation de ligne, la
-seconde sur trois workflows historiques terminaux dont `completed_at` reste nul. Le critère corrigé
-compte les statuts non terminaux et vaut zéro. Le snapshot canonique confirme aussi zéro réservation
-active, cinq réservations `uncertain` préservées, `COLD-03` et `COLD-04` échouées avec respectivement
-2 388 et 2 290 jetons, et aucun enfant, outil ou artefact pour ces deux Tasks.
-
-L'image Worker `sha256:b14d17a97f3f295b3ad78d13ee16fe61da11f050c65d735bddbe711b0cc26b6b`
-est construite depuis `969fe66…` en 786,1 s. Le module installé possède le même SHA-256 que le checkout
-et le contrat Research complet passe dans un conteneur en lecture seule, sans réseau. L'image active
-`35303f2…` reste attachée au même conteneur et est désormais conservée sous
-`rollback-35303f2e3a5e`; le tag `rollback-e4d886b9b329` reste intact. Le snapshot canonique est
-strictement identique avant et après la construction, les services publics sont sains et aucune Task
-n'est créée. L'activation suivante doit employer cette image déjà construite, sans rebuild, dépendance
-ni pull, et ne recréer que le Worker après une nouvelle garde d'inactivité.
-
-L'activation contrôlée de cette image est maintenant prouvée sur le checkout `fb59fc4…`. Une première
-garde échoue avant l'arrêt du Worker parce qu'elle cherche les sources de build dans le runtime. La
-reprise résout le module installé par Python sous `/app/.venv/lib/python3.12/site-packages`, compare
-son empreinte avant et après activation et ne recrée que le Worker. Le nouveau conteneur
-`a04ca3056060…` contient le code `969fe66…` et ses deux pollers portent le suffixe `@a04ca3056060`.
-Les quatre services adjacents, les tags de rollback et le snapshot canonique sont conservés ; les
-contrôles publics rendent `200|200|401`. Aucune nouvelle Task n'a été lancée par cette opération.
-Préparer `COLD-05` seulement après un contrôle frais d'inactivité et d'absence de ce marqueur dans les
-Tasks et sur disque ; ne jamais réutiliser le fichier ou les Tasks `COLD-03`/`COLD-04`. Le déchargement
-emploie le nom Ollama natif `qwen2.5:0.5b`, pas le nom de fournisseur LiteLLM préfixé. La présence du
-modèle installé et son absence des modèles chargés doivent être contrôlées avant le nouvel horodatage.
-
-La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
-modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
-modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,
-un artefact sourcé, les tokens observés et une réservation réglée ; le journal Ollama doit confirmer
-deux threads. Conserver les deux Research historiques échoués sans rejeu ni rapprochement inventé.
-
-Une commande de qualification contenant une interdiction explicite d'exécution ne doit jamais créer la
-Task métier proposée par le modèle. Core relit le message canonique, applique
-`semantic.execution-veto`, conserve la proposition pour audit et rend la commande terminale sans handoff.
-La preuve exige une proposition volontairement valide et confiante, puis l'absence du Task ID métier
-déterministe ; une simple réponse `unsupported` du modèle ne suffit pas à tester cette frontière.
-
-Le checkpoint `e3adbe6…` satisfait cette preuve en CI avec une proposition forcée `news.brief`. Sur la
-cible, le même Core rend une commande réelle terminale en 59,57 s avec `semantic.execution-veto`, zéro
-Task métier, un usage modèle et une réservation réglée. Le modèle cible n'ayant proposé aucune capacité,
-la preuve cible confirme le déploiement et l'absence d'effet ; elle ne remplace pas le scénario CI qui
-exerce le veto face à une proposition valide et confiante.
+Le veto sémantique est déjà qualifié en CI face à une proposition valide/confiante et activé sur
+cible. La commande réelle a terminé en 59,57 s sans Task métier, mais avec une proposition
+unsupported du modèle : les deux preuves ont des portées distinctes. Ne les rejouer que si le
+routage ou sa frontière d'autorisation change.
 
 ## Préparer les modèles une fois, exécuter sans téléchargement
 
@@ -185,6 +116,8 @@ un maximum RSS du processus/des enfants est cumulatif, pas une mesure de toute l
 
 ## Cible reçue et répétition ultérieure sur portable
 
+Cette section décrit le protocole d'installation initiale et de répétition, pas la prochaine action.
+Le serveur Netcup est déjà installé et durci ; les étapes acquises ne sont pas à refaire.
 Le serveur netcup RS 4000 G12 est livré et en fonctionnement d'après les captures utilisateur.
 Elles montrent Vienne, 12 CPU AMD64, 32 Gio de RAM, un disque de 1 Tio et IPv4/IPv6 attribuées.
 Le panneau affiche zéro règle de pare-feu : vérifier la politique effective avant toute installation.
@@ -340,12 +273,22 @@ destination chiffrée indépendante, vérification `restic check --read-data`, r
 déscellement OpenBao et relecture d'une Task, d'un document, d'un événement et d'un secret de test. Conserver
 les IDs de workflow et les obligations financières ; aucune lease ni dépense inconnue effacée.
 
-D04/H5 demeure incomplet tant que les éléments suivants manquent : scénario canonique complet sur la
-cible retenue (PDF/mémoire/recherche/modèle réellement choisi), charge mesurée et files en usage mixte,
-proxy TLS et refus des routes internes, droits réseau/SQL sur cible, upgrade/rollback compatible,
-restauration indépendante avec récupération des clés et vérification utilisateur. Un fournisseur externe
-reste optionnel et nécessite une configuration/autorisation existante ; aucun achat n'est requis par ce lot.
-Ne pas déplacer ces conditions vers un nouveau sous-lot pour déclarer D04 terminé. D05 attend la sortie H5.
+Les acquis cible TLS/OIDC, PDF, mémoire, secrets et frontières déjà mesurées restent acquis.
+D04/H5 demeure incomplet tant que les quatre preuves suivantes ne sont pas réunies :
+
+| Preuve restante | Critère de sortie | Réemploi |
+|---|---|---|
+| Research et modèle quotidien | Examiner COLD-05, compléter la mesure froide/chaude manquante ; appels MCP, artefact/citations et comptabilité cohérents. Qualifier la pertinence du modèle retenu sur des demandes représentatives avant adoption quotidienne | Parcours Research/gateway existants, aucune nouvelle orchestration |
+| Charge et files mixtes | Lectures 1/10/100/1000 clients virtuels, zéro erreur et p95 ≤2 s selon le runner ; mesurer aussi le mélange réel modèle/PDF/mémoire sur le pilote, quotas et absence de blocage/OOM | `target.py load`, admission et observation D02 ; fixer concurrence et seuils du mélange avant mesure |
+| Upgrade/rollback et frontières | Nouvelle image puis retour compatible sans perte canonique ; reprise des services, identités et permissions ; revérifier seulement les frontières SQL/réseau affectées | Procédures existantes, anciennes images conservées et garde d'inactivité ; un simple redémarrage ne prouve pas le rollback |
+| Restauration indépendante | Backup applicatif chiffré, `restic check --read-data`, restauration sur volumes neufs hors hôte, relecture des données et clés | Scripts backup/restore existants ; la récupération des seules clés OpenBao ou les fixtures CI ne suffisent pas |
+
+Ce tableau précise les preuves du lot existant, sans créer de sous-lots. Le rapport final doit
+inclure matériel/versions, limites et absence de P0/P1 bloquant l'usage privé. Vérifier la CI du head
+final avant merge et baseline/tag. Un fournisseur externe reste optionnel et nécessite une
+configuration/autorisation existante ; aucun achat n'est requis. D05 attend la sortie H5.
+La capacité commerciale, tous les OS, les mobiles, l'offline et les scans complexes ne doivent pas
+étendre cette qualification du premier serveur Linux indéfiniment.
 
 ## Sources et récupération sélective
 
