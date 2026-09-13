@@ -10,9 +10,9 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Checkout cible | `ee6be6cb7791432da6e9982e20ecf994d4d19941` ; checkout serveur propre à ce SHA |
-| Correctif actif | `3e84c6aa96f8279a236c6fc712260132853cde65` ; liaison fetch déployée, 10/10 workflows réussis au checkpoint `ee6be6c…` |
-| Correctif candidat | `0e57de2b840f1692fa5dbff20f3fa98792182207` ; recherche générale/officielle et erreur MCP terminale validées localement, CI à obtenir |
+| Checkout cible | `5f4bdd35ee2a4743e45986d88523b7d83bb505f8` ; checkout serveur propre à ce SHA |
+| Correctif actif | `0e57de2b840f1692fa5dbff20f3fa98792182207` ; Worker et Web MCP actifs, 10/10 workflows réussis au checkpoint `5f4bdd3…` |
+| Correctif candidat | non publié ; lecture interne du binding MCP pour réparer le bootstrap sans exposer l'endpoint public |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -34,10 +34,10 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 | Composant | Dernier code déployé confirmé |
 |---|---|
 | Core | image `e5c245924d50…`, construite au SHA technique `7fb2211…` |
-| Worker | image `f8e84dfdd1b1…`, correctif `3e84c6a…` actif |
+| Worker | image `babd504b95f2…`, correctif `0e57de2…` actif |
 | Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
 | LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
-| Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; outils A1 search/fetch |
+| Web MCP | image `fcfba65ffada…`, correctif `0e57de2…` actif ; registre encore à resynchroniser |
 
 Le checkout serveur a été avancé à `a4ec6491eb2a44e8ee4e8c4a31b293f562100405`. La première préparation
 s'est arrêtée au contrôle après sortie de l'éditeur sans enregistrer. La reprise sans éditeur a réussi :
@@ -58,6 +58,14 @@ Le checkout serveur a ensuite été avancé à `ee6be6cb7791432da6e9982e20ecf994
 le poller Temporal est sain, aucun travail n'était actif et les comptes sont restés strictement
 `32|32|14|19|4|22|5` pendant l'activation. Image de retour conservée :
 `nevolium-api-rollback/nevolium-worker:before-fetch-binding-ee6be6c`.
+
+Le checkout cible est maintenant `5f4bdd35ee2a4743e45986d88523b7d83bb505f8`. Worker
+`babd504b95f2…` et Web MCP `fcfba65ffada…` ont remplacé les images précédentes et le nouveau catalogue
+répond. La synchronisation s'est arrêtée avant toute écriture : la liste publique des ToolServers masque
+volontairement `endpoint_url`, mais le bootstrap essayait de comparer ce champ absent à
+`http://nevolium-web-mcp:8090/mcp`. La lecture SQL et l'environnement Worker prouvent que les deux
+valeurs réelles sont identiques sur 32 octets. Le registre reste en génération 1, les comptes restent
+`35|35|15|20|6|23|5`, les travaux actifs `0|0|0` et aucune Task/OpenAI n'a été lancée.
 
 Sauvegarde privée existante : `/etc/nevolium/api-rollback.9KmtYC` (ancien environnement et configurations).
 Images conservées : `nevolium-api-rollback/{nevolium-core,nevolium-worker,nevolium-web,litellm}:9KmtYC`.
@@ -97,6 +105,10 @@ Le candidat `0e57de2…` passe localement Ruff 0.13.0 F/E9, compilation et les c
 Web MCP, Tool/Task, News, registre MCP, Context Pack et gateway. Aucun appel OpenAI n'a été effectué.
 Publication autorisée par l'utilisateur. Le connecteur GitHub a conservé l'arbre exact du commit
 technique local `69c4c3d…` ; seul l'identifiant du commit change lors de cette publication.
+Les 10 workflows GitHub sont ensuite passés au checkpoint `5f4bdd3…`. Le correctif local suivant ajoute
+une vue interne minimale du binding ToolServer, protégée par le jeton interservice ; la liste publique
+reste expurgée. Le bootstrap vérifie cette vue avant toute synchronisation. Contrats Web MCP, Tool/Task,
+Research, OpenAPI, Ruff F/E9 et compilation réussis localement sans appel externe.
 
 ## Prochaine action exécutable
 
@@ -126,15 +138,12 @@ synthèse n'a été lancée et le second essai n'a pas été créé. Les comptes
 `35|35|15|20|6|23|5`, les travaux actifs `0|0|0` et les cinq réservations historiques `uncertain`
 restent inchangées. Ne rejouer aucune Task connue.
 
-**Valider en CI le correctif candidat `0e57de2…`.** Il sépare la recherche Web générale
-de la catégorie News, rend la période optionnelle et retire tout filtre de période non demandé. Une
-demande de source officielle doit planifier un filtre `site:` ; le Worker refuse le plan avant tout
-outil si ce filtre manque et ne lie Fetch qu'à une URL du domaine demandé. Une erreur complète déjà
-retournée par MCP devient terminale pour l'activité, tandis qu'une panne réseau transitoire conserve
-le retry existant. Après CI, reconstruire et remplacer uniquement Worker et Web MCP, resynchroniser
-le schéma du registre sans migration, puis lancer deux nouvelles Tasks Research séquentielles. Ne pas
-réutiliser les UUID connus ni COLD-03/04/05. Le [protocole D04](docs/qualification-d04.md) porte la
-suite finie et les limites, sans nouveau sous-lot.
+**Publier et valider en CI le correctif de bootstrap interne.** Il faut ensuite construire le Core et
+le Worker corrigés, remplacer ces deux services sans travail actif, puis resynchroniser le registre avec
+un jeton administrateur éphémère. Web MCP `fcfba65ffada…` reste actif et n'a pas à être reconstruit.
+Après la génération de registre attendue, lancer deux nouvelles Tasks Research séquentielles. Ne pas
+réutiliser les UUID connus ni COLD-03/04/05. Le [protocole D04](docs/qualification-d04.md) porte la suite
+finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.

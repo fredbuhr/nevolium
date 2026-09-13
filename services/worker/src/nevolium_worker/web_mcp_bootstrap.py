@@ -117,9 +117,14 @@ async def bootstrap() -> None:
                 expected=frozenset({201}),
             )
         else:
-            server = existing
-            if str(server.get("namespace")) != WEB_NAMESPACE:
+            if str(existing.get("namespace")) != WEB_NAMESPACE:
                 raise RuntimeError("Existing nevolium-web ToolServer has an unexpected namespace")
+            server = await _json(
+                client,
+                "GET",
+                f"/internal/v1/tool-servers/{existing['id']}",
+                headers=_internal_headers(),
+            )
             if str(server.get("endpoint_url")) != endpoint_url:
                 raise RuntimeError(
                     "Existing nevolium-web ToolServer endpoint differs from NEVOLIUM_WEB_MCP_URL; "

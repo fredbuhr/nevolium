@@ -81,6 +81,30 @@ def main() -> None:
     )
     assert server["catalog_generation"] == 0, server
 
+    # Public discovery stays redacted, while the internal bootstrap can verify the
+    # exact deployment binding instead of treating a deliberately absent field as drift.
+    _, visible_servers = json_request("GET", "/v1/tool-servers")
+    visible_server = next(item for item in visible_servers if item["id"] == server["id"])
+    assert "endpoint_url" not in visible_server, visible_server
+    json_request(
+        "GET",
+        f"/internal/v1/tool-servers/{server['id']}",
+        expected=401,
+    )
+    _, transport = json_request(
+        "GET",
+        f"/internal/v1/tool-servers/{server['id']}",
+        headers=INTERNAL,
+    )
+    assert transport == {
+        "id": server["id"],
+        "key": "smoke-server",
+        "namespace": "smoke",
+        "transport": "mcp_streamable_http",
+        "endpoint_url": "http://fake-mcp:8765/mcp",
+        "catalog_generation": 0,
+    }, transport
+
     # Catalog schemas are untrusted remote input and must be structurally valid.
     json_request(
         "POST",

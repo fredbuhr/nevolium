@@ -67,6 +67,19 @@ class ToolServerSummaryRead(BaseModel):
     updated_at: datetime
 
 
+class ToolServerTransportRead(BaseModel):
+    """Internal deployment binding used to validate a first-party MCP bootstrap."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    key: str
+    namespace: str
+    transport: str
+    endpoint_url: str
+    catalog_generation: int
+
+
 class ToolCatalogItem(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     title: str | None = Field(default=None, max_length=240)
@@ -355,6 +368,21 @@ async def list_tool_servers(
 ) -> list[ToolServer]:
     return await page_rows(session, select(ToolServer), ToolServer, key_name="key",
                            limit=limit, cursor=cursor, response=response)
+
+
+@router.get(
+    "/internal/v1/tool-servers/{server_id}",
+    response_model=ToolServerTransportRead,
+    dependencies=[Depends(require_internal_token)],
+)
+async def get_tool_server_transport(
+    server_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+) -> ToolServer:
+    server = await session.get(ToolServer, server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Tool server not found")
+    return server
 
 
 @router.post(
