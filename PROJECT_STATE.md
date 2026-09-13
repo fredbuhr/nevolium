@@ -12,7 +12,7 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
 | Checkout cible | `5f4bdd35ee2a4743e45986d88523b7d83bb505f8` ; checkout serveur propre à ce SHA |
 | Correctif actif | `0e57de2b840f1692fa5dbff20f3fa98792182207` ; Worker et Web MCP actifs, 10/10 workflows réussis au checkpoint `5f4bdd3…` |
-| Correctif candidat | non publié ; lecture interne du binding MCP pour réparer le bootstrap sans exposer l'endpoint public |
+| Correctif candidat | `bef11ff317565d9d05da278a8fcebaec6b736dc8` ; bootstrap interne corrigé, 10/10 workflows réussis |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -105,10 +105,11 @@ Le candidat `0e57de2…` passe localement Ruff 0.13.0 F/E9, compilation et les c
 Web MCP, Tool/Task, News, registre MCP, Context Pack et gateway. Aucun appel OpenAI n'a été effectué.
 Publication autorisée par l'utilisateur. Le connecteur GitHub a conservé l'arbre exact du commit
 technique local `69c4c3d…` ; seul l'identifiant du commit change lors de cette publication.
-Les 10 workflows GitHub sont ensuite passés au checkpoint `5f4bdd3…`. Le correctif local suivant ajoute
+Les 10 workflows GitHub sont ensuite passés au checkpoint `5f4bdd3…`. Le correctif `bef11ff…` ajoute
 une vue interne minimale du binding ToolServer, protégée par le jeton interservice ; la liste publique
 reste expurgée. Le bootstrap vérifie cette vue avant toute synchronisation. Contrats Web MCP, Tool/Task,
-Research, OpenAPI, Ruff F/E9 et compilation réussis localement sans appel externe.
+Research, OpenAPI, Ruff F/E9 et compilation réussis localement sans appel externe. Les 10 workflows
+GitHub sont verts ; l'unique reset réseau Docker Hub de Foundation a réussi lors de la relance ciblée.
 
 ## Prochaine action exécutable
 
@@ -138,9 +139,9 @@ synthèse n'a été lancée et le second essai n'a pas été créé. Les comptes
 `35|35|15|20|6|23|5`, les travaux actifs `0|0|0` et les cinq réservations historiques `uncertain`
 restent inchangées. Ne rejouer aucune Task connue.
 
-**Publier et valider en CI le correctif de bootstrap interne.** Il faut ensuite construire le Core et
-le Worker corrigés, remplacer ces deux services sans travail actif, puis resynchroniser le registre avec
-un jeton administrateur éphémère. Web MCP `fcfba65ffada…` reste actif et n'a pas à être reconstruit.
+**Construire le Core et le Worker au checkpoint contenant `bef11ff…`.** Remplacer ensuite ces deux
+services sans travail actif, puis resynchroniser le registre avec un jeton administrateur éphémère.
+Web MCP `fcfba65ffada…` reste actif et n'a pas à être reconstruit.
 Après la génération de registre attendue, lancer deux nouvelles Tasks Research séquentielles. Ne pas
 réutiliser les UUID connus ni COLD-03/04/05. Le [protocole D04](docs/qualification-d04.md) porte la suite
 finie et les limites, sans nouveau sous-lot.
