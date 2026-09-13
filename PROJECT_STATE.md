@@ -32,9 +32,10 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 
 | Composant | Dernier code déployé confirmé |
 |---|---|
-| Core | `e3adbe648b245e2567970769e6a4bf4333b3e4a4` |
-| Worker | `969fe668d08984b0e6aea38b8ba7f1ff18972b21` |
-| LiteLLM | `e4d886b9b32907135cb5faeb7737f09de27c6389` ; ancienne route locale |
+| Core | image `e5c245924d50…`, construite au SHA technique `7fb2211…` |
+| Worker | image `932e3d909448…`, construite au SHA technique `7fb2211…` |
+| Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
+| LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
 | Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; outils A1 search/fetch |
 
 Le checkout serveur a été avancé à `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4`. La première préparation
@@ -42,7 +43,13 @@ s'est arrêtée au contrôle après sortie de l'éditeur sans enregistrer. La re
 clé saisie localement, six paramètres API appliqués, anciennes variables OpenAI/Ollama retirées,
 configuration de production acceptée. Core construit en 10,8 s, Worker en 338,3 s, Web en 9,5 s.
 Résultat opérateur : `REPRISE_API_OK`, `CONFIGURATION_VALIDEE_IMAGES_CONSTRUITES`.
-Les identités des quatre conteneurs sont inchangées ; aucune activation ni requête OpenAI attestée.
+
+L'activation suivante a réussi sans reconstruction. Core, Worker, Web et LiteLLM ont été recréés avec
+les images ci-dessus ; Core/LiteLLM sont sains et le nouveau Worker est présent dans les deux queues
+Temporal. Ollama `4245ff7673bc…` est arrêté. Les accès publics donnent `200|200|401`. Les travaux actifs
+étaient `0|0|0` avant et pendant la bascule. Le relevé canonique est strictement inchangé :
+`27|27|11|16|1|19|5` pour Tasks, workflows, usages, réservations, invocations, artefacts et réservations
+`uncertain`. Résultat opérateur : `ACTIVATION_API_OK`. Aucune requête générative OpenAI encore attestée.
 
 Sauvegarde privée existante : `/etc/nevolium/api-rollback.9KmtYC` (ancien environnement et configurations).
 Images conservées : `nevolium-api-rollback/{nevolium-core,nevolium-worker,nevolium-web,litellm}:9KmtYC`.
@@ -58,17 +65,17 @@ Ces faits proviennent de la sortie opérateur ; aucune connexion SSH depuis ce w
 - COLD-03/04/05 restent des échecs historiques. COLD-05 (`ccb61e1c-7fb2-460b-ad70-e4cef359ed42`)
   a recherché son marqueur, omis fetch puis rendu une synthèse non JSON. Deux usages réglés, aucun OOM.
   Conserver les cinq réservations historiques `uncertain`, sans effacement ni rejeu automatique.
-- Correctif Core déjà sur la branche : un slot Research lie atomiquement un seul appel/entrée,
-  même en concurrence ; IDs existants conservés, aucune migration. **Non déployé sur cible.**
+- Correctif Core actif sur la cible : un slot Research lie atomiquement un seul appel/entrée,
+  même en concurrence ; IDs existants conservés, aucune migration.
 - Worker transmet les JSON Schemas Research natifs et valide toujours contenu/outils/citations.
-  **Non déployé sur cible.** Le pivot conserve ces correctifs et retire les défauts `local-fast`
+  **Actif sur la cible.** Le pivot conserve ces correctifs et retire les défauts `local-fast`
   des nouvelles demandes au lieu d'ajouter un second gateway ou un nouveau runner de campagne.
 - Les essais/procédures locaux sont archivés. La fixture reste isolée et manuelle ; les contrats de
   comptabilité, concurrence, ownership et crash/replay Research restent requis.
 
 Le panneau Web Research imposait également `local-fast` et une estimation propre : ces deux champs
 sont retirés au profit des valeurs Core. Une nouvelle demande locale explicite est refusée en
-production ; le contexte des anciennes Tasks reste lisible. **Le Web est construit, activation en attente.**
+production ; le contexte des anciennes Tasks reste lisible. **Le Web corrigé est actif.**
 
 ## Validation du pivot avant publication
 
@@ -81,15 +88,12 @@ contrats/concurrence/crash-replay, vrais PDF/mémoire et restauration CI réussi
 
 ## Prochaine action exécutable
 
-**Activer les images déjà construites au SHA technique `7fb2211…`.** Cette mise à jour du checkpoint
-est documentaire et n'impose ni mise à jour du checkout serveur ni reconstruction.
-Vérifier inactivité (workflows, réservations modèle et admissions de travail), conserver un relevé des
-comptes canoniques et vérifier les images de retour existantes. Arrêter l'ancien Ollama et remplacer
-Core/Worker/Web/LiteLLM avec `--no-build --no-deps --pull never`, puis vérifier santé Core/LiteLLM,
-présence du Worker dans les queues Temporal et accès publics `200|200|401`. Le relevé canonique et les
-cinq réservations historiques inconnues doivent rester conservés. L'activation reste à confirmer par
-la sortie opérateur, avant les deux nouvelles recherches OpenAI. Le [protocole D04](docs/qualification-d04.md)
-porte la suite finie et les limites, sans nouveau sous-lot.
+**Exécuter deux nouvelles Tasks Research OpenAI séquentielles sur les services déjà actifs.** Chaque
+Task doit faire `web.search` puis `web.fetch`, terminer en moins de 600 s, produire un artefact cité et
+exactement deux usages `smart` avec tokens/coût reportés et réservations réglées. Conserver les UUID dès
+la création et arrêter la paire au premier échec ou résultat inconnu, sans rejouer COLD-03/04/05.
+Cette mise à jour documentaire n'impose ni mise à jour du checkout serveur ni reconstruction. Le
+[protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
