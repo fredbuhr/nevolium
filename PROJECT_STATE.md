@@ -17,9 +17,9 @@ Dernière revue : 2026-09-13. **Vérifier GitHub live avant toute action.**
 | Lot actif | **D04 — moteurs réels et exploitation (H5)** |
 | Branche active | `hardening/d04-real-engine-qualification` |
 | Livraison active | [PR #88](https://github.com/fredbuhr/nevolium/pull/88), ouverte en draft, non fusionnée |
-| Dernier code déployé confirmé | Core/Worker `e3adbe648b245e2567970769e6a4bf4333b3e4a4` ; Web MCP `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; checkpoint registre `02be8f12f35e26b6e0ad2d3cafa5d9fc8c977368` synchronisé |
-| Validation | Registre Web exact et sans doublon. Le premier Research authentifié échoue pendant le planning avant tout outil : zéro usage et artefact, réservation locale expirée conservée `started`. Worker et Web MCP restent opérationnels |
-| Prochaine action | Valider en CI puis déployer le délai Research 180 s, le proxy 210 s, le heartbeat renouvelé 30/90 s et l'arrêt non rejouable des issues modèle inconnues ; lancer ensuite une nouvelle Task de preuve sans rejouer l'échec |
+| Dernier code déployé confirmé | Core `e3adbe648b245e2567970769e6a4bf4333b3e4a4` ; Worker `d78f45ac911d35035fc5ae195655a85bbe458ab2` ; Web MCP `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; LiteLLM 210 s actif |
+| Validation | Deux Research authentifiés ont échoué au planning avant tout outil. La seconde preuve isole la cause : Ollama voyait 12 CPU mais subissait un quota de 2 CPU. Le même prompt exact de 2 182 jetons termine en 29,62 s avec `num_thread=2`, sans Task, réservation ni rejeu canonique |
+| Prochaine action | Valider en CI puis activer `num_thread=2` dans LiteLLM et son délai par appel inférieur de 10 s à celui du Worker ; lancer une nouvelle Task Research distincte, froide puis chaude, sans rejouer les deux échecs conservés |
 | Conditions manquantes | Pertinence générale du routage et choix du modèle quotidien, Research canonique de bout en bout, backup Restic indépendant, campagne cible/charge/rollback |
 | Méthode | Garder cette PR ; commits internes comme checkpoints, aucun nouveau sous-lot et aucun D05 avant la sortie H5 |
 

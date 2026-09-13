@@ -55,6 +55,7 @@ class Deployment(unittest.TestCase):
                 )
                 self.assertEqual(local["litellm_params"]["model"], "os.environ/OLLAMA_MODEL")
                 self.assertEqual(local["litellm_params"]["api_base"], "http://ollama:11434")
+                self.assertEqual(local["litellm_params"]["num_thread"], 2)
                 self.assertEqual(local["model_info"]["input_cost_per_token"], 0)
                 self.assertEqual(local["model_info"]["output_cost_per_token"], 0)
                 self.assertEqual(document["router_settings"]["timeout"], 210)

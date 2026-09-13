@@ -21,6 +21,7 @@ MAX_MODEL_CHECKPOINT_SLOTS = 32
 ZERO_COST_MODEL_ALIASES = frozenset({"local-fast"})
 MODEL_REQUEST_TIMEOUT_CAP_SECONDS = 180.0
 MODEL_REQUEST_HEARTBEAT_INTERVAL_SECONDS = 30.0
+MODEL_PROXY_TIMEOUT_GRACE_SECONDS = 10.0
 
 
 class ModelCallOutcomeUnknown(RuntimeError):
@@ -560,11 +561,16 @@ async def chat_completion(
         idempotency_key=idempotency_key,
     )
 
+    bounded_timeout = min(timeout_seconds, MODEL_REQUEST_TIMEOUT_CAP_SECONDS)
     request = {
         "model": model_alias,
         "temperature": temperature,
         "messages": messages,
         "max_tokens": settings.nevolium_model_max_output_tokens,
+        # LiteLLM must stop and close its provider request before this Worker's
+        # absolute deadline. Otherwise a provider can continue after the durable
+        # activity has already failed with an unknown outcome.
+        "timeout": max(1.0, bounded_timeout - MODEL_PROXY_TIMEOUT_GRACE_SECONDS),
         "metadata": langfuse_metadata(
             task_id=task_id,
             workflow_execution_id=workflow_execution_id,
@@ -581,7 +587,6 @@ async def chat_completion(
     # Absolute deadline, including slow streaming responses. Core's dispatch lease is
     # 300s and the production proxy timeout is 210s; a timed-out request remains
     # financially uncertain. Keep client calls below both bounds.
-    bounded_timeout = min(timeout_seconds, MODEL_REQUEST_TIMEOUT_CAP_SECONDS)
     heartbeat_task = (
         asyncio.create_task(
             _heartbeat_started_model_call(

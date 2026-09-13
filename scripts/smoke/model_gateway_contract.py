@@ -76,6 +76,11 @@ async def main() -> None:
             payload = kwargs["json"]
             assert payload["model"] == "smart", payload
             assert payload["max_tokens"] == model_gateway.settings.nevolium_model_max_output_tokens
+            assert payload["timeout"] == (
+                model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS
+                - model_gateway.MODEL_PROXY_TIMEOUT_GRACE_SECONDS
+            ), payload
+            assert self.timeout == model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS
             metadata = payload["metadata"]
             assert metadata == {
                 "generation_name": "nevolium.model.invoke",
@@ -127,6 +132,7 @@ async def main() -> None:
             model_alias="smart",
             idempotency_key=CALL_KEY,
             estimated_cost_usd=Decimal("0.02"),
+            timeout_seconds=model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS + 30,
             messages=[{"role": "user", "content": "fixture"}],
         )
         assert result.content == "fixture completion", result

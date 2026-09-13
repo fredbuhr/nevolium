@@ -11,6 +11,9 @@ model_list:
     litellm_params:
       model: os.environ/OLLAMA_MODEL
       api_base: http://ollama:11434
+      # Compose grants Ollama two CPUs. Without this explicit bound llama.cpp sees all
+      # host CPUs, starts twelve threads and is then severely throttled by the cgroup.
+      num_thread: 2
     model_info:
       input_cost_per_token: 0
       output_cost_per_token: 0

@@ -47,6 +47,16 @@ une erreur de transport ou un checkpoint incertain en `ModelCallOutcomeUnknown` 
 contrats hors ligne couvrent les trois bornes et ce statut terminal ; l'activation et une nouvelle Task
 de preuve restent requises. La Task échouée et sa réservation ne sont ni modifiées ni relancées.
 
+Une seconde Task Research distincte échoue également au planning, cette fois après 202,82 s : aucune
+invocation MCP, aucun usage et aucun artefact, avec une réservation expirée conservée `started`. La
+corrélation des journaux montre que LiteLLM attend 210 s et qu'Ollama utilise 12 threads alors que son
+conteneur est limité à 2 CPU et 4 Gio. Un benchmark hors tables canoniques rejoue le prompt exact de
+2 182 jetons après déchargement du modèle avec `num_thread=2` : HTTP 200 en 29,62 s, préremplissage à
+85,28 jetons/s et 32 jetons générés. Il ne crée ni Task, ni réservation, ni usage. La configuration de
+branche fixe donc l'alias local à deux threads dans les deux fichiers LiteLLM ; le gateway demande en
+plus une échéance par appel dix secondes inférieure à sa propre borne. Cette correction reste à passer
+en CI, à être activée puis à être prouvée par une nouvelle Task Research froide et chaude.
+
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
 et la qualité des réponses ne sont pas corrigés par ce changement de budget.

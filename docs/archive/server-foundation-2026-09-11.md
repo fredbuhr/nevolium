@@ -294,3 +294,19 @@ une erreur de transport ou une issue déjà inconnue en `ModelCallOutcomeUnknown
 tentative. Les contrats locaux prouvent ces relations et la préservation des checkpoints. Ce correctif
 reste à passer en CI, à activer sur la cible puis à qualifier avec une nouvelle Task distincte. L'ancienne
 réservation expirée reste intacte jusqu'à un rapprochement canonique séparé.
+
+Après activation de ce code, une seconde Task distincte `NEVOLIUM-D04-RESEARCH-WEB-02` échoue au même
+stade en 202,82 s, toujours avant tout appel MCP, usage ou artefact. Le Worker n'effectue qu'une tentative
+et conserve l'issue inconnue ; LiteLLM expire à 210 s. Ollama révèle alors le défaut matériel précis :
+le runner choisit 12 threads visibles sur l'hôte bien que le conteneur soit limité à 2 CPU et 4 Gio.
+Le planificateur comptait 2 182 jetons d'entrée, 256 jetons de sortie au maximum et 6 606 caractères de
+messages. Après déchargement du modèle, un appel direct à LiteLLM avec ce prompt exact et `num_thread=2`
+répond HTTP 200 en 29,62 s : chargement froid inclus, préremplissage de 2 182 jetons en 25,59 s à
+85,28 jetons/s, puis 32 jetons en 1,73 s. Cette mesure ne touche aucune table canonique et ne relance
+aucune Task.
+
+Le correctif préparé fixe donc `num_thread: 2` sur `local-fast`, conformément au quota Compose, dans les
+deux configurations LiteLLM. Il transmet aussi à LiteLLM une échéance par appel dix secondes inférieure
+à la borne du client Worker, afin que le proxy rende la main avant l'expiration durable. Les contrats
+ciblés couvrent ces paramètres ; la CI, l'activation et une nouvelle preuve Research froide puis chaude
+restent requises. Les deux anciennes Tasks et leurs réservations demeurent inchangées.

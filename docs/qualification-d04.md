@@ -45,6 +45,15 @@ de la performance Ollama. Qualifier ensuite une nouvelle commande cible,
 modèle déchargé puis chaud, vérifier tokens/coût/réservation et conserver les anciens échecs.
 Un dépassement persistant doit être mesuré et diagnostiqué, pas caché par une nouvelle hausse de seuil.
 
+### Budget CPU du modèle local
+
+Sur la cible, le conteneur Ollama est limité à 2 CPU mais le runner détecte les 12 CPU de l'hôte. Le
+planificateur Research réel de 2 182 jetons dépasse 210 s avec 12 threads soumis au quota. Après
+déchargement du modèle, le même prompt exact avec `num_thread=2` répond en 29,62 s : 25,59 s pour le
+préremplissage à 85,28 jetons/s et 1,73 s pour 32 jetons. Le paramètre `local-fast` doit donc rester égal
+au quota Compose et être vérifié dans les journaux Ollama. Cette mesure isolée n'est pas une qualification
+Research : celle-ci exige encore une Task authentifiée distincte, des appels MCP et un artefact sourcé.
+
 Une commande de qualification contenant une interdiction explicite d'exécution ne doit jamais créer la
 Task métier proposée par le modèle. Core relit le message canonique, applique
 `semantic.execution-veto`, conserve la proposition pour audit et rend la commande terminale sans handoff.
