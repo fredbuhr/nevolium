@@ -10,8 +10,8 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Parent vérifié avant pivot API | `25566363c66bcc41980077214c3f379e2880f3a4`, 10/10 workflows réussis ; 91 commits dans #88 à cette revue |
-| Validation du pivot | Contrats locaux puis CI du nouveau head à vérifier avant activation ; le job local manuel n'est plus requis |
+| Code cible construit | `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4` ; checkout serveur propre à ce SHA |
+| Validation du pivot | 10/10 workflows réussis à ce SHA ; quatre jobs D04 requis réussis, fixture locale manuelle ignorée |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -37,11 +37,17 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 | LiteLLM | `e4d886b9b32907135cb5faeb7737f09de27c6389` ; ancienne route locale |
 | Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; outils A1 search/fetch |
 
-Le checkout serveur est à `25566363c66bcc41980077214c3f379e2880f3a4`. La dernière commande a construit
-le client de qualification en 389,9 s, puis échoué au premier téléchargement de `qwen3:4b` : résolution
-DNS de `registry.ollama.ai`. Statut 1, avant isolation des services. Core/Worker/Ollama n'ont pas été
-arrêtés par ce script ; aucune nouvelle Task. Le build/cache client reste présent. Ne pas relancer.
-Ces faits proviennent de la sortie opérateur ; aucune connexion serveur dans cette reprise.
+Le checkout serveur a été avancé à `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4`. La première préparation
+s'est arrêtée au contrôle après sortie de l'éditeur sans enregistrer. La reprise sans éditeur a réussi :
+clé saisie localement, six paramètres API appliqués, anciennes variables OpenAI/Ollama retirées,
+configuration de production acceptée. Core construit en 10,8 s, Worker en 338,3 s, Web en 9,5 s.
+Résultat opérateur : `REPRISE_API_OK`, `CONFIGURATION_VALIDEE_IMAGES_CONSTRUITES`.
+Les identités des quatre conteneurs sont inchangées ; aucune activation ni requête OpenAI attestée.
+
+Sauvegarde privée existante : `/etc/nevolium/api-rollback.9KmtYC` (ancien environnement et configurations).
+Images conservées : `nevolium-api-rollback/{nevolium-core,nevolium-worker,nevolium-web,litellm}:9KmtYC`.
+Ne pas redemander la clé, ouvrir un éditeur, refaire les builds ou relancer les commandes de préparation.
+Ces faits proviennent de la sortie opérateur ; aucune connexion SSH depuis ce workspace.
 
 ## Acquis et anomalies à préserver
 
@@ -62,31 +68,28 @@ Ces faits proviennent de la sortie opérateur ; aucune connexion serveur dans ce
 
 Le panneau Web Research imposait également `local-fast` et une estimation propre : ces deux champs
 sont retirés au profit des valeurs Core. Une nouvelle demande locale explicite est refusée en
-production ; le contexte des anciennes Tasks reste lisible. **Le Web doit aussi être reconstruit.**
+production ; le contexte des anciennes Tasks reste lisible. **Le Web est construit, activation en attente.**
 
 ## Validation du pivot avant publication
 
 Ruff F/E9 (dont imports/code inutilisés), identité canonique et diff sans erreur réussis.
 Contrats gateway, planning/synthèse Research, routage sémantique et six contrôles du runner cible
 réussis. Neuf contrôles déploiement/configuration/reprise réussis sans Docker ; isolation de la clé
-API vérifiée dans le vrai processus enfant mémoire. Docker indisponible dans ce workspace : rendu
-Compose et intégrations restent à vérifier par la CI du nouveau head. Aucun appel OpenAI effectué.
+API vérifiée dans le vrai processus enfant mémoire. Docker indisponible dans ce workspace ; rendu
+Compose et intégrations ensuite validés en CI au SHA `7fb2211…` : Foundation 9/9 jobs, Research
+contrats/concurrence/crash-replay, vrais PDF/mémoire et restauration CI réussis. Aucun appel OpenAI effectué.
 
 ## Prochaine action exécutable
 
-**Vérifier la CI du head API publié dans #88, puis préparer la configuration sur le serveur.**
-Après mise à jour contrôlée du checkout, éditer uniquement le fichier protégé :
-
-```bash
-sudoedit /etc/nevolium/production.env
-```
-
-Y renseigner le couple modèle/clé de l'API, `smart` pour Research/News/routage et l'estimation Research
-0.10 comme décrit dans [deployment](docs/deployment.md#selection-du-fournisseur-api). Ne jamais
-transmettre ce fichier ou la clé. Ensuite valider la topologie effective avec le contrôleur existant,
-construire avant activation, vérifier inactivité (workflows ET réservations), garder les images et
-configurations précédentes, arrêter l'ancien Ollama et activer Core/Worker/Web/LiteLLM en une fois.
-Le [protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
+**Activer les images déjà construites au SHA technique `7fb2211…`.** Cette mise à jour du checkpoint
+est documentaire et n'impose ni mise à jour du checkout serveur ni reconstruction.
+Vérifier inactivité (workflows, réservations modèle et admissions de travail), conserver un relevé des
+comptes canoniques et vérifier les images de retour existantes. Arrêter l'ancien Ollama et remplacer
+Core/Worker/Web/LiteLLM avec `--no-build --no-deps --pull never`, puis vérifier santé Core/LiteLLM,
+présence du Worker dans les queues Temporal et accès publics `200|200|401`. Le relevé canonique et les
+cinq réservations historiques inconnues doivent rester conservés. L'activation reste à confirmer par
+la sortie opérateur, avant les deux nouvelles recherches OpenAI. Le [protocole D04](docs/qualification-d04.md)
+porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
