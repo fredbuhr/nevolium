@@ -10,8 +10,8 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Code cible construit | `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4` ; checkout serveur propre à ce SHA |
-| Validation du pivot | 10/10 workflows réussis à ce SHA ; quatre jobs D04 requis réussis, fixture locale manuelle ignorée |
+| Code actif cible | `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4` ; checkout serveur propre à ce SHA |
+| Correctif à déployer | `3ccc7f786bbaa8d87bdbbcf2c6ed0c986c004e19` ; 10/10 workflows réussis, dont Research et D04 |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -94,8 +94,8 @@ résultat et n'a pas lancé le second essai. Ce résultat est connu et ne doit p
 observé vient du contrat du planificateur : « minimum utile » permettait d'ignorer une clé d'outil
 explicitement demandée alors que le plan complet est produit avant toute exécution.
 
-**Publier puis déployer le correctif Worker borné de ce contrat.** Le planificateur doit recevoir les
-clés autorisées explicitement nommées dans la question, les conserver dans l'ordre et échouer avant
+**Déployer le correctif Worker borné de ce contrat.** Le planificateur reçoit désormais les
+clés autorisées explicitement nommées dans la question, les conserve dans l'ordre et échoue avant
 outil/synthèse s'il en omet une. Aucun second tour modèle, aucune réparation du résultat et aucun nouveau
 runner. Après CI et remplacement du seul Worker, créer deux nouvelles Tasks Research séquentielles ;
 ne pas réutiliser l'UUID ci-dessus ni COLD-03/04/05. Le
