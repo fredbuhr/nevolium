@@ -85,6 +85,9 @@ writes, destructive actions, authentication changes, purchases, messages or othe
 When the query explicitly names available tool keys, include each named tool in the stated order;
 those calls are required rather than optional. Plan the complete bounded sequence up front because
 execution does not invoke the planner again after an earlier tool result.
+When web.fetch follows web.search and its URL is not known until execution, put a non-URL dependency
+marker in its `url` field. Nevolium will bind it to the first HTTP(S) result from the most recent
+completed web.search. Never invent a URL merely to make the plan look complete.
 If the Context Pack is sufficient or the available tools cannot materially help, return an empty
 call list and explain why. Return only one raw JSON object with top-level `calls` and `rationale`
 fields, without Markdown fences. Core independently validates every proposed call and remains authoritative.
@@ -281,6 +284,52 @@ def build_research_evidence(tool_results: list[dict[str, Any]]) -> list[dict[str
             }
         )
     return evidence
+
+
+def _absolute_http_url(value: Any) -> str | None:
+    candidate = str(value or "").strip()
+    try:
+        parsed = httpx.URL(candidate)
+    except (TypeError, ValueError, httpx.InvalidURL):
+        return None
+    if parsed.scheme not in {"http", "https"} or not parsed.host or parsed.userinfo:
+        return None
+    return candidate
+
+
+def resolve_research_tool_input(
+    call: PlannedToolCall,
+    completed_results: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Bind a dependent Web fetch to an URL returned by an earlier completed search."""
+
+    resolved = dict(call.input)
+    if call.tool_key != "web.fetch" or _absolute_http_url(resolved.get("url")):
+        return resolved
+
+    for completed in reversed(completed_results):
+        if completed.get("tool_key") != "web.search":
+            continue
+        result = completed.get("result")
+        if not isinstance(result, dict):
+            continue
+        structured = result.get("structuredContent") or result.get("structured_content")
+        if not isinstance(structured, dict):
+            continue
+        search_results = structured.get("results")
+        if not isinstance(search_results, list):
+            continue
+        for search_result in search_results:
+            if not isinstance(search_result, dict):
+                continue
+            url = _absolute_http_url(search_result.get("url"))
+            if url:
+                resolved["url"] = url
+                return resolved
+
+    raise ValueError(
+        "web.fetch requires an absolute HTTP(S) URL or a prior web.search result containing one"
+    )
 
 
 def build_evidence_index(evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -524,6 +573,13 @@ async def perform_autonomous_research(payload: dict[str, Any]) -> dict[str, Any]
         )
         results: list[dict[str, Any]] = []
         for slot, call in enumerate(plan.calls):
+            try:
+                resolved_input = resolve_research_tool_input(call, results)
+            except ValueError as exc:
+                raise ApplicationError(
+                    f"Research could not bind input for {call.tool_key}: {exc}",
+                    non_retryable=True,
+                ) from exc
             completed_slots = [int(item["slot"]) for item in results]
             _heartbeat_research_progress(
                 model_checkpoints,
@@ -537,7 +593,7 @@ async def perform_autonomous_research(payload: dict[str, Any]) -> dict[str, Any]
                 headers=_headers(),
                 json={
                     "tool_key": call.tool_key,
-                    "input": call.input,
+                    "input": resolved_input,
                     "slot": slot,
                     "rationale": call.rationale,
                 },
@@ -569,7 +625,7 @@ async def perform_autonomous_research(payload: dict[str, Any]) -> dict[str, Any]
                         {
                             "slot": slot,
                             "tool_key": call.tool_key,
-                            "input": call.input,
+                            "input": resolved_input,
                             "rationale": call.rationale,
                             "invocation_id": invocation_id,
                             "result": child.get("result") or {},
