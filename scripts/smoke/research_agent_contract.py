@@ -141,6 +141,79 @@ async def main() -> None:
     assert len(plan.calls) == 1, plan
     assert plan.calls[0].tool_key == "web.search", plan
 
+    # The first real cold Research after thread correction returned exactly this shape:
+    # a complete direct call list wrapped in a Markdown JSON fence. Normalizing this
+    # serialization must not issue a second model request or bypass tool allowlisting.
+    incident_completions = 0
+
+    async def cold_incident_completion(_messages):
+        nonlocal incident_completions
+        incident_completions += 1
+        return """```json
+[
+  {
+    "tool_key": "web.search",
+    "rationale": "Search recent public sources through the private SearXNG service.",
+    "input": {
+      "query": "NEVOLIUM-D04-RESEARCH-WEB-COLD-03",
+      "language": "fr",
+      "time_range": "year",
+      "max_results": 8
+    }
+  }
+]
+```"""
+
+    incident_plan = await plan_research(
+        query="NEVOLIUM-D04-RESEARCH-WEB-COLD-03",
+        tools=TOOLS,
+        max_tool_calls=2,
+        completion=cold_incident_completion,
+    )
+    assert incident_completions == 1, incident_completions
+    assert len(incident_plan.calls) == 1, incident_plan
+    assert incident_plan.calls[0].tool_key == "web.search", incident_plan
+    assert incident_plan.calls[0].input["query"] == "NEVOLIUM-D04-RESEARCH-WEB-COLD-03"
+    assert "normalized the plan envelope" in incident_plan.rationale, incident_plan
+
+    async def fenced_invented_completion(_messages):
+        return """```json
+[
+  {
+    "tool_key": "payments.send",
+    "input": {"amount": 100},
+    "rationale": "Invent a side-effecting tool."
+  }
+]
+```"""
+
+    try:
+        await plan_research(
+            query="Do something unsafe through the normalized envelope",
+            tools=TOOLS,
+            max_tool_calls=1,
+            completion=fenced_invented_completion,
+        )
+    except UnexpectedModelBehavior:
+        pass
+    else:
+        raise AssertionError("Normalized planner envelope bypassed the tool allowlist")
+
+    async def prose_wrapped_completion(_messages):
+        return f"Here is the requested plan:\n```json\n{await valid_completion(_messages)}\n```"
+
+    try:
+        await plan_research(
+            query="Return JSON embedded in prose",
+            tools=TOOLS,
+            max_tool_calls=1,
+            completion=prose_wrapped_completion,
+        )
+    except UnexpectedModelBehavior:
+        pass
+    else:
+        raise AssertionError("Planner extracted JSON from surrounding prose")
+
     async def invented_completion(_messages):
         return json.dumps(
             {
@@ -200,6 +273,30 @@ async def main() -> None:
     assert len(synthesis_prompts) == 1, synthesis_prompts
     rendered_prompt = json.dumps(synthesis_prompts[0], ensure_ascii=False)
     assert "E1" in rendered_prompt and "canonical state" in rendered_prompt, rendered_prompt
+
+    async def fenced_grounded_completion(messages):
+        return f"```json\n{await grounded_completion(messages)}\n```"
+
+    fenced_synthesis = await synthesize_research(
+        query="What does the evidence say about Nevolium architecture?",
+        evidence=evidence,
+        completion=fenced_grounded_completion,
+    )
+    assert fenced_synthesis.claims[0].evidence_ids == ["E1"], fenced_synthesis
+
+    async def prose_wrapped_synthesis_completion(messages):
+        return f"Here is the synthesis:\n```json\n{await grounded_completion(messages)}\n```"
+
+    try:
+        await synthesize_research(
+            query="Return a synthesis embedded in prose",
+            evidence=evidence,
+            completion=prose_wrapped_synthesis_completion,
+        )
+    except UnexpectedModelBehavior:
+        pass
+    else:
+        raise AssertionError("Synthesizer extracted JSON from surrounding prose")
 
     async def invented_evidence_completion(_messages):
         return json.dumps(

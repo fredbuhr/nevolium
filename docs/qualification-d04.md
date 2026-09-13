@@ -70,6 +70,14 @@ threads sain, Worker chargé depuis la nouvelle image avec bornes 180/10 s, poll
 présents, Core inchangé et services publics sains. Aucune Task Research n'a été créée par l'opération.
 Le code activé reste `e4d886b…` ; le checkpoint documentaire ultérieur ne requiert aucun rebuild.
 
+`NEVOLIUM-D04-RESEARCH-WEB-COLD-03` confirme ensuite deux threads et 30,65 s pour un appel modèle froid
+de 2 388 jetons, correctement comptabilisé et réglé. Le planning échoue car le modèle renvoie une liste
+JSON complète sous fence Markdown plutôt que l'objet `ResearchPlan`; aucun outil ni artefact n'est créé.
+Cette Task demeure une preuve d'incident et ne doit pas être rejouée. Le correctif de parsing ne peut
+retirer qu'une fence JSON couvrant toute la réponse et envelopper une liste directe sans changer ses
+éléments. Il ne peut ni extraire du JSON depuis de la prose, ni ajouter un outil, ni demander une seconde
+réponse modèle. Pydantic, l'allowlist et les schémas Core doivent encore refuser tout contenu invalide.
+
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
 modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,

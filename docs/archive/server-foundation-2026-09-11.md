@@ -353,3 +353,25 @@ La prochaine preuve doit synchroniser le checkpoint documentaire sans reconstrui
 l'inactivité, décharger explicitement `qwen2.5:0.5b`, puis lancer une Task authentifiée distincte portant
 `NEVOLIUM-D04-RESEARCH-WEB-COLD-03` avec deux appels outils au maximum. Examiner ce seul parcours avant
 de lancer la Task chaude. Les deux échecs précédents restent inchangés.
+
+La Task froide `NEVOLIUM-D04-RESEARCH-WEB-COLD-03` est créée une seule fois à 11:51:06 UTC, démarre à
+11:51:07 et échoue à 11:51:59. Les quatre conteneurs observés restent en fonctionnement, sans OOM ni
+redémarrage. Ollama lance le modèle en 2,60 secondes avec `-t 2` et confirme
+`n_threads = 2 (n_threads_batch = 2) / 12`. Le prompt de 2 278 jetons est prérempli en 21,55 secondes
+à 105,71 jetons/s ; 110 jetons sont générés en 6,41 secondes et l'appel HTTP 200 termine en 30,65
+secondes. L'usage total de 2 388 jetons est enregistré à coût nul et l'unique réservation passe
+`settled`. Ce résultat qualifie le défaut de threads corrigé sur un vrai planning froid.
+
+Le modèle rend ensuite une liste JSON complète entourée de ` ```json ` et ` ``` `, avec un appel
+`web.search`, alors que `PromptedOutput(ResearchPlan)` attend un objet portant `calls` et `rationale`.
+Avec zéro retry de sortie, PydanticAI lève `UnexpectedModelBehavior` après la réponse déjà comptabilisée.
+La Task et le workflow échouent en tentative 1 avec `Activity task failed`; il n'existe aucun appel MCP
+ni artefact. Cette Task reste conservée et ne doit pas être rejouée.
+
+Le correctif préparé renforce les instructions de planning et synthèse pour demander un objet JSON brut.
+La frontière locale retire uniquement une fence JSON qui couvre la réponse entière. Pour le planning,
+une liste JSON directe est enveloppée dans l'objet attendu, sans modifier ses éléments ni appeler de
+nouveau le modèle. Pydantic valide toujours la structure ; la vérification des outils autorisés et les
+schémas Core restent inchangés. Une régression reprend la forme exacte observée, vérifie un seul appel
+au modèle et couvre aussi une synthèse sous fence. La CI, la construction/activation du Worker corrigé
+et une nouvelle Task froide distincte restent nécessaires avant l'essai chaud.
