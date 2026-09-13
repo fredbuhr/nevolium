@@ -82,6 +82,9 @@ MCP déjà retournée est terminale pour cette tentative et ne déclenche pas di
 Les deux usages par Task doivent être réglés une seule
 fois ; l'absence d'en-tête de coût pour `smart` ne vaut pas un coût nul. Les estimations/bornes de tokens
 ne garantissent pas un plafond fournisseur en dollars ; conserver les limites canoniques existantes.
+La réponse publique de LiteLLM peut conserver l'alias dans son champ `model` ; l'attribution canonique
+préfère donc son en-tête de déploiement `x-litellm-model-name`. Le plafond de sortie du pilote API est
+`4096`, conformément à la configuration documentée, et non l'ancienne valeur `256` du modèle local.
 
 Un échec arrête cette paire : garder toutes les preuves, ne pas rejouer automatiquement un appel dont
 l'issue est inconnue. Corriger seulement le défaut observé puis refaire le scénario affecté.

@@ -290,8 +290,15 @@ def parse_usage(
     if total_tokens == 0:
         total_tokens = prompt_tokens + completion_tokens
     cost_usd, cost_reported = _response_cost(headers, model_alias=model_alias)
+    # LiteLLM rewrites the response body's ``model`` field to the public router
+    # alias. Its deployment header carries the concrete provider/model selected
+    # by the router and is therefore the authoritative attribution when present.
+    provider_model = str(headers.get("x-litellm-model-name") or "").strip()
+    if not provider_model:
+        provider_model = str(data.get("model") or "unknown").strip()
+    provider_model = provider_model[:240]
     return ModelUsage(
-        provider_model=str(data.get("model") or "unknown"),
+        provider_model=provider_model or "unknown",
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
         total_tokens=total_tokens,

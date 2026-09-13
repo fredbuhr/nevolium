@@ -117,9 +117,10 @@ async def main() -> None:
                 headers={
                     "x-litellm-response-cost": "0.012345",
                     "x-litellm-call-id": CALL_KEY,
+                    "x-litellm-model-name": "openai/gpt-fixture",
                 },
                 json={
-                    "model": "openai/gpt-fixture",
+                    "model": "smart",
                     "choices": [{"message": {"content": "fixture completion"}}],
                     "usage": {
                         "prompt_tokens": 101,
@@ -302,8 +303,18 @@ async def main() -> None:
         model_alias="smart",
     )
     assert missing_cost.total_tokens == 5, missing_cost
+    assert missing_cost.provider_model == "ollama/qwen-fixture", missing_cost
     assert missing_cost.cost_usd == Decimal("0"), missing_cost
     assert missing_cost.cost_reported is False, missing_cost
+    attributed = model_gateway.parse_usage(
+        {
+            "model": "smart",
+            "usage": {"prompt_tokens": 3, "completion_tokens": 2},
+        },
+        httpx.Headers({"x-litellm-model-name": "openai/gpt-4.1"}),
+        model_alias="smart",
+    )
+    assert attributed.provider_model == "openai/gpt-4.1", attributed
     local_zero_cost = model_gateway.parse_usage(
         {
             "model": "local-fast",
