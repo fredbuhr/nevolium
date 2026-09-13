@@ -71,6 +71,9 @@ Le second essai est une nouvelle Task ; aucun rejeu de COLD-03, COLD-04 ou COLD-
 Relever les phases planning/synthèse, appels MCP, latence, modèle réellement reporté, tokens, coût,
 réservations, IDs d'artefacts et état terminal. Les clés d'outil nommées explicitement dans la question
 sont obligatoires et ordonnées ; leur omission invalide le plan avant tout outil et toute synthèse.
+Si le plan ne connaît pas encore l'URL de `web.fetch`, le Worker la lie sans nouvel appel modèle à la
+première URL HTTP(S) du dernier `web.search` terminé. L'entrée canonique de fetch doit contenir cette
+URL résolue, jamais le marqueur de dépendance proposé par le modèle.
 Les deux usages par Task doivent être réglés une seule
 fois ; l'absence d'en-tête de coût pour `smart` ne vaut pas un coût nul. Les estimations/bornes de tokens
 ne garantissent pas un plafond fournisseur en dollars ; conserver les limites canoniques existantes.
