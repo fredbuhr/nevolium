@@ -197,7 +197,11 @@ async def perform_tool_invocation(payload: dict[str, Any]) -> dict[str, Any]:
         result = await client.call_tool(remote_name, arguments)
     result_payload = _result_payload(result)
     if bool(result_payload.get("isError") or result_payload.get("is_error")):
-        raise RuntimeError(f"MCP tool returned an error: {result_payload}")
+        raise ApplicationError(
+            f"MCP tool returned an error: {str(result_payload)[:2000]}",
+            type="MCPToolReturnedError",
+            non_retryable=True,
+        )
 
     _heartbeat("result", invocation_id, result_payload)
     await _complete(invocation_id, result_payload)

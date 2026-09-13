@@ -102,8 +102,16 @@ def _impact_level(score: int) -> str:
 
 
 async def _search_searxng(
-    *, query: str, language: str, time_range: str, max_sources: int, mode: str
+    *,
+    query: str,
+    language: str,
+    time_range: str | None,
+    max_sources: int,
+    mode: str,
+    category: str = "news",
 ) -> list[dict[str, Any]]:
+    if category not in {"general", "news"}:
+        raise ValueError("SearXNG category must be general or news")
     search_query = query
     if mode == "market_impact":
         search_query = (
@@ -113,19 +121,20 @@ async def _search_searxng(
 
     params = {
         "q": search_query,
-        "categories": "news",
+        "categories": category,
         "language": language,
-        "time_range": time_range,
         "format": "json",
         "safesearch": 1,
     }
+    if time_range:
+        params["time_range"] = time_range
     async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
         response = await client.get(f"{settings.searxng_url.rstrip('/')}/search", params=params)
         response.raise_for_status()
         payload = response.json()
 
         raw_results = payload.get("results") or []
-        if not raw_results:
+        if not raw_results and category != "general":
             params["categories"] = "general"
             response = await client.get(f"{settings.searxng_url.rstrip('/')}/search", params=params)
             response.raise_for_status()

@@ -22,17 +22,26 @@ def build_server() -> MCPServer:
 
     @server.tool(
         name="search",
-        title="Search recent public sources",
+        title="Search public web sources",
         description=(
-            "Search recent public web/news sources through Nevolium's private SearXNG service. "
-            "Returns titles, URLs, snippets and publication metadata without modifying external state."
+            "Search general public web sources through Nevolium's private SearXNG service. "
+            "Returns titles, URLs, snippets and publication metadata without modifying external "
+            "state. Omit time_range for historical or official facts; set it only for an explicitly "
+            "recent request."
         ),
         annotations=read_only_open_web,
     )
     async def search(
         query: Annotated[str, Field(min_length=2, max_length=500)],
         language: Annotated[str, Field(min_length=2, max_length=16)] = "fr",
-        time_range: Literal["day", "month", "year"] = "month",
+        time_range: Annotated[
+            Literal["day", "month", "year"] | None,
+            Field(
+                description=(
+                    "Optional recency filter; omit for historical facts and official documentation."
+                )
+            ),
+        ] = None,
         max_results: Annotated[int, Field(ge=1, le=12)] = 8,
     ) -> dict[str, Any]:
         sources = await news._search_searxng(
@@ -41,6 +50,7 @@ def build_server() -> MCPServer:
             time_range=time_range,
             max_sources=max_results,
             mode="general",
+            category="general",
         )
         return {
             "query": query,

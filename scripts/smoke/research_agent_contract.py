@@ -204,7 +204,10 @@ async def main() -> None:
                 "calls": [
                     {
                         "tool_key": "web.search",
-                        "input": {"query": "Debian 13 trixie release information"},
+                        "input": {
+                            "query": "site:debian.org Debian 13 trixie release information",
+                            "time_range": "year",
+                        },
                         "rationale": "Search for Debian 13 release information.",
                     },
                     {
@@ -229,12 +232,43 @@ async def main() -> None:
         "web.fetch",
     ], cold_04_plan
     assert cold_04_plan.calls[0].input == {
-        "query": "Debian 13 trixie release information"
+        "query": "site:debian.org Debian 13 trixie release information"
     }, cold_04_plan
     assert cold_04_plan.calls[1].input == {
         "url": "https://www.debian.org/releases/trixie/"
     }, cold_04_plan
     assert "omitted the top-level plan rationale" in cold_04_plan.rationale, cold_04_plan
+
+    async def missing_official_filter_completion(_messages):
+        return json.dumps(
+            {
+                "calls": [
+                    {
+                        "tool_key": "web.search",
+                        "input": {"query": "Debian 13 release information"},
+                        "rationale": "Search for Debian release information.",
+                    },
+                    {
+                        "tool_key": "web.fetch",
+                        "input": {"url": "SEARCH_RESULT_URL"},
+                        "rationale": "Read the selected result.",
+                    },
+                ],
+                "rationale": "Search and read one result.",
+            }
+        )
+
+    try:
+        await plan_research(
+            query="Use web.search, then web.fetch for the official Debian 13 release page.",
+            tools=cold_04_tools,
+            max_tool_calls=2,
+            completion=missing_official_filter_completion,
+        )
+    except UnexpectedModelBehavior as exc:
+        assert "site filter" in str(exc), exc
+    else:
+        raise AssertionError("Planner accepted an official search without a site filter")
 
     dependent_fetch = cold_04_plan.calls[1].model_copy(
         update={"input": {"url": "TO_BE_FILLED_FROM_SEARCH_RESULT", "max_chars": 1200}}
@@ -243,10 +277,16 @@ async def main() -> None:
         {
             "slot": 0,
             "tool_key": "web.search",
+            "input": {"query": "site:debian.org Debian 13 release information"},
             "result": {
                 "structured_content": {
+                    "query": "site:debian.org Debian 13 release information",
                     "results": [
                         {"title": "invalid", "url": "not-a-url"},
+                        {
+                            "title": "Unrelated mirror",
+                            "url": "https://example.com/debian-13",
+                        },
                         {
                             "title": "Debian 13 release information",
                             "url": "https://www.debian.org/releases/trixie/",
@@ -270,13 +310,39 @@ async def main() -> None:
     else:
         raise AssertionError("Dependent web.fetch input was accepted without prior search evidence")
 
+    no_official_result = [
+        {
+            "slot": 0,
+            "tool_key": "web.search",
+            "input": {"query": "site:debian.org Debian 13 release information"},
+            "result": {
+                "structured_content": {
+                    "results": [
+                        {
+                            "title": "Unrelated mirror",
+                            "url": "https://example.com/debian-13",
+                        }
+                    ]
+                }
+            },
+        }
+    ]
+    try:
+        resolve_research_tool_input(dependent_fetch, no_official_result)
+    except ValueError as exc:
+        assert "site filter" in str(exc), exc
+    else:
+        raise AssertionError("Dependent fetch ignored the official-domain search constraint")
+
     async def omitted_explicit_fetch_completion(_messages):
         return json.dumps(
             {
                 "calls": [
                     {
                         "tool_key": "web.search",
-                        "input": {"query": "Debian 13 trixie release information"},
+                        "input": {
+                            "query": "site:debian.org Debian 13 trixie release information"
+                        },
                         "rationale": "Search for Debian 13 release information.",
                     }
                 ],

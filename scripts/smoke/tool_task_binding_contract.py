@@ -53,6 +53,45 @@ class ToolTaskBindingContract(unittest.IsolatedAsyncioTestCase):
             start.assert_not_awaited()
             client.assert_not_called()
 
+    async def test_completed_mcp_error_is_non_retryable(self) -> None:
+        context = {
+            "task_id": "task-a",
+            "status": "running",
+            "tool_key": "web.fetch",
+            "endpoint_url": "http://fixture-mcp/mcp",
+            "remote_name": "fetch",
+            "input": {"url": "https://example.com/unreadable"},
+            "retry_policy": "safe_retry",
+        }
+
+        class ErrorClient:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_args):
+                return None
+
+            async def call_tool(self, _name, _arguments):
+                return object()
+
+        with (
+            patch.object(runtime, "_get_context", AsyncMock(return_value=context)),
+            patch.object(runtime, "_start", AsyncMock()),
+            patch.object(runtime, "_complete", AsyncMock()) as complete,
+            patch.object(runtime, "Client", return_value=ErrorClient()),
+            patch.object(
+                runtime,
+                "_result_payload",
+                return_value={"is_error": True, "content": [{"text": "unreadable"}]},
+            ),
+            self.assertRaises(ApplicationError) as caught,
+        ):
+            await runtime.perform_tool_invocation(self.payload())
+
+        self.assertTrue(caught.exception.non_retryable)
+        self.assertEqual(caught.exception.type, "MCPToolReturnedError")
+        complete.assert_not_awaited()
+
     async def test_failure_carries_current_task_and_handles_rejected_binding(self) -> None:
         for applied in (True, False):
             with patch.object(runtime, "_fail", AsyncMock(return_value=applied)) as fail:

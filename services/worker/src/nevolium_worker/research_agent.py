@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from collections.abc import Awaitable, Callable
 from decimal import Decimal
 from typing import Any, Literal, TypeVar
@@ -30,6 +31,20 @@ RESEARCH_PROGRESS_KEY = "research_progress"
 RESEARCH_MODEL_TIMEOUT_SECONDS = 180.0
 RESEARCH_HEARTBEAT_TIMEOUT_SECONDS = 90
 RESEARCH_ACTIVITY_TIMEOUT_SECONDS = 600
+
+OFFICIAL_SOURCE_PATTERN = re.compile(
+    r"\b(?:official(?:ly)?|officiel(?:le)?s?|source(?:s)? primaire(?:s)?)\b",
+    re.IGNORECASE,
+)
+RECENCY_PATTERN = re.compile(
+    r"\b(?:"
+    r"today|yesterday|latest|recent(?:ly)?|current|last (?:day|week|month|year)|"
+    r"this (?:week|month|year)|"
+    r"aujourd'hui|hier|dernier(?:e|es|s)?|recent(?:e|es|s)?|actuel(?:le|les|s)?|"
+    r"actualite(?:s)?|cette (?:semaine|annee)|ce mois"
+    r")\b",
+    re.IGNORECASE,
+)
 
 T = TypeVar("T")
 
@@ -88,6 +103,10 @@ execution does not invoke the planner again after an earlier tool result.
 When web.fetch follows web.search and its URL is not known until execution, put a non-URL dependency
 marker in its `url` field. Nevolium will bind it to the first HTTP(S) result from the most recent
 completed web.search. Never invent a URL merely to make the plan look complete.
+When the user asks for an official or primary source from a named organization or project, constrain
+the search query to its unambiguous official domain with a `site:` filter. Do not set `time_range`
+unless the user explicitly asks for a recent period; historical dates and official documentation
+require an unrestricted search.
 If the Context Pack is sufficient or the available tools cannot materially help, return an empty
 call list and explain why. Return only one raw JSON object with top-level `calls` and `rationale`
 fields, without Markdown fences. Core independently validates every proposed call and remains authoritative.
@@ -234,6 +253,16 @@ async def plan_research(
     for call in plan.calls:
         if call.tool_key not in allowed:
             raise UnexpectedModelBehavior(f"Planner proposed tool outside allowed catalog: {call.tool_key}")
+        if call.tool_key == "web.search" and not _explicit_recency_requested(query):
+            call.input.pop("time_range", None)
+    if _official_source_requested(query):
+        search_calls = [call for call in plan.calls if call.tool_key == "web.search"]
+        if search_calls and not all(
+            _search_site_filters(call.input.get("query")) for call in search_calls
+        ):
+            raise UnexpectedModelBehavior(
+                "Planner omitted the required site filter for an official-source search"
+            )
     planned_keys = [call.tool_key for call in plan.calls]
     cursor = 0
     for required_key in explicitly_required:
@@ -297,6 +326,42 @@ def _absolute_http_url(value: Any) -> str | None:
     return candidate
 
 
+def _search_site_filters(query: Any) -> tuple[str, ...]:
+    filters: list[str] = []
+    for token in str(query or "").split():
+        if not token.casefold().startswith("site:"):
+            continue
+        candidate = (
+            token[5:].strip().strip(".,;:()[]{}\"'").casefold().removeprefix("www.")
+        )
+        if candidate and "." in candidate and candidate not in filters:
+            filters.append(candidate)
+    return tuple(filters)
+
+
+def _official_source_requested(query: str) -> bool:
+    return OFFICIAL_SOURCE_PATTERN.search(query) is not None
+
+
+def _explicit_recency_requested(query: str) -> bool:
+    folded = (
+        query.casefold()
+        .replace("é", "e")
+        .replace("è", "e")
+        .replace("ê", "e")
+        .replace("à", "a")
+    )
+    return RECENCY_PATTERN.search(folded) is not None
+
+
+def _url_matches_site_filter(url: str, filters: tuple[str, ...]) -> bool:
+    try:
+        host = str(httpx.URL(url).host or "").rstrip(".").casefold()
+    except (TypeError, ValueError, httpx.InvalidURL):
+        return False
+    return any(host == domain or host.endswith(f".{domain}") for domain in filters)
+
+
 def resolve_research_tool_input(
     call: PlannedToolCall,
     completed_results: list[dict[str, Any]],
@@ -319,13 +384,30 @@ def resolve_research_tool_input(
         search_results = structured.get("results")
         if not isinstance(search_results, list):
             continue
+        candidates: list[str] = []
         for search_result in search_results:
             if not isinstance(search_result, dict):
                 continue
             url = _absolute_http_url(search_result.get("url"))
             if url:
-                resolved["url"] = url
-                return resolved
+                candidates.append(url)
+
+        search_input = completed.get("input")
+        search_query = structured.get("query") or (
+            search_input.get("query") if isinstance(search_input, dict) else ""
+        )
+        site_filters = _search_site_filters(search_query)
+        if site_filters:
+            candidates = [
+                url for url in candidates if _url_matches_site_filter(url, site_filters)
+            ]
+            if not candidates:
+                raise ValueError(
+                    "web.fetch dependency search returned no URL matching its site filter"
+                )
+        if candidates:
+            resolved["url"] = candidates[0]
+            return resolved
 
     raise ValueError(
         "web.fetch requires an absolute HTTP(S) URL or a prior web.search result containing one"

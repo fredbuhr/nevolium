@@ -12,6 +12,8 @@ async def main() -> None:
     async def fake_search(**kwargs):
         assert kwargs["query"] == "Nevolium architecture", kwargs
         assert kwargs["mode"] == "general", kwargs
+        assert kwargs["category"] == "general", kwargs
+        assert kwargs["time_range"] is None, kwargs
         return [
             {
                 "id": "S1",
@@ -54,7 +56,6 @@ async def main() -> None:
                     {
                         "query": "Nevolium architecture",
                         "language": "fr",
-                        "time_range": "month",
                         "max_results": 4,
                     },
                 )
@@ -63,6 +64,7 @@ async def main() -> None:
             structured = search_result.get("structuredContent") or search_result.get("structured_content")
             assert structured["results"][0]["url"] == "https://example.com/nevolium", structured
             assert "Canonical state" in structured["results"][0]["snippet"], structured
+            assert structured["time_range"] is None, structured
 
             # The real SSRF guard rejects local/private targets before any network request.
             private_result = _result_payload(

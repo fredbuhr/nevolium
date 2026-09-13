@@ -74,6 +74,11 @@ sont obligatoires et ordonnées ; leur omission invalide le plan avant tout outi
 Si le plan ne connaît pas encore l'URL de `web.fetch`, le Worker la lie sans nouvel appel modèle à la
 première URL HTTP(S) du dernier `web.search` terminé. L'entrée canonique de fetch doit contenir cette
 URL résolue, jamais le marqueur de dépendance proposé par le modèle.
+Une recherche Web générale n'est ni limitée aux actualités ni à une période implicite. Une demande de
+source officielle doit planifier un filtre `site:` explicite ; le Worker refuse le plan avant tout outil
+si ce filtre manque et retire toute période que la demande n'a pas explicitement requise. La liaison
+respecte le domaine et échoue avant Fetch si Search ne renvoie aucun résultat correspondant. Une erreur
+MCP déjà retournée est terminale pour cette tentative et ne déclenche pas dix lectures identiques.
 Les deux usages par Task doivent être réglés une seule
 fois ; l'absence d'en-tête de coût pour `smart` ne vaut pas un coût nul. Les estimations/bornes de tokens
 ne garantissent pas un plafond fournisseur en dollars ; conserver les limites canoniques existantes.
