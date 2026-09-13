@@ -88,11 +88,17 @@ contrats/concurrence/crash-replay, vrais PDF/mémoire et restauration CI réussi
 
 ## Prochaine action exécutable
 
-**Exécuter deux nouvelles Tasks Research OpenAI séquentielles sur les services déjà actifs.** Chaque
-Task doit faire `web.search` puis `web.fetch`, terminer en moins de 600 s, produire un artefact cité et
-exactement deux usages `smart` avec tokens/coût reportés et réservations réglées. Conserver les UUID dès
-la création et arrêter la paire au premier échec ou résultat inconnu, sans rejouer COLD-03/04/05.
-Cette mise à jour documentaire n'impose ni mise à jour du checkout serveur ni reconstruction. Le
+Le premier essai OpenAI `a1ea7662-4ab2-421a-9e60-5e6c0d7f2766` a terminé en 18 s avec deux usages et
+deux réservations réglées, mais seulement `web.search`. La qualification a correctement refusé le
+résultat et n'a pas lancé le second essai. Ce résultat est connu et ne doit pas être rejoué. Le défaut
+observé vient du contrat du planificateur : « minimum utile » permettait d'ignorer une clé d'outil
+explicitement demandée alors que le plan complet est produit avant toute exécution.
+
+**Publier puis déployer le correctif Worker borné de ce contrat.** Le planificateur doit recevoir les
+clés autorisées explicitement nommées dans la question, les conserver dans l'ordre et échouer avant
+outil/synthèse s'il en omet une. Aucun second tour modèle, aucune réparation du résultat et aucun nouveau
+runner. Après CI et remplacement du seul Worker, créer deux nouvelles Tasks Research séquentielles ;
+ne pas réutiliser l'UUID ci-dessus ni COLD-03/04/05. Le
 [protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.

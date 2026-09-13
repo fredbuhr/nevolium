@@ -217,7 +217,7 @@ async def main() -> None:
         )
 
     cold_04_plan = await plan_research(
-        query="NEVOLIUM-D04-RESEARCH-WEB-COLD-04",
+        query="Use web.search, then web.fetch for the official Debian 13 release page.",
         tools=cold_04_tools,
         max_tool_calls=2,
         completion=cold_04_incident_completion,
@@ -234,6 +234,32 @@ async def main() -> None:
         "url": "https://www.debian.org/releases/trixie/"
     }, cold_04_plan
     assert "omitted the top-level plan rationale" in cold_04_plan.rationale, cold_04_plan
+
+    async def omitted_explicit_fetch_completion(_messages):
+        return json.dumps(
+            {
+                "calls": [
+                    {
+                        "tool_key": "web.search",
+                        "input": {"query": "Debian 13 trixie release information"},
+                        "rationale": "Search for Debian 13 release information.",
+                    }
+                ],
+                "rationale": "One search should be enough.",
+            }
+        )
+
+    try:
+        await plan_research(
+            query="Use web.search, then web.fetch for the official Debian 13 release page.",
+            tools=cold_04_tools,
+            max_tool_calls=2,
+            completion=omitted_explicit_fetch_completion,
+        )
+    except UnexpectedModelBehavior as exc:
+        assert "web.fetch" in str(exc), exc
+    else:
+        raise AssertionError("Planner omitted an explicitly requested allowed tool")
 
     async def missing_rationale_invented_completion(_messages):
         return json.dumps(
