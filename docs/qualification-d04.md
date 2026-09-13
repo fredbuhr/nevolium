@@ -89,6 +89,25 @@ et Activity portent `7@54a82541cbcd`, et les quatre services adjacents gardent l
 services publics sont sains et aucune nouvelle Task n'est créée. La prochaine mesure doit être une Task
 froide distincte `COLD-04`, préparée après déchargement explicite du modèle puis examinée avant l'essai chaud.
 
+La Task froide unique `NEVOLIUM-D04-RESEARCH-WEB-COLD-04` (`e1c81a97-59d4-4be8-ae12-732d09796085`)
+est ensuite conservée dans son état `failed`. Elle termine en 49,95 s, sans retry, sans appel MCP,
+sans artefact et sans enfant. Son unique réservation est réglée à coût nul ; l'usage observé compte
+2 162 jetons de prompt et 128 jetons de sortie. Ollama confirme le modèle réellement déchargé au départ,
+un chargement de 2,30 s, deux threads, 18,61 s de préremplissage et 6,97 s de génération. La réponse
+modèle est un objet JSON complet : elle contient exactement `web.search` puis `web.fetch`, les deux
+entrées et leurs justifications individuelles, ainsi que le champ supplémentaire `max_tool_calls=2`.
+Elle omet seulement le `rationale` supérieur exigé par `ResearchPlan`, ce qui provoque l'échec
+Pydantic avant toute exécution d'outil. Cette Task ne doit pas être rejouée.
+
+Le correctif `969fe668d08984b0e6aea38b8ba7f1ff18972b21` normalise uniquement cette enveloppe observée :
+si la réponse complète est un objet, si le champ `rationale` est absent et si `calls` est bien une
+liste, il conserve la liste inchangée et ajoute une note d'audit déterministe. Il ne répare aucune autre
+forme, ne crée aucun appel et ne sollicite jamais une seconde complétion. La régression reprend les deux
+appels exacts de `COLD-04`, vérifie une seule complétion, puis confirme qu'un outil inventé reste refusé
+et qu'une collection `calls` malformée n'est pas normalisée. Le head passe 10/10 workflows PR, dont
+5/5 jobs D04 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). Une nouvelle image
+Worker doit maintenant être construite et vérifiée sans réseau, sans activation ni nouvelle Task.
+
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
 modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,

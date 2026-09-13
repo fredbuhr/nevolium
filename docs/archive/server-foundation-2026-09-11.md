@@ -395,3 +395,39 @@ Workflow et Activity exposent tous deux la nouvelle identité `7@54a82541cbcd`. 
 Web MCP gardent leurs conteneurs ; l'image `e4d886b…` reste sous `rollback-e4d886b9b329`, les services
 publics restent sains et aucune Task Research n'est créée. Une nouvelle mesure froide distincte peut
 maintenant être préparée, sans rejouer `COLD-03` et avant tout essai chaud.
+
+Le checkpoint `22675d3…` est ensuite synchronisé et la préparation `COLD-04` s'arrête avant armement
+sur une comparaison de nom de modèle : LiteLLM expose correctement `ollama/qwen2.5:0.5b`, tandis que
+la liste native Ollama porte `qwen2.5:0.5b`. Le diagnostic en lecture seule confirme que les cinq
+conteneurs attendus sont sains, sans OOM ni redémarrage, que le Worker actif contient bien
+`35303f2…`, que les pollers Workflow et Activity sont uniques, que le modèle est installé mais déchargé,
+et qu'aucune Task `COLD-04` n'existe. L'armement corrigé distingue ensuite les deux noms, contrôle les
+identités exactes des conteneurs, préserve cinq réservations historiques `uncertain`, crée seulement
+le marqueur horodaté `/tmp/nevolium-d04-research-cold-04.started-at` et ne lance aucune Task.
+
+La Task `NEVOLIUM-D04-RESEARCH-WEB-COLD-04` est lancée une seule fois sous l'identifiant
+`e1c81a97-59d4-4be8-ae12-732d09796085`. Son workflow
+`nevolium-task-e1c81a97-59d4-4be8-ae12-732d09796085`, run
+`01a09b2b-aa17-7092-86b9-b85c55a50081`, démarre à 14:28:45 UTC et termine `failed` à
+14:29:35, sans tentative supplémentaire. L'unique réservation est `settled`, l'usage vaut
+2 162 jetons d'entrée et 128 jetons de sortie, soit 2 290 jetons à coût nul. Il n'existe aucun enfant,
+appel d'outil, artefact ou approbation. Les cinq réservations `uncertain` historiques restent intactes.
+
+Ollama prouve un vrai passage froid à deux threads : chargement du modèle en 2,30 s, préremplissage en
+18,61 s à 116,15 jetons/s, génération de 128 jetons en 6,97 s à 18,23 jetons/s, temps modèle total de
+25,58 s et réponse HTTP en 28,05 s. La réponse complète est un objet JSON avec exactement deux appels
+ordonnés. Le premier demande `web.search` pour `Debian 13 trixie release information`; le second demande
+`web.fetch` pour `https://www.debian.org/releases/trixie/`. Chaque appel possède sa justification et
+l'objet contient `max_tool_calls=2`, mais le `rationale` supérieur obligatoire manque. PydanticAI lève
+donc `UnexpectedModelBehavior` avant l'exécution de `web.search`. L'état échoué, l'usage et la
+réservation constituent la preuve canonique ; aucun rejeu de `COLD-04` n'est autorisé.
+
+Le correctif `969fe668d08984b0e6aea38b8ba7f1ff18972b21` reste volontairement étroit. Il intervient
+seulement sur un objet JSON complet dépourvu de `rationale` dont `calls` est une liste, copie cet objet,
+préserve la liste et ajoute une note d'audit déterministe pour le champ d'enveloppe absent. Pydantic,
+l'allowlist et les schémas restent autoritaires. La régression reprend la forme exacte observée, exige
+une seule complétion et les entrées inchangées, puis prouve qu'un outil inventé ou un champ `calls`
+malformé sont toujours refusés. Le commit passe 10/10 workflows PR, dont 5/5 jobs D04
+([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). La prochaine opération sûre est
+la construction hors activation d'une image Worker issue de ce commit, avec contrôle du module et du
+contrat dans un conteneur sans réseau. Le Worker `35303f2…` doit rester actif pendant cette préparation.

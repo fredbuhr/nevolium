@@ -88,6 +88,17 @@ Web MCP restent inchangés ; l'image précédente est conservée pour rollback, 
 sains et `COLD-03` garde son état échoué, son usage de 2 388 jetons et sa réservation réglée. Aucune Task
 Research n'est créée pendant l'activation. Une nouvelle Task froide distincte reste à exécuter.
 
+La Task froide distincte `COLD-04` est exécutée une seule fois et reste conservée en échec. Le vrai
+appel Ollama utilise deux threads et produit 2 290 jetons comptabilisés à coût nul avec réservation
+réglée. La sortie est un objet JSON complet contenant exactement `web.search` puis `web.fetch`, mais
+elle omet le seul `rationale` supérieur exigé par `ResearchPlan`. Pydantic arrête donc le parcours
+avant les outils : zéro invocation, zéro artefact, zéro enfant et aucun retry. Le correctif borné
+`969fe66…` conserve les appels inchangés et ajoute uniquement une note d'audit déterministe quand cette
+enveloppe exacte manque son `rationale`. Les outils inventés et les collections malformées restent
+refusés. Ce head passe 10/10 workflows PR, dont 5/5 jobs D04
+([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). L'étape suivante est seulement de
+construire et vérifier l'image Worker correspondante, sans l'activer et sans lancer une nouvelle Task.
+
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
 et la qualité des réponses ne sont pas corrigés par ce changement de budget.
