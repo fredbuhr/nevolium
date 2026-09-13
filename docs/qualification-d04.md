@@ -25,7 +25,7 @@ est historique ; ne pas exécuter ses prochaines actions.
 |---|---|---|
 | Research via OpenAI | Deux nouvelles Tasks séquentielles ; chacune termine dans la borne existante de 600 s, fait `web.search` puis `web.fetch`, produit une synthèse factuelle citée ; deux usages modèle avec tokens/coût reportés et réservations réglées | Deux résultats canoniques consultables, sans nouvel état financier inconnu ni doublon |
 | Charge du pilote | Lectures 1/10/100/1 000 clients virtuels, concurrence 20, zéro erreur, p95 ≤2 s et 180 s maximum par palier ; puis un Research + un PDF + une projection mémoire sous les quotas existants | Pas d'OOM, dépassement de quota ni travail oublié ; PDF ≤210 s, mémoire ≤240 s et Research ≤600 s hors attentes d'admission mesurées séparément |
-| Upgrade et rollback | Garder les anciennes images/configurations ; activer Core/Worker/LiteLLM cohérents, contrôler santé et frontières, revenir aux images précédentes puis au candidat, sans rétrograder le schéma ni exécuter d'ancienne Task | Données/IDs inchangés, services prêts, OIDC/accès propriétaire et refus anonyme corrects |
+| Upgrade et rollback | Garder les anciennes images/configurations ; activer Core/Worker/Web/LiteLLM cohérents, contrôler santé et frontières, revenir aux images précédentes puis au candidat, sans rétrograder le schéma ni exécuter d'ancienne Task | Données/IDs inchangés, services prêts, OIDC/accès propriétaire et refus anonyme corrects |
 | Restauration indépendante | Backup Restic chiffré de la cible, transfert hors serveur, restauration en environnement isolé sur volumes neufs avec les procédures existantes | Lecture SQL, message JetStream, objet SeaweedFS et secret OpenBao attendus ; rapport identifiant source/destination et versions |
 
 Ce sont des critères de pilote, pas une certification commerciale ni 1 000 générations simultanées.
@@ -40,7 +40,7 @@ La restauration de deux VM CI prouve le mécanisme, pas encore la récupération
    et `NEVOLIUM_RESEARCH_MODEL_ESTIMATED_COST_USD=0.10`. La clé reste sur le serveur, jamais dans la
    commande partagée, le navigateur ou le rapport. Le [guide](deployment.md#selection-du-fournisseur-api)
    décrit la configuration. Cette préparation seule ne prouve pas l'accès au fournisseur.
-3. Construire Core et Worker avant leur remplacement. Ne pas lancer de Task pendant cette opération.
+3. Construire Core, Worker et Web avant leur remplacement. Ne pas lancer de Task pendant cette opération.
    Relever l'état des workflows, documents/projections, invocations et réservations avant la bascule.
    `/v1/work-capacity` seul ne prouve pas l'absence d'appels modèle : vérifier aussi les réservations
    `reserved`/`started` et les exécutions. Conserver les cinq historiques `uncertain` sans les effacer.

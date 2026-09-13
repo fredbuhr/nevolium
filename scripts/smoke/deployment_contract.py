@@ -320,6 +320,11 @@ class ResearchModelSelection(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(handed_off.estimated_model_cost_usd, Decimal("0.10"))
 
     async def test_provider_change_does_not_relabel_existing_tasks(self):
+        with patch.object(research.settings, "nevolium_env", "production"):
+            with self.assertRaises(ValidationError):
+                research.ResearchRunCreate(
+                    project_id=uuid.uuid4(), query="New Research request", model_alias="local-fast"
+                )
         task = SimpleNamespace(id=uuid.uuid4(), project_id=uuid.uuid4(), input={
             "capability": "research.autonomous", "query": "Existing research task",
         })

@@ -69,7 +69,7 @@ automatique ne lui envoie une requête ou une clé d'un autre fournisseur.
 Avant de changer l'API, attendre la fin des travaux et appels modèle, sauvegarder la configuration
 protégée et les images, puis suivre l'[activation D04](qualification-d04.md#activation-cohérente-une-seule-fois).
 Recréer LiteLLM est nécessaire pour appliquer son nouvel environnement ; le premier passage requiert
-aussi Core/Worker. Arrêter l'ancien Ollama après inactivité et conserver ses volumes.
+aussi Core/Worker/Web. Arrêter l'ancien Ollama après inactivité et conserver ses volumes.
 Le contrôleur refuse les profils locaux et les clés absentes/placeholder sans contacter le fournisseur.
 Le sélecteur dans l'interface est prévu en D05, pas déjà livré par ces variables.
 

@@ -135,8 +135,6 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
           query: query.trim(),
           max_tool_calls: maxToolCalls,
           allowed_tool_keys: [],
-          model_alias: 'local-fast',
-          estimated_model_cost_usd: '0.01',
         }),
       })
       const accepted = await readJson<ResearchAccepted>(response)

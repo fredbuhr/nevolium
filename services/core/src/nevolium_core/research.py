@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,6 +39,12 @@ class ResearchRunCreate(BaseModel):
         ge=0,
         le=1,
     )
+
+    @model_validator(mode="after")
+    def require_api_for_production(self) -> ResearchRunCreate:
+        if settings.nevolium_env == "production" and self.model_alias == "local-fast":
+            raise ValueError("Local LLM Research is deferred; select an API alias")
+        return self
 
 
 class ResearchContext(BaseModel):

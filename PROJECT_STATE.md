@@ -60,6 +60,10 @@ Ces faits proviennent de la sortie opérateur ; aucune connexion serveur dans ce
 - Les essais/procédures locaux sont archivés. La fixture reste isolée et manuelle ; les contrats de
   comptabilité, concurrence, ownership et crash/replay Research restent requis.
 
+Le panneau Web Research imposait également `local-fast` et une estimation propre : ces deux champs
+sont retirés au profit des valeurs Core. Une nouvelle demande locale explicite est refusée en
+production ; le contexte des anciennes Tasks reste lisible. **Le Web doit aussi être reconstruit.**
+
 ## Validation du pivot avant publication
 
 Ruff F/E9 (dont imports/code inutilisés), identité canonique et diff sans erreur réussis.
@@ -81,7 +85,7 @@ Y renseigner le couple modèle/clé de l'API, `smart` pour Research/News/routage
 0.10 comme décrit dans [deployment](docs/deployment.md#selection-du-fournisseur-api). Ne jamais
 transmettre ce fichier ou la clé. Ensuite valider la topologie effective avec le contrôleur existant,
 construire avant activation, vérifier inactivité (workflows ET réservations), garder les images et
-configurations précédentes, arrêter l'ancien Ollama et activer Core/Worker/LiteLLM en une fois.
+configurations précédentes, arrêter l'ancien Ollama et activer Core/Worker/Web/LiteLLM en une fois.
 Le [protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
