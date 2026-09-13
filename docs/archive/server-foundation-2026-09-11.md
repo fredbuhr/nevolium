@@ -386,3 +386,12 @@ attendu et reçoit le tag `rollback-e4d886b9b329`. Une nouvelle image Worker est
 éphémère sans réseau valide la normalisation de la forme observée ainsi que le refus du JSON inclus dans
 de la prose. Le Worker actif n'est pas recréé, les services publics restent sains et aucune Task Research
 n'est lancée. L'activation contrôlée du seul Worker reste la prochaine gate.
+
+Après synchronisation du checkpoint `33fba9f…`, un nouveau contrôle confirme encore zéro workflow et
+réservation active ainsi que la conservation exacte de `COLD-03` et de ses 2 388 jetons. Seul le Worker
+est arrêté proprement puis recréé avec l'image `35303f2…` déjà construite, sans build, dépendance ni pull.
+Le module chargé correspond au code attendu, les bornes 180/10 secondes restent actives et les pollers
+Workflow et Activity exposent tous deux la nouvelle identité `7@54a82541cbcd`. Core, LiteLLM, Ollama et
+Web MCP gardent leurs conteneurs ; l'image `e4d886b…` reste sous `rollback-e4d886b9b329`, les services
+publics restent sains et aucune Task Research n'est créée. Une nouvelle mesure froide distincte peut
+maintenant être préparée, sans rejouer `COLD-03` et avant tout essai chaud.

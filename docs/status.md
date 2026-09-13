@@ -82,6 +82,12 @@ Worker `e4d886b…` reste actif et son image est conservée sous `rollback-e4d88
 usage et sa réservation réglée restent intacts. Aucun service ni nouvelle Task n'est recréé pendant cette
 préparation. L'activation contrôlée du seul Worker reste nécessaire.
 
+Le Worker corrigé `35303f2…` est maintenant actif sur la cible. Il est le seul conteneur recréé et ses
+pollers Workflow et Activity sont présents sous l'identité `7@54a82541cbcd`. Core, LiteLLM, Ollama et
+Web MCP restent inchangés ; l'image précédente est conservée pour rollback, les services publics sont
+sains et `COLD-03` garde son état échoué, son usage de 2 388 jetons et sa réservation réglée. Aucune Task
+Research n'est créée pendant l'activation. Une nouvelle Task froide distincte reste à exécuter.
+
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
 et la qualité des réponses ne sont pas corrigés par ce changement de budget.

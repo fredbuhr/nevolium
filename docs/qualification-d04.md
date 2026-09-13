@@ -83,6 +83,11 @@ Sa nouvelle image Worker est désormais construite sur la cible et vérifiée ho
 reste celle de `e4d886b…`, conservée sous `rollback-e4d886b9b329` ; aucun conteneur ni Task n'est recréé.
 L'activation doit employer l'image déjà construite sans nouveau build ni pull, après un contrôle frais
 d'inactivité, puis prouver les deux pollers avant toute nouvelle Research.
+Cette activation est désormais réussie : seul le Worker est recréé sur `35303f2…`, les pollers Workflow
+et Activity portent `7@54a82541cbcd`, et les quatre services adjacents gardent leurs conteneurs. L'image
+`e4d886b…` reste disponible sous son tag de rollback, `COLD-03` et sa comptabilité sont inchangés, les
+services publics sont sains et aucune nouvelle Task n'est créée. La prochaine mesure doit être une Task
+froide distincte `COLD-04`, préparée après déchargement explicite du modèle puis examinée avant l'essai chaud.
 
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
