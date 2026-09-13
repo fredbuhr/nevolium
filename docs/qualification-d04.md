@@ -65,6 +65,11 @@ ses nouveaux pollers Temporal. `running` seul ne prouve ni la disponibilité d'u
 Si un contrôle échoue, conserver sa sortie et diagnostiquer avant tout essai métier ; ne pas répéter
 aveuglément le bloc d'activation. Préserver le tag de retour sans modifier les données canoniques.
 
+L'activation du 13 septembre satisfait ces contrôles : zéro workflow/réservation active, LiteLLM deux
+threads sain, Worker chargé depuis la nouvelle image avec bornes 180/10 s, pollers Workflow/Activity
+présents, Core inchangé et services publics sains. Aucune Task Research n'a été créée par l'opération.
+Le code activé reste `e4d886b…` ; le checkpoint documentaire ultérieur ne requiert aucun rebuild.
+
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
 modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,

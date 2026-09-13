@@ -335,3 +335,21 @@ réservations inconnues ou leases. Après activation, prouver les deux threads s
 authentifiée à froid, puis une seconde identité à chaud, avec appels MCP, sources, usage et réservation.
 Une image conservée fournit un point de retour ; elle ne prouve pas à elle seule le scénario complet
 upgrade/rollback exigé par H5. Aucun déploiement cible ni nouveau Research n'est exécuté par cette reprise.
+
+La sortie opérateur de l'activation satisfait les gardes préparées. Avant l'arrêt, la lecture canonique
+trouve zéro workflow et zéro réservation modèle non expirée actifs. L'image du conteneur Worker correspond
+au tag `nevolium-nevolium-worker:rollback-d78f45ac911d`, tandis que l'image préparée est distincte et son
+module `model_gateway.py` possède le même SHA-256 que le checkout `e4d886b…`. Le Worker s'arrête proprement
+en quatre secondes. LiteLLM est recréé sans build ni pull ; son fichier monté expose `num_thread=2`, zéro
+retry, un délai de 210 secondes et le seul modèle local de qualification, sans clé OpenAI ou Anthropic.
+Le Worker est ensuite recréé sans build ni dépendance, sur l'image préparée. Le runtime expose le plafond
+client de 180 secondes et la grâce proxy de 10 secondes ; un poller de cette nouvelle identité est observé
+sur chacune des files Temporal Workflow et Activity. Core garde son conteneur, les trois contrôles publics
+réussissent et l'API anonyme reste refusée. Le bloc termine par
+`AUCUNE_NOUVELLE_TASK_RESEARCH_LANCEE_PAR_CE_BLOC`.
+
+Ce résultat qualifie l'activation du correctif et la présence du Worker, pas encore le parcours métier.
+La prochaine preuve doit synchroniser le checkpoint documentaire sans reconstruire, constater de nouveau
+l'inactivité, décharger explicitement `qwen2.5:0.5b`, puis lancer une Task authentifiée distincte portant
+`NEVOLIUM-D04-RESEARCH-WEB-COLD-03` avec deux appels outils au maximum. Examiner ce seul parcours avant
+de lancer la Task chaude. Les deux échecs précédents restent inchangés.
