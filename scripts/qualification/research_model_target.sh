@@ -57,7 +57,8 @@ if [[ ! "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
   echo "ARRET : --expected-commit doit etre un SHA Git complet." >&2
   exit 2
 fi
-if [[ ! -f "$ENV_FILE" ]]; then
+sudo -v
+if ! sudo test -f "$ENV_FILE"; then
   echo "ARRET : fichier d'environnement absent." >&2
   exit 2
 fi
@@ -78,7 +79,6 @@ if [[ -n "$(git status --short)" ]]; then
   exit 2
 fi
 
-sudo -v
 SUDO_KEEPALIVE_PID=""
 compose=(
   sudo docker compose --env-file "$ENV_FILE"
