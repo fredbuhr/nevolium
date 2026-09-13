@@ -99,6 +99,15 @@ refusés. Ce head passe 10/10 workflows PR, dont 5/5 jobs D04
 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). L'étape suivante est seulement de
 construire et vérifier l'image Worker correspondante, sans l'activer et sans lancer une nouvelle Task.
 
+Cette image est maintenant prête sous
+`sha256:b14d17a97f3f295b3ad78d13ee16fe61da11f050c65d735bddbe711b0cc26b6b`.
+Le module Research installé correspond au checkout `969fe66…` et son contrat complet passe hors réseau
+dans un conteneur en lecture seule. Le Worker actif garde l'image `35303f2…`, désormais également
+étiquetée `rollback-35303f2e3a5e`, tandis que le rollback `e4d886b…` reste disponible. Les identités
+des cinq conteneurs observés, les services publics et le snapshot canonique restent strictement
+inchangés ; aucune Task n'est créée. La prochaine gate est l'activation du seul Worker à partir de
+l'image préparée, sans build ni pull, avant toute nouvelle mesure Research.
+
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
 et la qualité des réponses ne sont pas corrigés par ce changement de budget.

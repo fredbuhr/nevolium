@@ -108,6 +108,22 @@ et qu'une collection `calls` malformée n'est pas normalisée. Le head passe 10/
 5/5 jobs D04 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). Une nouvelle image
 Worker doit maintenant être construite et vérifiée sans réseau, sans activation ni nouvelle Task.
 
+Cette préparation est maintenant réussie. Deux gardes opérateur se sont d'abord arrêtées sans toucher
+aux images ni aux conteneurs : la première sur des chemins Bash privés de continuation de ligne, la
+seconde sur trois workflows historiques terminaux dont `completed_at` reste nul. Le critère corrigé
+compte les statuts non terminaux et vaut zéro. Le snapshot canonique confirme aussi zéro réservation
+active, cinq réservations `uncertain` préservées, `COLD-03` et `COLD-04` échouées avec respectivement
+2 388 et 2 290 jetons, et aucun enfant, outil ou artefact pour ces deux Tasks.
+
+L'image Worker `sha256:b14d17a97f3f295b3ad78d13ee16fe61da11f050c65d735bddbe711b0cc26b6b`
+est construite depuis `969fe66…` en 786,1 s. Le module installé possède le même SHA-256 que le checkout
+et le contrat Research complet passe dans un conteneur en lecture seule, sans réseau. L'image active
+`35303f2…` reste attachée au même conteneur et est désormais conservée sous
+`rollback-35303f2e3a5e`; le tag `rollback-e4d886b9b329` reste intact. Le snapshot canonique est
+strictement identique avant et après la construction, les services publics sont sains et aucune Task
+n'est créée. L'activation suivante doit employer cette image déjà construite, sans rebuild, dépendance
+ni pull, et ne recréer que le Worker après une nouvelle garde d'inactivité.
+
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
 modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,

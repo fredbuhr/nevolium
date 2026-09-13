@@ -431,3 +431,40 @@ malformé sont toujours refusés. Le commit passe 10/10 workflows PR, dont 5/5 j
 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34763676792)). La prochaine opération sûre est
 la construction hors activation d'une image Worker issue de ce commit, avec contrôle du module et du
 contrat dans un conteneur sans réseau. Le Worker `35303f2…` doit rester actif pendant cette préparation.
+
+La cible synchronise ensuite le checkpoint `7574b24…`. Deux blocs de préparation s'interrompent avant
+toute mutation Docker. Le premier fast-forward réussit, puis Bash tente d'exécuter deux chemins de
+fichiers parce que les pathspecs d'un `git diff` étaient placés sur des lignes non continuées. Le
+second valide le checkout, les cinq conteneurs et la topologie de production, puis s'arrête sur un
+prédicat d'inactivité trop large : trois workflows historiques terminaux conservent
+`completed_at IS NULL`, alors qu'aucun workflow n'a un statut non terminal. Aucun des deux blocs
+n'atteint le tag de rollback ou le build. Le diagnostic suivant confirme notamment l'absence du tag
+`rollback-35303f2e3a5e`, l'image active `418ef126…a503`, les mêmes identités de conteneurs et zéro
+redémarrage ou OOM.
+
+La lecture canonique corrige donc l'inactivité en excluant les statuts `completed`, `failed` et
+`cancelled`. Elle retourne zéro workflow non terminal, zéro réservation `reserved` ou `started`
+non expirée et cinq réservations `uncertain` conservées. `COLD-03` reste `failed` avec un workflow
+échoué, 2 388 jetons, une réservation réglée et aucun enfant, outil ou artefact. `COLD-04` présente
+la même structure avec 2 290 jetons. Les comptes globaux restent 25 Tasks, 25 exécutions, 14
+réservations, 9 usages, zéro invocation d'outil et 18 artefacts.
+
+Après ces gardes, l'image active `35303f2…` reçoit le tag
+`nevolium-nevolium-worker:rollback-35303f2e3a5e`. L'ancien tag
+`nevolium-nevolium-worker:rollback-e4d886b9b329` continue de pointer vers
+`sha256:8f536cdd602a6870b5ff079290ed0172b9a38979c3597d3f0875ef59e4f02bbf`.
+La construction du Worker termine en 786,1 secondes et produit l'image
+`sha256:b14d17a97f3f295b3ad78d13ee16fe61da11f050c65d735bddbe711b0cc26b6b`.
+Le SHA-256 du module `research_agent.py` installé correspond au checkout `969fe66…`. Le contrat
+Research complet passe dans un conteneur éphémère en lecture seule et sans réseau, y compris la
+régression exacte de `COLD-04`, l'allowlist et les bornes de replay.
+
+Les cinq conteneurs applicatifs gardent ensuite leurs identités, le Worker actif pointe toujours vers
+`418ef126…a503`, et le snapshot
+`0|0|5|failed|1|2388|1|0|0|0|failed|1|2290|1|0|0|0|25|25|14|9|0|18`
+est identique avant et après le build. Les contrôles publics réussissent et aucune Task Research n'est
+créée. L'image `b14d17a…` est donc prête mais non active. La prochaine gate doit synchroniser le
+checkpoint documentaire sans reconstruire, vérifier de nouveau le snapshot et les conteneurs, puis
+recréer seulement le Worker avec `--no-build --no-deps --pull never`. Les pollers Workflow et Activity,
+le module actif et la stabilité des quatre services adjacents doivent être prouvés avant une nouvelle
+Task froide distincte `COLD-05`.
