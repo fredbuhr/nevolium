@@ -10,9 +10,9 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Checkout cible | `a4ec6491eb2a44e8ee4e8c4a31b293f562100405` ; checkout serveur propre à ce SHA |
-| Correctif actif | `3ccc7f786bbaa8d87bdbbcf2c6ed0c986c004e19` ; Worker déployé, 10/10 workflows réussis |
-| Correctif suivant | `3e84c6aa96f8279a236c6fc712260132853cde65` ; liaison fetch publiée, CI à obtenir |
+| Checkout cible | `ee6be6cb7791432da6e9982e20ecf994d4d19941` ; checkout serveur propre à ce SHA |
+| Correctif actif | `3e84c6aa96f8279a236c6fc712260132853cde65` ; liaison fetch déployée, 10/10 workflows réussis au checkpoint `ee6be6c…` |
+| Correctif candidat | `0e57de2b840f1692fa5dbff20f3fa98792182207` ; recherche générale/officielle et erreur MCP terminale validées localement, CI à obtenir |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -34,7 +34,7 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 | Composant | Dernier code déployé confirmé |
 |---|---|
 | Core | image `e5c245924d50…`, construite au SHA technique `7fb2211…` |
-| Worker | image `ce1b2bc9638c…`, correctif `3ccc7f7…` actif |
+| Worker | image `f8e84dfdd1b1…`, correctif `3e84c6a…` actif |
 | Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
 | LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
 | Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; outils A1 search/fetch |
@@ -50,7 +50,14 @@ les images ci-dessus ; Core/LiteLLM sont sains et le nouveau Worker est présent
 Temporal. Ollama `4245ff7673bc…` est arrêté. Les accès publics donnent `200|200|401`. Les travaux actifs
 étaient `0|0|0` avant et pendant la bascule. Le relevé canonique est strictement inchangé :
 `27|27|11|16|1|19|5` pour Tasks, workflows, usages, réservations, invocations, artefacts et réservations
-`uncertain`. Résultat opérateur : `ACTIVATION_API_OK`. Aucune requête générative OpenAI encore attestée.
+`uncertain`. Résultat opérateur : `ACTIVATION_API_OK`. Aucune requête générative OpenAI n'avait
+encore été effectuée à ce stade historique.
+
+Le checkout serveur a ensuite été avancé à `ee6be6cb7791432da6e9982e20ecf994d4d19941` et le Worker
+`f8e84dfdd1b1…` a remplacé `ce1b2bc9638c…`. La liaison déterministe Search vers Fetch est active,
+le poller Temporal est sain, aucun travail n'était actif et les comptes sont restés strictement
+`32|32|14|19|4|22|5` pendant l'activation. Image de retour conservée :
+`nevolium-api-rollback/nevolium-worker:before-fetch-binding-ee6be6c`.
 
 Sauvegarde privée existante : `/etc/nevolium/api-rollback.9KmtYC` (ancien environnement et configurations).
 Images conservées : `nevolium-api-rollback/{nevolium-core,nevolium-worker,nevolium-web,litellm}:9KmtYC`.
@@ -86,6 +93,10 @@ réussis. Neuf contrôles déploiement/configuration/reprise réussis sans Docke
 API vérifiée dans le vrai processus enfant mémoire. Docker indisponible dans ce workspace ; rendu
 Compose et intégrations ensuite validés en CI au SHA `7fb2211…` : Foundation 9/9 jobs, Research
 contrats/concurrence/crash-replay, vrais PDF/mémoire et restauration CI réussis. Aucun appel OpenAI effectué.
+Le candidat `0e57de2…` passe localement Ruff 0.13.0 F/E9, compilation et les contrats Research,
+Web MCP, Tool/Task, News, registre MCP, Context Pack et gateway. Aucun appel OpenAI n'a été effectué.
+Publication autorisée par l'utilisateur. Le connecteur GitHub a conservé l'arbre exact du commit
+technique local `69c4c3d…` ; seul l'identifiant du commit change lors de cette publication.
 
 ## Prochaine action exécutable
 
@@ -104,13 +115,26 @@ n'a pas été lancé. Le diagnostic sans rejeu a identifié l'entrée exacte : l
 Les comptes après arrêt sont `32|32|14|19|4|22|5` ; les cinq réservations historiques `uncertain`
 restent inchangées. Ne rejouer aucune de ces Tasks.
 
-**Valider en CI le correctif `3e84c6a…`, puis remplacer uniquement le Worker.** Lorsqu'un
-`web.fetch` suit un Search mais ne porte pas encore d'URL absolue, le Worker lie son entrée à la première
-URL HTTP(S) du dernier résultat Search terminé. L'entrée réellement résolue reste contrôlée et persistée
-par Core, puis validée par le lecteur SSRF-safe. Une URL explicite valide reste inchangée. Aucun second
-appel modèle, réparateur de résultat ou nouveau runner. Après CI et déploiement, reprendre avec deux
-nouvelles Tasks Research séquentielles ; ne pas réutiliser les UUID connus ni COLD-03/04/05. Le
-[protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
+La liaison a été déployée et une nouvelle Task distincte
+`00b08588-d1be-4e74-94ed-42a311df94b0` l'a effectivement utilisée : `web.search` a terminé puis
+`web.fetch` a reçu l'URL réelle `https://www.msn.com/fr-fr/actualite/other/clap-de-fin-pour-debian-11-il-est-temps-de-migrer/ar-AA2bkf29`.
+La recherche générale avait toutefois forcé SearXNG en catégorie `news` avec `time_range=year` ; les
+trois résultats étaient MSN Debian 11, iOS et Dacia, sans source Debian officielle. Fetch a reçu HTTP
+200 mais Trafilatura n'a trouvé aucun texte principal lisible. Temporal a rejoué dix fois cette erreur
+MCP déjà retournée. Un seul usage et une seule réservation OpenAI ont été créés et réglés, aucune
+synthèse n'a été lancée et le second essai n'a pas été créé. Les comptes après arrêt sont
+`35|35|15|20|6|23|5`, les travaux actifs `0|0|0` et les cinq réservations historiques `uncertain`
+restent inchangées. Ne rejouer aucune Task connue.
+
+**Valider en CI le correctif candidat `0e57de2…`.** Il sépare la recherche Web générale
+de la catégorie News, rend la période optionnelle et retire tout filtre de période non demandé. Une
+demande de source officielle doit planifier un filtre `site:` ; le Worker refuse le plan avant tout
+outil si ce filtre manque et ne lie Fetch qu'à une URL du domaine demandé. Une erreur complète déjà
+retournée par MCP devient terminale pour l'activité, tandis qu'une panne réseau transitoire conserve
+le retry existant. Après CI, reconstruire et remplacer uniquement Worker et Web MCP, resynchroniser
+le schéma du registre sans migration, puis lancer deux nouvelles Tasks Research séquentielles. Ne pas
+réutiliser les UUID connus ni COLD-03/04/05. Le [protocole D04](docs/qualification-d04.md) porte la
+suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
