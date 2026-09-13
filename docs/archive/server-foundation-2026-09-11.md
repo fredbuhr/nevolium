@@ -368,10 +368,12 @@ Avec zéro retry de sortie, PydanticAI lève `UnexpectedModelBehavior` après la
 La Task et le workflow échouent en tentative 1 avec `Activity task failed`; il n'existe aucun appel MCP
 ni artefact. Cette Task reste conservée et ne doit pas être rejouée.
 
-Le correctif préparé renforce les instructions de planning et synthèse pour demander un objet JSON brut.
+Le correctif `35303f2e3a5ea181a3b960f63bfaef1a12f4191c` renforce les instructions de planning et synthèse pour demander un objet JSON brut.
 La frontière locale retire uniquement une fence JSON qui couvre la réponse entière. Pour le planning,
 une liste JSON directe est enveloppée dans l'objet attendu, sans modifier ses éléments ni appeler de
 nouveau le modèle. Pydantic valide toujours la structure ; la vérification des outils autorisés et les
 schémas Core restent inchangés. Une régression reprend la forme exacte observée, vérifie un seul appel
-au modèle et couvre aussi une synthèse sous fence. La CI, la construction/activation du Worker corrigé
-et une nouvelle Task froide distincte restent nécessaires avant l'essai chaud.
+au modèle, le refus d'un outil inventé après normalisation, le refus d'extraire du JSON depuis de la prose
+et une synthèse sous fence. Le head passe 10/10 workflows PR, dont 5/5 jobs D04
+([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). La construction/activation du
+Worker corrigé et une nouvelle Task froide distincte restent nécessaires avant l'essai chaud.

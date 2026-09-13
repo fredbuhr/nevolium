@@ -77,6 +77,8 @@ Cette Task demeure une preuve d'incident et ne doit pas être rejouée. Le corre
 retirer qu'une fence JSON couvrant toute la réponse et envelopper une liste directe sans changer ses
 éléments. Il ne peut ni extraire du JSON depuis de la prose, ni ajouter un outil, ni demander une seconde
 réponse modèle. Pydantic, l'allowlist et les schémas Core doivent encore refuser tout contenu invalide.
+Le correctif `35303f2…` passe ensuite 10/10 workflows PR, dont les 5/5 jobs D04
+([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). Il n'est pas encore activé sur la cible.
 
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le

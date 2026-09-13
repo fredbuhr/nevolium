@@ -72,7 +72,9 @@ Markdown, tandis que PydanticAI attend l'objet `ResearchPlan`. Aucun outil MCP n
 Le correctif de branche renforce la consigne de sortie et normalise seulement une fence JSON couvrant
 toute la réponse ; une liste directe est enveloppée sans changer ses appels. Il ne relance pas le modèle
 et les contrôles Pydantic, allowlist et schémas restent autoritaires. La sortie réelle possède une
-régression dédiée ; CI, activation et nouvelle Task distincte restent requises.
+régression dédiée. Le head de code `35303f2…` passe 10/10 workflows PR, dont 5/5 jobs D04
+([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). L'activation et une nouvelle Task
+distincte restent requises.
 
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
