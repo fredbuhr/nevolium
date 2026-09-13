@@ -1,6 +1,7 @@
 """Real local LiteLLM/Ollama/Core accounting and SearXNG adapters; no paid model path."""
 import asyncio
 from decimal import Decimal
+import json
 import os
 import subprocess
 import time
@@ -15,6 +16,12 @@ from nevolium_worker.model_gateway import chat_completion, ModelCheckpointLedger
 CORE = 'http://127.0.0.1:8000'
 OLLAMA = 'http://127.0.0.1:11434'
 MODEL = 'qwen2.5:0.5b'
+STRUCTURED_SCHEMA = {
+    'type': 'object',
+    'properties': {'message': {'type': 'string'}},
+    'required': ['message'],
+    'additionalProperties': False,
+}
 
 
 def compose(*args):
@@ -56,18 +63,25 @@ def run():
         task_id = task.json()['id']
     ledger = ModelCheckpointLedger()
     key = str(uuid.uuid4())
-    params = dict(task_id=task_id, workflow_execution_id=None, correlation_id=None,
-                  model_alias='local-fast', messages=[{'role':'user','content':'Say hello in French in one short sentence.'}],
-                  idempotency_key=key, checkpoint_ledger=ledger, estimated_cost_usd=Decimal('0.001'),
-                  timeout_seconds=110, temperature=0)
+    params = dict(
+        task_id=task_id, workflow_execution_id=None, correlation_id=None,
+        model_alias='local-fast',
+        messages=[{'role':'user', 'content':'Return a JSON object whose message is one short greeting in French.'}],
+        idempotency_key=key, checkpoint_ledger=ledger,
+        estimated_cost_usd=Decimal('0.001'), timeout_seconds=110, temperature=0,
+        response_schema=STRUCTURED_SCHEMA, response_schema_name='nevolium_local_fixture',
+    )
 
     def inference():
         result = asyncio.run(chat_completion(**params))
-        assert result.content.strip() and result.usage.completion_tokens > 0
+        structured = json.loads(result.content)
+        assert set(structured) == {'message'} and structured['message'].strip()
+        assert result.usage.completion_tokens > 0
         assert ledger.checkpoint_for(key)['stage'] == 'accounted'
         return {'prompt_tokens':result.usage.prompt_tokens, 'completion_tokens':result.usage.completion_tokens,
                 'reported_cost_usd':str(result.usage.cost_usd), 'cost_reported':result.usage.cost_reported,
-                'canonical_accounting':True, 'model_alias':'local-fast'}
+                'canonical_accounting':True, 'model_alias':'local-fast',
+                'native_json_schema':True}
     evidence.case('gateway-local-inference-and-accounting', 115, inference)
 
     def replay_without_engine():

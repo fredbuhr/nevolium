@@ -19,6 +19,12 @@ CALL_KEY = model_gateway.deterministic_model_call_key(
     workflow_execution_id=EXECUTION_ID,
     call_slot="contract.fixture.v1",
 )
+FIXTURE_SCHEMA = {
+    "type": "object",
+    "properties": {"answer": {"type": "string"}},
+    "required": ["answer"],
+    "additionalProperties": False,
+}
 SECOND_CALL_KEY = model_gateway.deterministic_model_call_key(
     task_id=TASK_ID,
     workflow_execution_id=EXECUTION_ID,
@@ -80,6 +86,14 @@ async def main() -> None:
                 model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS
                 - model_gateway.MODEL_PROXY_TIMEOUT_GRACE_SECONDS
             ), payload
+            assert payload["response_format"] == {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "nevolium_gateway_fixture",
+                    "strict": False,
+                    "schema": FIXTURE_SCHEMA,
+                },
+            }, payload
             assert self.timeout == model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS
             metadata = payload["metadata"]
             assert metadata == {
@@ -134,6 +148,8 @@ async def main() -> None:
             estimated_cost_usd=Decimal("0.02"),
             timeout_seconds=model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS + 30,
             messages=[{"role": "user", "content": "fixture"}],
+            response_schema=FIXTURE_SCHEMA,
+            response_schema_name="nevolium_gateway_fixture",
         )
         assert result.content == "fixture completion", result
         assert result.usage.provider_model == "openai/gpt-fixture", result.usage

@@ -13,7 +13,7 @@ des services sont limités au projet CI jetable ; ne pas les lancer sur une inst
 | PDF Docling | PDF original avec couche texte, même enfant borné que le Worker | Texte attendu et parser `docling`, ≤210 s, délai parser 180 s conservé |
 | Mémoire | Mem0/embeddings ONNX + PostgreSQL, Graphiti + Neo4j | Projection et rejeu ≤240 s, mêmes clés, recherche du bon scope et aucun résultat étranger |
 | Modèles hors ligne | Préparation réseau explicite ; exécution réseau Docker interne et bundle en lecture seule | IP publiques injoignables, cache absent refusé, SHA-256 inchangés après les adaptateurs |
-| Modèle local | Petit Qwen2.5 0.5B de qualification → Ollama → LiteLLM → gateway Core | Texte/tokens réels ≤115 s, admission/comptabilité canoniques ; aucune clé externe configurée |
+| Modèle local | Petit Qwen2.5 0.5B de câblage → Ollama → LiteLLM → gateway Core | JSON Schema/tokens réels ≤115 s, admission/comptabilité canoniques ; aucune clé externe configurée |
 | Perte/reprise moteur | Arrêt d'Ollama, rejeu connu, nouvel appel interrompu, redémarrage | Résultat connu relu sans moteur ; issue inconnue non rejouée aveuglément ; nouvelle inférence réussie |
 | Recherche | Adaptateur Worker → SearXNG → moteurs Web publics | ≥1 source publique ≤65 s ; panne/restriction amont signalée, pas de résultat fabriqué |
 | OpenBao | Serveur persistant, token workload et policy de lecture | Lecture Nevolium autorisée ; écriture, autre namespace, liste et administration refusées |
@@ -58,13 +58,16 @@ Research : celle-ci exige encore une Task authentifiée distincte, des appels MC
 
 Les incidents et activations successives sont conservés dans le [rapport serveur](archive/server-foundation-2026-09-11.md).
 L'état courant est uniquement dans [PROJECT_STATE](../PROJECT_STATE.md) ; ce protocole ne prescrit
-aucun rejeu d'une ancienne Task ou d'un ancien marqueur. COLD-03/04 sont des échecs conservés ; le
-retour COLD-05 manque lors de l'audit du 13 septembre et doit être lu avant toute autre exécution.
+aucun rejeu d'une ancienne Task ou d'un ancien marqueur. COLD-03/04 sont des échecs conservés.
+COLD-05 a atteint un `web.search`, mais a recherché son marqueur au lieu de la requête Debian, omis
+`web.fetch`, puis échoué sur 13 jetons de synthèse non JSON. Ses deux réservations sont réglées, aucun
+workflow n'est actif et les cinq historiques `uncertain` sont inchangés. Ne pas rejouer COLD-05.
 
 Le Worker qualifié utilise 180 s par appel modèle, heartbeat de progression à 30 s, timeout heartbeat
 90 s et activité Research 600 s. La borne proxy par appel est dix secondes sous la borne client.
 Les normalisations existantes traitent seulement une fence complète, une liste complète d'appels et
-l'absence du rationale supérieur ; schémas, allowlist et preuve des citations restent obligatoires.
+l'absence du rationale supérieur. Le Worker de branche transmet maintenant les JSON Schemas Pydantic
+par `response_format` au gateway ; la validation locale, l'allowlist et les citations restent obligatoires.
 Le correctif Core de cette reprise lie un slot à un seul appel même en concurrence ; il conserve les
 identifiants historiques et ne change ni le modèle, ni ces budgets, ni le Worker.
 
@@ -73,17 +76,48 @@ sources publiques, sans reprendre les identifiants des incidents. Le succès exi
 appels MCP réels, artefact sourcé, tokens observés et réservations réglées ; Ollama doit confirmer
 les deux threads. Froid/chaud désigne le modèle en mémoire, pas un cache disque purgé.
 
-Lire d'abord le résultat existant. S'il est complet, ne pas refaire le froid ; passer à la mesure
-chaude manquante. S'il échoue, classer la cause à partir des journaux et sorties conservés. Regrouper
-la correction et les régressions affectées avant une seule activation. Des erreurs répétées de
-format ou de pertinence imposent une qualification du modèle sur des prompts représentatifs,
-plutôt qu'une succession de normalisations assouplissant le contrat. Le petit 0.5B reste un modèle
-de câblage ; aucune hausse de timeout ou ressource ne vaut une amélioration démontrée.
+Le défaut est classé : l'infrastructure répond dans les bornes, mais le 0.5B échoue sur la pertinence
+et le contrat de synthèse. Le petit 0.5B reste un modèle de câblage. La prochaine étape compare des
+candidats sur des prompts fixes plutôt que d'ajouter une troisième normalisation. Une hausse de timeout
+ou de ressources ne vaut pas une amélioration démontrée.
 
 Le veto sémantique est déjà qualifié en CI face à une proposition valide/confiante et activé sur
 cible. La commande réelle a terminé en 59,57 s sans Task métier, mais avec une proposition
 unsupported du modèle : les deux preuves ont des portées distinctes. Ne les rejouer que si le
 routage ou sa frontière d'autorisation change.
+
+### Présélection bornée du modèle Research
+
+`scripts/qualification/research_model.py` utilise les vraies fonctions `plan_research` et
+`synthesize_research`, mais appelle directement l'Ollama loopback avec leurs JSON Schemas. Il ne crée
+aucune Task, n'appelle aucun outil Web et ne télécharge rien. Il mesure temps au premier jeton, durée,
+tokens, chargement et taille en mémoire. Trois cas sont tous obligatoires : séquence exacte
+`web.search` puis `web.fetch` à froid, même plan à chaud, synthèse sourcée résistante à une instruction
+injectée dans les preuves. Un cas dépasse 180 s, une sortie sémantiquement fausse ou plus de 12 Gio
+chargés rend le candidat inéligible. Le runner refuse un autre modèle déjà en mémoire et décharge
+chaque candidat avant le suivant.
+
+Préparer explicitement les candidats, pendant une fenêtre sans Research active, puis lancer une seule
+comparaison. Les téléchargements sont une étape opérateur distincte ; leurs digests sont relevés par
+`/api/tags` dans le rapport.
+
+```bash
+docker compose exec -T ollama ollama pull qwen3:4b
+docker compose exec -T ollama ollama pull qwen3:8b
+docker compose exec -T ollama ollama ps
+uv run --locked --project services/worker python scripts/qualification/research_model.py run \
+  --model qwen3:4b --model qwen3:8b \
+  --commit "$(git rev-parse HEAD)" \
+  --output .nevolium-qualification/evidence/research-model.json
+```
+
+Si `ollama ps` n'est pas vide, attendre le déchargement ou arrêter explicitement le modèle affiché ;
+ne pas lancer une mesure mémoire mixte. `selected_model: null` arrête la campagne. Un nom sélectionné
+n'est qu'une présélection : modifier ensuite `OLLAMA_MODEL` avec son digest vérifié, activer en une fois
+le Worker à schéma natif et le candidat, puis exécuter deux nouvelles Tasks canoniques froide/chaude.
+Leur identité est portée par leurs UUID et le rapport : ne plus préfixer la question utilisateur par un
+marqueur opaque que le planificateur pourrait prendre pour le sujet. Elles doivent produire la bonne
+séquence MCP, un artefact cité et deux usages réglés chacune.
 
 ## Préparer les modèles une fois, exécuter sans téléchargement
 
@@ -278,7 +312,7 @@ D04/H5 demeure incomplet tant que les quatre preuves suivantes ne sont pas réun
 
 | Preuve restante | Critère de sortie | Réemploi |
 |---|---|---|
-| Research et modèle quotidien | Examiner COLD-05, compléter la mesure froide/chaude manquante ; appels MCP, artefact/citations et comptabilité cohérents. Qualifier la pertinence du modèle retenu sur des demandes représentatives avant adoption quotidienne | Parcours Research/gateway existants, aucune nouvelle orchestration |
+| Research et modèle quotidien | Conserver COLD-05 sans rejeu ; présélection 4B/8B entièrement réussie, puis deux nouvelles Tasks froide/chaude avec séquence MCP correcte, artefact/citations et comptabilité cohérents | Runner direct sans données canoniques, puis parcours Research/gateway existant |
 | Charge et files mixtes | Lectures 1/10/100/1000 clients virtuels, zéro erreur et p95 ≤2 s selon le runner ; mesurer aussi le mélange réel modèle/PDF/mémoire sur le pilote, quotas et absence de blocage/OOM | `target.py load`, admission et observation D02 ; fixer concurrence et seuils du mélange avant mesure |
 | Upgrade/rollback et frontières | Nouvelle image puis retour compatible sans perte canonique ; reprise des services, identités et permissions ; revérifier seulement les frontières SQL/réseau affectées | Procédures existantes, anciennes images conservées et garde d'inactivité ; un simple redémarrage ne prouve pas le rollback |
 | Restauration indépendante | Backup applicatif chiffré, `restic check --read-data`, restauration sur volumes neufs hors hôte, relecture des données et clés | Scripts backup/restore existants ; la récupération des seules clés OpenBao ou les fixtures CI ne suffisent pas |
@@ -302,3 +336,6 @@ La capacité commerciale, tous les OS, les mobiles, l'offline et les scans compl
   [adaptateur Mem0 2.0.20](https://github.com/mem0ai/mem0/blob/v2.0.20/mem0/embeddings/fastembed.py).
 - [Modèle de qualification Ollama](https://ollama.com/library/qwen2.5:0.5b) et
   [API d'inventaire avec digest](https://docs.ollama.com/api/tags).
+- [Sorties structurées Ollama](https://docs.ollama.com/capabilities/structured-outputs),
+  [JSON Schema via LiteLLM](https://docs.litellm.ai/docs/completion/json_mode) et
+  [famille Qwen3](https://ollama.com/library/qwen3).

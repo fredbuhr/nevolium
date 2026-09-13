@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
+import re
 import uuid
 from contextlib import suppress
 from dataclasses import dataclass
@@ -22,6 +24,8 @@ ZERO_COST_MODEL_ALIASES = frozenset({"local-fast"})
 MODEL_REQUEST_TIMEOUT_CAP_SECONDS = 180.0
 MODEL_REQUEST_HEARTBEAT_INTERVAL_SECONDS = 30.0
 MODEL_PROXY_TIMEOUT_GRACE_SECONDS = 10.0
+MAX_RESPONSE_SCHEMA_BYTES = 64 * 1024
+RESPONSE_SCHEMA_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 
 class ModelCallOutcomeUnknown(RuntimeError):
@@ -212,6 +216,38 @@ def _litellm_headers(idempotency_key: str | None = None) -> dict[str, str]:
         # stable correlation; exactly-once provider execution is not assumed.
         headers["x-litellm-call-id"] = idempotency_key
     return headers
+
+
+def json_schema_response_format(*, name: str, schema: dict[str, Any]) -> dict[str, Any]:
+    """Build one bounded OpenAI-compatible structured-output request.
+
+    LiteLLM forwards this shape to providers that support JSON Schema, including the local Ollama
+    route. Pydantic validation after the response remains authoritative. ``strict`` is deliberately
+    false because Research tool inputs are dynamic JSON objects and therefore cannot satisfy the
+    closed-object restrictions imposed by some providers' strict mode.
+    """
+
+    if not RESPONSE_SCHEMA_NAME_PATTERN.fullmatch(name):
+        raise ValueError(
+            "response schema name must contain 1-64 letters, digits, underscores or hyphens"
+        )
+    if schema.get("type") != "object":
+        raise ValueError("response schema must describe one top-level JSON object")
+    try:
+        encoded = json.dumps(schema, ensure_ascii=False, separators=(",", ":"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("response schema must be JSON serializable") from exc
+    if len(encoded.encode("utf-8")) > MAX_RESPONSE_SCHEMA_BYTES:
+        raise ValueError("response schema exceeds the bounded gateway size")
+    normalized_schema = json.loads(encoded)
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": name,
+            "strict": False,
+            "schema": normalized_schema,
+        },
+    }
 
 
 def _non_negative_int(value: Any) -> int:
@@ -505,6 +541,8 @@ async def chat_completion(
     temperature: float = 0.2,
     estimated_cost_usd: Decimal = Decimal("0"),
     timeout_seconds: float = 90.0,
+    response_schema: dict[str, Any] | None = None,
+    response_schema_name: str | None = None,
 ) -> ChatCompletionResult:
     """Invoke one logical LiteLLM call without blindly replaying an ambiguous paid request.
 
@@ -525,6 +563,8 @@ async def chat_completion(
 
     if not idempotency_key.strip():
         raise ValueError("idempotency_key is required for durable model calls")
+    if (response_schema is None) != (response_schema_name is None):
+        raise ValueError("response_schema and response_schema_name must be supplied together")
 
     checkpoint = resume_checkpoint or (
         checkpoint_ledger.checkpoint_for(idempotency_key) if checkpoint_ledger is not None else None
@@ -553,6 +593,12 @@ async def chat_completion(
                 f"Model call {idempotency_key} checkpoint is missing its validated result"
             )
 
+    response_format = (
+        json_schema_response_format(name=response_schema_name, schema=response_schema)
+        if response_schema is not None and response_schema_name is not None
+        else None
+    )
+
     await _authorize_model_call(
         task_id=task_id,
         workflow_execution_id=workflow_execution_id,
@@ -579,6 +625,8 @@ async def chat_completion(
             idempotency_key=idempotency_key,
         ),
     }
+    if response_format is not None:
+        request["response_format"] = response_format
     _heartbeat_model_checkpoint(
         stage="started",
         idempotency_key=idempotency_key,

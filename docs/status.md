@@ -24,7 +24,7 @@ rétention ; D03 (#87) durcit le déploiement, les droits et la reproductibilit�
 | News | Dix sources propriétaire et briefing terminé avec fallback déterministe lors d'un timeout | Synthèse quotidienne non qualifiée ; réservation historique inconnue conservée |
 | Modèle et comptabilité | Ollama/LiteLLM à deux threads ; tokens réels, coût nul déclaré pour `local-fast` seulement, réservation réglée et rejeu idempotent | `qwen2.5:0.5b` qualifie le câblage, pas la qualité du modèle quotidien |
 | Routage | Command Center, propositions PydanticAI, garde Core et veto sans Task métier ; proposition forcée valide testée en CI | Pertinence générale et latence interactive |
-| Research | Context Pack, planning/synthèse bornés, deux outils Web A1 activés ; accès Web réel et refus loopback vérifiés | Parcours canonique complet non établi : COLD-03/04 échouées, retour COLD-05 manquant dans cette reprise |
+| Research | Context Pack, planning/synthèse bornés, deux outils Web A1 activés ; accès Web réel et refus loopback vérifiés ; schémas natifs ajoutés sur la branche | Parcours canonique complet non établi : COLD-05 a mal planifié la requête puis produit une synthèse non JSON avec le modèle 0.5B ; nouveau Worker non déployé |
 | Unicité Research | Correctif de branche : liaison atomique d'un slot à un seul outil/entrée ; IDs existants conservés, scénario de concurrence Core/PostgreSQL ajouté | Activation cible après validation du head CI |
 | Secrets/exploitation | OpenBao persistant, policy minimale, récupération des clés chiffrée et vérifiée hors serveur, root révoqué, renouvellement actif | Backup applicatif et restauration indépendante de la cible ; upgrade/rollback |
 | Restauration CI | Restic chiffré transféré sur une seconde VM et relu : SQL, JetStream, objet filer, secret OpenBao | Ce résultat ne constitue pas la restauration du serveur utilisateur |
@@ -51,9 +51,9 @@ restent dans les lots produit/distribution du [plan D01–D22](implementation-pl
 
 ## Portée des validations
 
-La base de reprise `e870893…` passe 10/10 workflows. L'[audit du 13 septembre](archive/d04-progress-audit-2026-09-13.md)
-distingue ce succès, le défaut de doublons reproduit ensuite, les tests locaux du correctif et la
-preuve de concurrence à contrôler sur le head final en CI. Le [protocole D04](qualification-d04.md) fixe
+Le dernier head publié `7b1ded0…` passe 10/10 workflows. L'[audit du 13 septembre](archive/d04-progress-audit-2026-09-13.md)
+distingue ce succès, le résultat COLD-05, les changements Worker locaux suivants et les preuves à
+contrôler sur leur head final en CI. Le [protocole D04](qualification-d04.md) fixe
 les seuils et quatre preuves de sortie encore ouvertes ; les acquis ne sont pas à recommencer.
 Les anciens checkpoints et « prochaines actions » sont historiques, jamais une instruction de reprise.
 

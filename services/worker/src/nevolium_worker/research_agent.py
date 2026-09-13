@@ -461,6 +461,8 @@ async def perform_autonomous_research(payload: dict[str, Any]) -> dict[str, Any]
                 temperature=0.0,
                 estimated_cost_usd=planner_estimated_cost,
                 timeout_seconds=RESEARCH_MODEL_TIMEOUT_SECONDS,
+                response_schema=ResearchPlan.model_json_schema(),
+                response_schema_name="nevolium_research_plan",
             )
             return result.content
 
@@ -600,6 +602,8 @@ async def perform_autonomous_research(payload: dict[str, Any]) -> dict[str, Any]
                     temperature=0.0,
                     estimated_cost_usd=synthesis_estimated_cost,
                     timeout_seconds=RESEARCH_MODEL_TIMEOUT_SECONDS,
+                    response_schema=ResearchSynthesis.model_json_schema(),
+                    response_schema_name="nevolium_research_synthesis",
                 )
                 return result.content
 

@@ -10,7 +10,7 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4 et D01–D03 terminés dans leurs périmètres ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche de développement active |
-| Base de cette reprise | `e8708934448255d1e1ab4207fe35ebf4bd5bcb5b`, 10/10 workflows réussis ; comparer le head live à cette base |
+| Dernier head publié vérifié | `7b1ded0fa0849d3607e7b76bc26f38c01c5cab1d`, 10/10 workflows réussis ; changements suivants à revalider en CI |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9, pas de migration ni de nouvelle dépendance dans cette reprise |
 | Cible H5 | Premier serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote 3–4 personnes |
 
@@ -40,9 +40,12 @@ Ces observations sont historiques : aucune connexion au serveur dans cette repri
 - `COLD-03` échouée : 2 388 jetons, réservation réglée, aucun outil/artefact. `COLD-04`
   (`e1c81a97-59d4-4be8-ae12-732d09796085`) échouée : 2 290 jetons, réservation réglée, aucun outil/artefact.
   Le correctif Worker `969fe66…` traite le champ d'enveloppe absent, sans second appel modèle.
-- **COLD-05 : résultat non disponible dans cette reprise.** Le dernier retour de la discussion
-  précédente n'est pas attaché ici. Ne présumer ni absence, ni échec, ni réussite de la Task ou de son
-  marqueur ; ne pas réarmer/rejouer avant lecture du retour ou d'un constat cible en lecture seule.
+- `COLD-05`, Task `ccb61e1c-7fb2-460b-ad70-e4cef359ed42`, a échoué sans retry en 48 s. Planning
+  accepté, mais le seul appel `web.search` a recherché le marqueur COLD-05 au lieu de la requête Debian ;
+  aucun `web.fetch`. La synthèse a ensuite produit 13 jetons non JSON (`JSONDecodeError`), donc aucun
+  artefact Research final. Les deux appels LiteLLM/Ollama HTTP 200 totalisent 2 383 puis 2 063 jetons ;
+  les deux réservations sont `settled`, zéro workflow/réservation actif, cinq historiques `uncertain`
+  inchangés. Ollama confirme deux threads, aucun OOM ni redémarrage. **Ne pas rejouer COLD-05.**
 - Les cinq réservations `uncertain` du dernier snapshot sont conservées. Ne supprimer aucune donnée,
   lease, dépense inconnue ou preuve pour faire passer un contrôle.
 
@@ -54,6 +57,13 @@ Le correctif verrouille le parent durant la liaison et recherche le slot indépe
 les historiques ambigus sont refusés. IDs/clés existants conservés, sans migration.
 Régression de concurrence ajoutée au scénario Core/PostgreSQL existant. **Correctif non déployé sur cible.**
 
+Le gateway Worker accepte désormais un JSON Schema natif borné et Research transmet directement les
+schémas `ResearchPlan` et `ResearchSynthesis` à LiteLLM/Ollama. La validation Pydantic, l'allowlist Core
+et les citations restent autoritatives. Le scénario réel local vérifie aussi ce transport structuré.
+Un runner de présélection compare jusqu'à trois modèles Ollama déjà installés, un seul en mémoire, sans
+Task canonique ni appel Web : plan froid/chaud exact, synthèse sourcée et résistance à une instruction
+injectée. Aucun modèle n'est adopté automatiquement. **Ces changements Worker ne sont pas déployés.**
+
 Validation locale : uv 0.12.13, synchronisation verrouillée Core/Worker, Ruff F/E9, identité ; contrats
 Research, gateway/comptabilité, Context Pack, ownership Research et états terminaux réussis.
 Reproduction relationnelle locale : deux invocations avant correction, une après ; elle ne prouve pas
@@ -62,10 +72,12 @@ Docker et l'accès au serveur ne sont pas disponibles dans ce workspace.
 
 ## Prochaine action et sortie
 
-**Récupérer le dernier retour COLD-05 et examiner l'unique Task existante avant toute nouvelle exécution.**
-Vérifier état terminal, appels MCP, artefact/citations, usages et réservations. Aucun redéploiement
-Worker requis pour lire ce résultat. Un défaut de qualité exige une analyse des sorties conservées
-avant une autre campagne cible, sans prolonger les normalisations JSON au cas par cas.
+**Présélectionner Qwen3 4B et 8B hors données canoniques avec le runner borné, sans nouvelle Task.**
+Un candidat doit réussir tous les critères de qualité à froid et à chaud, rester sous 180 s par cas et
+sous 12 Gio chargé. En l'absence de candidat éligible, arrêter et conserver le rapport. Sinon, regrouper
+le modèle retenu et le Worker à schéma natif dans une seule activation réversible, puis créer deux
+nouvelles Tasks Research canoniques, froide et chaude, avec une question propre et de nouveaux identifiants
+consignés hors du texte utilisateur. COLD-05 reste intacte.
 
 Les quatre preuves restantes figurent dans le [protocole H5](docs/qualification-d04.md#restauration-et-passage-de-h5) :
 Research/modèle quotidien ; charge/files mixtes ; upgrade/rollback et frontières affectées ; restauration
