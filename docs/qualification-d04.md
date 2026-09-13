@@ -97,22 +97,24 @@ injectée dans les preuves. Un cas dépasse 180 s, une sortie sémantiquement fa
 chargés rend le candidat inéligible. Le runner refuse un autre modèle déjà en mémoire et décharge
 chaque candidat avant le suivant.
 
-Préparer explicitement les candidats, pendant une fenêtre sans Research active, puis lancer une seule
-comparaison. Les téléchargements sont une étape opérateur distincte ; leurs digests sont relevés par
-`/api/tags` dans le rapport.
+Sur la cible de production, le port hôte Ollama est volontairement absent et sa limite quotidienne de
+4 Gio ne peut pas charger le candidat 8B. Le wrapper cible construit donc un client depuis le checkout,
+télécharge explicitement les deux candidats, exige zéro workflow/réservation actif, puis arrête
+temporairement Core, Worker et Ollama. Il réutilise l'image et le volume Ollama dans un conteneur sans
+réseau externe, limité à 2 CPU et 12 Gio ; le client partage uniquement son espace réseau loopback.
+Le trap restaure les trois conteneurs d'origine avec leurs identités, y compris après un échec. Aucune
+configuration, Task ou donnée canonique n'est modifiée ; les modèles téléchargés et le rapport restent
+sur le volume/disque cible.
 
 ```bash
-docker compose exec -T ollama ollama pull qwen3:4b
-docker compose exec -T ollama ollama pull qwen3:8b
-docker compose exec -T ollama ollama ps
-uv run --locked --project services/worker python scripts/qualification/research_model.py run \
-  --model qwen3:4b --model qwen3:8b \
-  --commit "$(git rev-parse HEAD)" \
-  --output .nevolium-qualification/evidence/research-model.json
+scripts/qualification/research_model_target.sh \
+  --expected-commit "$(git rev-parse HEAD)"
 ```
 
-Si `ollama ps` n'est pas vide, attendre le déchargement ou arrêter explicitement le modèle affiché ;
-ne pas lancer une mesure mémoire mixte. `selected_model: null` arrête la campagne. Un nom sélectionné
+Lancer une seule fois pendant une fenêtre de maintenance : le script refuse un modèle déjà chargé,
+moins de 20 Gio disque, moins de 14 Gio de RAM disponible ou tout travail canonique actif. Ne pas le
+contourner avec une commande Ollama directe. Un rapport existant n'est jamais écrasé. Une valeur
+`selected_model: null` arrête la campagne. Un nom sélectionné
 n'est qu'une présélection : modifier ensuite `OLLAMA_MODEL` avec son digest vérifié, activer en une fois
 le Worker à schéma natif et le candidat, puis exécuter deux nouvelles Tasks canoniques froide/chaude.
 Leur identité est portée par leurs UUID et le rapport : ne plus préfixer la question utilisateur par un

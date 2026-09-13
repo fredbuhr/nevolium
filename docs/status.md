@@ -51,9 +51,9 @@ restent dans les lots produit/distribution du [plan D01–D22](implementation-pl
 
 ## Portée des validations
 
-Le dernier head publié `7b1ded0…` passe 10/10 workflows. L'[audit du 13 septembre](archive/d04-progress-audit-2026-09-13.md)
-distingue ce succès, le résultat COLD-05, les changements Worker locaux suivants et les preuves à
-contrôler sur leur head final en CI. Le [protocole D04](qualification-d04.md) fixe
+Le head publié `903d33b…` passe 10/10 workflows, dont les intégrations Research et Ollama réelles.
+L'[audit du 13 septembre](archive/d04-progress-audit-2026-09-13.md) distingue ces preuves du résultat
+COLD-05. Le [protocole D04](qualification-d04.md) fixe
 les seuils et quatre preuves de sortie encore ouvertes ; les acquis ne sont pas à recommencer.
 Les anciens checkpoints et « prochaines actions » sont historiques, jamais une instruction de reprise.
 

@@ -248,7 +248,8 @@ def find_model(rows: list[dict[str, Any]], requested: str) -> dict[str, Any] | N
 async def qualify(
     client: httpx.AsyncClient, model: str, catalog: dict[str, Any], args: argparse.Namespace
 ) -> dict[str, Any]:
-    await unload(client, model)
+    # Refuse every preloaded model before issuing an unload request. Unloading the requested
+    # candidate first could otherwise interrupt an inference already using that model.
     await require_empty_runtime(client)
 
     async def plan(completion: OllamaCompletion) -> ResearchPlan:
@@ -335,6 +336,8 @@ async def run(args: argparse.Namespace) -> int:
         or args.max_loaded_bytes <= 0
         or args.num_threads <= 0
         or args.num_context < 1024
+        or (args.model_runtime_cpus is not None and args.model_runtime_cpus <= 0)
+        or (args.model_runtime_memory_bytes is not None and args.model_runtime_memory_bytes <= 0)
     ):
         raise ValueError("qualification limits are invalid")
 
@@ -354,6 +357,8 @@ async def run(args: argparse.Namespace) -> int:
             "max_loaded_size_bytes": args.max_loaded_bytes,
             "num_threads": args.num_threads,
             "num_context": args.num_context,
+            "model_runtime_cpus": args.model_runtime_cpus,
+            "model_runtime_memory_bytes": args.model_runtime_memory_bytes,
         },
         "candidates": [],
         "d04_gate": "incomplete",
@@ -488,6 +493,8 @@ def parse_args() -> argparse.Namespace:
     qualify_parser.add_argument("--max-loaded-bytes", type=int, default=MAX_LOADED_BYTES)
     qualify_parser.add_argument("--num-threads", type=int, default=2)
     qualify_parser.add_argument("--num-context", type=int, default=8192)
+    qualify_parser.add_argument("--model-runtime-cpus", type=float)
+    qualify_parser.add_argument("--model-runtime-memory-bytes", type=int)
     return parser.parse_args()
 
 

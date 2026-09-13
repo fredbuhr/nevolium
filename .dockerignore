@@ -8,3 +8,4 @@
 **/dist
 backups
 .nevolium-backup-staging
+.nevolium-qualification

@@ -64,10 +64,16 @@ Un runner de présélection compare jusqu'à trois modèles Ollama déjà instal
 Task canonique ni appel Web : plan froid/chaud exact, synthèse sourcée et résistance à une instruction
 injectée. Aucun modèle n'est adopté automatiquement. **Ces changements Worker ne sont pas déployés.**
 
+La topologie production retire le port hôte Ollama et limite le service quotidien à 4 Gio. Le wrapper
+cible de présélection prépare donc les modèles avant une interruption bornée, refuse tout travail actif,
+exécute un Ollama éphémère hors réseau à 2 CPU/12 Gio avec le volume existant, puis restaure Core, Worker
+et Ollama par trap. Il ne déploie pas le nouveau Worker et n'écrit dans aucune table canonique.
+
 Validation locale : uv 0.12.13, synchronisation verrouillée Core/Worker, Ruff F/E9, identité ; contrats
 Research, gateway/comptabilité, Context Pack, ownership Research et états terminaux réussis.
-Reproduction relationnelle locale : deux invocations avant correction, une après ; elle ne prouve pas
-le verrou PostgreSQL. Vérifier la CI du head final dans #88 pour la concurrence et les intégrations.
+Reproduction relationnelle locale : deux invocations avant correction, une après. Le head `903d33b…`
+passe 10/10 workflows, dont la concurrence Core/PostgreSQL, le vrai SIGKILL/replay Research et le
+transport JSON Schema réel Core → LiteLLM → Ollama. Revalider le prochain head dans #88.
 Docker et l'accès au serveur ne sont pas disponibles dans ce workspace.
 
 ## Prochaine action et sortie

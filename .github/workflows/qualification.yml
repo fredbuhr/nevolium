@@ -41,7 +41,9 @@ jobs:
       - name: Prove TLS, public access, bounded reads and honest account counts
         run: uv run --locked --project services/worker python scripts/qualification/contract.py
       - name: Prove Research model preselection criteria
-        run: uv run --locked --project services/worker python scripts/qualification/research_model.py self-test
+        run: |
+          uv run --locked --project services/worker python scripts/qualification/research_model.py self-test
+          bash -n scripts/qualification/research_model_target.sh
 
   real-document-memory:
     runs-on: ubuntu-latest
