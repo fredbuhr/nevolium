@@ -20,6 +20,7 @@ from nevolium_worker.research_agent import (
     build_research_evidence,
     plan_research,
     research_progress_snapshot,
+    resolve_research_tool_input,
     run_research_model_stage,
     split_research_model_budget,
     synthesize_research,
@@ -234,6 +235,40 @@ async def main() -> None:
         "url": "https://www.debian.org/releases/trixie/"
     }, cold_04_plan
     assert "omitted the top-level plan rationale" in cold_04_plan.rationale, cold_04_plan
+
+    dependent_fetch = cold_04_plan.calls[1].model_copy(
+        update={"input": {"url": "TO_BE_FILLED_FROM_SEARCH_RESULT", "max_chars": 1200}}
+    )
+    completed_search = [
+        {
+            "slot": 0,
+            "tool_key": "web.search",
+            "result": {
+                "structured_content": {
+                    "results": [
+                        {"title": "invalid", "url": "not-a-url"},
+                        {
+                            "title": "Debian 13 release information",
+                            "url": "https://www.debian.org/releases/trixie/",
+                        },
+                    ]
+                }
+            },
+        }
+    ]
+    assert resolve_research_tool_input(dependent_fetch, completed_search) == {
+        "url": "https://www.debian.org/releases/trixie/",
+        "max_chars": 1200,
+    }
+    assert resolve_research_tool_input(cold_04_plan.calls[1], completed_search) == {
+        "url": "https://www.debian.org/releases/trixie/"
+    }
+    try:
+        resolve_research_tool_input(dependent_fetch, [])
+    except ValueError as exc:
+        assert "prior web.search" in str(exc), exc
+    else:
+        raise AssertionError("Dependent web.fetch input was accepted without prior search evidence")
 
     async def omitted_explicit_fetch_completion(_messages):
         return json.dumps(
