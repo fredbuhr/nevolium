@@ -76,6 +76,12 @@ régression dédiée. Le head de code `35303f2…` passe 10/10 workflows PR, don
 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). L'activation et une nouvelle Task
 distincte restent requises.
 
+La cible possède maintenant l'image Worker corrigée construite depuis `35303f2…`. Son module installé
+correspond au checkout et son normaliseur est vérifié dans un conteneur éphémère sans réseau. L'ancien
+Worker `e4d886b…` reste actif et son image est conservée sous `rollback-e4d886b9b329` ; `COLD-03`, son
+usage et sa réservation réglée restent intacts. Aucun service ni nouvelle Task n'est recréé pendant cette
+préparation. L'activation contrôlée du seul Worker reste nécessaire.
+
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
 et la qualité des réponses ne sont pas corrigés par ce changement de budget.

@@ -377,3 +377,12 @@ au modèle, le refus d'un outil inventé après normalisation, le refus d'extrai
 et une synthèse sous fence. Le head passe 10/10 workflows PR, dont 5/5 jobs D04
 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). La construction/activation du
 Worker corrigé et une nouvelle Task froide distincte restent nécessaires avant l'essai chaud.
+
+La préparation cible synchronise ensuite le checkpoint `2a8e309…` et confirme de nouveau zéro workflow
+ou réservation active. La Task `COLD-03` échouée, son unique réservation réglée, ses 2 388 jetons et
+l'absence d'outil ou d'artefact restent inchangés. L'image active `e4d886b…` correspond encore au code
+attendu et reçoit le tag `rollback-e4d886b9b329`. Une nouvelle image Worker est construite depuis
+`35303f2…`, distincte de l'image active ; le fichier installé correspond au checkout et un conteneur
+éphémère sans réseau valide la normalisation de la forme observée ainsi que le refus du JSON inclus dans
+de la prose. Le Worker actif n'est pas recréé, les services publics restent sains et aucune Task Research
+n'est lancée. L'activation contrôlée du seul Worker reste la prochaine gate.

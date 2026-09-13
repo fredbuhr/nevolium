@@ -79,6 +79,10 @@ retirer qu'une fence JSON couvrant toute la réponse et envelopper une liste dir
 réponse modèle. Pydantic, l'allowlist et les schémas Core doivent encore refuser tout contenu invalide.
 Le correctif `35303f2…` passe ensuite 10/10 workflows PR, dont les 5/5 jobs D04
 ([run](https://github.com/fredbuhr/nevolium/actions/runs/34758531063)). Il n'est pas encore activé sur la cible.
+Sa nouvelle image Worker est désormais construite sur la cible et vérifiée hors réseau. L'image active
+reste celle de `e4d886b…`, conservée sous `rollback-e4d886b9b329` ; aucun conteneur ni Task n'est recréé.
+L'activation doit employer l'image déjà construite sans nouveau build ni pull, après un contrôle frais
+d'inactivité, puis prouver les deux pollers avant toute nouvelle Research.
 
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
