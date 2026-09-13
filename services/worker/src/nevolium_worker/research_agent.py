@@ -129,7 +129,7 @@ def _parse_complete_json_output(content: str) -> Any:
 
 
 def _normalise_plan_output(content: str) -> str:
-    """Accept the bounded local model's observed direct-list plan envelope."""
+    """Accept only the bounded local model plan envelopes observed on the real target."""
 
     parsed = _parse_complete_json_output(content)
     if isinstance(parsed, list):
@@ -139,6 +139,16 @@ def _normalise_plan_output(content: str) -> str:
                 "Model returned a direct JSON call list; Nevolium normalized the plan envelope."
             ),
         }
+    elif (
+        isinstance(parsed, dict)
+        and "rationale" not in parsed
+        and isinstance(parsed.get("calls"), list)
+    ):
+        parsed = dict(parsed)
+        parsed["rationale"] = (
+            "Model omitted the top-level plan rationale; Nevolium preserved the returned "
+            "call list and normalized only the missing envelope field."
+        )
     return json.dumps(parsed, ensure_ascii=False)
 
 

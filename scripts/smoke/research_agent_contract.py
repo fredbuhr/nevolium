@@ -176,6 +176,105 @@ async def main() -> None:
     assert incident_plan.calls[0].input["query"] == "NEVOLIUM-D04-RESEARCH-WEB-COLD-03"
     assert "normalized the plan envelope" in incident_plan.rationale, incident_plan
 
+    # COLD-04 returned a complete object with the requested calls and their individual
+    # rationales, but omitted only the required top-level rationale. Preserve the calls
+    # verbatim, add an explicit normalization note and never ask the model a second time.
+    cold_04_completions = 0
+    cold_04_tools = [
+        *TOOLS,
+        {
+            "key": "web.fetch",
+            "title": "Fetch web page",
+            "description": "Fetch one public page without side effects.",
+            "input_schema": {
+                "type": "object",
+                "properties": {"url": {"type": "string"}},
+                "required": ["url"],
+                "additionalProperties": False,
+            },
+        },
+    ]
+
+    async def cold_04_incident_completion(_messages):
+        nonlocal cold_04_completions
+        cold_04_completions += 1
+        return json.dumps(
+            {
+                "calls": [
+                    {
+                        "tool_key": "web.search",
+                        "input": {"query": "Debian 13 trixie release information"},
+                        "rationale": "Search for Debian 13 release information.",
+                    },
+                    {
+                        "tool_key": "web.fetch",
+                        "input": {"url": "https://www.debian.org/releases/trixie/"},
+                        "rationale": "Fetch the official Debian release page.",
+                    },
+                ],
+                "max_tool_calls": 2,
+            }
+        )
+
+    cold_04_plan = await plan_research(
+        query="NEVOLIUM-D04-RESEARCH-WEB-COLD-04",
+        tools=cold_04_tools,
+        max_tool_calls=2,
+        completion=cold_04_incident_completion,
+    )
+    assert cold_04_completions == 1, cold_04_completions
+    assert [call.tool_key for call in cold_04_plan.calls] == [
+        "web.search",
+        "web.fetch",
+    ], cold_04_plan
+    assert cold_04_plan.calls[0].input == {
+        "query": "Debian 13 trixie release information"
+    }, cold_04_plan
+    assert cold_04_plan.calls[1].input == {
+        "url": "https://www.debian.org/releases/trixie/"
+    }, cold_04_plan
+    assert "omitted the top-level plan rationale" in cold_04_plan.rationale, cold_04_plan
+
+    async def missing_rationale_invented_completion(_messages):
+        return json.dumps(
+            {
+                "calls": [
+                    {
+                        "tool_key": "payments.send",
+                        "input": {"amount": 100},
+                        "rationale": "Invent a side-effecting tool.",
+                    }
+                ]
+            }
+        )
+
+    try:
+        await plan_research(
+            query="Do something unsafe through a missing-rationale envelope",
+            tools=cold_04_tools,
+            max_tool_calls=1,
+            completion=missing_rationale_invented_completion,
+        )
+    except UnexpectedModelBehavior:
+        pass
+    else:
+        raise AssertionError("Missing-rationale normalization bypassed the tool allowlist")
+
+    async def malformed_missing_rationale_completion(_messages):
+        return json.dumps({"calls": "web.search"})
+
+    try:
+        await plan_research(
+            query="Return a malformed plan without a rationale",
+            tools=cold_04_tools,
+            max_tool_calls=1,
+            completion=malformed_missing_rationale_completion,
+        )
+    except UnexpectedModelBehavior:
+        pass
+    else:
+        raise AssertionError("Normalizer repaired a malformed call collection")
+
     async def fenced_invented_completion(_messages):
         return """```json
 [
