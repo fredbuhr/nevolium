@@ -17,9 +17,11 @@ Dernière revue : 2026-09-13. **Vérifier GitHub live avant toute action.**
 | Lot actif | **D04 — moteurs réels et exploitation (H5)** |
 | Branche active | `hardening/d04-real-engine-qualification` |
 | Livraison active | [PR #88](https://github.com/fredbuhr/nevolium/pull/88), ouverte en draft, non fusionnée |
+| Refs contrôlées le 2026-09-13 | `main` = `45b74baa3ddf8910f2aaa3d23c63f3e9bbedcf60` ; head technique D04 = `e4d886b9b32907135cb5faeb7737f09de27c6389`. Le diff depuis la base canonique vers `main` ne modifie que `PROJECT_STATE.md` |
 | Dernier code déployé confirmé | Core `e3adbe648b245e2567970769e6a4bf4333b3e4a4` ; Worker `d78f45ac911d35035fc5ae195655a85bbe458ab2` ; Web MCP `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; LiteLLM 210 s actif |
-| Validation | Deux Research authentifiés ont échoué au planning avant tout outil. La seconde preuve isole la cause : Ollama voyait 12 CPU mais subissait un quota de 2 CPU. Le même prompt exact de 2 182 jetons termine en 29,62 s avec `num_thread=2`, sans Task, réservation ni rejeu canonique |
-| Prochaine action | Valider en CI puis activer `num_thread=2` dans LiteLLM et son délai par appel inférieur de 10 s à celui du Worker ; lancer une nouvelle Task Research distincte, froide puis chaude, sans rejouer les deux échecs conservés |
+| Préparation cible confirmée par sortie opérateur | Checkout propre passé de `d78f45a…` à `e4d886b…`, garde production accepté, image Worker construite en 962,5 s et ancienne image conservée sous `nevolium-nevolium-worker:rollback-d78f45ac911d`. Worker/LiteLLM non recréés ; services publics sains au contrôle fourni |
+| Validation | Head technique `e4d886b…` : **10/10 workflows PR réussis**, dont **5/5 jobs D04** ([run](https://github.com/fredbuhr/nevolium/actions/runs/34753219895)). Deux Research échoués conservés ; prompt isolé de 2 182 jetons à deux threads : 29,62 s. Activation et Research canonique corrigé non encore prouvés |
+| Prochaine action | Sans nouveau travail utilisateur, vérifier l'absence d'exécution active et l'image préparée, puis activer uniquement LiteLLM/Worker sans rebuild. Vérifier configuration, santé et pollers ; qualifier ensuite deux nouvelles Tasks Research distinctes, à froid puis à chaud, sans rejouer les deux échecs conservés |
 | Conditions manquantes | Pertinence générale du routage et choix du modèle quotidien, Research canonique de bout en bout, backup Restic indépendant, campagne cible/charge/rollback |
 | Méthode | Garder cette PR ; commits internes comme checkpoints, aucun nouveau sous-lot et aucun D05 avant la sortie H5 |
 
@@ -212,6 +214,8 @@ ces cibles produit avec trois serveurs à synchroniser ou exiger tous les OS/mob
 - [Plan stable D01–D22](docs/implementation-plan.md) · [reprise](docs/development-workflow.md) · [déploiement](docs/deployment.md)
 - [Acquis D03](docs/archive/checkpoint-through-d03-2026-09-11.md) · [état produit](docs/status.md) · [roadmap](docs/roadmap.md)
 
-Les anciennes branches D01–D03/H1–H4 sont retirées. Réservoirs non canoniques inspectés :
+Les anciennes branches D01–D03/H1–H4 sont retirées du développement actif ; le contrôle live du
+2026-09-13 montre que leurs refs distantes existent encore. Elles ne sont ni réactivées ni supprimées
+pendant l'activation des moteurs. Réservoirs non canoniques inspectés :
 prototype d'interface historique (`ed12d503…`) et `consolidate/g49-research-durable-stages` (`57a1a217…`).
 Aucun merge en bloc ; principe de namespace OpenBao repris après revue, droits futurs non accordés.

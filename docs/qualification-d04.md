@@ -54,6 +54,23 @@ préremplissage à 85,28 jetons/s et 1,73 s pour 32 jetons. Le paramètre `local
 au quota Compose et être vérifié dans les journaux Ollama. Cette mesure isolée n'est pas une qualification
 Research : celle-ci exige encore une Task authentifiée distincte, des appels MCP et un artefact sourcé.
 
+La reprise du 13 septembre confirme la CI verte sur `e4d886b…` et la construction de son image sur la
+cible, sans activation. Pour ce palier, suspendre les nouvelles demandes utilisateur, vérifier qu'aucun
+workflow ni réservation modèle non expirée n'est actif, comparer le module gateway de l'image préparée
+au code et conserver l'image Worker précédente. Arrêter proprement le seul Worker avant de recréer
+LiteLLM, puis démarrer l'image Worker déjà construite avec `--no-build --no-deps --pull never`.
+Ne pas redémarrer les bases ou modifier leurs données. Vérifier le fichier LiteLLM réellement monté,
+l'alias local, l'absence de clés de fournisseurs externes, la santé du proxy, le code Worker chargé et
+ses nouveaux pollers Temporal. `running` seul ne prouve ni la disponibilité d'un Worker ni Research.
+Si un contrôle échoue, conserver sa sortie et diagnostiquer avant tout essai métier ; ne pas répéter
+aveuglément le bloc d'activation. Préserver le tag de retour sans modifier les données canoniques.
+
+La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
+modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
+modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,
+un artefact sourcé, les tokens observés et une réservation réglée ; le journal Ollama doit confirmer
+deux threads. Conserver les deux Research historiques échoués sans rejeu ni rapprochement inventé.
+
 Une commande de qualification contenant une interdiction explicite d'exécution ne doit jamais créer la
 Task métier proposée par le modèle. Core relit le message canonique, applique
 `semantic.execution-veto`, conserve la proposition pour audit et rend la commande terminale sans handoff.

@@ -54,8 +54,11 @@ conteneur est limité à 2 CPU et 4 Gio. Un benchmark hors tables canoniques rej
 2 182 jetons après déchargement du modèle avec `num_thread=2` : HTTP 200 en 29,62 s, préremplissage à
 85,28 jetons/s et 32 jetons générés. Il ne crée ni Task, ni réservation, ni usage. La configuration de
 branche fixe donc l'alias local à deux threads dans les deux fichiers LiteLLM ; le gateway demande en
-plus une échéance par appel dix secondes inférieure à sa propre borne. Cette correction reste à passer
-en CI, à être activée puis à être prouvée par une nouvelle Task Research froide et chaude.
+plus une échéance par appel dix secondes inférieure à sa propre borne. Le head technique `e4d886b…`
+passe désormais 10/10 workflows PR, dont les 5 jobs D04. La sortie opérateur confirme le checkout
+synchronisé, l'image Worker construite, son image précédente conservée et les services publics sains.
+Les conteneurs Worker/LiteLLM n'ont pas encore été recréés : l'activation et deux nouvelles Tasks
+Research distinctes, à froid puis à chaud, restent à prouver. Le benchmark isolé ne clôture pas ce parcours.
 
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux

@@ -310,3 +310,28 @@ deux configurations LiteLLM. Il transmet aussi à LiteLLM une échéance par app
 à la borne du client Worker, afin que le proxy rende la main avant l'expiration durable. Les contrats
 ciblés couvrent ces paramètres ; la CI, l'activation et une nouvelle preuve Research froide puis chaude
 restent requises. Les deux anciennes Tasks et leurs réservations demeurent inchangées.
+
+## Complément de reprise du 13 septembre : correctif construit, activation en attente
+
+Le contrôle GitHub retrouve `main` à `45b74baa3ddf8910f2aaa3d23c63f3e9bbedcf60` et la PR #88 ouverte,
+draft, au head technique `e4d886b9b32907135cb5faeb7737f09de27c6389`. Les quatre commits de `main`
+depuis `0e2d22d…` ne modifient que le checkpoint ; ils n'intègrent pas D04. Les dix workflows PR de ce
+head technique sont terminés avec succès. Le [run D04 34753219895](https://github.com/fredbuhr/nevolium/actions/runs/34753219895)
+contient cinq jobs réussis : contrôleur `103713150454`, documents/mémoire `103713150537`, services locaux
+`103713150564`, source de récupération `103713150594` et cible indépendante `103713278843`.
+Ces preuves CI ne remplacent pas la qualification du serveur.
+
+La sortie shell transmise par l'opérateur confirme le fast-forward propre de `d78f45a…` à `e4d886b…`,
+le garde de topologie accepté et la construction de l'image Worker complète en 962,5 s. Les marqueurs
+finaux confirment la conservation de l'image précédente sous
+`nevolium-nevolium-worker:rollback-d78f45ac911d`, l'absence de recréation des conteneurs et la santé
+des services publics. La commande collée dans la conversation comporte une ligne tronquée ; ces éléments
+reposent sur sa sortie, sans prétendre reconstituer le script complet ni une inspection distante directe.
+
+La prochaine action est l'activation ciblée LiteLLM/Worker de cette image déjà construite, après contrôle
+de l'inactivité et de la correspondance du module gateway avec le commit. Ne pas rebâtir l'image, augmenter
+les quotas ou lancer les fixtures CI destructives sur la cible. Ne pas effacer les anciennes Tasks,
+réservations inconnues ou leases. Après activation, prouver les deux threads sur une nouvelle Research
+authentifiée à froid, puis une seconde identité à chaud, avec appels MCP, sources, usage et réservation.
+Une image conservée fournit un point de retour ; elle ne prouve pas à elle seule le scénario complet
+upgrade/rollback exigé par H5. Aucun déploiement cible ni nouveau Research n'est exécuté par cette reprise.
