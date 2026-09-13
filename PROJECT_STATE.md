@@ -10,8 +10,9 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Code actif cible | `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4` ; checkout serveur propre à ce SHA |
-| Correctif à déployer | `3ccc7f786bbaa8d87bdbbcf2c6ed0c986c004e19` ; 10/10 workflows réussis, dont Research et D04 |
+| Checkout cible | `a4ec6491eb2a44e8ee4e8c4a31b293f562100405` ; checkout serveur propre à ce SHA |
+| Correctif actif | `3ccc7f786bbaa8d87bdbbcf2c6ed0c986c004e19` ; Worker déployé, 10/10 workflows réussis |
+| Correctif suivant | `3e84c6aa96f8279a236c6fc712260132853cde65` ; liaison fetch publiée, CI à obtenir |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -33,12 +34,12 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 | Composant | Dernier code déployé confirmé |
 |---|---|
 | Core | image `e5c245924d50…`, construite au SHA technique `7fb2211…` |
-| Worker | image `932e3d909448…`, construite au SHA technique `7fb2211…` |
+| Worker | image `ce1b2bc9638c…`, correctif `3ccc7f7…` actif |
 | Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
 | LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
 | Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; outils A1 search/fetch |
 
-Le checkout serveur a été avancé à `7fb2211095a56b11eca0f9cef9ccf59ee0e1e4a4`. La première préparation
+Le checkout serveur a été avancé à `a4ec6491eb2a44e8ee4e8c4a31b293f562100405`. La première préparation
 s'est arrêtée au contrôle après sortie de l'éditeur sans enregistrer. La reprise sans éditeur a réussi :
 clé saisie localement, six paramètres API appliqués, anciennes variables OpenAI/Ollama retirées,
 configuration de production acceptée. Core construit en 10,8 s, Worker en 338,3 s, Web en 9,5 s.
@@ -94,11 +95,21 @@ résultat et n'a pas lancé le second essai. Ce résultat est connu et ne doit p
 observé vient du contrat du planificateur : « minimum utile » permettait d'ignorer une clé d'outil
 explicitement demandée alors que le plan complet est produit avant toute exécution.
 
-**Déployer le correctif Worker borné de ce contrat.** Le planificateur reçoit désormais les
-clés autorisées explicitement nommées dans la question, les conserve dans l'ordre et échoue avant
-outil/synthèse s'il en omet une. Aucun second tour modèle, aucune réparation du résultat et aucun nouveau
-runner. Après CI et remplacement du seul Worker, créer deux nouvelles Tasks Research séquentielles ;
-ne pas réutiliser l'UUID ci-dessus ni COLD-03/04/05. Le
+Le correctif Worker a été déployé sans travaux actifs et son poller Temporal est sain. La nouvelle Task
+`f6946d6a-6139-4647-b6af-91f33ec09750` prouve que le plan corrigé a bien créé `web.search`, puis
+`web.fetch` dans l'ordre. Search a terminé ; fetch a échoué, donc la Task et son workflow ont échoué
+avant synthèse. Un seul usage et une seule réservation OpenAI ont été créés et réglés ; le second essai
+n'a pas été lancé. Le diagnostic sans rejeu a identifié l'entrée exacte : le modèle avait placé
+`TO_BE_FILLED_FROM_SEARCH_RESULT` dans `url`. Le lecteur Web n'était donc jamais arrivé à une URL réelle.
+Les comptes après arrêt sont `32|32|14|19|4|22|5` ; les cinq réservations historiques `uncertain`
+restent inchangées. Ne rejouer aucune de ces Tasks.
+
+**Valider en CI le correctif `3e84c6a…`, puis remplacer uniquement le Worker.** Lorsqu'un
+`web.fetch` suit un Search mais ne porte pas encore d'URL absolue, le Worker lie son entrée à la première
+URL HTTP(S) du dernier résultat Search terminé. L'entrée réellement résolue reste contrôlée et persistée
+par Core, puis validée par le lecteur SSRF-safe. Une URL explicite valide reste inchangée. Aucun second
+appel modèle, réparateur de résultat ou nouveau runner. Après CI et déploiement, reprendre avec deux
+nouvelles Tasks Research séquentielles ; ne pas réutiliser les UUID connus ni COLD-03/04/05. Le
 [protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
