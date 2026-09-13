@@ -468,3 +468,27 @@ checkpoint documentaire sans reconstruire, vérifier de nouveau le snapshot et l
 recréer seulement le Worker avec `--no-build --no-deps --pull never`. Les pollers Workflow et Activity,
 le module actif et la stabilité des quatre services adjacents doivent être prouvés avant une nouvelle
 Task froide distincte `COLD-05`.
+
+Le checkpoint documentaire `fb59fc4fc29b5ecfcca4f87168f8537ac3b76a5a` passe ensuite les dix workflows
+PR, dont Research et D04, et est synchronisé sur le serveur. Le premier bloc d'activation s'interrompt
+avant tout arrêt ou recréation : le contrôle vise à tort
+`/app/services/worker/src/nevolium_worker/research_agent.py`. Le Dockerfile installe avec
+`--no-editable` puis copie uniquement `/app/.venv` dans l'image runtime. La reprise demande donc à
+Python le fichier du module installé ; il se trouve sous
+`/app/.venv/lib/python3.12/site-packages/nevolium_worker/research_agent.py`.
+
+Les modules de l'ancien Worker et de l'image préparée correspondent respectivement à `35303f2…`
+et `969fe66…`. Après vérification du snapshot canonique inchangé, seul le Worker est arrêté en 3,7 s,
+puis recréé sans build, dépendance ni pull en 1,2 s. Son identifiant devient
+`a04ca30560606238623301b85987bf33fc1a22d3ef2cf3d006de1505007acc2f` et son image reste la cible
+`sha256:b14d17a97f3f295b3ad78d13ee16fe61da11f050c65d735bddbe711b0cc26b6b`. L'empreinte du module
+actif correspond au correctif. Un conteneur CLI éphémère, sans lancement de workflow, décrit les
+queues Workflow et Activity et confirme dans chacune un poller de suffixe `@a04ca3056060`.
+
+Core `8b2f98e22a7c…`, LiteLLM `ac4be617eb12…`, Ollama `4245ff7673bc…` et Web MCP `c07f7d74bf7c…`
+gardent leurs identités. Les deux tags de rollback restent intacts ; le snapshot après activation vaut
+toujours `0|0|5|failed|1|2388|1|0|0|0|failed|1|2290|1|0|0|0|25|25|14|9|0|18`.
+Les contrôles publics Application/Auth/API anonyme donnent `200|200|401`. Aucune Task Research n'est
+créée. Cette preuve valide l'activation, pas encore Research bout en bout. La prochaine opération
+est la préparation sans redéploiement du marqueur froid distinct `COLD-05`, suivie d'une seule Task
+authentifiée et d'un examen de ses preuves avant la mesure chaude.

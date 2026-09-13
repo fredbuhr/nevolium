@@ -108,6 +108,15 @@ des cinq conteneurs observés, les services publics et le snapshot canonique res
 inchangés ; aucune Task n'est créée. La prochaine gate est l'activation du seul Worker à partir de
 l'image préparée, sans build ni pull, avant toute nouvelle mesure Research.
 
+Cette activation est désormais confirmée sur le checkout serveur `fb59fc4…` : le seul Worker recréé
+porte le code `969fe66…`, l'image `b14d17a…` et le conteneur `a04ca3056060…`. Son module installé
+correspond au code et les pollers Workflow/Activity du nouveau conteneur sont présents. Une première
+garde avait arrêté le bloc avant activation à cause d'un chemin source absent du runtime ; la reprise
+résout le fichier réellement installé via Python, sans rebuild. Core, LiteLLM, Ollama et Web MCP restent
+inchangés, les deux images de rollback sont conservées et le snapshot SQL reste identique. Les contrôles
+publics rendent `200|200|401` et aucune Task n'est créée. Research bout en bout reste à prouver :
+préparer maintenant une Task froide distincte `COLD-05`, sans rejouer les incidents conservés.
+
 Les sections ci-dessous conservent l'historique des paliers. Six espaces UI sont raccordés, pas quinze
 modules futurs ; le cockpit Mycelium reste D05. L'erreur partagée Command/News, les débordements de panneaux
 et la qualité des réponses ne sont pas corrigés par ce changement de budget.

@@ -124,6 +124,18 @@ strictement identique avant et après la construction, les services publics sont
 n'est créée. L'activation suivante doit employer cette image déjà construite, sans rebuild, dépendance
 ni pull, et ne recréer que le Worker après une nouvelle garde d'inactivité.
 
+L'activation contrôlée de cette image est maintenant prouvée sur le checkout `fb59fc4…`. Une première
+garde échoue avant l'arrêt du Worker parce qu'elle cherche les sources de build dans le runtime. La
+reprise résout le module installé par Python sous `/app/.venv/lib/python3.12/site-packages`, compare
+son empreinte avant et après activation et ne recrée que le Worker. Le nouveau conteneur
+`a04ca3056060…` contient le code `969fe66…` et ses deux pollers portent le suffixe `@a04ca3056060`.
+Les quatre services adjacents, les tags de rollback et le snapshot canonique sont conservés ; les
+contrôles publics rendent `200|200|401`. Aucune nouvelle Task n'a été lancée par cette opération.
+Préparer `COLD-05` seulement après un contrôle frais d'inactivité et d'absence de ce marqueur dans les
+Tasks et sur disque ; ne jamais réutiliser le fichier ou les Tasks `COLD-03`/`COLD-04`. Le déchargement
+emploie le nom Ollama natif `qwen2.5:0.5b`, pas le nom de fournisseur LiteLLM préfixé. La présence du
+modèle installé et son absence des modèles chargés doivent être contrôlées avant le nouvel horodatage.
+
 La mesure qui suit emploie deux nouvelles Tasks authentifiées : une après déchargement explicite du
 modèle, puis une seconde pendant qu'il est encore chargé. La température froide/chaude concerne le
 modèle en mémoire, pas un cache disque purgé. Le succès exige l'état terminal, les appels MCP réels,
