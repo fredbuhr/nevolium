@@ -260,8 +260,8 @@ def _non_negative_int(value: Any) -> int:
 def _response_cost(headers: httpx.Headers, *, model_alias: str) -> tuple[Decimal, bool]:
     """Read the final proxy cost while preserving a reviewed local zero-cost invariant.
 
-    ``local-fast`` is version-pinned to the on-host Ollama endpoint and explicitly priced at zero
-    in both LiteLLM configurations. Some LiteLLM releases omit the response-cost header when that
+    ``local-fast`` is retained only for historical Tasks and the isolated Ollama fixture,
+    where it is explicitly priced at zero. The API pilot rejects this route. Some LiteLLM releases omit the response-cost header when that
     exact cost is zero. Treat only this reviewed alias as reported zero; every missing or malformed
     cost for a potentially paid alias remains financially uncertain.
     """

@@ -78,12 +78,13 @@ class HeavyWorkExecutionContract(unittest.IsolatedAsyncioTestCase):
         source = {"message_id": "fixture", "conversation_id": "conversation", "subject_ref": "owner",
                   "content": "Canonical source", "role": "user", "source_version": 1,
                   "created_at": datetime.now(UTC).isoformat()}
-        with patch.dict(os.environ, {"NEVOLIUM_INTERNAL_TOKEN": "fixture-secret", "OPENAI_API_KEY": "fixture-key"}), patch.object(asyncio, "create_subprocess_exec", spawn):
+        with patch.dict(os.environ, {"NEVOLIUM_INTERNAL_TOKEN": "fixture-secret", "OPENAI_API_KEY": "fixture-key", "NEVOLIUM_API_KEY": "fixture-selected-api-key"}), patch.object(asyncio, "create_subprocess_exec", spawn):
             reports = await asyncio.wait_for(memory_projection._run_projection(source, "stub"), 15)
         self.assertEqual([r["projector"] for r in reports], ["mem0", "graphiti"])
         self.assertTrue(all(r["metadata"]["backend"] == "deterministic-stub" for r in reports))
         self.assertNotIn("NEVOLIUM_INTERNAL_TOKEN", environments[0])
         self.assertNotIn("OPENAI_API_KEY", environments[0])
+        self.assertNotIn("NEVOLIUM_API_KEY", environments[0])
 
     async def test_waiting_work_uses_durable_timer_and_bounded_history(self):
         # Temporal orchestration fixture complements the real Temporal memory/document CI suites.

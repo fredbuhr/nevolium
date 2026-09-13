@@ -434,6 +434,7 @@ async def perform_autonomous_research(payload: dict[str, Any]) -> dict[str, Any]
         tools = context.get("tools") if isinstance(context.get("tools"), list) else []
         query = str(context.get("query") or "")
         max_calls = max(1, min(8, int(context.get("max_tool_calls") or 3)))
+        # Pre-configuration histories retain their original local alias on recovery.
         model_alias = str(context.get("model_alias") or "local-fast")
         model_budget = Decimal(str(context.get("estimated_model_cost_usd") or "0.01"))
         planner_uses_model = bool(tools)

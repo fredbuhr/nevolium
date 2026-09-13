@@ -11,6 +11,46 @@ from urllib.parse import urlsplit
 FORBIDDEN = {'home-assistant', 'openhands', 'livekit', 'nevolium-realtime', 'rotki', 'actual-budget', 'hummingbot', 'headscale', 'activepieces', 'ntfy'}
 PASSWORD = re.compile(r'(PASSWORD|SECRET|SIGNING_KEY|INTERNAL_TOKEN|OPERATIONS_TOKEN|MASTER_KEY|OPENBAO_TOKEN|ENCRYPTION_KEY|SALT)$')
 OPENBAO_SERVICE_TOKEN = re.compile(r's\.[A-Za-z0-9]{24,}')
+MODEL_ALIASES = {'smart', 'alternative'}
+API_MODEL = re.compile(r'(openai|anthropic|xai|moonshot)/[^\s/][^\s]*')
+
+
+def _provider_secret_is_missing(value: object) -> bool:
+    normalized = str(value or '').strip()
+    return not normalized or any(
+        marker in normalized.lower()
+        for marker in ('change_me', 'change-me', 'development', 'nevolium-dev')
+    )
+
+
+def validate_model_routes(services: dict) -> list[str]:
+    """Validate the selected API without exposing credentials or contacting a provider."""
+    errors = []
+    core = services.get('nevolium-core', {}).get('environment', {})
+    worker = services.get('nevolium-worker', {}).get('environment', {})
+    selected_aliases = {
+        core.get('NEVOLIUM_RESEARCH_MODEL', 'smart'),
+        worker.get('NEVOLIUM_NEWS_MODEL', 'smart'),
+        worker.get('NEVOLIUM_SEMANTIC_ROUTER_MODEL', 'smart'),
+    }
+    if selected_aliases - MODEL_ALIASES:
+        errors.append('Production model aliases must be smart or alternative; local AI is deferred')
+    if {'ollama', 'vllm'} & services.keys():
+        errors.append('Local LLM services are outside the API pilot; remove local-ai/gpu profiles')
+    if 'litellm' not in services:
+        return errors  # Foundation-only deployments do not activate paid model routing.
+    litellm = services['litellm'].get('environment', {})
+    if 'smart' in selected_aliases:
+        if _provider_secret_is_missing(litellm.get('NEVOLIUM_API_KEY')):
+            errors.append('LiteLLM smart alias requires NEVOLIUM_API_KEY')
+        if not API_MODEL.fullmatch(str(litellm.get('NEVOLIUM_API_MODEL') or '')):
+            errors.append('NEVOLIUM_API_MODEL requires a remote provider/model identifier')
+    if (
+        'alternative' in selected_aliases
+        and _provider_secret_is_missing(litellm.get('ANTHROPIC_API_KEY'))
+    ):
+        errors.append('LiteLLM alternative alias requires ANTHROPIC_API_KEY')
+    return errors
 
 
 def validate(config: dict) -> list[str]:
@@ -49,10 +89,6 @@ def validate(config: dict) -> list[str]:
         if 'nevolium' in svc.get('networks', {}): errors.append(f'{name}: development shared network forbidden')
         if name in {'nevolium-core','nevolium-worker','nevolium-realtime'} and env.get('NEVOLIUM_ENV') != 'production':
             errors.append(f'{name}: production mode required')
-    if 'vllm' in services:
-        command = services['vllm'].get('command', [])
-        if '--revision' not in command or not re.fullmatch(r'[0-9a-f]{40}', command[command.index('--revision')+1]):
-            errors.append('vLLM requires an explicit upstream model revision')
     core = services.get('nevolium-core', {}).get('environment', {})
     if core:
         if str(core.get('NEVOLIUM_AUTH_ENABLED')).lower() != 'true': errors.append('Core authentication required')
@@ -87,6 +123,7 @@ def validate(config: dict) -> list[str]:
             errors.append('Worker must not join the canonical network')
         if 'egress' in seaweed_networks:
             errors.append('SeaweedFS must not have egress')
+    errors.extend(validate_model_routes(services))
     return errors
 
 

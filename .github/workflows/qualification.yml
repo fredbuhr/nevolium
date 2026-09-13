@@ -23,6 +23,11 @@ on:
       - 'uv.lock'
       - '.github/workflows/qualification.yml'
   workflow_dispatch:
+    inputs:
+      legacy_local_ai:
+        description: "Run the deferred Ollama fixture (not a D04 pilot gate)"
+        type: boolean
+        default: false
 
 concurrency:
   group: qualification-${{ github.ref }}
@@ -40,10 +45,6 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Prove TLS, public access, bounded reads and honest account counts
         run: uv run --locked --project services/worker python scripts/qualification/contract.py
-      - name: Prove Research model preselection criteria
-        run: |
-          uv run --locked --project services/worker python scripts/qualification/research_model.py self-test
-          bash -n scripts/qualification/research_model_target.sh
 
   real-document-memory:
     runs-on: ubuntu-latest
@@ -88,6 +89,7 @@ jobs:
         run: docker compose -f compose.yaml -f compose.qualification.yaml --profile '*' down -v --remove-orphans
 
   real-local-services:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.legacy_local_ai }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -102,14 +104,18 @@ jobs:
           cat >> .env <<'EOF'
           NEVOLIUM_WORKER_EXTRAS=
           NEVOLIUM_INTERNAL_TOKEN=d04-internal-fixture-token
-          OPENAI_API_KEY=
+          NEVOLIUM_API_KEY=
           ANTHROPIC_API_KEY=
           LITELLM_MASTER_KEY=d04-local-fixture-no-provider-key
           OLLAMA_MODEL=ollama/qwen2.5:0.5b
           EOF
+      - name: Check deferred local preselection helpers
+        run: |
+          uv run --locked --project services/worker python scripts/qualification/research_model.py self-test
+          bash -n scripts/qualification/research_model_target.sh
       - name: Start local inference, search and canonical accounting
         run: |
-          docker compose -f compose.yaml -f compose.test-noauth.yaml up -d --build postgres nats nevolium-core ollama litellm searxng valkey
+          docker compose -f compose.yaml -f compose.test-noauth.yaml -f compose.qualification-local.yaml up -d --build postgres nats nevolium-core ollama litellm searxng valkey
           docker compose exec -T ollama ollama pull qwen2.5:0.5b
       - name: Prove real local inference, accounting, restart and search
         run: uv run --locked --project services/worker python scripts/qualification/local_services.py

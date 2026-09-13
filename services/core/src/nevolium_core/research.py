@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .auth import Principal, require_nevolium_user
+from .config import settings
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
@@ -30,8 +31,14 @@ class ResearchRunCreate(BaseModel):
     query: str = Field(min_length=3, max_length=4000)
     max_tool_calls: int = Field(default=3, ge=1, le=8)
     allowed_tool_keys: list[str] = Field(default_factory=list, max_length=32)
-    model_alias: str = Field(default="local-fast", min_length=1, max_length=120)
-    estimated_model_cost_usd: Decimal = Field(default=Decimal("0.01"), ge=0, le=1)
+    model_alias: Literal["smart", "alternative", "local-fast"] = Field(
+        default_factory=lambda: settings.nevolium_research_model
+    )
+    estimated_model_cost_usd: Decimal = Field(
+        default_factory=lambda: settings.nevolium_research_model_estimated_cost_usd,
+        ge=0,
+        le=1,
+    )
 
 
 class ResearchContext(BaseModel):
@@ -279,6 +286,7 @@ async def research_context(task_id: uuid.UUID, session: AsyncSession = Depends(g
         project_id=task.project_id,
         query=str(task_input.get("query") or ""),
         max_tool_calls=int(task_input.get("max_tool_calls") or 3),
+        # Defaults on old Tasks must not change when the operator selects a new provider.
         model_alias=str(task_input.get("model_alias") or "local-fast"),
         estimated_model_cost_usd=Decimal(str(task_input.get("estimated_model_cost_usd") or "0.01")),
         tools=[

@@ -48,9 +48,9 @@ Web / Desktop / future mobile
              +--------------------+--------------------+
              |                    |                    |
           LiteLLM              MCP/Apps           Browser/Code
-       cloud + local          Activepieces       Playwright/OpenHands
+       selected API           Activepieces       Playwright/OpenHands
              |
-       Ollama/vLLM/etc.
+       OpenAI/others
 
 Cross-cutting: NATS · Valkey · OpenBao · Keycloak · Langfuse · ntfy
 ```
@@ -173,11 +173,14 @@ Every significant autonomous workflow carries:
 
 All general model traffic uses LiteLLM as the provider boundary. The worker asks Nevolium routing policy for a task class/quality/risk budget, then calls a logical model alias rather than provider-specific names.
 
-Local tiers:
+The current pilot uses remote APIs only, starting with OpenAI. The logical alias `smart` maps to
+one selected provider/model and its matching credential in LiteLLM. Core persists the alias and
+budget for each new Research Task; provider keys never enter task inputs or the Web client.
+D05 adds an administrator-controlled provider/model selector using this existing boundary.
 
-- Ollama for simple local deployment;
-- llama.cpp for edge/desktop-native inference where useful;
-- vLLM for dedicated GPU serving.
+Local LLM serving (Ollama, llama.cpp or vLLM) is deferred until a new decision and suitable hardware,
+not a D04/D05/D13 prerequisite. Existing PDF and embedding adapters retain their qualified technical
+model bundle. See [ADR-031](decisions/ADR-031-api-first-pilot.md).
 
 Provider-specific capabilities remain available through adapters when needed, but they cannot leak into the canonical domain schema.
 

@@ -131,13 +131,15 @@ with `Retry-After: 1`. No lock or DB connection is retained during a provider re
 | `NEVOLIUM_MODEL_OWNER_DAILY_BUDGET_USD` | 10 | Same exposure per project owner |
 | `NEVOLIUM_MODEL_MAX_OUTPUT_TOKENS` | 4096 | Non-streaming completion output bound passed to LiteLLM |
 | `NEVOLIUM_NEWS_MODEL_ESTIMATED_COST_USD` | 0.01 | Explicit News estimate when its task has no override |
+| `NEVOLIUM_RESEARCH_MODEL` | `smart` | New Research Tasks use the selected API alias; Core persists this choice for the Worker |
+| `NEVOLIUM_RESEARCH_MODEL_ESTIMATED_COST_USD` | 0.01 | Total reservation estimate split between Research planning and synthesis; production template uses 0.10 |
 | `DATABASE_POOL_SIZE` / `DATABASE_MAX_OVERFLOW` | 5 / 5 | Maximum ten connections per Core process by default |
 | `DATABASE_POOL_TIMEOUT` | 10 seconds | Pool checkout timeout |
 
 These are configurable initial limits, not measured throughput or a purchase authorization.
 The task budget is still authoritative. Admission counts spent + reserved + uncertain amounts;
 estimates round upward to six decimal places. Paid aliases `smart`/`alternative` require a
-positive estimate. `local-fast` permits zero. Provider prices are not inferred from the alias:
+positive estimate. Historical/fixture-only `local-fast` permits zero and is rejected by the API pilot deployment guard. Provider prices are not inferred from the alias:
 **an estimate and output-token limit do not guarantee a strict dollar ceiling**. Actual cost
 above the estimate is recorded, audited (`estimate_exceeded`) and blocks subsequent admission
 if a budget is exceeded. `/v1/tasks/{id}/budget` exposes reserved/uncertain amounts, uncertain
@@ -149,7 +151,7 @@ Lifecycle:
   60 seconds. Repeating this reservation is safe and does not extend its lifetime.
 - `/internal/v1/model-reservations/start` consumes that reservation exactly once and grants a
   300-second execution lease. A concurrent/lost start response is never blindly replayed.
-- The Worker then checkpoints and sends one request, with a 120-second absolute deadline.
+- The Worker then checkpoints and sends one request, with a bounded absolute deadline (180 seconds for Research, 110 for semantic routing).
   LiteLLM router and SDK retries are configured to zero; real provider/proxy behavior remains
   a D04 measurement. Lease expiration cannot prove remote cancellation.
 - A never-started expiry frees both money and capacity and can be re-admitted under the same key.

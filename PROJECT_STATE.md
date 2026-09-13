@@ -6,98 +6,90 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 
 | Champ | État vérifié |
 |---|---|
-| `main` | `45b74baa3ddf8910f2aaa3d23c63f3e9bbedcf60` ; D03 intégré par #87, D04 non intégré |
-| Acquis intégrés | Reset R0–R7, H1–H4 et D01–D03 terminés dans leurs périmètres ; dernier jalon produit G51 Daily Spine |
-| Lot actif | **D04 : moteurs réels et exploitation, sortie H5** |
-| Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche de développement active |
-| Dernier head publié vérifié | `7b1ded0fa0849d3607e7b76bc26f38c01c5cab1d`, 10/10 workflows réussis ; changements suivants à revalider en CI |
-| Schéma / images | `0014_capacity_and_data` ; baseline images v9, pas de migration ni de nouvelle dépendance dans cette reprise |
-| Cible H5 | Premier serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote 3–4 personnes |
+| `main` | `45b74baa3ddf8910f2aaa3d23c63f3e9bbedcf60` ; D03 intégré par #87 |
+| Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
+| Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
+| Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
+| Parent vérifié avant pivot API | `25566363c66bcc41980077214c3f379e2880f3a4`, 10/10 workflows réussis ; 91 commits dans #88 à cette revue |
+| Validation du pivot | Contrats locaux puis CI du nouveau head à vérifier avant activation ; le job local manuel n'est plus requis |
+| Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
+| Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
-## Dernier état cible attesté, distinct du code de branche
+## Décision active : API uniquement pour le pilote
 
-| Composant | Dernier code déployé confirmé dans les preuves opérateur |
+Sur instruction utilisateur, OpenAI remplace le LLM local. Ne plus relancer la présélection Qwen,
+réparer son DNS ou régler les threads Ollama. Le local attend une nouvelle décision et du matériel
+adapté ; il ne conditionne ni D04, ni D05, ni D13. Voir [ADR-031](docs/decisions/ADR-031-api-first-pilot.md).
+
+`smart` est l'alias de l'API choisie : `NEVOLIUM_API_MODEL` + `NEVOLIUM_API_KEY` dans LiteLLM,
+OpenAI `openai/gpt-4.1` initialement. Aucun secret fournisseur côté Core/Worker/Web. Les nouvelles
+Tasks Research et le routage sémantique utilisent `smart` ; Core persiste le choix et l'estimation,
+le Worker les reçoit dans le contexte. Anciennes Tasks inchangées. Le garde de production refuse
+les routes/services locaux et une clé API absente/placeholder. Le sélecteur API de l'interface est
+prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
+
+## Dernier état cible attesté
+
+| Composant | Dernier code déployé confirmé |
 |---|---|
 | Core | `e3adbe648b245e2567970769e6a4bf4333b3e4a4` |
 | Worker | `969fe668d08984b0e6aea38b8ba7f1ff18972b21` |
-| LiteLLM | `e4d886b9b32907135cb5faeb7737f09de27c6389` ; `local-fast`, Ollama natif `qwen2.5:0.5b`, deux threads |
-| Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; deux outils A1 en lecture seule |
+| LiteLLM | `e4d886b9b32907135cb5faeb7737f09de27c6389` ; ancienne route locale |
+| Web MCP | `db3da89acfb041db75e6c7a2417a83dbafc6ce80` ; outils A1 search/fetch |
 
-Dernier checkout cible attesté dans le dépôt : `fb59fc4…`. Worker actif `a04ca3056060…`, image
-`sha256:b14d17a97f3f295b3ad78d13ee16fe61da11f050c65d735bddbe711b0cc26b6b`, pollers Workflow/Activity présents.
-Module installé sous `/app/.venv/lib/python3.12/site-packages/nevolium_worker/`.
-Rollbacks Worker `rollback-35303f2e3a5e` et `rollback-e4d886b9b329` conservés.
-Contrôles publics `200|200|401` ; snapshot SQL identique avant/après cette activation.
-Ces observations sont historiques : aucune connexion au serveur dans cette reprise.
+Le checkout serveur est à `25566363c66bcc41980077214c3f379e2880f3a4`. La dernière commande a construit
+le client de qualification en 389,9 s, puis échoué au premier téléchargement de `qwen3:4b` : résolution
+DNS de `registry.ollama.ai`. Statut 1, avant isolation des services. Core/Worker/Ollama n'ont pas été
+arrêtés par ce script ; aucune nouvelle Task. Le build/cache client reste présent. Ne pas relancer.
+Ces faits proviennent de la sortie opérateur ; aucune connexion serveur dans cette reprise.
 
-## Acquis et incidents à préserver
+## Acquis et anomalies à préserver
 
-- Serveur durci, Docker/réseaux internes, Caddy/TLS, comptes nominatifs avec MFA, retrait du bootstrap
-  Keycloak, récupération séparée des clés OpenBao et renouvellement workload vérifiés.
-- Core/Web/Worker et moteurs actifs ; PDF Docling propriétaire, Mem0/Graphiti et rejeu sans doublon
-  prouvés sur cible. News fonctionne avec fallback déterministe ; usages locaux observés comptabilisés.
-- Veto sémantique actif. Pertinence générale du routage et modèle quotidien non qualifiés.
-- `COLD-03` échouée : 2 388 jetons, réservation réglée, aucun outil/artefact. `COLD-04`
-  (`e1c81a97-59d4-4be8-ae12-732d09796085`) échouée : 2 290 jetons, réservation réglée, aucun outil/artefact.
-  Le correctif Worker `969fe66…` traite le champ d'enveloppe absent, sans second appel modèle.
-- `COLD-05`, Task `ccb61e1c-7fb2-460b-ad70-e4cef359ed42`, a échoué sans retry en 48 s. Planning
-  accepté, mais le seul appel `web.search` a recherché le marqueur COLD-05 au lieu de la requête Debian ;
-  aucun `web.fetch`. La synthèse a ensuite produit 13 jetons non JSON (`JSONDecodeError`), donc aucun
-  artefact Research final. Les deux appels LiteLLM/Ollama HTTP 200 totalisent 2 383 puis 2 063 jetons ;
-  les deux réservations sont `settled`, zéro workflow/réservation actif, cinq historiques `uncertain`
-  inchangés. Ollama confirme deux threads, aucun OOM ni redémarrage. **Ne pas rejouer COLD-05.**
-- Les cinq réservations `uncertain` du dernier snapshot sont conservées. Ne supprimer aucune donnée,
-  lease, dépense inconnue ou preuve pour faire passer un contrôle.
+- Cible durcie, TLS/OIDC/MFA et comptes nominatifs, bootstrap retiré, OpenBao persistant et
+  renouvellement prouvés. PDF Docling propriétaire et Mem0/Graphiti avec rejeu sans doublon acquis.
+- News fonctionne avec fallback déterministe ; veto sémantique actif. Qualité quotidienne via API
+  encore à mesurer. Ne pas confondre succès de fixture et bon résultat utilisateur.
+- COLD-03/04/05 restent des échecs historiques. COLD-05 (`ccb61e1c-7fb2-460b-ad70-e4cef359ed42`)
+  a recherché son marqueur, omis fetch puis rendu une synthèse non JSON. Deux usages réglés, aucun OOM.
+  Conserver les cinq réservations historiques `uncertain`, sans effacement ni rejeu automatique.
+- Correctif Core déjà sur la branche : un slot Research lie atomiquement un seul appel/entrée,
+  même en concurrence ; IDs existants conservés, aucune migration. **Non déployé sur cible.**
+- Worker transmet les JSON Schemas Research natifs et valide toujours contenu/outils/citations.
+  **Non déployé sur cible.** Le pivot conserve ces correctifs et retire les défauts `local-fast`
+  des nouvelles demandes au lieu d'ajouter un second gateway ou un nouveau runner de campagne.
+- Les essais/procédures locaux sont archivés. La fixture reste isolée et manuelle ; les contrats de
+  comptabilité, concurrence, ownership et crash/replay Research restent requis.
 
-## Travail de cette reprise
+## Validation du pivot avant publication
 
-[Audit du 13 septembre](docs/archive/d04-progress-audit-2026-09-13.md) et consolidation du suivi courant.
-Défaut Core reproduit : deux outils différents pouvaient partager un slot malgré `max_tool_calls=1`.
-Le correctif verrouille le parent durant la liaison et recherche le slot indépendamment de l'outil ;
-les historiques ambigus sont refusés. IDs/clés existants conservés, sans migration.
-Régression de concurrence ajoutée au scénario Core/PostgreSQL existant. **Correctif non déployé sur cible.**
+Ruff F/E9 (dont imports/code inutilisés), identité canonique et diff sans erreur réussis.
+Contrats gateway, planning/synthèse Research, routage sémantique et six contrôles du runner cible
+réussis. Neuf contrôles déploiement/configuration/reprise réussis sans Docker ; isolation de la clé
+API vérifiée dans le vrai processus enfant mémoire. Docker indisponible dans ce workspace : rendu
+Compose et intégrations restent à vérifier par la CI du nouveau head. Aucun appel OpenAI effectué.
 
-Le gateway Worker accepte désormais un JSON Schema natif borné et Research transmet directement les
-schémas `ResearchPlan` et `ResearchSynthesis` à LiteLLM/Ollama. La validation Pydantic, l'allowlist Core
-et les citations restent autoritatives. Le scénario réel local vérifie aussi ce transport structuré.
-Un runner de présélection compare jusqu'à trois modèles Ollama déjà installés, un seul en mémoire, sans
-Task canonique ni appel Web : plan froid/chaud exact, synthèse sourcée et résistance à une instruction
-injectée. Aucun modèle n'est adopté automatiquement. **Ces changements Worker ne sont pas déployés.**
+## Prochaine action exécutable
 
-La topologie production retire le port hôte Ollama et limite le service quotidien à 4 Gio. Le wrapper
-cible de présélection prépare donc les modèles avant une interruption bornée, refuse tout travail actif,
-exécute un Ollama éphémère hors réseau à 2 CPU/12 Gio avec le volume existant, puis restaure Core, Worker
-et Ollama par trap. Il ne déploie pas le nouveau Worker et n'écrit dans aucune table canonique.
+**Vérifier la CI du head API publié dans #88, puis préparer la configuration sur le serveur.**
+Après mise à jour contrôlée du checkout, éditer uniquement le fichier protégé :
 
-Validation locale : uv 0.12.13, synchronisation verrouillée Core/Worker, Ruff F/E9, identité ; contrats
-Research, gateway/comptabilité, Context Pack, ownership Research et états terminaux réussis.
-Reproduction relationnelle locale : deux invocations avant correction, une après. Le head `903d33b…`
-passe 10/10 workflows, dont la concurrence Core/PostgreSQL, le vrai SIGKILL/replay Research et le
-transport JSON Schema réel Core → LiteLLM → Ollama. Revalider le prochain head dans #88.
-Docker et l'accès au serveur ne sont pas disponibles dans ce workspace.
+```bash
+sudoedit /etc/nevolium/production.env
+```
 
-## Prochaine action et sortie
+Y renseigner le couple modèle/clé de l'API, `smart` pour Research/News/routage et l'estimation Research
+0.10 comme décrit dans [deployment](docs/deployment.md#selection-du-fournisseur-api). Ne jamais
+transmettre ce fichier ou la clé. Ensuite valider la topologie effective avec le contrôleur existant,
+construire avant activation, vérifier inactivité (workflows ET réservations), garder les images et
+configurations précédentes, arrêter l'ancien Ollama et activer Core/Worker/LiteLLM en une fois.
+Le [protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
-**Présélectionner Qwen3 4B et 8B hors données canoniques avec le runner borné, sans nouvelle Task.**
-Un candidat doit réussir tous les critères de qualité à froid et à chaud, rester sous 180 s par cas et
-sous 12 Gio chargé. En l'absence de candidat éligible, arrêter et conserver le rapport. Sinon, regrouper
-le modèle retenu et le Worker à schéma natif dans une seule activation réversible, puis créer deux
-nouvelles Tasks Research canoniques, froide et chaude, avec une question propre et de nouveaux identifiants
-consignés hors du texte utilisateur. COLD-05 reste intacte.
+Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
+Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
 
-Les quatre preuves restantes figurent dans le [protocole H5](docs/qualification-d04.md#restauration-et-passage-de-h5) :
-Research/modèle quotidien ; charge/files mixtes ; upgrade/rollback et frontières affectées ; restauration
-Restic indépendante sur volumes neufs. Conserver les acquis non affectés. Avant activation du correctif
-Core, vérifier head CI et inactivité, utiliser la procédure existante avec image précédente conservée.
-Aucun merge, D05, achat ou lancement commercial implicite.
-
-## Références et périmètre
+## Références
 
 [État produit](docs/status.md) · [plan D01–D22](docs/implementation-plan.md) · [workflow](docs/development-workflow.md)
-· [preuves serveur](docs/archive/server-foundation-2026-09-11.md) · [preuves CI D04](docs/archive/qualification-d04-2026-09-11.md).
-L'[ADR-030](docs/decisions/ADR-030-nevolium-canonical-identity.md) fixe Nevolium sans alias antérieur.
-L'[ADR-029](docs/decisions/ADR-029-server-personal-and-offline-clients.md) conserve serveur prioritaire,
-installation personnelle et clients PC/mobile/tablette ; tous les OS, l'offline et la 3D ne conditionnent pas H5.
-Budget préféré 50 €/mois, plafond 90 € ; portable ASUS FA608PM seulement candidat à une répétition ultérieure.
-Les anciennes refs H/D existent encore mais sont retirées du développement actif. Réservoirs inspectés :
-prototype `ed12d503…`, `consolidate/g49-research-durable-stages` à `57a1a217…` ; aucun merge en bloc.
+· [preuves serveur](docs/archive/server-foundation-2026-09-11.md) · [audit D04](docs/archive/d04-progress-audit-2026-09-13.md).
+Les anciennes refs H/D restent retirées du développement actif. Réservoirs déjà inspectés : prototype
+`ed12d503…`, `consolidate/g49-research-durable-stages` à `57a1a217…` ; aucun merge en bloc.

@@ -49,8 +49,6 @@ router = APIRouter()
 
 SEMANTIC_ROUTE_BUDGET_USD = Decimal("0.02")
 SEMANTIC_ROUTE_CONFIDENCE_FLOOR = 0.80
-RESEARCH_COMMAND_MODEL_BUDGET_USD = Decimal("0.02")
-RESEARCH_COMMAND_MODEL_ALIAS = "local-fast"
 
 _NEWS_TERMS = (
     "actualite",
@@ -515,8 +513,6 @@ async def _execute_route(
             query=routed.query,
             max_tool_calls=routed.max_tool_calls,
             allowed_tool_keys=[],
-            model_alias=RESEARCH_COMMAND_MODEL_ALIAS,
-            estimated_model_cost_usd=RESEARCH_COMMAND_MODEL_BUDGET_USD,
         )
         deterministic_task_id = uuid.uuid5(
             uuid.NAMESPACE_URL,

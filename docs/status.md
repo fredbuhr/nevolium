@@ -22,8 +22,8 @@ rétention ; D03 (#87) durcit le déploiement, les droits et la reproductibilit�
 | Documents | PDF à couche texte parsé par Docling 2.126.0 ; source SHA-256, version échouée conservée, réingestion et chunk propriétaire | Scans/OCR complexes, tableaux et gros documents non qualifiés par cet essai |
 | Mémoire | Mem0/embeddings et Graphiti prouvés sur cible ; scope étranger vide, génération 2 rejouée sans doublon | Qualité des usages produit ; projections dérivées, pas source de vérité |
 | News | Dix sources propriétaire et briefing terminé avec fallback déterministe lors d'un timeout | Synthèse quotidienne non qualifiée ; réservation historique inconnue conservée |
-| Modèle et comptabilité | Ollama/LiteLLM à deux threads ; tokens réels, coût nul déclaré pour `local-fast` seulement, réservation réglée et rejeu idempotent | `qwen2.5:0.5b` qualifie le câblage, pas la qualité du modèle quotidien |
-| Routage | Command Center, propositions PydanticAI, garde Core et veto sans Task métier ; proposition forcée valide testée en CI | Pertinence générale et latence interactive |
+| Modèle et comptabilité | `smart` configurable par fournisseur/modèle/clé ; OpenAI par défaut. Tokens, coûts reportés, réservations et rejeu restent canoniques ; production refuse le LLM local | Configuration API préparée sur la branche, aucun appel OpenAI cible encore attesté ; les preuves locales restent historiques |
+| Routage | Command Center, propositions PydanticAI, garde Core et veto sans Task métier ; nouvelles routes Research et sémantiques sur `smart` | Pertinence et latence du pilote API à mesurer ; les alias des anciennes Tasks restent inchangés |
 | Research | Context Pack, planning/synthèse bornés, deux outils Web A1 activés ; accès Web réel et refus loopback vérifiés ; schémas natifs ajoutés sur la branche | Parcours canonique complet non établi : COLD-05 a mal planifié la requête puis produit une synthèse non JSON avec le modèle 0.5B ; nouveau Worker non déployé |
 | Unicité Research | Correctif de branche : liaison atomique d'un slot à un seul outil/entrée ; IDs existants conservés, scénario de concurrence Core/PostgreSQL ajouté | Activation cible après validation du head CI |
 | Secrets/exploitation | OpenBao persistant, policy minimale, récupération des clés chiffrée et vérifiée hors serveur, root révoqué, renouvellement actif | Backup applicatif et restauration indépendante de la cible ; upgrade/rollback |
@@ -38,7 +38,7 @@ Les essais interrompus et réservations inconnues restent intacts.
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web publié, OIDC, panneaux persistés ; Command Center, Projects, Today, Research, News, Knowledge | Design Mycelium et cohérence quotidienne D05 ; défauts d'affichage/d'erreurs partagées encore signalés |
+| Cockpit | Web publié, OIDC, panneaux persistés ; Command Center, Projects, Today, Research, News, Knowledge | Design Mycelium, cohérence quotidienne et sélecteur fournisseur/modèle D05 ; défauts d'affichage/d'erreurs partagées encore signalés |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | Gantt, calendrier, dépendances/jalons, Kanban et récurrences D06 |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | Édition enrichie D07, mindmap 2D D08 et Mycelium 3D D09 |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration/persistance, permissions appareil et voix |
@@ -51,12 +51,20 @@ restent dans les lots produit/distribution du [plan D01–D22](implementation-pl
 
 ## Portée des validations
 
-Le head publié `903d33b…` passe 10/10 workflows, dont les intégrations Research et Ollama réelles.
+Le parent `2556636…` avait 10/10 workflows réussis, dont la fixture Ollama réelle. Le pivot API
+requiert sa propre CI avant activation. La fixture locale est désormais manuelle et normalement
+ignorée ; ses preuves ne sont plus une condition de D04. Les contrats gardent la comptabilité,
+l'anti-doublon et la reprise Research. Aucun résultat CI factice ne prouve l'accès réel à OpenAI.
 L'[audit du 13 septembre](archive/d04-progress-audit-2026-09-13.md) distingue ces preuves du résultat
 COLD-05. Le [protocole D04](qualification-d04.md) fixe
 les seuils et quatre preuves de sortie encore ouvertes ; les acquis ne sont pas à recommencer.
 Les anciens checkpoints et « prochaines actions » sont historiques, jamais une instruction de reprise.
 
 Les tests ne prouvent ni 1 000 utilisateurs privés distincts, ni 1 000 générations simultanées.
-Les budgets réservent des estimations, sans plafond fournisseur garanti en dollars. Aucun fournisseur
-payant, achat, lancement commercial ou qualification de tous les OS n'est imposé pour fermer H5.
+Les budgets réservent des estimations, sans plafond fournisseur garanti en dollars. Un seul fournisseur
+réel qualifié suffit pour le pilote ; tous les fournisseurs, le lancement commercial et tous les OS
+ne sont pas des conditions de fermeture de H5.
+
+L'[ADR-031](decisions/ADR-031-api-first-pilot.md) fixe les API pour le pilote. Claude, Grok et Kimi
+peuvent être configurés derrière la même frontière ; leur exécution réelle n'est pas encore qualifiée.
+Le sélecteur Web appartient à D05. Le LLM local n'a pas de date de retour imposée au plan.

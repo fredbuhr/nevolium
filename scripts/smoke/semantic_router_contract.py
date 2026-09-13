@@ -7,6 +7,7 @@ import asyncio
 import json
 from typing import Any
 from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import patch
 
 import httpx
@@ -142,7 +143,7 @@ async def prove_gateway_deadline(delay: float, *, expires: bool) -> None:
                 # Let the real asyncio.timeout callback run when the virtual deadline passed.
                 await asyncio.sleep(0)
                 await asyncio.sleep(0)
-                data = {"model": "local-fast", "usage": {
+                data = {"model": "fixture/api", "usage": {
                     "prompt_tokens": 924, "completion_tokens": 101, "total_tokens": 1025,
                 }, "choices": [{"message": {"content": json.dumps({
                     "outcome": "unsupported", "confidence": 0,
@@ -152,7 +153,10 @@ async def prove_gateway_deadline(delay: float, *, expires: bool) -> None:
                 assert url.endswith("/semantic-route"), url
                 applied.append(kwargs)
                 data = {"status": "unsupported"}
-            return httpx.Response(200, request=httpx.Request("POST", url), json=data)
+            return httpx.Response(
+                200, request=httpx.Request("POST", url), json=data,
+                headers={"x-litellm-response-cost": "0.003"},
+            )
 
     with (
         patch.object(loop, "time", lambda: clock[0]),
@@ -179,7 +183,7 @@ async def prove_gateway_deadline(delay: float, *, expires: bool) -> None:
             assert len(usages) == len(applied) == 1
             assert usages[0]["usage"].total_tokens == 1025
             assert usages[0]["usage"].cost_reported is True
-            assert usages[0]["usage"].cost_usd == 0
+            assert usages[0]["usage"].cost_usd == Decimal("0.003")
         assert len(requests) == len(authorizations) == 1
 
 
@@ -276,7 +280,7 @@ async def main() -> None:
         "Nevolium catalog, rejects invented capability keys, uses one model turn per route attempt, "
         "accounts a virtual 70-second response within the D04 budget, rejects a virtual "
         "111-second timeout without a second provider call, and makes unknown outcomes non-retryable. "
-        "Real cold-start qualification remains a separate target proof."
+        "Real API qualification remains a separate target proof."
     )
 
 

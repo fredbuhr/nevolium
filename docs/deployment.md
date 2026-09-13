@@ -14,7 +14,7 @@ indisponible ; ne pas confondre interface accessible et intelligence complète.
 |---|---|
 | `memory` | Neo4j ; le Worker réel utilise aussi la base Mem0. Indispensable au scénario mémoire réel D04 |
 | `ai` | LiteLLM ; appels IA bornés et comptabilisés par Nevolium |
-| `local-ai` | Ollama ; backend de l'alias local-fast, modèle à provisionner explicitement |
+| `local-ai` | Fixture Ollama différée ; activation de production refusée pour le pilote API |
 | `search` | SearXNG et Valkey ; News et recherches |
 | `compose.web-mcp.yaml` | Outils publics search/fetch ; inclut SearXNG/Valkey et raccorde le Worker. En production ajouter aussi `compose.web-mcp.production.yaml` |
 | `observability` + `compose.observability.yaml` | Langfuse, ClickHouse, Valkey et activation des callbacks LiteLLM ; hors autorité canonique |
@@ -23,12 +23,11 @@ indisponible ; ne pas confondre interface accessible et intelligence complète.
 | `automation`, `notifications` | Activepieces et ntfy : configurés, aucun consommateur Nevolium livré ; activation de production refusée |
 | `collaboration-experimental`, `voice-experimental` | Hocuspocus et LiveKit : prototypes ; activation de production refusée |
 | `finance`, `home`, `dev-agent`, `remote` | Moteurs non intégrés ; activation de production refusée |
-| `gpu` | vLLM optionnel ; révision amont de modèle de 40 caractères hexadécimaux obligatoire, intégration non validée |
+| `gpu` | vLLM différé ; activation de production refusée pour le pilote API |
 | `ops` | Provisionnement SQL et migration ponctuels ; sauvegarde avec `compose.ops.yaml` |
 
 Les ressources CPU/RAM/PIDs et `init` sont bornées pour les services. Ce sont des plafonds de
-sécurité, pas des recommandations matérielles : notamment 4 Go peuvent être insuffisants pour
-un modèle local. D04 mesure et ajuste sur le matériel choisi. Worker : 45 s de délai Docker,
+sécurité, pas des recommandations matérielles. D04 mesure le pilote API sur le matériel choisi. Worker : 45 s de délai Docker,
 20 s de grâce Temporal puis annulation/nettoyage ; les contrôles d'interruption D01/D02 restent requis.
 
 ## Préparer et contrôler
@@ -40,9 +39,9 @@ Le fichier modèle n'est volontairement pas une configuration acceptée par le g
 
 ```bash
 python scripts/ops/production.py check --env-file .env.production
-# Scénario mémoire/recherche/modèle local, lorsque ses assets seront préparés :
+# Scénario mémoire/recherche avec fournisseur API :
 python scripts/ops/production.py check --env-file .env.production \
-  --profile memory --profile ai --profile local-ai --web-mcp
+  --profile memory --profile ai --web-mcp
 ```
 
 Le contrôleur analyse le JSON effectif de Compose sans afficher les secrets. Il refuse entre autres
@@ -50,6 +49,29 @@ le mélange avec l'overlay dev/noauth, les identifiants SQL administratifs côt�
 modèle, les ports publics non contrôlés et les prototypes à privilèges hôte. Le Core et le Worker
 vérifient aussi leur configuration au démarrage ; Core vérifie ses privilèges SQL effectifs.
 `make prod-template` ne vérifie que la syntaxe du modèle ; `make prod-config` valide le fichier réel.
+
+## Selection du fournisseur API
+
+Le pilote utilise `smart` pour Research, News et le routeur sémantique. LiteLLM résout cet alias
+avec le couple `NEVOLIUM_API_MODEL` / `NEVOLIUM_API_KEY` du fichier protégé de l'instance.
+Le modèle initial est `openai/gpt-4.1`. Les autres préfixes préparés sont `anthropic/`, `xai/` et
+`moonshot/` ; renseigner un modèle réellement accessible et la clé de ce fournisseur ensemble.
+La présence d'un préfixe ne prouve ni l'accès du compte ni la compatibilité de chaque modèle.
+
+Sur l'installation existante, éditer `/etc/nevolium/production.env` avec `sudoedit`. Si une ancienne
+clé était dans `OPENAI_API_KEY`, la transférer dans `NEVOLIUM_API_KEY` à l'intérieur de cet éditeur,
+puis retirer `OPENAI_API_KEY`, `OPENAI_MODEL` et `OLLAMA_MODEL`. Ne pas afficher ce fichier.
+Définir `NEVOLIUM_RESEARCH_MODEL=smart`, `NEVOLIUM_SEMANTIC_ROUTER_MODEL=smart`,
+`NEVOLIUM_NEWS_MODEL=smart` et `NEVOLIUM_RESEARCH_MODEL_ESTIMATED_COST_USD=0.10`.
+L'alias explicite `alternative` conserve sa configuration Anthropic existante ; aucun fallback
+automatique ne lui envoie une requête ou une clé d'un autre fournisseur.
+
+Avant de changer l'API, attendre la fin des travaux et appels modèle, sauvegarder la configuration
+protégée et les images, puis suivre l'[activation D04](qualification-d04.md#activation-cohérente-une-seule-fois).
+Recréer LiteLLM est nécessaire pour appliquer son nouvel environnement ; le premier passage requiert
+aussi Core/Worker. Arrêter l'ancien Ollama après inactivité et conserver ses volumes.
+Le contrôleur refuse les profils locaux et les clés absentes/placeholder sans contacter le fournisseur.
+Le sélecteur dans l'interface est prévu en D05, pas déjà livré par ces variables.
 
 ## SQL : installation initiale et transition depuis le développement
 
@@ -340,9 +362,9 @@ ligne et vérifie tous les SHA-256 avant de démarrer Worker. Cela ne garantit p
 les bons modèles : la preuve PDF/embeddings réelle D04 doit passer avant promotion. Un échec de modèle
 ne doit pas être contourné en revenant silencieusement au mode mémoire stub.
 
-Ollama stocke ses modèles dans son volume et n'a pas de sortie Internet en production. Préparer ses
-poids explicitement, enregistrer les digests du manifeste et les versions avec le rapport D04 ; aucun
-`pull` automatique au démarrage. vLLM exige une révision explicite. OpenHands reste hors production ;
+Le LLM local est différé par ADR-031. Son ancien volume est conservé sans provisionnement pour le pilote.
+Pour les modèles techniques PDF/embeddings, enregistrer le manifeste et les versions ; aucun
+`pull` automatique au démarrage. OpenHands reste hors production ;
 son image enfant est `UNCONFIGURED` tant qu'un opérateur n'a pas fourni un tag incluant son digest
 (`version@sha256:…`). Ne pas inventer un digest pour permettre un démarrage.
 

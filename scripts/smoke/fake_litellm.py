@@ -62,7 +62,7 @@ class Handler(BaseHTTPRequestHandler):
             "id": "chatcmpl-nevolium-semantic-ci",
             "object": "chat.completion",
             "created": 1788897600,
-            "model": "ollama/qwen3:8b",
+            "model": "fixture/api",
             "choices": [
                 {
                     "index": 0,

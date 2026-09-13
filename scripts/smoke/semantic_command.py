@@ -128,7 +128,7 @@ def main() -> None:
     _, artifacts = json_request("GET", f"/v1/tasks/{routing_task_id}/artifacts")
     semantic_artifact = next(item for item in artifacts if item["kind"] == "semantic-route")
     content = semantic_artifact["content"]
-    assert content["model_alias"] == "local-fast", content
+    assert content["model_alias"] == "smart", content
     assert content["proposal"]["capability"] == "news.brief", content
     assert content["proposal"]["confidence"] == 0.93, content
     assert content["applied"]["status"] == "accepted", content

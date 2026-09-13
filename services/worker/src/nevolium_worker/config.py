@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     nevolium_model_max_output_tokens: int = Field(default=4096, ge=1, le=32768)
     nevolium_news_model: str = "smart"
     nevolium_news_model_estimated_cost_usd: Decimal = Field(default=Decimal("0.01"), gt=0, le=Decimal("999999.999999"))
-    nevolium_semantic_router_model: str = "local-fast"
+    nevolium_semantic_router_model: Literal["smart", "alternative", "local-fast"] = "smart"
     nevolium_semantic_router_estimated_cost_usd: Decimal = Decimal("0.002")
     searxng_url: str = "http://searxng:8080"
     nats_url: str = "nats://nats:4222"

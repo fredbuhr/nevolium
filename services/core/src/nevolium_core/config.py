@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     nevolium_model_owner_concurrency: int = Field(default=2, ge=1, le=64)
     nevolium_model_global_daily_budget_usd: Decimal = Field(default=Decimal("50"), ge=0)
     nevolium_model_owner_daily_budget_usd: Decimal = Field(default=Decimal("10"), ge=0)
+    nevolium_research_model: Literal["smart", "alternative", "local-fast"] = "smart"
+    nevolium_research_model_estimated_cost_usd: Decimal = Field(
+        default=Decimal("0.01"), gt=0, le=Decimal("1")
+    )
     nevolium_work_global_concurrency: int = Field(default=4, ge=1, le=128)
     nevolium_work_owner_concurrency: int = Field(default=1, ge=1, le=16)
     nevolium_work_max_pending: int = Field(default=1000, ge=1, le=10000)

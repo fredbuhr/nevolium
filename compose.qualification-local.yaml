@@ -1,0 +1,7 @@
+# Legacy local LLM fixture only. Never combine with production.
+services:
+  litellm:
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-ollama/qwen2.5:0.5b}
+    volumes:
+      - ./infrastructure/litellm/config.local-qualification.yaml:/app/config.yaml:ro

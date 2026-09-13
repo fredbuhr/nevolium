@@ -99,26 +99,24 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 ### D04 — moteurs réels et exploitation (H5)
 
 - **Prérequis :** D01–D03.
-- **Livraison :** scénario privé avec vrai PDF/Docling, mémoire/graphe, recherche, modèle local et
-  fournisseur externe si configuré ; mesurer latence, mémoire, coût et files. Restauration chiffrée
-  hors hôte, perte de moteur, redémarrage, upgrade/rollback et refus réseau.
-- **Charge :** scénarios 1/10/100/1 000 utilisateurs, concurrence/débit explicites ; distinguer
-  simulation sans API payante et mesure sur matériel identifié. Fixer les seuils avant mesure.
-- **Sortie :** rapport daté (versions, matériel, résultats, limites), aucun P0/P1 bloquant l'usage
-  privé, récupération prouvée et baseline/tag post-audit.
-- **Cible de sortie :** serveur Linux x86_64 retenu pour le premier pilote ; la qualification de tous les OS,
-  clients mobiles et modes offline appartient aux lots produit/distribution, pas à une extension indéfinie de H5.
-- **Condition externe :** ne pas acheter serveur/API ni publier sans autorisation ; préparer scripts
-  et protocole même si le matériel manque. La capacité commerciale sera approfondie en D21.
+- **Livraison :** pilote privé avec PDF/Docling, mémoire/graphe, recherche et génération par API.
+  Premier fournisseur : OpenAI derrière LiteLLM ; routage, coûts et autorité restent canoniques.
+  L'[ADR-031](decisions/ADR-031-api-first-pilot.md) retire le LLM local du pilote. Son retour attend
+  une décision ultérieure et du matériel adapté, sans bloquer D04, D05 ou D13.
+- **Acquis :** déploiement privé durci, PDF/mémoire réels, frontières et reprise idempotente ; conserver
+  les preuves non affectées. Le checkpoint distingue code publié et versions réellement déployées.
+- **Reste fini :** deux Research séquentiels réussis via OpenAI ; charge du pilote ; upgrade/rollback ;
+  restauration Restic indépendante. Les scénarios et seuils sont dans le [protocole H5](qualification-d04.md).
+- **Charge :** 1/10/100/1 000 clients virtuels en lecture, concurrence/débit explicites et seuils fixés
+  avant mesure, puis séquence mixte bornée. Ne pas assimiler cela à 1 000 comptes ou générations simultanées.
+- **Sortie :** rapport daté de ces quatre preuves, versions/matériel/limites, aucun P0/P1 bloquant
+  l'usage privé, CI requise verte, PR intégrée et baseline/tag H5. Aucun benchmark de LLM local,
+  essai de tous les fournisseurs ou nouvelle fonction produit n'est ajouté à la sortie.
 - **Livraison active : #88**, une campagne commune dans `hardening/d04-real-engine-qualification`.
-  [Protocole et seuils](qualification-d04.md), vrais adaptateurs CPU, IA locale/recherche et restauration
-  chiffrée entre deux hôtes CI ; correctifs de runtime dans la même PR. D04/H5 reste ouvert jusqu’au
-  scénario privé et aux mesures de la cible, sans transformer cette condition en un nouveau sous-lot.
-- **Identité canonique :** la bascule complète vers Nevolium reste dans cette même livraison D04,
-  conformément à l'[ADR-030](decisions/ADR-030-nevolium-canonical-identity.md). Aucun alias de
-  compatibilité n'est conservé avant le premier déploiement ; la CI refuse tout résidu dans l'arbre
-  suivi. Le head `d9478de…` passe 10/10 workflows et 5/5 jobs D04 ; le dépôt GitHub et le remote local
-  sont maintenant basculés vers Nevolium. La reprise peut continuer sur le serveur dans D04.
+  Un échec ouvre seulement une correction du défaut constaté, sans nouvelle branche ni sous-lot.
+- **Limites :** qualification du premier serveur Linux x86_64. Capacité commerciale en D21 ; autres OS,
+  offline et distribution dans les lots prévus. Aucun achat, merge ou déploiement implicite.
+  L'identité canonique Nevolium reste celle de l'[ADR-030](decisions/ADR-030-nevolium-canonical-identity.md).
 
 ## Phase B — interface quotidienne et pensée visuelle
 
@@ -129,10 +127,18 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
   labels sobres, centre lisible, panneaux adaptés ; navigation, recherche d'accès rapide,
   inspecteur, états vides/chargement/erreur, clavier et réduction des animations. Conserver Dockview,
   layouts par propriétaire et profils manuels réversibles, sans permission implicite.
+- **Réglages API :** sélecteur de fournisseur/modèle pour l'instance (OpenAI, Claude/Anthropic,
+  Grok/xAI, Kimi/Moonshot), état de connexion, test borné et erreur actionnable. Clés côté serveur,
+  modification réservée à l'administrateur, aucune exposition dans les réponses ou le stockage Web.
+  Avant bascule, vider les appels en cours ; en cas de configuration invalide, garder l'ancienne.
+  Réutiliser LiteLLM et les budgets/usages existants. Vérifier réellement le fournisseur sélectionné ;
+  ne pas déclarer tous les modèles compatibles parce qu'ils sont listés. Aucun LLM local dans ce lot.
 - **Multi-appareil :** shell Web installable/PWA, formats téléphone/tablette/bureau, alternatives tactiles
   au survol/glisser, états de connexion ; layouts par appareil. Le cache métier et ses mutations attendent D12.
 - **Sortie :** ouvrir projet/conversation/Today/document, réorganiser et recharger sans perte ;
-  téléphone et navigateur sans WebGL utilisables. Pas de graphe 3D décoratif permanent dans ce lot.
+  téléphone et navigateur sans WebGL utilisables. Changer l'API sélectionnée sans modifier les workflows,
+  conserver la configuration valide si le test échoue, afficher les coûts canoniques sans révéler de clé.
+  Pas de graphe 3D décoratif permanent dans ce lot.
 - **Références :** les images de conversations ne sont pas automatiquement dans Git. Consigner
   les références réellement disponibles ; ne pas revendiquer une fidélité visuelle sans les voir.
 
@@ -224,7 +230,7 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 ### D13 — version personnelle utilisable, pilote à deux
 
 - **Prérequis :** D05–D12.
-- **Livraison :** onboarding/aide, réglages modèles locaux/API et clés propres (BYOK), coûts/quotas,
+- **Livraison :** onboarding/aide, consolidation des réglages API de D05 et clés propres par compte (BYOK), coûts/quotas,
   sauvegarde/export/suppression, santé/erreurs actionnables, Web mobile/PWA, accessibilité, FR/EN
   de base et upgrades réversibles ; aucun cache offline de secrets.
 - **Sortie :** document→discussion→mindmap→tâches→Gantt→rappel→reprise sur installation privée avec
@@ -337,7 +343,7 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 | Assistant contextuel, Agents/Skills, approbations/activité/coûts | D10, D13 |
 | Calendriers/contacts/email/messages/fichiers, OAuth/révocation | D11 |
 | Attention/notifications, synchronisation/collaboration | D12 |
-| IA locale, OpenAI/Claude/autres fournisseurs, BYOK, routing simple | D02, D04, D13, D21 |
+| API et routage simple, sélecteur fournisseur, BYOK ; LLM local différé par ADR-031 | D02, D04, D05, D13, D21 |
 | Desktop/présence/voix, permissions micro/écran/presse-papiers/fichiers | D14–D15 |
 | Automatisations, browser/computer use, agent dev/maintenance | D16–D17 |
 | Finance/Crypto, proposition/simulation/signature isolée | D18–D19 |

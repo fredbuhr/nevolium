@@ -1,11 +1,18 @@
 # Nevolium — ordre des livraisons
 
-Révision : 2026-09-11. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
+Révision : 2026-09-13. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
 et critères de sortie. [PROJECT_STATE](../PROJECT_STATE.md) seul indique le lot actif et les preuves.
 La table donne le séquencement ; elle ne déclare pas tous les lots livrés. **D01–D03 sont terminés**
 (#84–#87). Le reste de D02 a été réuni en une seule PR avec validation commune.
 **Lot actif : D04/H5 (#88)**, campagne commune et validation de la cible avant les fonctions produit. D03 a été livré dans une seule PR #87.
 Le détail opérationnel et les preuves restent dans le checkpoint.
+
+Décision du 13 septembre : génération et routage par API, OpenAI en premier. La qualification locale
+est retirée du chemin actif. D04 conserve seulement quatre preuves restantes : Research via OpenAI,
+charge bornée du pilote, upgrade/rollback et restauration indépendante. D05 livrera le sélecteur
+fournisseur/modèle dans les réglages du cockpit ; D13 complétera le BYOK par compte.
+Le LLM local attend une nouvelle décision et un meilleur matériel, sans échéance imposée à ces lots.
+Voir l'[ADR-031](decisions/ADR-031-api-first-pilot.md).
 
 | Phase | Lots, dans l'ordre nominal | Résultat |
 |---|---|---|

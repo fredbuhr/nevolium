@@ -26,6 +26,7 @@ STRUCTURED_SCHEMA = {
 
 def compose(*args):
     subprocess.run(['docker', 'compose', '-f', 'compose.yaml', '-f', 'compose.test-noauth.yaml',
+                    '-f', 'compose.qualification-local.yaml',
                     *args], check=True, timeout=180)
 
 
