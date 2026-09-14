@@ -76,7 +76,9 @@ def main() -> int:
     assert "<TodayWorkspace apiUrl={API_URL} />" in app
     assert "/v1/today?day=" in today
     assert "method: 'PATCH'" in today
-    assert "Statut piloté par Temporal" in today
+    assert "const workflowManaged = ['queued', 'running'].includes(task.status)" in today
+    assert "!workflowManaged && task.status !== 'completed'" in today
+    assert "workflowManaged && (" in today
 
     print(
         "PASS: canonical Task planning fields, timezone-aware Today contracts and the dockable "
