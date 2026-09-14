@@ -364,6 +364,7 @@ class Runner:
             source_images=images,
             recovery_probe_image=probe_image,
             report_dir=str(report_dir),
+            planned_postgres_artifact_id=str(self.probe_id),
         )
         evidence.save()
         self.emit("configuration_ready", report=str(evidence.output))
@@ -378,7 +379,7 @@ class Runner:
         return self.run(
             base + [
                 "exec", "-T", "postgres", "sh", "-ec",
-                'exec psql -X -v ON_ERROR_STOP=1 -At -U "$POSTGRES_USER" -d "$POSTGRES_DB"',
+                'exec psql -X -q -v ON_ERROR_STOP=1 -At -U "$POSTGRES_USER" -d "$POSTGRES_DB"',
             ],
             input_text=sql,
         ).stdout.strip()
@@ -609,6 +610,9 @@ SELECT concat_ws('|',
 
     def seed_markers(self) -> dict[str, object]:
         self.recovery_material()
+        # Arm cleanup before sending a write: the database may commit even when
+        # the command response is missing, malformed or interrupted.
+        self.source_markers_created = True
         inserted = self.query(f"""
 INSERT INTO artifacts (id, project_id, kind, title, content)
 SELECT '{self.probe_id}'::uuid, id, 'd04-recovery-proof',
@@ -619,7 +623,6 @@ RETURNING id;
 """)
         if inserted != str(self.probe_id):
             raise RuntimeError("marqueur PostgreSQL non cree")
-        self.source_markers_created = True
         self.source_probe(
             NATS_PROBE,
             ["seed", self.nats_stream, self.nats_subject, self.probe_value],
@@ -749,6 +752,9 @@ RETURNING id;
         return {"all_packs_read": True, "raw_data_bytes": size, "snapshot_count": len(self.snapshots())}
 
     def restore(self, snapshots: dict[str, object]) -> dict[str, object]:
+        expected_project = f"nevolium-d04-restore-{self.probe_id.hex[:10]}"
+        if self.isolated_project != expected_project:
+            raise RuntimeError("projet de restauration isole invalide")
         collision = self.run([
             "docker", "ps", "-aq", "--filter",
             f"label=com.docker.compose.project={self.isolated_project}",
@@ -762,6 +768,7 @@ RETURNING id;
             NEVOLIUM_COMPOSE_ENV_FILE=str(self.env_file),
             NEVOLIUM_RESTIC_ENV_FILE=str(self.restic_env_file),
             NEVOLIUM_COMPOSE_OVERLAYS="compose.production.yaml",
+            NEVOLIUM_CONFIRM_RESTORE="YES",
         )
         self.run(
             ["bash", "scripts/ops/restore.sh", str(snapshots["data_snapshot"])],

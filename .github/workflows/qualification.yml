@@ -47,6 +47,14 @@ jobs:
         run: uv run --locked --project services/worker python scripts/qualification/contract.py
       - name: Prove target recovery runner safety boundaries
         run: uv run --locked --project services/worker python scripts/qualification/target_recovery_contract.py
+      - name: Prove real psql RETURNING output on disposable PostgreSQL
+        run: |
+          cp .env.example .env
+          docker compose -p nevolium-d04-sql-contract -f compose.yaml up -d --wait postgres
+          NEVOLIUM_RECOVERY_SQL_TEST=1 uv run --locked --project services/worker python scripts/qualification/target_recovery_contract.py
+      - name: Remove disposable SQL contract database
+        if: always()
+        run: docker compose -p nevolium-d04-sql-contract -f compose.yaml down -v --remove-orphans
 
   real-document-memory:
     runs-on: ubuntu-latest

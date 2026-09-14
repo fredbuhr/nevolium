@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 
 from common import Evidence
-from target_recovery import FREE_TIER_GUARD_BYTES, Runner
+from target_recovery import CommandFailure, FREE_TIER_GUARD_BYTES, Runner
 
 
 class Contract(unittest.TestCase):
@@ -21,6 +21,77 @@ class Contract(unittest.TestCase):
             openbao_recovery_file=root / "openbao-recovery.json",
             report_dir=root / "reports",
         ))
+
+    @unittest.skipUnless(os.environ.get("NEVOLIUM_RECOVERY_SQL_TEST") == "1", "disposable PostgreSQL required")
+    def test_postgres_returning_has_no_command_tags(self):
+        root = Path(__file__).resolve().parents[2]
+        runner = self.runner(root)
+        runner.source = ["docker", "compose", "-p", "nevolium-d04-sql-contract", "-f", "compose.yaml"]
+        # A real psql process: -At alone also emits BEGIN, CREATE, INSERT and ROLLBACK.
+        result = runner.query(f"""
+BEGIN;
+CREATE TEMP TABLE recovery_contract (id uuid);
+INSERT INTO recovery_contract VALUES ('{runner.probe_id}') RETURNING id;
+ROLLBACK;
+""")
+        self.assertEqual(result, str(runner.probe_id))
+
+    def test_partial_seed_remains_cleanable_after_bad_response_or_failure(self):
+        for failure in ("bad-output", "lost-response", "next-store"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                runner = self.runner(Path(directory))
+                rows = set()
+
+                def database(sql):
+                    if "INSERT INTO" in sql:
+                        rows.add(runner.probe_id)
+                        if failure == "lost-response":
+                            raise CommandFailure("response lost after commit")
+                        if failure == "bad-output":
+                            return f"{runner.probe_id}\nINSERT 0 1"
+                        return str(runner.probe_id)
+                    self.assertIn(str(runner.probe_id), sql)
+                    self.assertIn("DELETE FROM artifacts WHERE id=", sql)
+                    rows.discard(runner.probe_id)
+                    return ""
+
+                with (
+                    mock.patch.object(runner, "recovery_material", return_value=["one", "two", "three"]),
+                    mock.patch.object(runner, "query", side_effect=database),
+                    mock.patch.object(runner, "source_probe", side_effect=CommandFailure("store unavailable")),
+                    mock.patch.object(runner, "unseal_openbao"),
+                    mock.patch.object(runner, "wait_probe"),
+                ):
+                    with self.assertRaises(RuntimeError):
+                        runner.seed_markers()
+                    self.assertEqual(rows, {runner.probe_id})
+                    self.assertTrue(runner.source_markers_created)
+                    runner.cleanup_source_markers()
+                    self.assertFalse(rows)
+                    self.assertFalse(runner.source_markers_created)
+
+    def test_restore_confirmation_is_limited_to_generated_isolated_project(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self.runner(Path(directory))
+            for invalid in ("", "nevolium", "nevolium-d04-restore-wrong"):
+                runner.isolated_project = invalid
+                with mock.patch.object(runner, "run") as run:
+                    with self.assertRaisesRegex(RuntimeError, "isole invalide"):
+                        runner.restore({})
+                    run.assert_not_called()
+            runner.isolated_project = f"nevolium-d04-restore-{runner.probe_id.hex[:10]}"
+            with (
+                mock.patch.object(runner, "restic"),
+                mock.patch.object(runner, "run", side_effect=[
+                    mock.Mock(stdout=""), CommandFailure("stop after inspecting restore call"),
+                ]) as run,
+            ):
+                with self.assertRaises(CommandFailure):
+                    runner.restore({"data_snapshot": "fixture-snapshot"})
+                call = run.call_args_list[-1]
+                self.assertEqual(call.args[0], ["bash", "scripts/ops/restore.sh", "fixture-snapshot"])
+                self.assertEqual(call.kwargs["env"]["NEVOLIUM_CONFIRM_RESTORE"], "YES")
+                self.assertEqual(call.kwargs["env"]["COMPOSE_PROJECT_NAME"], runner.isolated_project)
 
     def test_existing_b2_configuration_is_validated_and_scrubbed(self):
         with tempfile.TemporaryDirectory() as directory:

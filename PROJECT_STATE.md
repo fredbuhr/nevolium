@@ -10,7 +10,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Checkout cible | `fb8d918ab0c02f0dce43f8250a5c1441870186a6` ; checkout serveur à ce SHA, index Git à rendre au compte administrateur |
+| Checkout cible | `e00d28465f7e47b38b5fb70cca3d279b9093f5cc` ; index Git réparé `1000:1000/0600` ; contrôle du marqueur de restauration interrompu |
 | Correctif actif | Requête ciblée et classement des sources déployés ; 10/10 workflows réussis à `a463546…`, attribution LiteLLM et plafond 4096 conservés |
 | Gate courante | Research OpenAI, charge complète et upgrade/rollback acquis ; seule la restauration indépendante reste avant H5 |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
@@ -250,10 +250,23 @@ est prouvé sans écriture privilégiée par comparaison de l'enregistrement per
 Le lancement à `fb8d918…` a validé les secrets saisis et créé `/etc/nevolium/restic.env` root
 `0600`, puis s'est arrêté avant marqueur et snapshot : Restic signalait normalement par le code 10
 que le dépôt n'existait pas encore, mais le runner refusait ce code avant de pouvoir lancer `init`.
-Une lecture Git précédente sous sudo a aussi réattribué le seul fichier `.git/index` à root.
-Après CI du head corrigé, réparer précisément cet owner, avancer le checkout cible et reprendre une
-seule fois le runner avec le fichier OpenBao éphémère ; les six secrets B2/Restic ne sont plus demandés.
-fichier éphémère puis les six saisies masquées. Après cette preuve, consigner le rapport final,
+La reprise V4 à `e00d284…` a réparé l'index Git, réutilisé les secrets B2 et initialisé le dépôt :
+Restic 0.19.1, aucun snapshot existant. La taille des quatre volumes (environ 155 Mio) passe le garde.
+Elle s'est arrêtée sur `marqueur PostgreSQL non cree` avant backup et restauration, dans le rapport
+`/var/lib/nevolium/qualification/d04-off-host-recovery-20260914T115600Z.5d5b58/recovery.json`.
+Les comptes `52|52|25|30|16|39|5` et travaux/outbox `0|0|0|0` sont attestés **avant** le marqueur,
+pas après : un artefact jetable peut rester inséré. Ne pas relancer ni supprimer par catégorie.
+
+Le correctif ajoute `psql -q` pour séparer les lignes RETURNING des command tags, arme le nettoyage
+avant l'INSERT même si la réponse est perdue et consigne l'UUID prévu avant toute mutation.
+Il transmet aussi la confirmation exigée par restore.sh uniquement pour le nom de projet isolé
+généré et après contrôle de collision. Aucun garde de restore.sh n'est retiré.
+Les contrats couvrent la réponse SQL invalide/perdue après commit et l'échec du magasin suivant ;
+un test CI PostgreSQL réel vérifie les sorties RETURNING (Docker indisponible localement).
+
+Prochaine action : lire seulement les UUID/command tags du journal privé et les métadonnées des
+marqueurs présents, puis rapprocher l'UUID exact avant son nettoyage ciblé et la reprise corrigée.
+Les six secrets B2/Restic ne sont plus demandés. Après la preuve de restauration, consigner le rapport final,
 repasser la CI du head, finaliser et intégrer #88, poser le tag H5 puis retirer la branche avant D05.
 Le [protocole D04](docs/qualification-d04.md) conserve les seuils et limites.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou D05 avant leur validation.
