@@ -59,6 +59,14 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   10/10 workflows réussis. Le premier run UI sur `ba337443…` avait révélé une assertion liée au
   texte « Temporal » ; la correction vérifie le verrou fonctionnel des tâches en cours et le même
   workflow réussit sur `b3dfbb53…`.
+- Qualification Chromium sur `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` : cinq contextes
+  réussis à 1440 × 1000 (cockpit et administration), 1024 × 768, 820 × 1180 et 390 × 844.
+  Le scénario prouve `Ctrl/Cmd+K`, recherche « documents », restauration du focus, absence de
+  débordement horizontal de page, absence de Canvas/WebGL, masquage des actions multi-écran sur
+  téléphone et ouverture réelle de `/popout.html`. Les captures et le rapport JSON sont produits
+  par le workflow UI dans l'artefact `d05-browser-qualification`.
+- La première capture à 1024 px a montré des contrôles de briefing trop serrés ; les grilles News
+  et Assistant sont maintenant empilées sur les largeurs compactes. La reprise visuelle a réussi.
 
 Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
 refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;
@@ -67,11 +75,12 @@ reste absent localement. Ruff n'a pas pu être lancé localement à cause de l'e
 sans `/proc/self/exe`, mais le gate Code quality réussit. Les builds de packages n'ont pas été
 rejoués localement avec uv 0.12.13, mais les gates verrouillés de la CI réussissent.
 
-Le navigateur cloud a refusé les deux URL loopback du serveur de prévisualisation avec
-`ERR_BLOCKED_BY_CLIENT` et aucun navigateur exécutable n'est présent dans ce conteneur. Aucun
-contrôle interactif du cockpit n'est donc revendiqué, malgré le build réussi. Les deux vues de
-cockpit et l'identité sphérique fournies pendant D05 ont été inspectées directement ; elles servent
-d'inspiration au [contrat visuel](../design-mycelium.md), pas de captures à reproduire à l'identique.
+Le navigateur cloud a refusé le loopback local avec `ERR_BLOCKED_BY_CLIENT`, mais la même
+prévisualisation isolée a ensuite été qualifiée avec Chromium dans GitHub Actions. Ses appels métier
+sont simulés de manière déterministe : cette preuve porte sur le rendu, le clavier, les tailles
+d'écran et le popout, pas sur OIDC ni sur un fournisseur réel. Les deux vues de cockpit et l'identité
+sphérique fournies pendant D05 ont été inspectées directement ; elles servent d'inspiration au
+[contrat visuel](../design-mycelium.md), pas de captures à reproduire à l'identique.
 
 ## Limites et prochaine action
 
@@ -79,7 +88,7 @@ Aucune nouvelle clé fournisseur n'était disponible et aucun appel réel suppl�
 effectué. OpenAI `openai/gpt-4.1` reste le seul fournisseur déjà qualifié par D04 ; la présence des
 trois autres choix ne prouve aucune compatibilité. Aucune migration n'est appliquée en production.
 
-Prochaine action : qualifier le rendu et le détachement dans un navigateur authentifié, puis tester
-le fournisseur choisi lors d'une activation explicitement autorisée. Le rollback du code redescend la migration à
+Prochaine action : réaliser l'essai utilisateur authentifié et tester le fournisseur choisi lors
+d'une activation explicitement autorisée. Le rollback du code redescend la migration à
 `0014_capacity_and_data` après arrêt/drainage normal ; il ne doit pas supprimer les configurations
 ou secrets LiteLLM sans examen de leur usage par des Tasks historiques.

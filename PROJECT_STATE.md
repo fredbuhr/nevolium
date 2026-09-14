@@ -9,10 +9,10 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
-| CI | Dernière tête D05 testée : 10/10 workflows réussis sur `b3dfbb53a1f22d7e0aba8304d1690f8f1a0bf632`. D04 : 10/10 sur `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
-| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête fonctionnelle vérifiée : `b3dfbb53a1f22d7e0aba8304d1690f8f1a0bf632` ; relire la tête live |
+| CI | Dernière tête globale entièrement verte : 10/10 sur `ca634416a181f59adc357cb696cf44022b60d348`. Qualification navigateur D05 réussie sur `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` ; relire sa suite globale, affectée pendant l'exécution par un `504` du registre Keycloak |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête fonctionnelle et visuelle vérifiée : `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` ; relire la tête live |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Qualifier le rendu, le rechargement et le détachement dans un navigateur authentifié, puis tester réellement la nouvelle configuration fournisseur choisie avant la revue finale D05 |
+| Prochaine action | Laisser revenir le registre Keycloak et obtenir la suite globale verte, puis tester réellement la nouvelle configuration fournisseur choisie avant la revue finale D05 |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -64,16 +64,19 @@ D06–D09 gardent planification,
 L'interface emploie désormais les repères Assistant, Actualités, Recherche, Aujourd'hui, Projets
 et Documents. Les noms d'infrastructure et le vocabulaire de stockage restent dans les diagnostics
 et la documentation technique. Les identifiants internes, routes, états et contrats métier ne sont
-pas renommés. TypeScript, build Vite, contrat D05 et `git diff --check` réussissent localement ;
-les 10 workflows GitHub réussissent sur la tête fonctionnelle exacte `b3dfbb53…`.
+pas renommés. TypeScript, build Vite, contrat D05 et `git diff --check` réussissent localement.
+Le workflow UI exécute désormais Chromium et conserve cinq captures : bureau, administration,
+bureau compact, tablette et téléphone. Sur `72aafd1c…`, il vérifie aussi la recherche
+« documents », le retour du focus, le popout réel, les classes d'appareil, l'absence de
+débordement de page et le chemin sans Canvas/WebGL.
 
 Validations locales du commit fonctionnel réussies : compilation Python, TypeScript, build Web,
 SQL Alembic hors ligne, contrats cockpit/PWA,
 gateway/configuration modèle, dispatch, Assistant, News, Semantic Router et layouts. Les 10
 workflows GitHub de `47cee6e…` réussissent, dont PostgreSQL réel, matrice Compose et contrôles de
-non-régression D04. Le navigateur cloud refuse le serveur loopback local ; aucun contrôle
-visuel interactif n'est revendiqué. Aucun test avec une nouvelle clé fournisseur ni déploiement
-n'a été effectué.
+non-régression D04. La qualification navigateur isolée est acquise dans GitHub Actions ; elle
+utilise des réponses API déterministes et ne remplace pas un essai de fournisseur réel. Aucun test
+avec une nouvelle clé fournisseur ni déploiement n'a été effectué.
 
 Les références visuelles n'existent pas dans les arbres Git : les trois images accessibles dans
 la conversation ont été inspectées comme inspirations et ne sont pas attribuées au dépôt.

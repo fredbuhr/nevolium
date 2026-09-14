@@ -3,9 +3,9 @@
 Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête fonctionnelle vérifiée est
-`b3dfbb53a1f22d7e0aba8304d1690f8f1a0bf632`, avec 10/10 workflows réussis ; le lot n'est ni
-intégré ni déployé. Les textes visibles sont alignés avec la
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête fonctionnelle et visuelle vérifiée
+est `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` ; la qualification Chromium bureau/tablette/
+téléphone réussit et conserve ses captures. Le lot n'est ni intégré ni déployé. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
@@ -45,7 +45,7 @@ Les cinq réservations uncertain et les anciens essais sont conservés sans reje
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web/OIDC, panneaux persistés ; candidat D05 avec repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents, identité Mycelium cyan/émeraude/violet, accès rapide, inspecteur, profils/ambiances, layouts par fenêtre, détachement multi-écran, clavier et PWA | Qualifier visuellement et intégrer le candidat D05 |
+| Cockpit | Web/OIDC, panneaux persistés ; candidat D05 avec repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents, identité Mycelium cyan/émeraude/violet, accès rapide, inspecteur, profils/ambiances, layouts par fenêtre, détachement multi-écran, clavier et PWA ; cinq vues Chromium qualifiées | Essai utilisateur authentifié puis intégration du candidat D05 |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
