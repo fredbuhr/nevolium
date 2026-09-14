@@ -12,7 +12,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
 | Checkout cible | `a4635462a4380aad2b2b991053c1078e36e5e79a` ; checkout serveur propre à ce SHA |
 | Correctif actif | Requête ciblée et classement des sources déployés ; 10/10 workflows réussis à `a463546…`, attribution LiteLLM et plafond 4096 conservés |
-| Gate courante | Research OpenAI acquis sur cible ; poursuivre charge pilote, upgrade/rollback et restauration indépendante |
+| Gate courante | Research OpenAI et charge de lecture acquis ; poursuivre séquence mixte, upgrade/rollback et restauration indépendante |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -212,12 +212,23 @@ Résultat final : `CORRECTION_ET_PREUVE_RESEARCH_D04_OK`. Aucun rejeu à prévoi
 
 ## Prochaine action exécutable
 
-Exécuter le runner existant `scripts/qualification/target.py load` sur l'origine HTTPS publique,
-avec un jeton utilisateur éphémère, concurrence 20, p95 ≤2 s, zéro erreur et 180 s par palier.
-Consigner que le générateur est sur la même cible et qu'un compte représente des clients virtuels,
-pas 1 000 comptes réels. Inventaire et compteurs avant/après ; aucun appel IA dans cette lecture.
-Ensuite : séquence mixte Research/PDF/mémoire, upgrade/rollback, restauration indépendante.
-Le [protocole D04](docs/qualification-d04.md) conserve ces trois preuves restantes et leurs seuils.
+La charge de lecture est acquise sur la cible au code `a463546…`. Le runner a vérifié TLS, le refus
+anonyme/invalide et cinq routes internes non exposées, puis les quatre paliers avec concurrence 20 :
+3 requêtes/1 client (p95 0,057 s), 30/10 (0,398 s), 300/100 (0,524 s) et 3 000/1 000
+(0,445 s), zéro erreur. Les 1 000 sont des clients virtuels alimentés par un seul compte réel ; le
+générateur tournait dans le conteneur Core de la même cible, limité à 2 CPU et 1 Gio. Le serveur
+mesuré reste 12 CPU, 32 Gio. Aucun conteneur n'a redémarré ou subi d'OOM ; comptes inchangés
+`47|47|23|28|14|34|5`, travaux actifs `0|0|0`, aucun appel IA. Rapport :
+`/var/lib/nevolium/qualification/d04-load-20260914T014343Z.LMEDPZ/load.json`.
+L'inventaire confirme que Restic n'est pas installé sur l'hôte ; la procédure utilise son image
+épinglée via l'overlay ops. `target_and_off_host_restore_validated=false` confirme que la restauration
+de cette cible reste à exécuter.
+
+Prochaine opération : une séquence mixte avec un Research, un PDF Docling et une projection
+Mem0/Graphiti, attentes d'admission et durées séparées, puis retour temporaire au Worker précédent et
+réactivation du candidat avec contrôles de santé, accès et invariants. Ensuite, seule la restauration
+indépendante restera avant la clôture H5. Le [protocole D04](docs/qualification-d04.md) conserve les
+seuils et limites.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou D05 avant leur validation.
 
 ## Références

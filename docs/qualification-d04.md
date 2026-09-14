@@ -6,7 +6,11 @@ opérationnel courant. H5 reste ouvert tant que les quatre preuves ci-dessous ne
 Au 14 septembre 2026, la paire Research OpenAI est acquise sur cible (`a463546…`) : 23,591 s et
 9,524 s, quatre usages réglés, aucune nouvelle réservation incertaine. La date initiale est
 étayée par E1 (Search) et le nom de code par E1/E2 ; Fetch a lu une annonce de mise à jour.
-Les trois autres preuves restent ouvertes. Les IDs, coûts et limites sont dans le checkpoint.
+La charge de lecture est aussi acquise : 3 333 requêtes sur les quatre paliers, concurrence 20,
+zéro erreur, p95 maximal 0,524 s pour une limite de 2 s. Le générateur était le conteneur Core de
+la cible et un compte réel alimentait les clients virtuels. La séquence mixte reste à faire avant de
+fermer cette preuve. Upgrade/rollback et restauration indépendante restent également ouverts.
+Les IDs, coûts et limites sont dans le checkpoint.
 
 ## Périmètre fixé
 
