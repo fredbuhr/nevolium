@@ -261,6 +261,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   const newsHeading = page.getByRole('heading', {
     name: 'Comprenez ce qui se passe à partir de sources conservées.',
   })
+  await page.screenshot({ path: path.join(outputDirectory, `nevolium-d05-${name}-focus.png`) })
   assert.equal(await assistantHeading.isVisible(), true, `${name}: Assistant doit être visible`)
   assert.equal(
     await newsHeading.isVisible(),

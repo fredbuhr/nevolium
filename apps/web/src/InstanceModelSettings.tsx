@@ -305,6 +305,7 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
           Clé API
           <input
             type="password"
+            aria-label="Clé API"
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}
             autoComplete="new-password"

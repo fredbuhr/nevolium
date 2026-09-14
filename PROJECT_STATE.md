@@ -14,7 +14,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live.
 | Données | Migration `0015_model_configurations` ; cinq réservations historiques `uncertain` conservées. Table de configuration vide au déploiement ; l’utilisateur a depuis saisi une clé, résultat non revérifié |
 | Récupération | Sel LiteLLM stable provisionné sans affichage ; snapshot de récupération `cb0696461e1bc6a3cad54260dccd7b564e2d6d5c684c9f7174a0fd091a623bc5` et snapshot quiescent pré-D05 `71f19a4691a6a45891aa0d59dfcd8237b58eaf2aaa738608e3f8e21facf5a524`, tous deux chiffrés sur B2 et relus |
 | Correction en cours | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites |
-| Validation de la correction | TypeScript, build Vite 148 modules, contrat D05, géométrie et identité passent localement ; navigateur local arrêté au démarrage (SIGTRAP), scénarios ajoutés à la CI ; aucune qualification visuelle revendiquée avant relecture des captures |
+| Validation de la correction | `1582021` : contrats et build CI réussis ; navigateur détecte des vues de taille nulle encore exposées pendant le centrage. Correction du masquage des vues/focus et relance requises. Navigateur local arrêté au démarrage (SIGTRAP) |
 | Prochaine action | Examiner la CI de la tête de cette PR, corriger les échecs et relire les captures du fil connecté sur bureau/téléphone. Vérifier séparément le badge du fournisseur réellement saisi, sans renvoyer la clé |
 
 ## Livraison D05 et limite de clôture
