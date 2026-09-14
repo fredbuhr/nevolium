@@ -3,8 +3,8 @@
 Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête fonctionnelle et visuelle vérifiée
-est `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` ; la qualification Chromium bureau/tablette/
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête fonctionnelle, visuelle et documentaire vérifiée
+est `9c1c0a53e674ad1d6818c88aee32e1f1efea16e5` ; ses 10 workflows réussissent et la qualification Chromium bureau/tablette/
 téléphone réussit et conserve ses captures. Le lot n'est ni intégré ni déployé. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
 Les mesures cible proviennent des sorties opérateur conservées dans le

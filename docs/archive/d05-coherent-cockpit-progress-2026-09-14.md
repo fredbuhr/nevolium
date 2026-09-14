@@ -6,7 +6,8 @@ Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevoli
 `73bba82be620a5e6f548e68fb3bbbfeb8836104a`, le contrat Compose a été corrigé sur
 `48210102a9814a30ef1c35f1245d693c126c5bd0` et l'itération visuelle/multi-écran est
 `47cee6ef1245af70d52279b26ad9c321f698a883`. La charte éditoriale est publiée sur
-`1f5db08c7b52502443fa0d5eae754c1801c8d471`, tête validée par 10/10 workflows.
+`1f5db08c7b52502443fa0d5eae754c1801c8d471`. Le checkpoint fonctionnel, visuel et documentaire
+`9c1c0a53e674ad1d6818c88aee32e1f1efea16e5` est validé par 10/10 workflows.
 Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
@@ -67,6 +68,10 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   par le workflow UI dans l'artefact `d05-browser-qualification`.
 - La première capture à 1024 px a montré des contrôles de briefing trop serrés ; les grilles News
   et Assistant sont maintenant empilées sur les largeurs compactes. La reprise visuelle a réussi.
+- GitHub CI sur le checkpoint `9c1c0a53e674ad1d6818c88aee32e1f1efea16e5` : 10/10 workflows
+  réussis. Une première tentative d'isolation a rencontré un téléchargement Docker `502` et la
+  première restauration D04 a interrogé PostgreSQL trop tôt ; leurs relances ciblées ont réussi
+  sans changement de code.
 
 Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
 refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;

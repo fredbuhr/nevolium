@@ -9,10 +9,10 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
-| CI | Dernière tête globale entièrement verte : 10/10 sur `ca634416a181f59adc357cb696cf44022b60d348`. Qualification navigateur D05 réussie sur `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` ; relire sa suite globale, affectée pendant l'exécution par un `504` du registre Keycloak |
-| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête fonctionnelle et visuelle vérifiée : `72aafd1c4379797a2ecd7dd5ebe7008fd9daf5bb` ; relire la tête live |
+| CI | 10/10 workflows réussis sur `9c1c0a53e674ad1d6818c88aee32e1f1efea16e5`, dont la qualification Chromium D05 et la restauration D04 entre deux hôtes |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête fonctionnelle, visuelle et documentaire vérifiée : `9c1c0a53e674ad1d6818c88aee32e1f1efea16e5` ; relire la tête live |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Laisser revenir le registre Keycloak et obtenir la suite globale verte, puis tester réellement la nouvelle configuration fournisseur choisie avant la revue finale D05 |
+| Prochaine action | Réaliser l'essai utilisateur authentifié et tester réellement la nouvelle configuration fournisseur choisie avant la revue finale D05 |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -73,8 +73,10 @@ débordement de page et le chemin sans Canvas/WebGL.
 Validations locales du commit fonctionnel réussies : compilation Python, TypeScript, build Web,
 SQL Alembic hors ligne, contrats cockpit/PWA,
 gateway/configuration modèle, dispatch, Assistant, News, Semantic Router et layouts. Les 10
-workflows GitHub de `47cee6e…` réussissent, dont PostgreSQL réel, matrice Compose et contrôles de
-non-régression D04. La qualification navigateur isolée est acquise dans GitHub Actions ; elle
+workflows GitHub de `9c1c0a53…` réussissent, dont PostgreSQL réel, matrice Compose et contrôles de
+non-régression D04. Deux premières tentatives ont rencontré un téléchargement Docker `502` et une
+disponibilité PostgreSQL trop précoce ; les relances ciblées ont réussi sans changement de code.
+La qualification navigateur isolée est acquise dans GitHub Actions ; elle
 utilise des réponses API déterministes et ne remplace pas un essai de fournisseur réel. Aucun test
 avec une nouvelle clé fournisseur ni déploiement n'a été effectué.
 
