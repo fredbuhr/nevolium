@@ -1,6 +1,6 @@
 # D04 : protocole de sortie du pilote par API
 
-Révision : 2026-09-13. Une branche et une PR : `hardening/d04-real-engine-qualification`,
+Révision : 2026-09-14. Une branche et une PR : `hardening/d04-real-engine-qualification`,
 [#88](https://github.com/fredbuhr/nevolium/pull/88). [PROJECT_STATE](../PROJECT_STATE.md) est le point
 opérationnel courant. H5 reste ouvert tant que les quatre preuves ci-dessous ne sont pas acquises.
 Au 14 septembre 2026, la paire Research OpenAI est acquise sur cible (`a463546…`) : 23,591 s et
@@ -11,8 +11,12 @@ concurrence 20, zéro erreur, p95 maximal 0,524 s pour une limite de 2 s. Le gé
 conteneur Core de la cible et un compte réel alimentait les clients virtuels. La séquence mixte a
 ensuite validé Research en 13,217 s, Docling en 39,499 s d'exécution et Mem0/Graphiti en 21,451 s
 d'exécution après 43,378 s d'attente d'admission. Upgrade/rollback est acquis avec retour à l'ancien
-Worker puis réactivation du candidat, compteurs et accès inchangés. Seule la restauration
-indépendante reste ouverte. Les IDs, coûts, images et limites sont dans le checkpoint.
+Worker puis réactivation du candidat, compteurs et accès inchangés. La restauration indépendante
+est acquise au code `61d7687…` : deux snapshots chiffrés B2, quatre magasins relus dans des volumes
+neufs isolés, production inchangée, environnement isolé et clés temporaires supprimés. Le stockage
+est hors serveur ; la restauration a lieu sur le même serveur dans un autre projet Compose.
+Les quatre preuves sont consignées dans le [rapport final](archive/d04-pilot-qualification-2026-09-14.md).
+Les procédures ci-dessous décrivent le protocole ; elles ne sont pas une demande de rejeu.
 
 ## Périmètre fixé
 
@@ -39,7 +43,8 @@ est historique ; ne pas exécuter ses prochaines actions.
 | Restauration indépendante | Backup Restic chiffré de la cible, transfert hors serveur, restauration en environnement isolé sur volumes neufs avec les procédures existantes | Lecture SQL, message JetStream, objet SeaweedFS et enregistrement persistant du jeton workload OpenBao attendus ; rapport identifiant source/destination et versions |
 
 Ce sont des critères de pilote, pas une certification commerciale ni 1 000 générations simultanées.
-La restauration de deux VM CI prouve le mécanisme, pas encore la récupération du serveur utilisateur.
+La restauration de deux VM CI prouve le mécanisme ; elle complète la preuve opérateur B2
+et ne transforme pas sa destination Compose isolée en seconde machine.
 
 ## Activation cohérente, une seule fois
 

@@ -105,8 +105,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
   une décision ultérieure et du matériel adapté, sans bloquer D04, D05 ou D13.
 - **Acquis :** déploiement privé durci, PDF/mémoire réels, frontières et reprise idempotente ; conserver
   les preuves non affectées. Le checkpoint distingue code publié et versions réellement déployées.
-- **Reste fini :** deux Research séquentiels réussis via OpenAI ; charge du pilote ; upgrade/rollback ;
-  restauration Restic indépendante. Les scénarios et seuils sont dans le [protocole H5](qualification-d04.md).
+- **Preuves acquises le 14 septembre 2026 :** deux Research OpenAI, charge du pilote,
+  upgrade/rollback et restauration Restic B2 isolée ; voir le [rapport final](archive/d04-pilot-qualification-2026-09-14.md). Les scénarios et seuils sont dans le [protocole H5](qualification-d04.md).
 - **Charge :** 1/10/100/1 000 clients virtuels en lecture, concurrence/débit explicites et seuils fixés
   avant mesure, puis séquence mixte bornée. Ne pas assimiler cela à 1 000 comptes ou générations simultanées.
 - **Sortie :** rapport daté de ces quatre preuves, versions/matériel/limites, aucun P0/P1 bloquant
