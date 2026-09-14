@@ -276,6 +276,20 @@ def main() -> int:
     token_a = access_token(*USER_A)
     token_b = access_token(*USER_B)
 
+    # D05 instance settings inherit the same authenticated application role boundary.
+    json_request("GET", "/v1/admin/model-configurations", expected={401})
+    _, model_inventory = json_request(
+        "GET", "/v1/admin/model-configurations", token=token_a, expected={200}
+    )
+    assert model_inventory["active"]["source"] == "environment", model_inventory
+    assert model_inventory["active"]["model_alias"] == "smart", model_inventory
+    assert model_inventory["allowed_providers"] == [
+        "openai", "anthropic", "xai", "moonshot"
+    ], model_inventory
+    json_request(
+        "GET", "/v1/admin/model-configurations", token=token_b, expected={403}
+    )
+
     # Detailed deployment diagnostics are admin-only; liveness/readiness remain public.
     json_request("GET", "/v1/system/architecture", token=token_a, expected={200})
     json_request("GET", "/v1/system/architecture", token=token_b, expected={403})

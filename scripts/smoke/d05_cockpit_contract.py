@@ -19,6 +19,12 @@ def png_size(path: Path) -> tuple[int, int]:
 
 
 def main() -> None:
+    isolation_workflow = (ROOT / ".github/workflows/multi-user-isolation.yml").read_text(
+        encoding="utf-8"
+    )
+    authenticated_browser = (
+        ROOT / "scripts/smoke/d05_authenticated_browser_qualification.mjs"
+    ).read_text(encoding="utf-8")
     manifest = json.loads((WEB / "public/manifest.webmanifest").read_text(encoding="utf-8"))
     assert manifest["display"] == "standalone"
     assert manifest["background_color"] == "#020b13"
@@ -76,6 +82,9 @@ def main() -> None:
     assert ".model-settings-form input:focus-visible" in styles
     assert "retry-test" in settings and "Relancer le test" in settings
     assert "test_execution_status" in settings and "api_key: apiKey" in settings
+    assert "d05_authenticated_browser_qualification.mjs" in isolation_workflow
+    assert "nevolium-web" in isolation_workflow
+    assert "nevolium-dev-2" in authenticated_browser and "Réglages API" in authenticated_browser
 
     catch_block = cockpit.split("} catch (error) {", 1)[1].split("} finally {", 1)[0]
     assert "attachPersistence" not in catch_block
