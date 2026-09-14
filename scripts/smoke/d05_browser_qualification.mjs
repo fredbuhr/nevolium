@@ -149,6 +149,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   await page.getByRole('option', { name: /Inspecteur/ }).waitFor()
   await page.keyboard.press('Escape')
   assert.equal(await page.getByRole('dialog').count(), 0, `${name}: la palette doit se fermer`)
+  await page.waitForFunction(() => document.activeElement?.classList.contains('quick-access-button'))
   assert(
     await quickAccess.evaluate((node) => node === document.activeElement),
     `${name}: le focus doit revenir à l’accès rapide`,
