@@ -21,6 +21,8 @@ def png_size(path: Path) -> tuple[int, int]:
 def main() -> None:
     manifest = json.loads((WEB / "public/manifest.webmanifest").read_text(encoding="utf-8"))
     assert manifest["display"] == "standalone"
+    assert manifest["background_color"] == "#020b13"
+    assert manifest["theme_color"] == "#061725"
     icon_sizes = {
         (icon["sizes"], icon["purpose"])
         for icon in manifest["icons"]
@@ -30,6 +32,9 @@ def main() -> None:
     assert png_size(WEB / "public/icons/nevolium-192.png") == (192, 192)
     assert png_size(WEB / "public/icons/nevolium-512.png") == (512, 512)
     assert png_size(WEB / "public/icons/nevolium-maskable-512.png") == (512, 512)
+    logo = (WEB / "public/icons/nevolium.svg").read_text(encoding="utf-8")
+    for identity_token in ("#78f0ad", "#2de7e0", "#5fcaff", "#9782ff"):
+        assert identity_token in logo, identity_token
 
     service_worker = (WEB / "public/sw.js").read_text(encoding="utf-8")
     assert "url.pathname.startsWith('/v1/')" in service_worker
@@ -37,6 +42,10 @@ def main() -> None:
         "caches.match(request)"
     )
     assert "offline.html" in service_worker
+    assert "popout.html" in service_worker
+    assert "caches.match(request)" in service_worker
+    popout = (WEB / "public/popout.html").read_text(encoding="utf-8")
+    assert "src/main.tsx" not in popout and "id=\"root\"" not in popout
 
     cockpit = (WEB / "src/CockpitShell.tsx").read_text(encoding="utf-8")
     settings = (WEB / "src/InstanceModelSettings.tsx").read_text(encoding="utf-8")
@@ -46,10 +55,25 @@ def main() -> None:
     assert "role=\"dialog\"" in cockpit and "aria-modal=\"true\"" in cockpit
     assert "handlePaletteDialogKey" in cockpit and "paletteReturnFocusRef" in cockpit
     assert "disableDnd={deviceClass === 'phone'}" in cockpit
+    assert "api.addPopoutGroup(activePanel" in cockpit
+    assert "deviceClass !== 'phone'" in cockpit and "Détacher" in cockpit
     assert "layoutRetry === 'save'" in cockpit and "queueLayoutSave(api)" in cockpit
+    assert "window.sessionStorage" in device
+    assert "cockpit.v3.${deviceClass}.${deviceKey}.${windowKey}.${profile}" in device
     assert "cockpit.v2.${deviceClass}.${deviceKey}.${profile}" in device
+    assert "WORKSPACE_KEY_PART_MAX_LENGTH = 40" in device
+    assert "preferenceKey(PROFILE_STORAGE, subjectRef)" in device
+    assert "preferenceKey(AMBIENCE_STORAGE, subjectRef)" in device
+    assert "saveTimer = undefined" in cockpit
+    assert "legacyWorkspaceKeys" in cockpit and "cockpit.main" in (WEB / "src/App.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "restoredLegacyLayout" in cockpit
     assert "@media (prefers-reduced-motion: reduce)" in styles
     assert ":focus-visible" in styles
+    assert "--accent-violet: #9782ff" in styles
+    assert ".app-shell.ambience-minimal" in styles
+    assert ".model-settings-form input:focus-visible" in styles
     assert "retry-test" in settings and "Relancer le test" in settings
     assert "test_execution_status" in settings and "api_key: apiKey" in settings
 
@@ -66,8 +90,8 @@ def main() -> None:
         assert forbidden not in reachable_source, forbidden
 
     print(
-        "D05 COCKPIT CONTRACT PASS: device/profile layouts, keyboard navigation, safe restore, "
-        "reduced motion, installable icons, API-free shell cache and no-WebGL baseline are present"
+        "D05 COCKPIT CONTRACT PASS: neural identity, account preferences, per-window layouts, "
+        "panel popouts, safe restore, keyboard/touch, installable icons and no-WebGL baseline are present"
     )
 
 

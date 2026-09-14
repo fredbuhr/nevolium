@@ -1,6 +1,7 @@
-const SHELL_CACHE = 'nevolium-shell-v1'
+const SHELL_CACHE = 'nevolium-shell-v2'
 const SHELL_ASSETS = [
   '/',
+  '/popout.html',
   '/offline.html',
   '/manifest.webmanifest',
   '/icons/nevolium.svg',
@@ -30,7 +31,9 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/v1/')) return
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('/offline.html')))
+    event.respondWith(
+      fetch(request).catch(async () => (await caches.match(request)) || caches.match('/offline.html')),
+    )
     return
   }
 

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
@@ -20,9 +20,14 @@ import {
 } from './lib/authSession'
 import {
   cockpitWorkspaceKey,
+  getPresentationWindowKey,
   getPresentationDeviceKey,
+  getSavedCockpitAmbience,
   getSavedCockpitProfile,
+  legacyCockpitWorkspaceKey,
+  saveCockpitAmbience,
   saveCockpitProfile,
+  type CockpitAmbience,
   useCockpitDeviceClass,
 } from './lib/cockpitDevice'
 import {
@@ -81,10 +86,23 @@ export default function App() {
   const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
   const [online, setOnline] = useState(() => navigator.onLine)
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
-  const [profile, setProfile] = useState<CockpitProfile>(() => getSavedCockpitProfile())
+  const [profile, setProfile] = useState<CockpitProfile>(() =>
+    getSavedCockpitProfile(auth.subject),
+  )
+  const [ambience, setAmbience] = useState<CockpitAmbience>(() =>
+    getSavedCockpitAmbience(auth.subject),
+  )
   const [deviceKey] = useState(() => getPresentationDeviceKey())
+  const [windowKey] = useState(() => getPresentationWindowKey())
   const deviceClass = useCockpitDeviceClass()
-  const workspaceKey = cockpitWorkspaceKey(deviceClass, deviceKey, profile)
+  const workspaceKey = cockpitWorkspaceKey(deviceClass, deviceKey, windowKey, profile)
+  const legacyWorkspaceKeys = useMemo(
+    () => [
+      legacyCockpitWorkspaceKey(deviceClass, deviceKey, profile),
+      ...(deviceClass === 'desktop' && profile === 'balanced' ? ['cockpit.main'] : []),
+    ],
+    [deviceClass, deviceKey, profile],
+  )
   const isAdmin = !auth.enabled || auth.roles.includes('nevolium-admin')
 
   const [command, setCommand] = useState('Quelles sont les nouvelles du jour sur la ville de Paris ?')
@@ -377,16 +395,12 @@ export default function App() {
   )
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ambience-${ambience}`}>
       <header className="app-header">
         <div className="brand-lockup">
-          <span className="mycelium-mark" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
+          <img className="mycelium-mark" src="/icons/nevolium.svg" alt="" aria-hidden="true" />
           <div>
-            <span className="eyebrow">ESPACE PERSONNEL</span>
+            <span className="eyebrow">MYCÉLIUM PERSONNEL</span>
             <h1>Nevolium</h1>
           </div>
         </div>
@@ -412,13 +426,28 @@ export default function App() {
               value={profile}
               onChange={(event) => {
                 const selected = event.target.value as CockpitProfile
-                saveCockpitProfile(selected)
+                saveCockpitProfile(selected, auth.subject)
                 setProfile(selected)
               }}
             >
               <option value="balanced">Équilibré</option>
               <option value="focus">Concentration</option>
               <option value="review">Revue</option>
+            </select>
+          </label>
+          <label>
+            Ambiance
+            <select
+              value={ambience}
+              onChange={(event) => {
+                const selected = event.target.value as CockpitAmbience
+                saveCockpitAmbience(selected, auth.subject)
+                setAmbience(selected)
+              }}
+            >
+              <option value="neural">Neurale</option>
+              <option value="calm">Calme</option>
+              <option value="minimal">Minimale</option>
             </select>
           </label>
           {installPrompt ? (
@@ -446,9 +475,7 @@ export default function App() {
         key={workspaceKey}
         apiUrl={API_URL}
         deviceClass={deviceClass}
-        legacyWorkspaceKey={
-          profile === 'balanced' && deviceClass === 'desktop' ? 'cockpit.main' : undefined
-        }
+        legacyWorkspaceKeys={legacyWorkspaceKeys}
         profile={profile}
         workspaceKey={workspaceKey}
         slots={{

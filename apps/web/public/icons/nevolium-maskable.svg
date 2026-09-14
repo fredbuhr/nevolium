@@ -1,14 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nevolium">
-  <rect width="512" height="512" fill="#0b1712"/>
-  <g transform="translate(64 64) scale(.75)" fill="none" stroke="#85e0b3" stroke-linecap="round" stroke-width="26">
-    <path d="M106 337c73-14 93-89 150-87 62 2 77 79 150 58"/>
-    <path d="M162 158c32 29 49 57 49 92m139-99c-39 28-58 61-60 103"/>
-  </g>
-  <g transform="translate(64 64) scale(.75)" fill="#d8ffea">
-    <circle cx="105" cy="337" r="29"/>
-    <circle cx="162" cy="158" r="32"/>
-    <circle cx="256" cy="250" r="44"/>
-    <circle cx="350" cy="151" r="32"/>
-    <circle cx="407" cy="308" r="29"/>
+  <defs>
+    <radialGradient id="background" cx="35%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#0b3040"/><stop offset=".55" stop-color="#041923"/><stop offset="1" stop-color="#020a12"/>
+    </radialGradient>
+    <linearGradient id="neural" x1="110" y1="130" x2="404" y2="382" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#78f0ad"/><stop offset=".48" stop-color="#2de7e0"/><stop offset=".8" stop-color="#5fcaff"/><stop offset="1" stop-color="#9782ff"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="url(#background)"/>
+  <g transform="translate(51 51) scale(.8)">
+    <circle cx="256" cy="256" r="163" fill="none" stroke="#2de7e0" stroke-opacity=".12" stroke-width="3"/>
+    <g fill="none" stroke="url(#neural)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+      <path d="M112 314C69 209 139 100 246 92c107-8 187 84 158 189-29 106-161 166-246 91-76-68-28-202 72-219 98-17 187 83 140 170-48 89-182 87-225-5" stroke-width="14"/>
+      <path d="M149 139c80-51 197-24 235 68 38 92-20 196-115 213-95 17-184-66-165-161 19-94 132-151 214-98 83 53 82 181-1 234" stroke-width="9" stroke-opacity=".88"/>
+      <path d="M93 249c48-88 161-125 251-80 89 45 111 163 45 237M194 91c-60 67-67 167-17 241 50 74 153 91 224 38" stroke-width="6" stroke-opacity=".72"/>
+    </g>
+    <g fill="#eaffff" filter="url(#glow)">
+      <circle cx="112" cy="314" r="10"/><circle cx="149" cy="139" r="9"/><circle cx="246" cy="92" r="8"/>
+      <circle cx="404" cy="281" r="10"/><circle cx="370" cy="323" r="8"/><circle cx="269" cy="420" r="9"/>
+    </g>
   </g>
 </svg>

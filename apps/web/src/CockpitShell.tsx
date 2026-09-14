@@ -41,7 +41,7 @@ type CockpitShellProps = {
   apiUrl?: string
   deviceClass: CockpitDeviceClass
   extraPanels?: CockpitExtraPanel[]
-  legacyWorkspaceKey?: string
+  legacyWorkspaceKeys?: string[]
   profile: CockpitProfile
   slots: CockpitSlots
   workspaceKey: string
@@ -302,7 +302,7 @@ export default function CockpitShell({
   apiUrl = DEFAULT_API_URL,
   deviceClass,
   extraPanels = [],
-  legacyWorkspaceKey,
+  legacyWorkspaceKeys = [],
   profile,
   slots,
   workspaceKey,
@@ -430,12 +430,17 @@ export default function CockpitShell({
         setLayoutRetry(null)
         setLayoutMessage('Modifications en attente…')
         saveTimer = window.setTimeout(() => {
+          saveTimer = undefined
           queueLayoutSave(api)
         }, SAVE_DEBOUNCE_MS)
       })
       cleanupRef.current = () => {
         disposable.dispose()
-        if (saveTimer) window.clearTimeout(saveTimer)
+        if (saveTimer) {
+          window.clearTimeout(saveTimer)
+          saveTimer = undefined
+          queueLayoutSave(api)
+        }
       }
     },
     [queueLayoutSave],
@@ -450,8 +455,11 @@ export default function CockpitShell({
       setLayoutMessage('Restauration de la disposition…')
       try {
         let saved = await loadWorkspaceLayout(apiUrl, workspaceKey)
-        if (saved.kind === 'missing' && legacyWorkspaceKey) {
+        let restoredLegacyLayout = false
+        for (const legacyWorkspaceKey of legacyWorkspaceKeys) {
+          if (saved.kind !== 'missing' || legacyWorkspaceKey === workspaceKey) break
           saved = await loadWorkspaceLayout(apiUrl, legacyWorkspaceKey)
+          restoredLegacyLayout = saved.kind === 'found'
         }
         if (disposedRef.current) return
         if (saved.kind === 'found') {
@@ -461,11 +469,15 @@ export default function CockpitShell({
           createDefaultLayout(api, profile, deviceClass, normalizedExtras)
         }
         attachPersistence(api)
-        setLayoutState('ready')
-        setLayoutRetry(null)
-        setLayoutMessage(
-          saved.kind === 'found' ? 'Disposition restaurée' : 'Nouvelle disposition locale',
-        )
+        if (restoredLegacyLayout) {
+          queueLayoutSave(api)
+        } else {
+          setLayoutState('ready')
+          setLayoutRetry(null)
+          setLayoutMessage(
+            saved.kind === 'found' ? 'Disposition restaurée' : 'Nouvelle disposition locale',
+          )
+        }
       } catch (error) {
         if (disposedRef.current) return
         if (!api.activePanel) createDefaultLayout(api, profile, deviceClass, normalizedExtras)
@@ -482,7 +494,7 @@ export default function CockpitShell({
       apiUrl,
       attachPersistence,
       deviceClass,
-      legacyWorkspaceKey,
+      legacyWorkspaceKeys,
       normalizedExtras,
       profile,
       workspaceKey,
@@ -552,6 +564,30 @@ export default function CockpitShell({
     createDefaultLayout(api, profile, deviceClass, normalizedExtras)
   }
 
+  const detachActivePanel = async () => {
+    const api = apiRef.current
+    const activePanel = api?.activePanel
+    if (!api || !activePanel) {
+      setLayoutState('error')
+      setLayoutRetry(null)
+      setLayoutMessage('Sélectionnez un panneau avant de le détacher.')
+      return
+    }
+    try {
+      const opened = await api.addPopoutGroup(activePanel)
+      if (!opened) throw new Error('La fenêtre a été refusée par le navigateur.')
+      setLayoutState('ready')
+      setLayoutRetry(null)
+      setLayoutMessage('Panneau détaché — déplacez sa fenêtre vers l’écran souhaité.')
+    } catch (error) {
+      setLayoutState('error')
+      setLayoutRetry(null)
+      setLayoutMessage(
+        error instanceof Error ? error.message : 'Impossible de détacher ce panneau.',
+      )
+    }
+  }
+
   return (
     <CockpitContentContext.Provider value={cockpitContent}>
       <section className="cockpit-shell" aria-label="Cockpit Nevolium">
@@ -581,20 +617,27 @@ export default function CockpitShell({
               </button>
             ))}
           </div>
-          <button
-            className="toolbar-secondary"
-            type="button"
-            disabled={!ready}
-            onClick={resetLayout}
-          >
-            Réinitialiser
-          </button>
+          <div className="toolbar-actions">
+            {deviceClass !== 'phone' ? (
+              <button
+                type="button"
+                disabled={!ready}
+                onClick={() => void detachActivePanel()}
+                title="Ouvrir le panneau actif dans une fenêtre déplaçable sur un autre écran"
+              >
+                Détacher
+              </button>
+            ) : null}
+            <button type="button" disabled={!ready} onClick={resetLayout}>
+              Réinitialiser
+            </button>
+          </div>
         </nav>
 
         <div className={`layout-state layout-state-${layoutState}`} aria-live="polite">
           <span className="layout-state-dot" aria-hidden="true" />
           <span>{layoutMessage}</span>
-          {layoutState === 'error' ? (
+          {layoutState === 'error' && layoutRetry ? (
             <button
               type="button"
               onClick={() => {
