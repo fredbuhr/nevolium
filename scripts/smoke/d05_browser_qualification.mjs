@@ -145,6 +145,8 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
+  const expectedDeviceLabel = viewport.width < 640 ? 'Téléphone' : viewport.width < 1024 ? 'Tablette' : 'Bureau'
+  await page.getByText(expectedDeviceLabel, { exact: true }).waitFor()
   const privateLayoutLabel = page.getByText('Disposition privée', { exact: true })
   await privateLayoutLabel.waitFor({ state: 'attached' })
   assert.equal(
@@ -249,7 +251,8 @@ try {
   await qualify(browser, 'desktop-admin', { width: 1440, height: 1000 }, {
     inspectAdmin: true,
   })
-  await qualify(browser, 'tablet', { width: 1024, height: 1366 })
+  await qualify(browser, 'compact-desktop', { width: 1024, height: 768 })
+  await qualify(browser, 'tablet', { width: 820, height: 1180 })
   await qualify(browser, 'phone', { width: 390, height: 844 })
   await fs.writeFile(
     path.join(outputDirectory, 'qualification.json'),
