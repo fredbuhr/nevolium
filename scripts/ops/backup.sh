@@ -4,16 +4,31 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-ENV_FILE="${KAIRO_COMPOSE_ENV_FILE:-.env}"
-OVERLAY="${KAIRO_COMPOSE_OVERLAY:-compose.override.yaml}"
+ENV_FILE="${NEVOLIUM_COMPOSE_ENV_FILE:-.env}"
+OVERLAY="${NEVOLIUM_COMPOSE_OVERLAY:-compose.override.yaml}"
+OVERLAYS="${NEVOLIUM_COMPOSE_OVERLAYS:-}"
+RESTIC_ENV_FILE="${NEVOLIUM_RESTIC_ENV_FILE:-}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing $ENV_FILE. Create it from the appropriate environment template first." >&2
   exit 2
 fi
 
-COMPOSE_ARGS=(--env-file "$ENV_FILE" -f compose.yaml)
-if [[ -n "$OVERLAY" ]]; then
+COMPOSE_ARGS=(--env-file "$ENV_FILE")
+if [[ -n "$RESTIC_ENV_FILE" ]]; then
+  if [[ ! -f "$RESTIC_ENV_FILE" ]]; then
+    echo "Missing $RESTIC_ENV_FILE." >&2
+    exit 2
+  fi
+  COMPOSE_ARGS+=(--env-file "$RESTIC_ENV_FILE")
+fi
+COMPOSE_ARGS+=(-f compose.yaml)
+if [[ -n "$OVERLAYS" ]]; then
+  IFS=: read -r -a OVERLAY_FILES <<< "$OVERLAYS"
+  for overlay_file in "${OVERLAY_FILES[@]}"; do
+    [[ -n "$overlay_file" ]] && COMPOSE_ARGS+=(-f "$overlay_file")
+  done
+elif [[ -n "$OVERLAY" ]]; then
   COMPOSE_ARGS+=(-f "$OVERLAY")
 fi
 OPS_ARGS=("${COMPOSE_ARGS[@]}" -f compose.ops.yaml)
@@ -26,13 +41,13 @@ ops() {
   docker compose "${OPS_ARGS[@]}" --profile ops "$@"
 }
 
-mkdir -p .kairo-backup-staging "${RESTIC_LOCAL_PATH:-./backups/restic}"
+mkdir -p .nevolium-backup-staging "${RESTIC_LOCAL_PATH:-./backups/restic}"
 
 QUIESCE_SERVICES=(
-  kairo-web
-  kairo-realtime
-  kairo-worker
-  kairo-core
+  nevolium-web
+  nevolium-realtime
+  nevolium-worker
+  nevolium-core
   temporal-ui
   keycloak
   temporal
@@ -66,7 +81,7 @@ resume_services() {
 trap resume_services EXIT INT TERM
 
 if ((${#STOPPED_SERVICES[@]} > 0)); then
-  echo "Quiescing KAIRO durable-state writers: ${STOPPED_SERVICES[*]}"
+  echo "Quiescing Nevolium durable-state writers: ${STOPPED_SERVICES[*]}"
   compose stop -t 30 "${STOPPED_SERVICES[@]}"
 fi
 
@@ -81,7 +96,7 @@ ops run --rm restic backup \
   /data/nats \
   /data/seaweed \
   /data/openbao \
-  --tag kairo \
+  --tag nevolium \
   --tag block1
 
 ops run --rm restic check
@@ -89,4 +104,4 @@ ops run --rm restic check
 resume_services
 trap - EXIT INT TERM
 
-echo "KAIRO backup completed and previously running services were resumed."
+echo "Nevolium backup completed and previously running services were resumed."

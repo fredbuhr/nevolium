@@ -1,0 +1,27 @@
+# Legacy local LLM fixture only; excluded from the API pilot.
+model_list:
+  - model_name: local-fast
+    litellm_params:
+      model: os.environ/OLLAMA_MODEL
+      api_base: http://ollama:11434
+      # Compose grants Ollama two CPUs. Without this explicit bound llama.cpp sees all
+      # host CPUs, starts twelve threads and is then severely throttled by the cgroup.
+      num_thread: 2
+    model_info:
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+
+router_settings:
+  routing_strategy: least-busy
+  num_retries: 0
+  timeout: 210
+
+litellm_settings:
+  num_retries: 0
+  # Observability only. Nevolium Core remains the authority for policy, audit and spend accounting.
+  # The OTEL exporter consumes correlation metadata already attached by Nevolium's model gateway.
+  callbacks: []
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL

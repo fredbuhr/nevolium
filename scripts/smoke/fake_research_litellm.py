@@ -57,9 +57,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if "allowed_evidence_ids" in rendered:
             stage = "synthesis"
+            expected_schema = "nevolium_research_synthesis"
             content = json.dumps(
                 {
-                    "answer": "The fixture evidence confirms that KAIRO recovered the research run after the Worker interruption.",
+                    "answer": "The fixture evidence confirms that Nevolium recovered the research run after the Worker interruption.",
                     "claims": [
                         {
                             "text": "The recovered research run retained the canonical MCP evidence.",
@@ -72,12 +73,13 @@ class Handler(BaseHTTPRequestHandler):
             )
         elif "tool_catalog" in rendered:
             stage = "planning"
+            expected_schema = "nevolium_research_plan"
             content = json.dumps(
                 {
                     "calls": [
                         {
                             "tool_key": "crash.search",
-                            "input": {"query": "KAIRO crash replay fixture"},
+                            "input": {"query": "Nevolium crash replay fixture"},
                             "rationale": "Collect the single deterministic evidence record.",
                         }
                     ],
@@ -90,13 +92,31 @@ class Handler(BaseHTTPRequestHandler):
             self._json(422, {"error": "Unknown Research model prompt"})
             return
 
+        response_format = request.get("response_format")
+        json_schema = (
+            response_format.get("json_schema") if isinstance(response_format, dict) else None
+        )
+        schema = json_schema.get("schema") if isinstance(json_schema, dict) else None
+        if not (
+            isinstance(response_format, dict)
+            and isinstance(json_schema, dict)
+            and response_format.get("type") == "json_schema"
+            and json_schema.get("name") == expected_schema
+            and json_schema.get("strict") is False
+            and isinstance(schema, dict)
+            and schema.get("type") == "object"
+        ):
+            _increment("unexpected")
+            self._json(422, {"error": "Research request did not carry its native JSON Schema"})
+            return
+
         call_number = _increment(stage)
         call_id = self.headers.get("x-litellm-call-id") or f"research-{stage}-{call_number}"
         response = {
-            "id": f"chatcmpl-kairo-research-{stage}-{call_number}",
+            "id": f"chatcmpl-nevolium-research-{stage}-{call_number}",
             "object": "chat.completion",
             "created": 1789032000,
-            "model": "openai/kairo-research-fixture",
+            "model": "openai/nevolium-research-fixture",
             "choices": [
                 {
                     "index": 0,

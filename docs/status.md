@@ -1,62 +1,66 @@
-# KAIRO — état fonctionnel vérifié
+# Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-11, D03 terminé par #87 ; merge `d8b8025bb9143e49093eaaac3295affefc6fc07f`.
-Toujours vérifier le live ; branche/PR/lot actif dans [PROJECT_STATE](../PROJECT_STATE.md).
+Révision : 2026-09-14. Les quatre preuves de sortie D04 sont acquises ; la clôture de
+[#88](https://github.com/fredbuhr/nevolium/pull/88) est suivie dans [PROJECT_STATE](../PROJECT_STATE.md).
+Les mesures cible proviennent des sorties opérateur conservées dans le
+[rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
-## Acquis canoniques
+## Acquis canoniques et qualification
 
-- Reset R0–R7 terminé, G51 Daily Spine intégré.
-- H1–H4 intégrés dans leurs périmètres ; H5 reste D04. H1–H3 : handoff mémoire authentifié, nettoyage, lockfiles et builds figés,
-  digests des images recensées. Baseline v9 : zéro référence non épinglée dans son périmètre.
-- #82 : attente de complétion mémoire corrigée, fixture sans News parasite ; 16/16 workflows verts.
-- #83 : création publique de capacités internes interdite, rattachements d'exécution et rejeu
-  MCP protégés ; 18/18 workflows verts dont isolation authentifiée et vrai SIGKILL Research.
-- Les huit workflows déclenchés par le checkpoint `4790e1e…` ont ensuite réussi.
+Reset R0–R7, H1–H4 et D01–D03 intégrés ; dernier jalon produit G51 Daily Spine.
+D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
+droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
+D05 n'est pas encore implémenté.
 
-- #84 / D01 : plan D01–D22 et reprise documentés, parsing enfant borné/annulable, streaming limité,
-  slots Worker et ressources Compose configurables. Head `45869904808d6216a967978767c19bc4a8f881f3`
-  validé par 16/16 workflows, dont dix nouvelles régressions et ingestion/réingestion réelles.
-
-- #85 / D02 partiel : réservations et admission atomiques du gateway IA, limites globales/par propriétaire,
-  coûts incertains conservés/rapprochés et visibilité authentifiée. Head `3a531b967349d61e253c5d7491d95d8ff87901c3`
-  validé par 16/16 workflows, dont transactions PostgreSQL concurrentes, migration aller-retour et SIGKILL Research.
-
-- #86 / D02 terminé : admission documents/mémoire, attente Temporal et enfants annulables,
-  pagination SQL/Web/Today, reconstruction à reçus idempotents, outbox à claims courts et rétention,
-  limites JetStream et observation des files. Head `3ed90a8bdd3eafd47d73fe21b8e2eddf3e5b1c2c`
-  validé par **17/17 workflows** ; PostgreSQL et JetStream réels, 1000 Tasks et demandes synthétiques,
-  six nouvelles preuves Worker et toutes les gates existantes. [Preuves](archive/checkpoint-through-d02-2026-09-11.md).
-
-- #87 / D03 terminé : production/JWT/SQL/ops, lecteur Web à IP vérifiée, topologie optionnelle,
-  images applicatives non root et Web statique, modèles inventoriés, CI sans doublons de push de branche.
-  Head `d931f9607b662272daf315ddc1988fede28af96c` : **9/9 workflows PR**, dont HTTP/TLS, PostgreSQL et réseau Docker réels.
-  [Preuves et limites](archive/checkpoint-through-d03-2026-09-11.md). D04 conserve les vrais moteurs/H5.
-
-## Capacités et limites
-
-| Domaine | Présent dans le code | Ce qui reste à prouver/livrer |
+| Domaine | Preuve disponible | Limite |
 |---|---|---|
-| État durable | PostgreSQL, objets SeaweedFS, outbox/NATS, exécution Temporal, migrations jusqu'à `0014_capacity_and_data`, pagination SQL et rétention technique | Dimensionnement réel, archivage canonique et charge sur matériel identifié |
-| Exécution Worker | Parsing hors boucle async, téléchargement/texte/durée bornés, nettoyage timeout/annulation, admission globale/par propriétaire, attente Temporal, enfants annulables | Mesure réelle des moteurs et du matériel en D04 |
-| Identité et actions | Keycloak, ownership, policy/approbations, registre MCP et invocations idempotentes | Policies/ingress sur cible réelle D04 ; UX de rapprochement des coûts incertains |
-| Intelligence | Routing/recherche, Context Packs et gateway avec admission, estimations réservées, sortie bornée et replay comptable | Choix utilisateur des modèles/clés, UX Agents/Skills, preuve coûts et vrais moteurs |
-| Documents et mémoire | Ingestion/version/chunks, recherche/inspection Web, projections mémoire reconstruisibles | CI Documents emploie le fallback texte, mémoire emploie des stubs ; vraie intégration Docling/Mem0/Graphiti à mesurer en D04 |
-| Cockpit | Panneaux persistés par sujet, Command Center, Projects, Today, Research, News, Knowledge | Design Mycelium complet, réglages, attention et parcours cohérents |
-| Planification | Priorité, dates prévues/échéance, PATCH owner-scoped, Today/fuseaux | Gantt, calendrier complet, dépendances/jalons/Kanban et récurrences |
-| Graphes | Relations canoniques, interfaces dans `packages/graph` | Mindmap 2D éditable et rendu Mycelium 3D absents du `main` inspecté |
-| Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Auth/persistence collaboration, Sidecar, permissions appareil et parcours vocal |
-| Finance/Crypto/Home/Dev | Moteurs déclarés/configurés et profils | Adaptateurs KAIRO, policy, workspaces et parcours réels |
-| Exploitation | Sauvegarde/restauration destructrice testée en CI, overlays de production | Restauration hors hôte, vrais moteurs, charge, sandbox et lancement commercial |
+| Serveur et état durable | Debian 13 durci, PostgreSQL `0014_capacity_and_data`, Temporal, JetStream, SeaweedFS ; charge mixte et restauration B2 acquises | Premier serveur Linux x86_64 |
+| Identité | TLS, OIDC/PKCE, comptes nominatifs et TOTP ; bootstrap retiré, refus anonyme/faux jeton/routes internes vérifiés | Ergonomie et nouveaux parcours |
+| Worker | Confinement, bundle hors ligne, Temporal réel ; mixte et rollback acquis | Capacité commerciale non qualifiée |
+| Documents | Docling 2.126.0, PDF propriétaire, version/chunks/source ; 39,499 s en mixte | Scans complexes, tableaux et gros documents hors essai |
+| Mémoire | Mem0/Graphiti réels et scope propriétaire ; rejeu sans doublon ; 21,451 s en mixte après 43,378 s d'admission | Qualité quotidienne à mesurer ; projections dérivées |
+| News | Sources propriétaire et briefing avec fallback déterministe | Synthèse quotidienne API non qualifiée ; anomalie financière historique conservée |
+| Modèle/comptabilité | OpenAI `openai/gpt-4.1` via `smart`, limite 4096 ; tokens/coûts et réservations réglés sur cible | Un fournisseur qualifié ; estimation ne garantit pas un plafond fournisseur |
+| Routage | Command Center, propositions, garde Core et veto sans Task métier ; routes API | Pertinence quotidienne à améliorer |
+| Research | Deux recherches citées terminées en 23,591 s et 9,524 s ; Search puis Fetch ; résultat et usages canoniques | Une question de qualification ; classement lexical des sources, pas preuve générale de pertinence |
+| Unicité Research | Binding atomique déployé, concurrence Core/PostgreSQL et crash/replay CI verts | Préserver les identités historiques |
+| Secrets/exploitation | OpenBao persistant, policy minimale, root révoqué, renouvellement ; ancien Worker réactivé puis candidat ; récupération chiffrée réussie | Ne pas confondre exercice manuel et sauvegarde planifiée |
+| Restauration | Deux snapshots B2, packs relus, quatre magasins vérifiés sur volumes isolés neufs ; production inchangée | Restauration utilisateur isolée sur même serveur ; restauration entre VM prouvée séparément en CI |
 
-## Périmètre de confiance
+Cible : 12 CPU logiques, environ 32 Gio de RAM. Lecture : 3 333 requêtes, concurrence 20,
+p95 maximal 0,524 s, zéro erreur. Un compte réel alimente les clients virtuels depuis le Core
+de la cible ; ces mesures ne prouvent pas 1 000 utilisateurs distincts ni générations simultanées.
 
-KAIRO a un socle et un cockpit initial utilisables en développement, pas encore l'ensemble du
-produit Mycelium/Gantt/Brain. Des tests contrôlés prouvent des invariants précis ; ils ne certifient
-ni tous les moteurs réels, ni toutes les frontières de production, ni 1 000 utilisateurs.
-Les budgets réservent des estimations : ils ne garantissent pas un plafond fournisseur en dollars.
-D01–D03 et le périmètre H4 associé sont terminés ; D04 porte les preuves de moteurs réels et H5, encore non terminé. Le [plan D01–D22](implementation-plan.md) conduit au
-pilote central D13, puis aux extensions et à la distribution.
+La récupération réussie au code `61d7687088dcbb002febd4c5f1a97f33edcb1269` a pris 86,979 s
+pour le backup et 44,686 s pour la restauration. Deux snapshots contiennent 21 129 842 octets
+de données Restic. Comptes finaux inchangés `52|52|25|30|16|39|5`, travaux/outbox `0|0|0|0`.
+Les cinq réservations uncertain et les anciens essais sont conservés sans rejeu.
 
-L'[audit du 11 septembre](audit-2026-09-11.md) contient les preuves initiales, les services et
-les risques classés. L'[historique jusqu'à #83](archive/checkpoint-through-pr83-2026-09-11.md)
-conserve les SHAs/runs des anciennes gates ; ses anciens « next action » ne sont plus courants.
+## Produit présent et fonctions futures
+
+| Domaine | Présent | À livrer |
+|---|---|---|
+| Cockpit | Web/OIDC, panneaux persistés, Command Center, Projects, Today, Research, News, Knowledge | D05 : cohérence Mycelium, navigation, états, clavier/mobile/PWA et réglages API administrateur |
+| Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
+| Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
+| Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
+| Finance/Crypto/Home/Dev | Profils optionnels déclarés | Adaptateurs, policy, workspaces et parcours réels |
+
+La présence de Three, Tauri, Yjs ou d'un moteur optionnel ne vaut pas une fonctionnalité livrée.
+[ADR-029](decisions/ADR-029-server-personal-and-offline-clients.md) conserve serveur prioritaire
+et clients PC/téléphone/tablette ; offline, synchronisation et packaging suivent le plan.
+
+## Validation et décisions
+
+Le code qualifié `61d7687…` passe 10/10 workflows CI, dont Research, Foundation et D04,
+avec restauration sur deux VM. Le job LLM local optionnel est skipped conformément à
+[ADR-031](decisions/ADR-031-api-first-pilot.md). La CI finale et l'intégration de #88 sont
+des étapes de clôture distinctes des preuves opérateur.
+
+API uniquement pour le pilote : autres fournisseurs, capacité commerciale et autres OS ne
+conditionnent pas H5. Les clés restent côté serveur. D05 apporte les réglages fournisseur/modèle ;
+le BYOK par compte, les usages avancés et l'éventuel retour local gardent leurs lots du
+[plan D01–D22](implementation-plan.md).
+
+Les [archives opérateur](archive/d04-operator-history-2026-09-14.md) conservent les incidents ;
+leurs anciennes prochaines actions ne doivent pas être exécutées.

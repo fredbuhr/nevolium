@@ -1,81 +1,70 @@
-# KAIRO — checkpoint de reprise
+# Nevolium : checkpoint de reprise
 
-Dernière revue : 2026-09-11. **Vérifier GitHub live avant toute action.**
+Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 
-## Source canonique
+## Source canonique et passage de lot
 
-- `main` porte D03 terminé (#87), merge `d8b8025bb9143e49093eaaac3295affefc6fc07f`.
-- Base canonique vérifiée avant D04 : `0e2d22d8b49d1ddda6f2c0432de8dfe991b3ee0a`.
-  Les checkpoints suivants sont documentaires ; vérifier leurs diffs, ne pas les prendre pour une intégration de D04.
-- D01–D03, reset R0–R7 et H1–H4 terminés dans leurs périmètres. **D04/H5 ouvert** ; dernier jalon produit G51 Daily Spine.
-- Migration canonique : `0014_capacity_and_data`. Baseline images v9 ; aucun nouveau digest inventé.
-
-## Où reprendre — un seul lot et une seule PR
-
-| Champ | Valeur |
+| Champ | État attesté |
 |---|---|
-| Lot actif | **D04 — moteurs réels et exploitation (H5)** |
-| Branche active | `hardening/d04-real-engine-qualification` |
-| Livraison active | [PR #88](https://github.com/fredbuhr/kairo/pull/88), ouverte en draft, non fusionnée |
-| Head de code à contrôler | `a5a61db38191a9f8f37551fba7fe44df06c8a3be` |
-| Arbre de ce head | `c3ea2b7928bd11b45a607a22a9a6f9f0371a1179` |
-| Validation | **9/9 workflows réussis**, **5/5 jobs D04** ; contrôleur accès : **6 tests HTTP/TLS** ; rapports versionnés ci-dessous |
-| Prochaine action | Sur netcup : accès SSH opérateur, inventaire en lecture seule, puis durcissement hôte avant toute installation KAIRO |
-| Condition manquante | Inventaire OS réel, pare-feu, domaine/TLS, destination indépendante de sauvegarde et modèle quotidien non validés |
-| Méthode | Garder cette PR ; commits internes comme checkpoints, aucun nouveau sous-lot et aucun D05 avant la sortie H5 |
+| Base main vérifiée | `45b74baa3ddf8910f2aaa3d23c63f3e9bbedcf60` ; D03 intégré par #87 |
+| Acquis | Reset R0–R7, H1–H4, D01–D03 ; quatre preuves D04 acquises sur cible |
+| Opération active | Clôture D04/H5 dans [#88](https://github.com/fredbuhr/nevolium/pull/88) |
+| Branche | `hardening/d04-real-engine-qualification` ; unique branche de livraison D04 |
+| Cible | Checkout `61d7687088dcbb002febd4c5f1a97f33edcb1269`, récupération réussie |
+| CI code qualifié | 10/10 workflows verts à `61d7687…` ; CI documentaire finale à vérifier avant fusion |
+| Étape suivante | Fusion de #88, tag H5 et retrait de la branche, puis ouverture de D05 |
 
-## Réalisé sur la branche, sans promotion de main
+## Preuves acquises et limites
 
-- Image Worker complète avec dépendances natives OCR figées ; écriture technique Mem0 dans TMPDIR
-  et historique SDK en mémoire pour respecter le système en lecture seule.
-- Vrai PDF Docling, embeddings Mem0/PostgreSQL, épisodes Graphiti/Neo4j, recherche sémantique et
-  isolation des scopes ; exécution CPU sans Internet, modèles en lecture seule et inventaire SHA-256 conservé.
-- Petite IA locale Ollama/LiteLLM via gateway/comptabilité KAIRO, panne/rejeu connu/refus du rejeu
-  incertain/redémarrage ; recherche publique réelle SearXNG. Aucun fournisseur payant configuré dans les fixtures.
-- OpenBao persistant corrigé pour la version épinglée ; policy de lecture KAIRO et quatre refus vérifiés.
-- Sauvegarde Restic chiffrée et restauration sur un autre hôte CI avec vrais SQL, message JetStream,
-  objet filer et secret OpenBao. Attente bornée des volumes SeaweedFS au démarrage, contenu original exigé.
-- Inventaire et contrôle préalable cible prêts : TLS, refus anonyme/faux jeton, JSON KAIRO attendu et
-  routes privées bloquées avant la charge ; réponses bornées et erreurs sans secrets. Six tests HTTP/TLS
-  réussis en CI. Les clients virtuels ne sont pas des comptes distincts ; le serveur de fixture ne mesure pas la capacité KAIRO.
+Les [preuves finales D04](docs/archive/d04-pilot-qualification-2026-09-14.md) consignent les mesures,
+snapshots et limites. L'[historique opérateur](docs/archive/d04-operator-history-2026-09-14.md)
+conserve les anciens essais ; ses prochaines actions sont périmées.
 
-## Conditions de sortie et reprise après interruption
+- Deux Research OpenAI : 23,591 s et 9,524 s, Search puis Fetch, coûts/tokens reportés,
+  quatre usages et réservations réglées, total 0,039764 USD.
+- Lecture : 3 333 requêtes, concurrence 20, p95 maximal 0,524 s, zéro erreur.
+  Un compte réel et un générateur sur la cible ; pas 1 000 générations simultanées.
+- Mixte : Research 13,217 s ; Docling 39,499 s ; mémoire 21,451 s d'exécution.
+  Attente mémoire 43,378 s mesurée séparément. Retour ancien Worker puis candidat validé.
+- B2 : backup cohérent 86,979 s, restauration isolée 44,686 s ; quatre magasins relus.
+  Deux snapshots chiffrés, 21 129 842 octets de données Restic, tous les packs vérifiés.
+  Stockage hors serveur ; restauration en Compose isolé sur le même serveur.
+- Production finale : `52|52|25|30|16|39|5`, travaux/outbox `0|0|0|0`.
+  Marqueurs et environnement isolé supprimés, parts OpenBao temporaires effacées.
+- Rapport : `/var/lib/nevolium/qualification/d04-off-host-recovery-20260914T123615Z.78b757/recovery.json`.
 
-Les preuves CPU de CI ne clôturent pas H5. Restent sur la cible retenue : parcours canonique complet
-PDF/mémoire/recherche/modèle choisi, charge et files en usage mixte, TLS/ingress, droits SQL/réseau,
-upgrade/rollback compatible et restauration indépendante avec récupération séparée des clés.
-Le modèle de test 0.5B ne sélectionne pas le modèle quotidien ; le PDF à couche texte ne qualifie pas
-les scans complexes ; aucun test GPU ni 1000 comptes privés réels revendiqué. Les coûts inconnus D02
-restent inconnus, même si une réponse locale expose un montant numérique nul.
+Aucune commande de qualification ni ancienne Task à rejouer. Conserver les cinq réservations
+historiques uncertain. Les sauvegardes sont réelles ; un calendrier automatique n'est pas attesté.
 
-Avant reprise : lire AGENTS, comparer `main`, PR #88 et son head live ; lire le rapport et ses limites.
-Les commits de preuves/checkpoint après le head de code doivent rester documentaires. Si un test échoue,
-conserver ses résultats, corriger dans D04 et revalider le code changé ; ne pas effacer leases, dépenses
-inconnues ou données pour débloquer une gate. Aucun déploiement utilisateur exécuté dans cette session.
+## Exploitation à préserver
 
-## Orientation utilisateur précisée après la campagne
+Pilote API uniquement selon [ADR-031](docs/decisions/ADR-031-api-first-pilot.md) :
+LiteLLM `smart`, `openai/gpt-4.1`, plafond de sortie 4096. Ne pas relancer Ollama
+ou la présélection locale. Clé fournisseur côté LiteLLM, aucune clé dans Core/Worker/Web.
 
-Serveur prioritaire ; installation complète sur PC personnel également visée. Clients PC, smartphone
-et tablette, avec mode hors ligne borné et 3D adaptative. [ADR-029 et critères](https://github.com/fredbuhr/kairo/blob/hardening/d04-real-engine-qualification/docs/decisions/ADR-029-server-personal-and-offline-clients.md)
-et plan D05–D22 ajustés dans la même PR ; choix de conception, pas fonctionnalités livrées.
-Netcup RS 4000 G12 livré à Vienne et en fonctionnement selon captures utilisateur : 12 CPU AMD64,
-32 Gio de RAM, disque 1 Tio et IPv4/IPv6 attribuées. Aucun identifiant réseau ou de compte n'est versionné.
-Le panneau montre zéro règle de pare-feu ; état réel à vérifier avant installation. ASUS TUF Gaming A16
-FA608PM relevé pour une répétition ultérieure : Ryzen 9 8940HX, 32 Go RAM, RTX 5060 Laptop 8 Go,
-environ 586 Go libres sous Windows x64. Budget préféré 50 €/mois, maximum 90 €, pilote 3–4 personnes.
-Protocole local/serveur ajouté dans qualification-d04 ; captures seulement, aucun test exécuté sur les machines.
-D04 reste centré sur le premier serveur Linux ; modèle quotidien non choisi. Ne pas confondre
-ces cibles produit avec trois serveurs à synchroniser ou exiger tous les OS/mobiles avant de fermer H5.
+Schéma `0014_capacity_and_data` ; pas de migration pour la clôture.
+Core `69453e7b1348…`, Worker `cb9b73de908…`, Web MCP `fcfba65ffada…`,
+registre génération 2 ; images de rollback conservées.
+Le checkout source n'est pas une preuve de reconstruction des conteneurs.
+Restic B2 privé dans `/etc/nevolium/restic.env`, root 0600 ; mot de passe conservé hors serveur.
+OpenBao valide : display name `token-nevolium-core`, policy minimale, période 604800 s,
+orphan/renewable, accessor comparé au bootstrap par diagnostic sans exposition.
+
+## D05 : périmètre préparé, implémentation non commencée
+
+Après clôture H5, suivre [D05](docs/implementation-plan.md#d05--cockpit-cohérent-et-langage-visuel-mycelium) :
+cockpit partagé, navigation/recherche rapide/inspecteur, états vides/chargement/erreur,
+clavier et réduction des animations ; Dockview et layouts par propriétaire/appareil conservés.
+PWA et formats téléphone/tablette/bureau, fonctionnement sans WebGL.
+Réglages fournisseur/modèle de l'instance réservés à l'administrateur, clés côté serveur,
+test borné et conservation de la dernière configuration valide. Réutiliser LiteLLM et la comptabilité.
+
+Commencer par inspecter l'interface existante et les références visuelles effectivement disponibles ;
+ne pas prétendre disposer d'images absentes du dépôt. D06–D09 gardent planification, édition et graphes.
+Aucun nouveau lot technique D04, fournisseur supplémentaire ou benchmark local avant D05.
 
 ## Références
 
-- [Complément accès public et validation](https://github.com/fredbuhr/kairo/blob/hardening/d04-real-engine-qualification/docs/archive/d04-public-access-2026-09-11.md)
-
-- [Protocole D04](https://github.com/fredbuhr/kairo/blob/hardening/d04-real-engine-qualification/docs/qualification-d04.md)
-- [Rapport D04 daté et preuves](https://github.com/fredbuhr/kairo/blob/hardening/d04-real-engine-qualification/docs/archive/qualification-d04-2026-09-11.md)
-- [Plan stable D01–D22](docs/implementation-plan.md) · [reprise](docs/development-workflow.md) · [déploiement](docs/deployment.md)
-- [Acquis D03](docs/archive/checkpoint-through-d03-2026-09-11.md) · [état produit](docs/status.md) · [roadmap](docs/roadmap.md)
-
-Les anciennes branches D01–D03/H1–H4 sont retirées. Réservoirs non canoniques inspectés :
-`feat/kairo-test-interface-v1` (`ed12d503…`) et `consolidate/g49-research-durable-stages` (`57a1a217…`).
-Aucun merge en bloc ; principe de namespace OpenBao repris après revue, droits futurs non accordés.
+[État produit](docs/status.md) · [Plan](docs/implementation-plan.md) · [Protocole](docs/qualification-d04.md)
+· [Workflow](docs/development-workflow.md). Les anciens noms H/D et réservoirs sont historiques ;
+aucun merge en bloc de `ed12d503…` ou `57a1a217…`.

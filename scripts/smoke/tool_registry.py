@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integration proof for KAIRO's canonical MCP tool registry and deny-by-default policy."""
+"""Integration proof for Nevolium's canonical MCP tool registry and deny-by-default policy."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ import urllib.request
 from typing import Any
 
 CORE = "http://localhost:8000"
-INTERNAL_TOKEN = os.getenv("KAIRO_INTERNAL_TOKEN", "CHANGE_ME_INTERNAL_TOKEN")
-INTERNAL = {"X-Kairo-Internal-Token": INTERNAL_TOKEN}
+INTERNAL_TOKEN = os.getenv("NEVOLIUM_INTERNAL_TOKEN", "CHANGE_ME_INTERNAL_TOKEN")
+INTERNAL = {"X-Nevolium-Internal-Token": INTERNAL_TOKEN}
 
 
 def json_request(
@@ -54,7 +54,7 @@ def wait_ready() -> None:
         except Exception as exc:  # noqa: BLE001
             last_error = exc
         time.sleep(1)
-    raise RuntimeError(f"KAIRO Core did not become ready: {last_error}")
+    raise RuntimeError(f"Nevolium Core did not become ready: {last_error}")
 
 
 def main() -> None:
@@ -80,6 +80,30 @@ def main() -> None:
         },
     )
     assert server["catalog_generation"] == 0, server
+
+    # Public discovery stays redacted, while the internal bootstrap can verify the
+    # exact deployment binding instead of treating a deliberately absent field as drift.
+    _, visible_servers = json_request("GET", "/v1/tool-servers")
+    visible_server = next(item for item in visible_servers if item["id"] == server["id"])
+    assert "endpoint_url" not in visible_server, visible_server
+    json_request(
+        "GET",
+        f"/internal/v1/tool-servers/{server['id']}",
+        expected=401,
+    )
+    _, transport = json_request(
+        "GET",
+        f"/internal/v1/tool-servers/{server['id']}",
+        headers=INTERNAL,
+    )
+    assert transport == {
+        "id": server["id"],
+        "key": "smoke-server",
+        "namespace": "smoke",
+        "transport": "mcp_streamable_http",
+        "endpoint_url": "http://fake-mcp:8765/mcp",
+        "catalog_generation": 0,
+    }, transport
 
     # Catalog schemas are untrusted remote input and must be structurally valid.
     json_request(
@@ -152,7 +176,7 @@ def main() -> None:
         payload={
             "project_id": project["id"],
             "tool_key": "smoke.search",
-            "input": {"query": "kairo"},
+            "input": {"query": "nevolium"},
         },
     )
 
@@ -188,7 +212,7 @@ def main() -> None:
         payload={
             "project_id": project["id"],
             "tool_key": "smoke.search",
-            "input": {"query": "kairo"},
+            "input": {"query": "nevolium"},
             "idempotency_key": "smoke-tool-invocation-1",
         },
     )
@@ -212,7 +236,7 @@ def main() -> None:
         payload={
             "project_id": project["id"],
             "tool_key": "smoke.search",
-            "input": {"query": "kairo"},
+            "input": {"query": "nevolium"},
             "idempotency_key": "smoke-tool-invocation-1",
         },
     )
@@ -285,7 +309,7 @@ def main() -> None:
         payload={
             "project_id": project["id"],
             "tool_key": "smoke.search",
-            "input": {"query": "kairo"},
+            "input": {"query": "nevolium"},
         },
     )
     _, fresh = json_request(
@@ -295,7 +319,7 @@ def main() -> None:
         payload={
             "project_id": project["id"],
             "tool_key": "smoke.search",
-            "input": {"query": "kairo", "limit": 5},
+            "input": {"query": "nevolium", "limit": 5},
             "idempotency_key": "smoke-tool-invocation-v2",
         },
     )

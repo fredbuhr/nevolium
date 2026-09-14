@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic proof of KAIRO's logical model gateway accounting, replay and trace contract."""
+"""Deterministic proof of Nevolium's logical model gateway accounting, replay and trace contract."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import Any
 
 import httpx
 
-from kairo_worker import model_gateway
+from nevolium_worker import model_gateway
 
 TASK_ID = "00000000-0000-0000-0000-000000000001"
 EXECUTION_ID = "00000000-0000-0000-0000-000000000002"
@@ -19,6 +19,12 @@ CALL_KEY = model_gateway.deterministic_model_call_key(
     workflow_execution_id=EXECUTION_ID,
     call_slot="contract.fixture.v1",
 )
+FIXTURE_SCHEMA = {
+    "type": "object",
+    "properties": {"answer": {"type": "string"}},
+    "required": ["answer"],
+    "additionalProperties": False,
+}
 SECOND_CALL_KEY = model_gateway.deterministic_model_call_key(
     task_id=TASK_ID,
     workflow_execution_id=EXECUTION_ID,
@@ -75,17 +81,30 @@ async def main() -> None:
             provider_posts.append(dict(kwargs))
             payload = kwargs["json"]
             assert payload["model"] == "smart", payload
-            assert payload["max_tokens"] == model_gateway.settings.kairo_model_max_output_tokens
+            assert payload["max_tokens"] == model_gateway.settings.nevolium_model_max_output_tokens
+            assert payload["timeout"] == (
+                model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS
+                - model_gateway.MODEL_PROXY_TIMEOUT_GRACE_SECONDS
+            ), payload
+            assert payload["response_format"] == {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "nevolium_gateway_fixture",
+                    "strict": False,
+                    "schema": FIXTURE_SCHEMA,
+                },
+            }, payload
+            assert self.timeout == model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS
             metadata = payload["metadata"]
             assert metadata == {
-                "generation_name": "kairo.model.invoke",
+                "generation_name": "nevolium.model.invoke",
                 "trace_id": "00000000000000000000000000000003",
                 "session_id": EXECUTION_ID,
-                "tags": ["kairo", "model:smart"],
-                "kairoTaskId": TASK_ID,
-                "kairoWorkflowExecutionId": EXECUTION_ID,
-                "kairoModelCallKey": CALL_KEY,
-                "kairoModelAlias": "smart",
+                "tags": ["nevolium", "model:smart"],
+                "nevoliumTaskId": TASK_ID,
+                "nevoliumWorkflowExecutionId": EXECUTION_ID,
+                "nevoliumModelCallKey": CALL_KEY,
+                "nevoliumModelAlias": "smart",
             }, metadata
             assert len(metadata["trace_id"]) == 32, metadata
             assert metadata["trace_id"].isalnum() and metadata["trace_id"] == metadata["trace_id"].lower()
@@ -98,9 +117,10 @@ async def main() -> None:
                 headers={
                     "x-litellm-response-cost": "0.012345",
                     "x-litellm-call-id": CALL_KEY,
+                    "x-litellm-model-name": "openai/gpt-fixture",
                 },
                 json={
-                    "model": "openai/gpt-fixture",
+                    "model": "smart",
                     "choices": [{"message": {"content": "fixture completion"}}],
                     "usage": {
                         "prompt_tokens": 101,
@@ -127,7 +147,10 @@ async def main() -> None:
             model_alias="smart",
             idempotency_key=CALL_KEY,
             estimated_cost_usd=Decimal("0.02"),
+            timeout_seconds=model_gateway.MODEL_REQUEST_TIMEOUT_CAP_SECONDS + 30,
             messages=[{"role": "user", "content": "fixture"}],
+            response_schema=FIXTURE_SCHEMA,
+            response_schema_name="nevolium_gateway_fixture",
         )
         assert result.content == "fixture completion", result
         assert result.usage.provider_model == "openai/gpt-fixture", result.usage
@@ -277,12 +300,35 @@ async def main() -> None:
             "usage": {"prompt_tokens": 3, "completion_tokens": 2},
         },
         httpx.Headers({}),
+        model_alias="smart",
     )
     assert missing_cost.total_tokens == 5, missing_cost
+    assert missing_cost.provider_model == "ollama/qwen-fixture", missing_cost
     assert missing_cost.cost_usd == Decimal("0"), missing_cost
     assert missing_cost.cost_reported is False, missing_cost
+    attributed = model_gateway.parse_usage(
+        {
+            "model": "smart",
+            "usage": {"prompt_tokens": 3, "completion_tokens": 2},
+        },
+        httpx.Headers({"x-litellm-model-name": "openai/gpt-4.1"}),
+        model_alias="smart",
+    )
+    assert attributed.provider_model == "openai/gpt-4.1", attributed
+    local_zero_cost = model_gateway.parse_usage(
+        {
+            "model": "local-fast",
+            "usage": {"prompt_tokens": 3, "completion_tokens": 2},
+        },
+        httpx.Headers({}),
+        model_alias="local-fast",
+    )
+    assert local_zero_cost.cost_usd == Decimal("0"), local_zero_cost
+    assert local_zero_cost.cost_reported is True, local_zero_cost
     for invalid_cost in ("NaN", "Infinity", "-1", "bad-cost"):
-        cost, reported = model_gateway._response_cost(httpx.Headers({"x-litellm-response-cost": invalid_cost}))
+        cost, reported = model_gateway._response_cost(
+            httpx.Headers({"x-litellm-response-cost": invalid_cost}), model_alias="local-fast"
+        )
         assert cost == 0 and reported is False
 
     print(
