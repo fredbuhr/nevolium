@@ -10,9 +10,9 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Checkout cible | `29638ae8dbf05a5dbcc9383d94d5d546ee6c54e7` ; checkout serveur propre à ce SHA |
-| Correctif actif | `bef11ff317565d9d05da278a8fcebaec6b736dc8` ; bootstrap interne déployé, registre génération 2, 10/10 workflows réussis |
-| Correctif candidat | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM publiée, 10/10 workflows réussis au checkpoint `449a688…` |
+| Checkout cible | `617a5f99f1f22bf8e232d259fcc48914f1ae3e4e` ; checkout serveur propre à ce SHA |
+| Correctif actif | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM et plafond 4096 actifs, 10/10 workflows réussis au checkpoint `617a5f9…` |
+| Preuve suivante | Deux nouvelles Tasks Research OpenAI séquentielles, sans rejeu des échecs historiques |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -34,7 +34,7 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 | Composant | Dernier code déployé confirmé |
 |---|---|
 | Core | image `69453e7b1348…`, correctif `bef11ff…` actif |
-| Worker | image `695e06a8ca32…`, correctif `bef11ff…` actif |
+| Worker | image `933fdacb68ec…`, correctif `ae4e7fb…` actif ; sortie modèle 4096 |
 | Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
 | LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
 | Web MCP | image `fcfba65ffada…`, correctif `0e57de2…` actif ; registre synchronisé génération 2 |
@@ -73,6 +73,14 @@ inchangé. Le bootstrap interne a réussi et le registre est passé de générat
 `web.search` a changé, `web.fetch` et les deux politiques read-only A1 sont restés cohérents. Les
 pollers Temporal sont sains, les comptes sont restés `35|35|15|20|6|23|5`, les travaux actifs
 `0|0|0`, le jeton administrateur éphémère a été effacé et aucune Task/OpenAI n'a été lancée.
+
+Le checkout a enfin été avancé à `617a5f99f1f22bf8e232d259fcc48914f1ae3e4e`. Le Worker
+`933fdacb68ec…` a remplacé `695e06a8ca32…` ; Core et Web MCP sont restés inchangés. La limite de
+sortie API est passée de 256 à 4096 et le chemin d'attribution du déploiement LiteLLM est actif. Le
+Worker est présent dans les deux queues Temporal, les comptes sont restés `38|38|17|22|8|25|5`,
+les travaux actifs `0|0|0` et aucune Task/OpenAI n'a été lancée. Retour conservé sous
+`nevolium-api-rollback/nevolium-worker:before-output-617a5f9` et sauvegarde privée de l'environnement
+`/etc/nevolium/production.env.before-output-617a5f9.5hSaTc`.
 
 Sauvegarde privée existante : `/etc/nevolium/api-rollback.9KmtYC` (ancien environnement et configurations).
 Images conservées : `nevolium-api-rollback/{nevolium-core,nevolium-worker,nevolium-web,litellm}:9KmtYC`.
@@ -123,6 +131,9 @@ Ruff ciblé, compilation et diff réussissent localement sans appel fournisseur.
 d'admission attend la base jetable de CI et n'a pas été exécuté contre une base locale persistante.
 Les 10 workflows GitHub sont verts au checkpoint exact `449a68800f5527afa55f0df004b2e8abf91c3183`,
 y compris Autonomous Research, Foundation et D04.
+Le checkpoint documentaire final `617a5f99f1f22bf8e232d259fcc48914f1ae3e4e` passe aussi les 10
+workflows. L'unique reset Docker Hub du premier job Foundation a réussi lors de la relance ciblée ;
+les neuf jobs Foundation et D04 sont verts.
 
 ## Prochaine action exécutable
 
@@ -161,11 +172,11 @@ second essai n'a pas été créé. Les comptes sont `38|38|17|22|8|25|5`, travau
 La même lecture a montré que LiteLLM remet l'alias `smart` dans le champ `model`, donc l'attribution
 canonique doit lire son en-tête de déploiement. Ne pas rejouer cette Task.
 
-Construire uniquement le Worker candidat, sauvegarder `production.env`, remplacer uniquement
-`NEVOLIUM_MODEL_MAX_OUTPUT_TOKENS=256` par la borne documentée `4096`, puis activer ce Worker sans
-travail actif. Après contrôle de l'identité du déploiement LiteLLM, lancer deux nouvelles Tasks
-Research séquentielles avec de nouveaux UUID. Le [protocole D04](docs/qualification-d04.md) porte la
-suite finie et les limites, sans nouveau sous-lot.
+Lancer deux nouvelles Tasks Research séquentielles avec de nouveaux UUID. Chaque Task doit terminer
+Search puis Fetch sur une source Debian officielle, produire un artefact parent cité, deux usages
+attribués au déploiement `openai/gpt-4.1` avec tokens/coûts reportés et deux réservations réglées.
+Arrêter la paire dès le premier résultat invalide et ne rejouer aucune Task. Le
+[protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
