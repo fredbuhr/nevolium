@@ -2,73 +2,60 @@
 
 Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 
-## Source canonique et passage de lot
+## Gate actif : clôture H5, opérations GitHub bloquées
 
 | Champ | État attesté |
 |---|---|
-| Base main vérifiée | `db07f7a90cc406ddc80683521bbf1744e3a2b668` ; D04 intégré par #88 |
+| Base main vérifiée | `ea2f3644ab19f2da2eedd2927cf7c0bedf2f9211` ; D04 intégré par #88 / `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Acquis | Reset R0–R7, H1–H4 et D01–D04 intégrés ; quatre preuves D04 acquises sur cible |
-| Opération active | Finalisation H5 : #88 fusionnée, tag H5 à créer |
-| Branche | `hardening/d04-real-engine-qualification` fusionnée, à supprimer ; aucune branche D05 créée |
-| Cible | Checkout `61d7687088dcbb002febd4c5f1a97f33edcb1269`, récupération réussie |
-| CI tête fusionnée | 10/10 workflows verts à `2946df59664c01d77abc3b5720fff1dbbf96cb4c` ; mise à jour après fusion documentaire uniquement |
-| Étape suivante | Créer le tag H5 sur le commit de fusion et supprimer la branche fusionnée, puis ouvrir D05 |
+| Refs live | H5 absent ; `hardening/d04-real-engine-qualification` encore à `2946df59664c01d77abc3b5720fff1dbbf96cb4c`, fusionnée |
+| Branche / PR active | Aucune PR ouverte ; aucune branche D05 créée. Les anciennes branches ne deviennent pas des branches actives |
+| CI inspectée | D04 `2946df5…` : 10/10 workflows réussis ; main `ea2f364…` : 8/8 workflows exécutés réussis ; arbre du merge identique à la tête D04 testée |
+| Réalisé dans cette reprise | Audit live et inspection du cockpit, des primitives API et du prototype ; documentation uniquement, aucune implémentation D05 |
+| Limite de session | Aucun terminal exposé ; aucune action GitHub de création de tag ni de suppression de branche |
+| Prochaine action | Exécuter le bloc de [clôture préparé](docs/archive/d05-entry-inspection-2026-09-14.md#blocage-et-commande-opérateur-préparée), puis vérifier H5 sur `db07f7a…` et absence de la seule branche D04 |
+| Passage D05 | Après vérification H5 : actualiser ce checkpoint, relire main/CI, créer une seule branche depuis main live |
 
-La connexion GitHub actuelle permet fusion et fichiers, mais ne fournit pas d'action de création
-de tag/release ni de suppression de branche. Ces deux opérations restent à effectuer via GitHub ;
-aucune nouvelle autorisation n'est requise et aucune qualification serveur n'est à relancer.
+Les opérations H5 sont déjà autorisées. La commande documentée n'a **pas été exécutée** ;
+ce checkpoint ne clôture pas H5. La CI ci-dessus concerne les SHA nommés, pas la présente
+mise à jour documentaire. Aucun checkout serveur ni conteneur n'a été modifié par l'agent.
 
-## Preuves acquises et limites
+## Preuves et exploitation à préserver
 
-Les [preuves finales D04](docs/archive/d04-pilot-qualification-2026-09-14.md) consignent les mesures,
-snapshots et limites. L'[historique opérateur](docs/archive/d04-operator-history-2026-09-14.md)
-conserve les anciens essais ; ses prochaines actions sont périmées.
+Le [rapport final D04](docs/archive/d04-pilot-qualification-2026-09-14.md) conserve les quatre
+preuves et leurs limites : deux Research OpenAI, 3 333 lectures/concurrence 20/zéro erreur,
+charge mixte et rollback Worker, deux snapshots Restic B2 chiffrés relus et restauration de
+PostgreSQL/JetStream/SeaweedFS/OpenBao sur volumes neufs dans un Compose isolé du même serveur.
+La restauration entre deux VM est une preuve CI distincte. Aucune sauvegarde automatique attestée.
 
-- Deux Research OpenAI : 23,591 s et 9,524 s, Search puis Fetch, coûts/tokens reportés,
-  quatre usages et réservations réglées, total 0,039764 USD.
-- Lecture : 3 333 requêtes, concurrence 20, p95 maximal 0,524 s, zéro erreur.
-  Un compte réel et un générateur sur la cible ; pas 1 000 générations simultanées.
-- Mixte : Research 13,217 s ; Docling 39,499 s ; mémoire 21,451 s d'exécution.
-  Attente mémoire 43,378 s mesurée séparément. Retour ancien Worker puis candidat validé.
-- B2 : backup cohérent 86,979 s, restauration isolée 44,686 s ; quatre magasins relus.
-  Deux snapshots chiffrés, 21 129 842 octets de données Restic, tous les packs vérifiés.
-  Stockage hors serveur ; restauration en Compose isolé sur le même serveur.
-- Production finale : `52|52|25|30|16|39|5`, travaux/outbox `0|0|0|0`.
-  Marqueurs et environnement isolé supprimés, parts OpenBao temporaires effacées.
-- Rapport : `/var/lib/nevolium/qualification/d04-off-host-recovery-20260914T123615Z.78b757/recovery.json`.
+- Dernier checkout serveur attesté : `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; non revérifié ici.
+- Pilote API uniquement : LiteLLM `smart`, `openai/gpt-4.1`, sortie maximale 4096 (ADR-031).
+  Clé fournisseur côté LiteLLM ; aucune clé dans Core/Worker/Web.
+- Schéma `0014_capacity_and_data`. Comptes finaux `52|52|25|30|16|39|5`, travaux/outbox `0|0|0|0`.
+- Conserver les cinq réservations historiques uncertain, snapshots B2 et images de rollback.
+  Ne relancer ni Ollama, ni ancienne Task, ni campagne D04.
+- Images attestées : Core `69453e7b1348…`, Worker `cb9b73de908…`, Web MCP `fcfba65ffada…`,
+  registre génération 2. Changer le checkout ne reconstruit pas les conteneurs.
+- Restic privé `/etc/nevolium/restic.env`, root 0600, mot de passe hors serveur.
+  OpenBao workload valide ; parts temporaires effacées. Détails dans le rapport final.
 
-Aucune commande de qualification ni ancienne Task à rejouer. Conserver les cinq réservations
-historiques uncertain. Les sauvegardes sont réelles ; un calendrier automatique n'est pas attesté.
+## D05 : inspection réalisée, implémentation non commencée
 
-## Exploitation à préserver
+[Inspection datée et réutilisation](docs/archive/d05-entry-inspection-2026-09-14.md).
+Dockview, API propriétaire de layouts, panneaux métier, inspecteur documentaire, rôles administrateur
+et comptabilité existent. Manquent notamment reprise par appareil, erreurs de layout visibles,
+navigation rapide, PWA et test/bascule du fournisseur d'instance. Réutiliser ces primitives.
 
-Pilote API uniquement selon [ADR-031](docs/decisions/ADR-031-api-first-pilot.md) :
-LiteLLM `smart`, `openai/gpt-4.1`, plafond de sortie 4096. Ne pas relancer Ollama
-ou la présélection locale. Clé fournisseur côté LiteLLM, aucune clé dans Core/Worker/Web.
+Aucune image de référence dans les arbres main/prototype consultés ; demander une ou deux
+captures validées et le logo éventuel. Le code `ed12d503…` est un réservoir inspecté, pas un
+design visuel vu ou validé. Aucun merge global de ce prototype ou de `57a1a217…`.
 
-Schéma `0014_capacity_and_data` ; pas de migration pour la clôture.
-Core `69453e7b1348…`, Worker `cb9b73de908…`, Web MCP `fcfba65ffada…`,
-registre génération 2 ; images de rollback conservées.
-Le checkout source n'est pas une preuve de reconstruction des conteneurs.
-Restic B2 privé dans `/etc/nevolium/restic.env`, root 0600 ; mot de passe conservé hors serveur.
-OpenBao valide : display name `token-nevolium-core`, policy minimale, période 604800 s,
-orphan/renewable, accessor comparé au bootstrap par diagnostic sans exposition.
+Suivre [D05](docs/implementation-plan.md#d05--cockpit-cohérent-et-langage-visuel-mycelium) en une
+livraison : design/navigation/inspecteur, états/clavier/mouvement réduit, appareils/PWA et réglages
+API administrateur. Test réel borné du fournisseur choisi, clés serveur, budgets/usages canoniques,
+vidage coordonné des appels et conservation de la configuration valide en cas d'échec.
+D06–D09 gardent planification, édition et graphes ; aucun graphe 3D décoratif permanent en D05.
 
-## D05 : périmètre préparé, implémentation non commencée
-
-Après clôture H5, suivre [D05](docs/implementation-plan.md#d05--cockpit-cohérent-et-langage-visuel-mycelium) :
-cockpit partagé, navigation/recherche rapide/inspecteur, états vides/chargement/erreur,
-clavier et réduction des animations ; Dockview et layouts par propriétaire/appareil conservés.
-PWA et formats téléphone/tablette/bureau, fonctionnement sans WebGL.
-Réglages fournisseur/modèle de l'instance réservés à l'administrateur, clés côté serveur,
-test borné et conservation de la dernière configuration valide. Réutiliser LiteLLM et la comptabilité.
-
-Commencer par inspecter l'interface existante et les références visuelles effectivement disponibles ;
-ne pas prétendre disposer d'images absentes du dépôt. D06–D09 gardent planification, édition et graphes.
-Aucun nouveau lot technique D04, fournisseur supplémentaire ou benchmark local avant D05.
-
-## Références
-
-[État produit](docs/status.md) · [Plan](docs/implementation-plan.md) · [Protocole](docs/qualification-d04.md)
-· [Workflow](docs/development-workflow.md). Les anciens noms H/D et réservoirs sont historiques ;
-aucun merge en bloc de `ed12d503…` ou `57a1a217…`.
+[État produit](docs/status.md) · [Plan](docs/implementation-plan.md) ·
+[Workflow](docs/development-workflow.md) · [Historique opérateur](docs/archive/d04-operator-history-2026-09-14.md)
+(anciennes prochaines actions périmées).
