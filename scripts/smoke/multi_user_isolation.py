@@ -402,6 +402,16 @@ def main() -> int:
         expected={201},
     )
     assert relationship["source_id"] == project_a["id"]
+    for entity_type, entity_id in (("project", project_a["id"]), ("task", task_a["id"])):
+        path = f"/v1/relationships?entity_type={entity_type}&entity_id={entity_id}&limit=1"
+        _, links = json_request("GET", path, token=token_a)
+        assert [link["id"] for link in links] == [relationship["id"]], links
+        json_request("GET", path, token=token_b, expected={404})
+        json_request("GET", path, expected={401})
+        json_request("GET", path.replace("limit=1", "limit=201"), token=token_a, expected={422})
+        json_request("GET", path + "&cursor=invalid", token=token_a, expected={422})
+    _, empty_links = json_request("GET", f"/v1/relationships?entity_type=project&entity_id={project_b['id']}", token=token_b)
+    assert empty_links == [], empty_links
     json_request(
         "POST",
         "/v1/relationships",

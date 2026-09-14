@@ -8,7 +8,7 @@ body::before { display: none; }
   inset: 0;
   opacity: 1;
   mask-image: none;
-  background: linear-gradient(180deg, rgba(1, 9, 16, .1), rgba(1, 9, 16, .05) 65%, rgba(1, 9, 16, .16)), url('/mycelium-landscape.webp') center bottom / cover no-repeat;
+  background: linear-gradient(125deg, rgba(2, 11, 19, .25), rgba(2, 11, 19, .7) 70%), url('/mycelium-quiet.webp') center / cover no-repeat;
 }
 .app-shell.ambience-calm::before { opacity: .6; }
 .app-shell.ambience-minimal::before { background-image: none; background-color: #020b13; }

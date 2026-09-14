@@ -435,7 +435,7 @@ export default function App() {
 
   return (
     <main className={`app-shell ambience-${ambience} surface-${surface}`}>
-      {surface === 'cockpit' && ambience !== 'minimal' ? <MyceliumAtmosphere /> : null}
+      {ambience !== 'minimal' ? <MyceliumAtmosphere /> : null}
       {surface === 'home' ? (
         <MyceliumHome
           ambience={ambience}

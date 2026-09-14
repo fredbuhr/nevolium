@@ -6,6 +6,7 @@ import { initializeAuth } from './lib/authSession'
 import { ProjectSelectionProvider } from './lib/projectSelection'
 import './styles.css'
 import './mycelium-organic.css'
+import './connected-cockpit.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 

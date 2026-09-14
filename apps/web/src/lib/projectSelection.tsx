@@ -11,15 +11,18 @@ import {
 type ProjectSelectionContextValue = {
   selectedProjectId: string
   setSelectedProjectId: Dispatch<SetStateAction<string>>
+  selectedDocumentId: string
+  setSelectedDocumentId: Dispatch<SetStateAction<string>>
 }
 
 const ProjectSelectionContext = createContext<ProjectSelectionContextValue | null>(null)
 
 export function ProjectSelectionProvider({ children }: { children: ReactNode }) {
   const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [selectedDocumentId, setSelectedDocumentId] = useState('')
   const value = useMemo(
-    () => ({ selectedProjectId, setSelectedProjectId }),
-    [selectedProjectId],
+    () => ({ selectedProjectId, setSelectedProjectId, selectedDocumentId, setSelectedDocumentId }),
+    [selectedProjectId, selectedDocumentId],
   )
 
   return (

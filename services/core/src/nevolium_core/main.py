@@ -9,7 +9,8 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
+from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import __version__
@@ -36,6 +37,7 @@ from .openbao import openbao_client
 from .outbox import OutboxRelay
 from .planning import router as planning_router
 from .project_access import (
+    entity_belongs_to_principal,
     get_owned_project,
     owned_project_clause,
     require_same_owner_entities,
@@ -389,6 +391,36 @@ async def get_task(
     if not task or not await get_owned_project(session, task.project_id, principal):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
+
+
+@app.get("/v1/relationships", response_model=list[RelationshipRead])
+async def list_relationships(
+    entity_type: Literal["project", "task", "document"],
+    entity_id: uuid.UUID,
+    response: Response,
+    principal: Principal = Depends(require_nevolium_user),
+    session: AsyncSession = Depends(get_session),
+    limit: PageLimit = 30,
+    cursor: PageCursor = None,
+) -> list[RelationshipRecord]:
+    """One bounded neighbourhood, never a global graph or an ownership oracle."""
+    if not await entity_belongs_to_principal(session, entity_type, entity_id, principal):
+        raise HTTPException(404, "Relationship endpoint not found")
+    statement = select(RelationshipRecord).where(
+        RelationshipRecord.owner_subject == principal.subject,
+        or_(
+            and_(RelationshipRecord.source_type == entity_type, RelationshipRecord.source_id == entity_id),
+            and_(RelationshipRecord.target_type == entity_type, RelationshipRecord.target_id == entity_id),
+        ),
+    )
+    rows = await page_rows(session, statement, RelationshipRecord, limit=limit, cursor=cursor,
+                           response=response, descending=True)
+    visible = []
+    for row in rows:
+        # Ownership may have changed since creation; stale endpoints must not leak metadata.
+        if await entity_belongs_to_principal(session, row.source_type, row.source_id, principal) and await entity_belongs_to_principal(session, row.target_type, row.target_id, principal):
+            visible.append(row)
+    return visible
 
 
 @app.post("/v1/relationships", response_model=RelationshipRead, status_code=status.HTTP_201_CREATED)

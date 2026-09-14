@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { qualifyConnectedScenarios } from './d05_connected_scenarios.mjs'
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const outputDirectory = path.join(repositoryRoot, 'artifacts/d05-browser')
@@ -263,9 +264,15 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   assert.equal(await assistantHeading.isVisible(), true, `${name}: Assistant doit être visible`)
   assert.equal(
     await newsHeading.isVisible(),
-    name === 'desktop' || name === 'desktop-admin' || name === 'compact-desktop',
+    false,
     `${name}: disposition initiale inattendue`,
   )
+  if (name === 'desktop' || name === 'desktop-admin' || name === 'compact-desktop') {
+    await page.getByRole('button', { name: 'Retrouver mes vues', exact: true }).click()
+    await newsHeading.waitFor({ state: 'visible' })
+    await page.getByRole('button', { name: 'Centrer l’activité', exact: true }).click()
+    await newsHeading.waitFor({ state: 'hidden' })
+  }
   if (name === 'tablet' || name === 'phone') {
     await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Actualités' }).click()
     await newsHeading.waitFor({ state: 'visible' })
@@ -286,7 +293,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   let popoutPath = null
   if (detach) {
-    await page.getByRole('button', { name: 'Assistant', exact: true }).click()
+    await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Assistant', exact: true }).click()
     const popoutPromise = context.waitForEvent('page')
     await page.getByRole('button', { name: 'Détacher', exact: true }).click()
     const popout = await popoutPromise
@@ -297,7 +304,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   }
 
   if (inspectAdmin) {
-    await page.getByRole('button', { name: 'Réglages API', exact: true }).click()
+    await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Réglages API', exact: true }).click()
     await page.getByRole('heading', { name: 'Modèle et fournisseur IA' }).waitFor()
     const provider = page.getByLabel('Fournisseur')
     assert.deepEqual(
@@ -367,6 +374,7 @@ try {
   await qualify(browser, 'compact-desktop', { width: 1024, height: 768 })
   await qualify(browser, 'tablet', { width: 820, height: 1180 })
   await qualify(browser, 'phone', { width: 390, height: 844 })
+  await qualifyConnectedScenarios(browser, { previewOrigin, apiOrigin, outputDirectory })
   await fs.writeFile(
     path.join(outputDirectory, 'qualification.json'),
     `${JSON.stringify(results, null, 2)}\n`,

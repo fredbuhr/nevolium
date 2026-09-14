@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { nevoliumFetch } from './lib/apiClient'
 
@@ -91,12 +91,22 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
   const [activatingId, setActivatingId] = useState<string | null>(null)
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pollError, setPollError] = useState<string | null>(null)
+  const [submittedId, setSubmittedId] = useState<string | null>(null)
+  const [receipt, setReceipt] = useState<string | null>(null)
+  const [checkedAt, setCheckedAt] = useState<string | null>(null)
+  const loadGeneration = useRef(0)
 
   const load = useCallback(async () => {
+    const generation = ++loadGeneration.current
     const response = await nevoliumFetch(`${apiUrl}/v1/admin/model-configurations`)
     if (!response.ok) throw new Error(await responseError(response))
     const value = (await response.json()) as ModelInventory
-    setInventory(value)
+    if (generation === loadGeneration.current) {
+      setInventory(value)
+      setPollError(null)
+      setCheckedAt(new Date().toLocaleTimeString('fr-FR'))
+    }
     return value
   }, [apiUrl])
 
@@ -113,9 +123,8 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
             !RETRYABLE_TEST_STATUSES.has(item.test_execution_status ?? ''),
         )
         if (cancelled) return
-        setError(null)
       } catch (loadError) {
-        if (!cancelled) setError(readableError(loadError))
+        if (!cancelled) setPollError(readableError(loadError))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -137,12 +146,20 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
     () => inventory?.candidates.filter((item) => item.status !== 'active') ?? [],
     [inventory],
   )
+  const latest = inventory
+    ? [inventory.active, ...inventory.candidates].find(item => item.id === submittedId && submittedId !== null)
+      ?? inventory.candidates.find(item => item.status !== 'retired')
+      ?? (inventory.active.source === 'managed' ? inventory.active : null)
+    : null
+
+  const refresh = () => void load().catch(cause => setPollError(readableError(cause)))
 
   async function submitTest(event: FormEvent) {
     event.preventDefault()
     if (!apiKey || !model.trim()) return
     setSubmitting(true)
     setError(null)
+    setReceipt(null)
     try {
       const response = await nevoliumFetch(`${apiUrl}/v1/admin/model-configurations/tests`, {
         method: 'POST',
@@ -150,8 +167,11 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
         body: JSON.stringify({ provider, model: model.trim(), api_key: apiKey }),
       })
       if (!response.ok) throw new Error(await responseError(response))
+      const accepted = await response.json() as { configuration: ModelConfiguration }
+      setSubmittedId(accepted.configuration.id)
+      setReceipt('Demande reçue par le serveur. Cela ne signifie pas encore que le fournisseur a accepté la clé.')
       setApiKey('')
-      await load()
+      await load().catch(cause => setPollError(readableError(cause)))
     } catch (submitError) {
       setApiKey('')
       setError(readableError(submitError))
@@ -170,7 +190,10 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
         { method: 'POST' },
       )
       if (!response.ok) throw new Error(await responseError(response))
+      ++loadGeneration.current
       setInventory((await response.json()) as ModelInventory)
+      setReceipt('Activation confirmée par le serveur pour les nouvelles tâches.')
+      setCheckedAt(new Date().toLocaleTimeString('fr-FR'))
     } catch (activationError) {
       setError(readableError(activationError))
     } finally {
@@ -213,15 +236,28 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
           <span>Nevolium vérifie la configuration active.</span>
         </div>
       ) : null}
-      {error ? (
+      {error || pollError ? (
         <div className="state-panel state-panel-error" role="alert">
           <strong>Action impossible</strong>
-          <span>{error}</span>
-          <button type="button" onClick={() => void load()}>
-            Réessayer
+          <span>{error || pollError}</span>
+          {pollError ? <small>État actuel non confirmé. Les informations ci-dessous sont la dernière lecture réussie.</small> : null}
+          <button type="button" onClick={refresh}>
+            Actualiser l’état sans relancer le test
           </button>
         </div>
       ) : null}
+
+      <div className="model-connection-summary" role="status" aria-live="polite" aria-atomic="true">
+        <span className="eyebrow">VOTRE CONNEXION IA</span>
+        <strong>{pollError ? 'Vérification momentanément indisponible' : latest?.status === 'active' ? 'Connexion vérifiée et activée' : latest?.status === 'verified' ? 'Test réussi — activation encore nécessaire' : latest?.status === 'failed' ? 'Le test n’a pas validé cette connexion' : latest?.status === 'testing' ? 'Test en cours — clé pas encore confirmée' : loading ? 'Lecture de l’état serveur…' : 'Aucune nouvelle clé validée dans ces réglages'}</strong>
+        {latest ? <span>{PROVIDER_LABELS[latest.provider as Provider] || latest.provider} · {latest.model_name}</span> : null}
+        {latest?.provider_model ? <span>Modèle retourné : {latest.provider_model}</span> : null}
+        {receipt && (!latest || latest.status === 'testing' || latest.status === 'active') ? <p>{receipt}</p> : null}
+        {latest?.status !== 'active' ? <p>La configuration active reste {inventory?.active.model_name || 'celle du serveur'}. Un test réussi ne la remplace pas automatiquement.</p> : null}
+        {latest?.status === 'verified' ? <button type="button" onClick={() => void activate(latest)} disabled={Boolean(activatingId) || Boolean(inventory?.active_calls) || Boolean(pollError)}>{activatingId ? 'Activation…' : 'Utiliser cette connexion vérifiée'}</button> : null}
+        {latest?.status === 'verified' && Boolean(inventory?.active_calls) ? <p>L’activation attend la fin des appels en cours.</p> : null}
+        <div><small>{checkedAt ? `Dernière lecture serveur : ${checkedAt}` : 'En attente du serveur'}</small><button type="button" onClick={refresh}>Actualiser l’état</button></div>
+      </div>
 
       {inventory ? (
         <article className="active-model-card">
@@ -235,6 +271,7 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
       ) : null}
 
       <form className="model-settings-form" onSubmit={submitTest}>
+        <h3>Tester une nouvelle connexion</h3>
         <div className="field-row">
           <label>
             Fournisseur
@@ -275,7 +312,8 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
             required
           />
           <small>
-            Envoyée une seule fois au service sécurisé ; elle n’est jamais réaffichée.
+            Saisir la clé ne suffit pas : cliquez sur « Tester cette connexion ». Elle est envoyée
+            au service sécurisé puis effacée du champ, même si le test échoue.
           </small>
         </label>
         <button type="submit" disabled={submitting || !apiKey || !model.trim()}>

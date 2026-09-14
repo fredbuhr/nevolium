@@ -6,12 +6,15 @@ D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89),
 unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Son dernier checkpoint de code complet vérifié
 avant la reprise de matière organique est `b122a09d499506797735cbb121f6d5a3326fcf3c` ; ses 10 workflows réussissent. Chromium couvre
 l'Accueil Mycelium et le Cockpit sur bureau/tablette/téléphone ; un second scénario traverse le vrai Keycloak avec PKCE pour les rôles
-administrateur et utilisateur. Le lot n'est ni intégré ni déployé. Les textes visibles sont alignés avec la
+administrateur et utilisateur. Le runtime `c17c7e24…` a depuis été déployé sur le pilote ; le lot n’est pas intégré. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
 La [reprise organique](archive/d05-organic-material-2026-09-14.md) remplace les orbites trop
 géométriques par une matière fibreuse bioluminescente et un paysage nocturne ; sa qualification
 exact-head et ses nouvelles captures sont suivies dans la PR. L'acceptation visuelle utilisateur
-reste nécessaire, indépendamment des tests fonctionnels.
+reste nécessaire, indépendamment des tests fonctionnels. Le retour suivant rouvre la navigation :
+la correction [fil connecté](archive/d05-connected-navigation-2026-09-14.md) ajoute l’inspection
+du parent, du voisinage et des relations canoniques, un fond neutre et l’état du test IA explicite.
+Elle n’est pas déployée ; ses preuves restent à vérifier sur sa propre tête.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
@@ -20,7 +23,7 @@ Les mesures cible proviennent des sorties opérateur conservées dans le
 Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
 D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
 droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
-D05 n'est ni intégré ni déployé ; sa livraison cohérente est en cours de revue.
+D05 n’est pas intégré ; le pilote exécute le runtime `c17c7e24…`, la correction est en revue.
 
 | Domaine | Preuve disponible | Limite |
 |---|---|---|

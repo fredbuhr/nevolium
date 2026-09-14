@@ -1,6 +1,6 @@
-import { memo, useId, useMemo } from 'react'
+import { memo, useId } from 'react'
 
-import { createMyceliumGeometry, type NeuralGeometry, type NeuralSpark } from './lib/myceliumGeometry'
+import { type NeuralGeometry, type NeuralSpark } from './lib/myceliumGeometry'
 
 function Spark({ spark, glowId }: { spark: NeuralSpark; glowId: string }) {
   return (
@@ -85,6 +85,5 @@ export const MyceliumField = memo(function MyceliumField({ geometry, ambient = f
 })
 
 export function MyceliumAtmosphere() {
-  const geometry = useMemo(() => createMyceliumGeometry(1400, 900), [])
-  return <div className="mycelium-atmosphere" aria-hidden="true"><MyceliumField geometry={geometry} ambient /></div>
+  return <div className="quiet-atmosphere" aria-hidden="true"><i /><i /><i /></div>
 }

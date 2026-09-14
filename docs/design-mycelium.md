@@ -25,10 +25,10 @@ La densité des liens ne vaut pas leur pertinence ; un lien doit aider à compre
 Une idée sans projet ni échéance garde sa place. L'ambiance visuelle ne doit ni imposer une
 lecture scientifique du produit ni exercer une pression pour produire davantage.
 
-Le produit conserve trois surfaces complémentaires :
+Le produit conserve trois surfaces complémentaires, avec une continuité de navigation :
 
 1. **Accueil Mycelium** — orientation et accès aux espaces réellement disponibles ;
-2. **Cockpit** — panneaux lisibles, redimensionnables et détachables pour travailler ;
+2. **Cockpit** — activité centrale, fil contextuel et vues redimensionnables/détachables ;
 3. **Explorateur** — relations canoniques 2D puis 3D en D08–D09, jamais décor permanent de D05.
 
 ## Implémentation D05
@@ -72,14 +72,40 @@ maskable conserve le motif dans la zone sûre.
   sombres réservés aux icônes et aux libellés. Les commandes restent des boutons HTML réels.
 - **Lumière** : cyan et bleu dominants, touches émeraude et violet, foyers lumineux localisés ;
   ni néon homogène autour de chaque rectangle ni pulsation de toute l'interface.
-- **Profondeur** : paysage nocturne détaillé, eau, relief et végétation discrets, horizon bas ;
-  abandon des montagnes polygonales. Les panneaux du cockpit conservent un fond suffisamment
-  opaque pour lire et travailler, même quand le décor reste visible sur leurs marges.
+- **Profondeur** : fond pétrole neutre, centre dégagé, ramifications cyan/émeraude en périphérie,
+  conformément aux nouvelles références utilisateur. Le paysage nocturne précédent est retiré
+  de l’interface ; sa preuve reste historique. Les surfaces de travail gardent un fond lisible.
 - **Stabilité** : le dessin et les cibles partagent les mêmes coordonnées en pixels réels, recalculées
   au redimensionnement. Le mouvement éventuel change seulement l'intensité, jamais les positions.
 - **Repli** : les textures WebP enrichissent le SVG, elles ne contiennent aucun texte ni contrôle.
   Sans image, le réseau vectoriel et les commandes restent utilisables. L'ambiance Minimale retire
-  paysage, tissus et textures ; les couleurs forcées donnent des boutons explicitement délimités.
+  fond, tissus et textures ; les couleurs forcées donnent des boutons explicitement délimités.
+
+## Le fil relié pendant le travail
+
+Le retour utilisateur après déploiement précise que le réseau d’accueil seul ne suffit pas.
+La correction D05 maintient un voisinage inspectable pendant l’activité :
+
+- **Origine / vertical** : le parent canonique du projet ou le projet de l’action/document ;
+- **Voisinage / horizontal** : documents et actions qui partagent réellement le projet ; ce lien
+  d’appartenance est nommé et ne prétend pas démontrer une proximité sémantique ;
+- **Connexions / transversal** : relations explicites entrantes et sortantes de l’élément,
+  avec leur type. Une traversée vers un document d’un autre projet change le contexte selon
+  son `project_id` canonique. Aucun lien supposé ou généré n’est ajouté pour remplir l’écran.
+
+La boussole 2D fournit trois commandes clavier/tactiles, pas un graphe métier complet. Le chemin
+parcouru permet de revenir ; le retour relit l’objet pour ne pas réouvrir un contenu devenu
+inaccessible. Le document ouvert est transmis à l’inspecteur existant par la sélection partagée.
+Les types sans vue livrée restent explicitement non ouvrables. L’absence et l’échec de lecture
+ont des messages distincts ; les pages sont bornées et complétées à la demande.
+
+Une nouvelle disposition de bureau commence sur l’activité centrée ; « Retrouver mes vues »
+restaure les panneaux côte à côte sans les recréer. Les dispositions déjà sauvegardées ne sont
+pas écrasées. Le fil est latéral sur bureau ; tablette et téléphone l’ouvrent à la demande, puis
+reviennent à l’activité choisie. Les profils et le détachement multi-écran sont préservés.
+
+Le fond bouge seulement par trois variations lentes d’opacité en périphérie. Ce mouvement ne
+signale aucune activité métier et s’arrête en mode calme/minimal ou mouvement réduit.
 
 La [note de réalisation](archive/d05-organic-material-2026-09-14.md) conserve les références,
 la provenance des deux textures, les instructions de génération et les limites de qualification.

@@ -17,6 +17,7 @@ import {
 import 'dockview-react/dist/styles/dockview.css'
 
 import { nevoliumFetch } from './lib/apiClient'
+import ContextNavigator from './ContextNavigator'
 
 export type CockpitSlots = {
   command: ReactNode
@@ -232,6 +233,8 @@ function createDefaultLayout(
     ...PANEL_DEFINITIONS.research,
     position: { referencePanel: PANEL_DEFINITIONS.news.id, direction: 'below' },
   })
+  const first = api.getPanel(PANEL_DEFINITIONS.command.id)
+  if (first) api.maximizeGroup(first)
 }
 
 function openPanel(api: CockpitApi, key: CockpitPanelKey, deviceClass: CockpitDeviceClass) {
@@ -325,6 +328,10 @@ export default function CockpitShell({
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [paletteQuery, setPaletteQuery] = useState('')
   const [paletteIndex, setPaletteIndex] = useState(0)
+  const [activeSpace, setActiveSpace] = useState(initialPanelKey || 'command')
+  const [recentSpaces, setRecentSpaces] = useState<string[]>([])
+  const [linksVisible, setLinksVisible] = useState(deviceClass === 'desktop')
+  const [centered, setCentered] = useState(false)
 
   const normalizedExtras = useMemo(() => normalizeExtraPanels(extraPanels), [extraPanels])
   const cockpitContent = useMemo<CockpitContent>(
@@ -428,6 +435,19 @@ export default function CockpitShell({
   const attachPersistence = useCallback(
     (api: CockpitApi) => {
       let saveTimer: number | undefined
+      const updateActive = () => {
+        const panel = api.activePanel
+        const key = Object.entries(PANEL_DEFINITIONS).find(([, value]) => value.id === panel?.id)?.[0]
+          || normalizedExtras.find(value => value.id === panel?.id)?.key
+        if (key) {
+          setActiveSpace(key)
+          setRecentSpaces(previous => previous.at(-1) === key ? previous : [...previous.slice(-4), key])
+        }
+        setCentered(api.hasMaximizedGroup())
+      }
+      updateActive()
+      const activeDisposable = api.onDidActivePanelChange(updateActive)
+      const maximizeDisposable = api.onDidMaximizedGroupChange(updateActive)
       const disposable = api.onDidLayoutChange(() => {
         if (saveTimer) window.clearTimeout(saveTimer)
         setLayoutState('saving')
@@ -440,6 +460,8 @@ export default function CockpitShell({
       })
       cleanupRef.current = () => {
         disposable.dispose()
+        activeDisposable.dispose()
+        maximizeDisposable.dispose()
         if (saveTimer) {
           window.clearTimeout(saveTimer)
           saveTimer = undefined
@@ -447,7 +469,7 @@ export default function CockpitShell({
         }
       }
     },
-    [queueLayoutSave],
+    [queueLayoutSave, normalizedExtras],
   )
 
   const restoreAndAttach = useCallback(
@@ -473,7 +495,9 @@ export default function CockpitShell({
           createDefaultLayout(api, profile, deviceClass, normalizedExtras)
         }
         const requestedPanel = paletteItems.find((item) => item.key === initialPanelKey)
+        const wasCentered = api.hasMaximizedGroup()
         if (requestedPanel) requestedPanel.open(api)
+        if (wasCentered && api.activePanel) api.maximizeGroup(api.activePanel)
         attachPersistence(api)
         if (restoredLegacyLayout) {
           queueLayoutSave(api)
@@ -521,8 +545,20 @@ export default function CockpitShell({
     const api = apiRef.current
     const item = filteredPaletteItems[index]
     if (!api || !item) return
+    const wasCentered = api.hasMaximizedGroup()
     item.open(api)
+    if (wasCentered && api.activePanel) api.maximizeGroup(api.activePanel)
     closePalette()
+  }
+
+  const navigate = (key: string) => {
+    const api = apiRef.current
+    const item = paletteItems.find(value => value.key === key)
+    if (!api || !item) return
+    const wasCentered = api.hasMaximizedGroup()
+    item.open(api)
+    if (wasCentered && api.activePanel) api.maximizeGroup(api.activePanel)
+    if (deviceClass !== 'desktop') setLinksVisible(false)
   }
 
   const handlePaletteKey = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -598,7 +634,7 @@ export default function CockpitShell({
 
   return (
     <CockpitContentContext.Provider value={cockpitContent}>
-      <section className="cockpit-shell" aria-label="Cockpit Nevolium">
+      <section className={`cockpit-shell ${linksVisible ? 'with-thread' : ''}`} aria-label="Cockpit Nevolium">
         <nav className="cockpit-toolbar" aria-label="Navigation du cockpit">
           <button className="cockpit-home-button" type="button" onClick={onOpenHome}>
             <span aria-hidden="true">⌂</span>
@@ -620,17 +656,23 @@ export default function CockpitShell({
                 key={item.key}
                 type="button"
                 disabled={!ready}
-                onClick={() => {
-                  const api = apiRef.current
-                  if (api) item.open(api)
-                }}
+                aria-current={activeSpace === item.key ? 'page' : undefined}
+                onClick={() => navigate(item.key)}
               >
                 {item.title}
               </button>
             ))}
           </div>
           <div className="toolbar-actions">
+            <button type="button" aria-expanded={linksVisible} aria-controls="context-thread" onClick={() => setLinksVisible(value => !value)}>Liens et contexte</button>
             {deviceClass === 'desktop' ? (
+              <>
+              <button type="button" disabled={!ready} aria-pressed={centered} onClick={() => {
+                const api = apiRef.current
+                if (!api?.activePanel) return
+                if (api.hasMaximizedGroup()) api.exitMaximizedGroup()
+                else api.maximizeGroup(api.activePanel)
+              }}>{centered ? 'Retrouver mes vues' : 'Centrer l’activité'}</button>
               <button
                 type="button"
                 disabled={!ready}
@@ -639,6 +681,7 @@ export default function CockpitShell({
               >
                 Détacher
               </button>
+              </>
             ) : null}
             <button type="button" disabled={!ready} onClick={resetLayout}>
               Réinitialiser
@@ -664,6 +707,13 @@ export default function CockpitShell({
           ) : null}
         </div>
 
+        <nav className="space-thread" aria-label="Fil de navigation">
+          <span className="eyebrow">VOUS ÊTES ICI</span>
+          {recentSpaces.map((key, index) => <button key={`${key}:${index}`} type="button" aria-current={index === recentSpaces.length - 1 ? 'step' : undefined} onClick={() => navigate(key)}>{paletteItems.find(item => item.key === key)?.title || key}</button>)}
+          <small>Projets et Documents partagent le contexte choisi.</small>
+        </nav>
+        <div className="connected-workspace">
+        {linksVisible ? <div id="context-thread"><ContextNavigator apiUrl={apiUrl} onOpenSpace={navigate} /></div> : null}
         <div className="cockpit-dock">
           <DockviewReact
             className="dockview-theme-abyss"
@@ -674,6 +724,7 @@ export default function CockpitShell({
             scrollbars="native"
             singleTabMode={deviceClass === 'phone' ? 'fullwidth' : 'default'}
           />
+        </div>
         </div>
       </section>
 

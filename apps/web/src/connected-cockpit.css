@@ -1,0 +1,95 @@
+/* D05: a stable working surface with a readable, living neighbourhood. */
+.quiet-atmosphere { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.quiet-atmosphere i { position: absolute; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(ellipse, #78f0ad18, transparent 68%); opacity: .25; animation: quiet-breath 17s ease-in-out infinite alternate; }
+.quiet-atmosphere i:nth-child(1) { left: -70px; top: 30%; }
+.quiet-atmosphere i:nth-child(2) { left: 34%; bottom: -80px; animation-delay: -7s; background: radial-gradient(ellipse, #2de7e020, transparent 68%); }
+.quiet-atmosphere i:nth-child(3) { right: -95px; bottom: 18%; animation-delay: -11s; }
+@keyframes quiet-breath { to { opacity: .8; } }
+.ambience-calm .quiet-atmosphere { opacity: .35; }
+.ambience-calm .quiet-atmosphere i { animation: none; }
+.surface-cockpit .cockpit-shell { border: 0; border-radius: 0; box-shadow: none; background: transparent; backdrop-filter: none; height: max(680px, calc(100dvh - 180px)); }
+.surface-cockpit .cockpit-context { border-color: #8accd31a; background: #06172599; }
+.cockpit-toolbar { flex-wrap: wrap; border: 0; background: #061725bb; border-radius: 16px 16px 0 0; }
+.cockpit-panel-buttons { flex: 1 1 550px; }
+.cockpit-panel-buttons button { position: relative; border-color: transparent; background: transparent; border-radius: 18px 10px 16px 8px; }
+.cockpit-panel-buttons button[aria-current] { color: #d9fff0; border-color: #78f0ad50; background: #78f0ad10; }
+.cockpit-panel-buttons button[aria-current]::before { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #a6ffe1; left: 5px; top: 50%; box-shadow: 0 0 9px #78f0ad; }
+.toolbar-actions { flex-wrap: wrap; }
+.space-thread { display: flex; flex-shrink: 0; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 52px; padding: 8px 14px; background: #03121cbb; font-size: 12px; }
+.space-thread .eyebrow { font-size: 9px; color: #9cb6bf; }
+.space-thread button { min-height: 36px; border: 0; background: none; color: #a4c0cc; padding: 0 6px; }
+.space-thread button + button::before { content: '↝'; padding-right: 16px; color: #6ebfad; }
+.space-thread button[aria-current] { color: #b5ffdc; }
+.space-thread small { margin-left: auto; color: #9bb2bd; }
+.connected-workspace { display: flex; flex: 1; min-height: 0; gap: 18px; padding-top: 12px; }
+#context-thread { flex: 0 0 286px; min-width: 0; overflow: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+.context-navigator { padding: 12px 14px 28px 4px; color: #d8edf0; font-size: 13px; }
+.thread-heading h2 { font-size: 23px; font-weight: 420; margin: 6px 0; }
+.context-navigator p { color: #a4bdc6; line-height: 1.55; font-size: 12px; }
+.context-navigator button { min-height: 44px; border: 0; background: #08233099; border-radius: 8px 16px 9px 12px; padding: 9px 10px; color: #d2eaf0; text-align: left; }
+.context-navigator button:hover { background: #103a4299; color: #eafffa; }
+.thread-project-picker { display: grid; gap: 7px; color: #b3cfd4; font-size: 12px; margin: 20px 0 12px; }
+.thread-project-picker select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #78f0ad44; background: #061923; color: #ecfff8; border-radius: 9px; padding: 9px; }
+.thread-trail { display: grid; gap: 10px; margin: 18px 0 10px; font-size: 11px; color: #8caeb7; }
+.relation-compass { position: relative; height: 170px; margin-top: 10px; }
+.relation-compass svg { position: absolute; width: 100%; height: 100%; }
+.relation-compass button { position: absolute; min-height: 44px; border: 1px solid #75e4ce40; border-radius: 40% 25% 38% 26%; background: #08242dea; font-size: 11px; }
+.relation-compass .compass-parent { left: 50%; top: 0; transform: translateX(-50%); }
+.relation-compass .compass-near { left: 0; top: 91px; }
+.relation-compass .compass-cross { right: 0; bottom: 0; }
+.compass-center { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); color: #d7fff2; background: #06252b; border-radius: 50%; padding: 9px; font-size: 11px; box-shadow: 0 0 22px #5feec124; }
+.thread-focus { position: relative; display: grid; grid-template-columns: 32px 1fr; gap: 8px; padding: 16px 12px; border: 1px solid #7ae4cc40; border-radius: 22px 30px 18px 26px; background: radial-gradient(ellipse at 0 0, #65d9b516, transparent 70%), #051a23e8; }
+.thread-focus img { width: 32px; height: 32px; grid-row: span 2; }
+.thread-focus strong { overflow-wrap: anywhere; font-size: 15px; font-weight: 500; }
+.thread-focus small { color: #9bc4b9; }
+.thread-focus > p, .thread-focus > button { grid-column: 1 / -1; }
+.thread-focus > p { max-height: 110px; overflow: auto; }
+.thread-branch { position: relative; margin: 0 0 0 16px; padding: 22px 0 4px 18px; border-left: 1px solid #73e2c140; }
+.thread-branch::before { position: absolute; content: ''; left: -3px; top: 32px; width: 5px; height: 5px; border-radius: 50%; background: #91eed3; box-shadow: 0 0 10px #78f0ad66; }
+.thread-branch h3 { font-size: 13px; font-weight: 500; color: #c8f7e7; margin: 4px 0 10px; }
+.thread-branch h3 > span { margin-right: 8px; }
+.thread-branch button { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 8px; margin-top: 5px; }
+.thread-branch button small { grid-column: 1 / -1; color: #94b1bd; font-size: 10px; }
+.thread-branch button span { overflow-wrap: anywhere; }
+.thread-transverse { border-color: #8b96df50; }
+.thread-transverse::before { background: #b3c9ff; }
+.thread-transverse h3 { color: #c4d5ff; }
+.thread-empty { display: grid; gap: 10px; padding: 30px 6px; }
+.thread-empty img { width: 64px; height: 64px; margin-bottom: 10px; }
+.thread-empty strong { font-size: 17px; font-weight: 450; line-height: 1.5; }
+.thread-error { color: #f7c4af; padding: 8px 0; }
+.connected-workspace .cockpit-dock { min-width: 0; border: 1px solid #69a4b22c; border-radius: 18px 9px 14px 8px; overflow: hidden; background: #03121ee8; }
+.surface-cockpit .cockpit-dock .command-center, .surface-cockpit .cockpit-dock .news-workspace, .surface-cockpit .cockpit-dock .workspace-panel { background: #051722ed; border-radius: 0; }
+.model-connection-summary { display: grid; gap: 10px; margin: 16px 0; padding: 20px; border: 1px solid #70d3bd66; border-radius: 20px 14px 24px 12px; background: #09252b; }
+.model-connection-summary > strong { font-size: 19px; color: #d4fff1; }
+.model-connection-summary p { margin: 0; color: #acc8cd; font-size: 13px; line-height: 1.6; }
+.model-connection-summary > div { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+.model-connection-summary button { color: #dffff2; min-height: 44px; padding: 8px 12px; border: 1px solid #78f0ad55; background: #18413b; border-radius: 9px; }
+.model-connection-summary small { color: #aac6c9; }
+.model-settings-form h3 { margin: 8px 0; font-size: 15px; font-weight: 500; }
+@media (max-width: 1180px) {
+  #context-thread { flex-basis: 240px; }
+  .space-thread small { display: none; }
+}
+@media (max-width: 1023px) {
+  .surface-cockpit .cockpit-shell { height: max(700px, calc(100dvh - 180px)); }
+  .connected-workspace { position: relative; }
+  #context-thread { position: absolute; inset: 0; z-index: 20; background: #041720; border: 1px solid #75bbad55; border-radius: 14px; }
+  .context-navigator { max-width: 620px; margin: 0 auto; padding: 20px; }
+  .space-thread { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; }
+  .space-thread button { flex: 0 0 auto; min-height: 44px; }
+}
+@media (max-width: 639px) {
+  .cockpit-panel-buttons { flex-basis: 100%; }
+  .toolbar-actions { margin-left: 0; width: 100%; }
+  .toolbar-actions button { min-height: 44px; }
+  .space-thread .eyebrow { display: none; }
+  .surface-cockpit .cockpit-shell { height: max(650px, calc(100dvh - 120px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quiet-atmosphere i { animation: none; }
+}
+@media (forced-colors: active) {
+  .quiet-atmosphere { display: none; }
+  .thread-focus, .thread-branch, .context-navigator button, .model-connection-summary { border: 1px solid CanvasText; }
+}
