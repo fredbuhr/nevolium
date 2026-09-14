@@ -12,7 +12,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
 | Checkout cible | `617a5f99f1f22bf8e232d259fcc48914f1ae3e4e` ; checkout serveur propre à ce SHA |
 | Correctif actif | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM et plafond 4096 actifs, 10/10 workflows réussis au checkpoint `617a5f9…` |
-| Preuve suivante | Deux nouvelles Tasks Research OpenAI séquentielles, sans rejeu des échecs historiques |
+| Correction en cours | Requête ciblée sur les faits et classement lexical des sources ; Worker uniquement, sans nouvel appel modèle |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -172,7 +172,24 @@ second essai n'a pas été créé. Les comptes sont `38|38|17|22|8|25|5`, travau
 La même lecture a montré que LiteLLM remet l'alias `smart` dans le champ `model`, donc l'attribution
 canonique doit lire son en-tête de déploiement. Ne pas rejouer cette Task.
 
-Lancer deux nouvelles Tasks Research séquentielles avec de nouveaux UUID. Chaque Task doit terminer
+La Task `48cad72d-cd45-415a-89a8-41cc2ea6be43` est terminée avec son artefact et deux usages
+`openai/gpt-4.1` réglés (total 0,018782 USD). Elle ne valide pas H5 : la requête générale a conduit
+à la page de téléchargement, qui ne contient pas la date initiale ; la synthèse reconnaît ce manque.
+L'extrait Fetch n'est pas tronqué. Comptes attestés `41|41|19|24|10|28|5`, travaux actifs `0|0|0`.
+Les deux arrêts SQL précédents appartenaient au bloc opérateur, avant toute Task ou appel IA.
+Ne rejouer aucune de ces tentatives et ne pas abaisser les exigences de preuve.
+
+Le correctif Worker demande des requêtes ciblées sur les faits et choisit parmi les résultats du
+domaine autorisé celui dont les titres/extraits recouvrent le plus de mots de la requête persistée.
+Classement déterministe, égalités stables, URL explicites préservées, aucune dépendance/migration,
+aucun nouvel appel modèle et aucune règle spécifique Debian. Il s'agit d'une heuristique, pas d'une
+garantie de complétude. Contrats Research, Context Pack, gateway, mémoire et ownership réussis
+localement, Ruff F/E9 et compilation réussis. Web MCP local bloqué par le proxy SOCKS du workspace
+(socksio absent), à valider en CI ; aucun changement de dépendance pour contourner ce point.
+CI à vérifier au commit publié. Le serveur reste sur `617a5f9…` jusqu'à confirmation d'activation.
+
+Après validation CI, construire et activer uniquement le Worker puis lancer deux nouvelles Tasks
+Research séquentielles avec de nouveaux UUID. Chaque Task doit terminer
 Search puis Fetch sur une source Debian officielle, produire un artefact parent cité, deux usages
 attribués au déploiement `openai/gpt-4.1` avec tokens/coûts reportés et deux réservations réglées.
 Arrêter la paire dès le premier résultat invalide et ne rejouer aucune Task. Le

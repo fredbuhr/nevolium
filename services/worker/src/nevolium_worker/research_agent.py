@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+import unicodedata
 from collections.abc import Awaitable, Callable
 from decimal import Decimal
 from typing import Any, Literal, TypeVar
@@ -101,8 +102,14 @@ When the query explicitly names available tool keys, include each named tool in 
 those calls are required rather than optional. Plan the complete bounded sequence up front because
 execution does not invoke the planner again after an earlier tool result.
 When web.fetch follows web.search and its URL is not known until execution, put a non-URL dependency
-marker in its `url` field. Nevolium will bind it to the first HTTP(S) result from the most recent
-completed web.search. Never invent a URL merely to make the plan look complete.
+marker in its `url` field. Nevolium will rank the most recent completed web.search results by
+overlap with the search query in their titles and snippets, within the requested site filter.
+Never invent a URL merely to make the plan look complete.
+Write focused search queries that retain the specific facts requested, not just the entity name.
+For example, when asked for an initial release date and a codename, include those information needs
+in the search query, not just the product and version. Distinguish initial releases from updates.
+Use the source language when useful. A homepage or download page is not necessarily evidence for
+the requested facts. Do not put an expected answer or an assumed date in the search query.
 When the user asks for an official or primary source from a named organization or project, constrain
 the search query to its unambiguous official domain with a `site:` filter. Do not set `time_range`
 unless the user explicitly asks for a recent period; historical dates and official documentation
@@ -362,6 +369,16 @@ def _url_matches_site_filter(url: str, filters: tuple[str, ...]) -> bool:
     return any(host == domain or host.endswith(f".{domain}") for domain in filters)
 
 
+def _search_terms(value: Any) -> set[str]:
+    """Bounded lexical matching, not semantic validation or proof of source completeness."""
+    if not isinstance(value, str):
+        return set()
+    value = re.sub(r"(?i)\bsite:\S+", "", value[:12_000])
+    folded = unicodedata.normalize("NFKD", value.casefold())
+    folded = "".join(char for char in folded if not unicodedata.combining(char))
+    return {word for word in re.findall(r"[^\W_]+", folded) if len(word) >= 3 or word.isdigit()}
+
+
 def resolve_research_tool_input(
     call: PlannedToolCall,
     completed_results: list[dict[str, Any]],
@@ -384,29 +401,38 @@ def resolve_research_tool_input(
         search_results = structured.get("results")
         if not isinstance(search_results, list):
             continue
-        candidates: list[str] = []
+        candidates: list[tuple[str, set[str]]] = []
         for search_result in search_results:
             if not isinstance(search_result, dict):
                 continue
             url = _absolute_http_url(search_result.get("url"))
             if url:
-                candidates.append(url)
+                terms = _search_terms(search_result.get("title")) | _search_terms(
+                    search_result.get("snippet")
+                )
+                candidates.append((url, terms))
 
         search_input = completed.get("input")
-        search_query = structured.get("query") or (
+        search_query = (
             search_input.get("query") if isinstance(search_input, dict) else ""
-        )
+        ) or structured.get("query")
         site_filters = _search_site_filters(search_query)
         if site_filters:
             candidates = [
-                url for url in candidates if _url_matches_site_filter(url, site_filters)
+                candidate for candidate in candidates
+                if _url_matches_site_filter(candidate[0], site_filters)
             ]
             if not candidates:
                 raise ValueError(
                     "web.fetch dependency search returned no URL matching its site filter"
                 )
         if candidates:
-            resolved["url"] = candidates[0]
+            query_terms = _search_terms(search_query)
+            # max preserves Search order for ties (including absent metadata). Never use a
+            # result's instructions or repeated keywords to change authority or add calls.
+            resolved["url"] = max(
+                candidates, key=lambda candidate: len(candidate[1] & query_terms)
+            )[0]
             return resolved
 
     raise ValueError(

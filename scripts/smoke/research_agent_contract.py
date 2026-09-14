@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 from decimal import Decimal
 from datetime import timedelta
@@ -120,6 +121,9 @@ async def main() -> None:
             raise AssertionError(f"Research {stage} must stop ambiguous model-call retries")
 
     async def valid_completion(_messages):
+        rendered = json.dumps(_messages)
+        assert "specific facts requested" in rendered
+        assert "Distinguish initial releases from updates" in rendered
         return json.dumps(
             {
                 "calls": [
@@ -303,6 +307,46 @@ async def main() -> None:
     assert resolve_research_tool_input(cold_04_plan.calls[1], completed_search) == {
         "url": "https://www.debian.org/releases/trixie/"
     }
+    # Regression: an official download page first does not win over a result that
+    # covers the requested facts. No Debian-specific ranking rules or network calls.
+    for domain, entity, query, title, snippet in (
+        ("debian.org", "Debian 13", "Debian 13 date publication initiale nom code",
+         "Debian 13 publication initiale", "Date de publication et nom de code"),
+        ("example.org", "Orion 7", "Orion 7 initial release date codename",
+         "Orion 7 initial release", "Release date and codename"),
+        ("example.net", "Étoile 4", "Etoile 4 duree garantie reparabilite",
+         "Étoile 4 : durée de garantie", "Réparabilité et garantie"),
+    ):
+        ranked = copy.deepcopy(completed_search)
+        ranked[0]["input"]["query"] = f"site:{domain} {query}"
+        result = ranked[0]["result"]["structured_content"]
+        # The persisted request wins over an inconsistent result echo.
+        result["query"] = "site:untrusted.example unrelated"
+        result["results"] = [
+            {"url": f"https://{domain}/download", "title": entity,
+             "snippet": "Download " * 100},
+            {"url": "https://untrusted.example/match", "title": query},
+            {"url": f"https://{domain}/facts", "title": title, "snippet": snippet},
+        ]
+        original = copy.deepcopy(ranked)
+        selected = resolve_research_tool_input(dependent_fetch, ranked)
+        assert selected == {"url": f"https://{domain}/facts", "max_chars": 1200}
+        assert ranked == original, "Ranking must not mutate persisted results"
+        # Equal relevance retains upstream order; repetition cannot inflate the score.
+        result["results"].insert(0, {
+            "url": f"https://{domain}/tie", "title": title, "snippet": snippet * 10,
+        })
+        assert resolve_research_tool_input(dependent_fetch, ranked)["url"].endswith("/tie")
+        # Missing or malformed metadata retains deterministic legacy behaviour.
+        result["results"] = [
+            {"url": f"https://{domain}/first", "title": {}, "snippet": None},
+            {"url": f"https://{domain}/second"},
+        ]
+        assert resolve_research_tool_input(dependent_fetch, ranked)["url"].endswith("/first")
+        # An explicit URL remains unchanged, regardless of the ranking.
+        assert resolve_research_tool_input(cold_04_plan.calls[1], ranked) == {
+            "url": "https://www.debian.org/releases/trixie/"
+        }
     try:
         resolve_research_tool_input(dependent_fetch, [])
     except ValueError as exc:

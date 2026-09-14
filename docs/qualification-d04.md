@@ -71,8 +71,11 @@ Le second essai est une nouvelle Task ; aucun rejeu de COLD-03, COLD-04 ou COLD-
 Relever les phases planning/synthèse, appels MCP, latence, modèle réellement reporté, tokens, coût,
 réservations, IDs d'artefacts et état terminal. Les clés d'outil nommées explicitement dans la question
 sont obligatoires et ordonnées ; leur omission invalide le plan avant tout outil et toute synthèse.
-Si le plan ne connaît pas encore l'URL de `web.fetch`, le Worker la lie sans nouvel appel modèle à la
-première URL HTTP(S) du dernier `web.search` terminé. L'entrée canonique de fetch doit contenir cette
+Si le plan ne connaît pas encore l'URL de `web.fetch`, le Worker la lie sans nouvel appel modèle à
+l'URL HTTP(S) du dernier `web.search` terminé classée par recouvrement des mots de la requête avec
+les titres/extraits, après filtrage de domaine. Les égalités conservent l'ordre Search. La requête
+doit viser les faits demandés, pas seulement l'entité ; ce classement lexical ne prouve pas que
+la page contient la réponse. L'entrée canonique de fetch doit contenir cette
 URL résolue, jamais le marqueur de dépendance proposé par le modèle.
 Une recherche Web générale n'est ni limitée aux actualités ni à une période implicite. Une demande de
 source officielle doit planifier un filtre `site:` explicite ; le Worker refuse le plan avant tout outil
@@ -85,6 +88,8 @@ ne garantissent pas un plafond fournisseur en dollars ; conserver les limites ca
 La réponse publique de LiteLLM peut conserver l'alias dans son champ `model` ; l'attribution canonique
 préfère donc son en-tête de déploiement `x-litellm-model-name`. Le plafond de sortie du pilote API est
 `4096`, conformément à la configuration documentée, et non l'ancienne valeur `256` du modèle local.
+Une Task `completed` qui reconnaît ne pas avoir trouvé la date demandée ne valide pas ce scénario.
+Contrôler la date précise et son appui dans les preuves citées, pas seulement la présence d'une année.
 
 Un échec arrête cette paire : garder toutes les preuves, ne pas rejouer automatiquement un appel dont
 l'issue est inconnue. Corriger seulement le défaut observé puis refaire le scénario affecté.
