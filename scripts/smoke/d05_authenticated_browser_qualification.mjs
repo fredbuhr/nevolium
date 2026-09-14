@@ -69,8 +69,11 @@ try {
   await adminPage.getByText('administrateur', { exact: true }).waitFor()
   await adminPage.getByRole('button', { name: 'Réglages API', exact: true }).click()
   await adminPage.getByRole('heading', { name: 'Modèle et fournisseur IA' }).waitFor()
-  await adminPage.getByText('openai/gpt-4.1', { exact: true }).waitFor()
-  await adminPage.getByText('Configuration serveur', { exact: true }).waitFor()
+  const activeModel = adminPage.locator('.active-model-card')
+  await activeModel.waitFor({ state: 'visible' })
+  assert.equal((await activeModel.locator('strong').textContent())?.trim(), 'openai/gpt-4.1')
+  await activeModel.getByText('Configuration serveur', { exact: true }).waitFor()
+  await adminPage.getByText('Lecture des réglages', { exact: true }).waitFor({ state: 'hidden' })
   assert.equal(await adminPage.getByLabel('Clé API').getAttribute('type'), 'password')
   await assertNoTokenPersistence(adminPage)
   await adminPage.screenshot({
