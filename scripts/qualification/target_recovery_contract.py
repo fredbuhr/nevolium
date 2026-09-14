@@ -75,10 +75,13 @@ class Contract(unittest.TestCase):
             self.assertIn("NEVOLIUM_RESTIC_ENV_FILE", text)
             self.assertIn("NEVOLIUM_COMPOSE_OVERLAYS", text)
             self.assertIn("IFS=: read -r -a OVERLAY_FILES", text)
-        overlay = (root / "compose.target-recovery.yaml").read_text()
-        self.assertIn("recovery-probe:", overlay)
-        self.assertIn("networks: [canonical, assets, secrets]", overlay)
-        self.assertNotIn("ports:", overlay)
+        runner = (root / "scripts" / "qualification" / "target_recovery.py").read_text()
+        self.assertIn('"docker", "run", "--rm"', runner)
+        self.assertIn('f"{self.isolated_project}_canonical"', runner)
+        self.assertIn('self.recovery_probe_image', runner)
+        self.assertIn('"--read-only"', runner)
+        self.assertIn('"--cap-drop", "ALL"', runner)
+        self.assertNotIn("NEVOLIUM_RECOVERY_PROBE_IMAGE", runner)
 
 
 if __name__ == "__main__":

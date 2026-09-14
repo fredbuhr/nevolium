@@ -102,6 +102,7 @@ class Runner:
         self.isolated: list[str] = []
         self.isolated_ops: list[str] = []
         self.isolated_project = ""
+        self.recovery_probe_image = ""
         self.isolated_started = False
         self.source_markers_created = False
         self.probe_id = uuid.uuid4()
@@ -274,7 +275,6 @@ class Runner:
             "compose.web-mcp.yaml",
             "compose.web-mcp.production.yaml",
             "compose.ops.yaml",
-            "compose.target-recovery.yaml",
             "scripts/ops/backup.sh",
             "scripts/ops/restore.sh",
         ):
@@ -311,7 +311,6 @@ class Runner:
         isolated_files = [
             self.root / "compose.yaml",
             self.root / "compose.production.yaml",
-            self.root / "compose.target-recovery.yaml",
         ]
         self.source = common + [value for path in source_files for value in ("-f", str(path))]
         self.source_ops = self.source + ["-f", str(self.root / "compose.ops.yaml"), "--profile", "ops"]
@@ -338,6 +337,7 @@ class Runner:
         ).stdout.strip()
         if probe_image != images["nevolium-core"]:
             raise RuntimeError("l'image du probe differe du Core actif")
+        self.recovery_probe_image = probe_image
         evidence.data.update(
             commit=self.commit,
             scope="private-target-to-backblaze-b2-isolated-compose",
@@ -428,13 +428,20 @@ SELECT concat_ws('|',
         ).stdout.strip()
 
     def isolated_probe(self, script: str, args: list[str]) -> str:
-        env = dict(os.environ, NEVOLIUM_RECOVERY_PROBE_IMAGE="nevolium-nevolium-core:latest")
+        if not self.recovery_probe_image.startswith("sha256:"):
+            raise RuntimeError("identifiant immuable de l'image du probe absent")
         return self.run(
-            self.isolated + [
-                "--profile", "ops", "run", "--rm", "-T", "--no-deps",
-                "recovery-probe", "-c", script, *args,
+            [
+                "docker", "run", "--rm",
+                "--network", f"{self.isolated_project}_canonical",
+                "--read-only",
+                "--tmpfs", "/tmp:size=67108864,mode=1777",
+                "--security-opt", "no-new-privileges:true",
+                "--cap-drop", "ALL",
+                "--entrypoint", "python",
+                self.recovery_probe_image,
+                "-c", script, *args,
             ],
-            env=env,
             timeout=90,
         ).stdout.strip()
 
@@ -697,7 +704,7 @@ RETURNING id;
             COMPOSE_PROJECT_NAME=self.isolated_project,
             NEVOLIUM_COMPOSE_ENV_FILE=str(self.env_file),
             NEVOLIUM_RESTIC_ENV_FILE=str(self.restic_env_file),
-            NEVOLIUM_COMPOSE_OVERLAYS="compose.production.yaml:compose.target-recovery.yaml",
+            NEVOLIUM_COMPOSE_OVERLAYS="compose.production.yaml",
         )
         self.run(
             ["bash", "scripts/ops/restore.sh", str(snapshots["data_snapshot"])],
