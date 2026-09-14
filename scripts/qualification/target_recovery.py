@@ -282,12 +282,19 @@ class Runner:
                 raise RuntimeError(f"fichier requis absent : {name}")
         self.private_file(self.env_file)
         self.private_file(self.openbao_recovery_file)
-        branch = self.run(["git", "branch", "--show-current"]).stdout.strip()
+        git_env = dict(os.environ, GIT_OPTIONAL_LOCKS="0")
+        branch = self.run(
+            ["git", "branch", "--show-current"], env=git_env
+        ).stdout.strip()
         if branch != EXPECTED_BRANCH:
             raise RuntimeError("branche D04 attendue absente")
-        if self.run(["git", "status", "--porcelain"]).stdout.strip():
+        if self.run(
+            ["git", "status", "--porcelain"], env=git_env
+        ).stdout.strip():
             raise RuntimeError("checkout non propre")
-        self.commit = self.run(["git", "rev-parse", "HEAD"]).stdout.strip()
+        self.commit = self.run(
+            ["git", "rev-parse", "HEAD"], env=git_env
+        ).stdout.strip()
         values = self.configure_restic()
 
         stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
@@ -414,8 +421,8 @@ SELECT concat_ws('|',
         return value
 
     def initialize_repository(self) -> dict[str, object]:
-        result = self.restic(["snapshots", "--json"], allowed=(0, 1))
-        if result.returncode != 0:
+        result = self.restic(["snapshots", "--json"], allowed=(0, 10))
+        if result.returncode == 10:
             self.restic(["init"])
         snapshots = self.snapshots()
         version = self.restic(["version"]).stdout.strip().splitlines()[0]

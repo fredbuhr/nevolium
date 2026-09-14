@@ -125,6 +125,31 @@ class Contract(unittest.TestCase):
             self.assertEqual(source["record_sha256"], restored["record_sha256"])
             self.assertEqual(source["period_seconds"], 604800)
 
+    def test_missing_b2_repository_code_10_is_initialized(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self.runner(Path(directory))
+            with mock.patch.object(Runner, "restic") as restic:
+                restic.side_effect = (
+                    mock.Mock(returncode=10),
+                    mock.Mock(returncode=0),
+                    mock.Mock(returncode=0, stdout="[]"),
+                    mock.Mock(returncode=0, stdout="restic 0.19.1 compiled"),
+                )
+                details = runner.initialize_repository()
+            self.assertEqual(details, {
+                "restic": "restic 0.19.1 compiled",
+                "existing_snapshots": 0,
+            })
+            self.assertEqual(
+                restic.call_args_list,
+                [
+                    mock.call(["snapshots", "--json"], allowed=(0, 10)),
+                    mock.call(["init"]),
+                    mock.call(["snapshots", "--json"], isolated=False),
+                    mock.call(["version"]),
+                ],
+            )
+
     def test_evidence_case_returns_details_without_changing_gate(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "evidence.json"
@@ -147,6 +172,8 @@ class Contract(unittest.TestCase):
         self.assertIn('"--read-only"', runner)
         self.assertIn('"--cap-drop", "ALL"', runner)
         self.assertNotIn("NEVOLIUM_RECOVERY_PROBE_IMAGE", runner)
+        self.assertIn('GIT_OPTIONAL_LOCKS="0"', runner)
+        self.assertIn('allowed=(0, 10)', runner)
         self.assertIn('default=Path("/run/nevolium/openbao-recovery.json")', runner)
         self.assertIn('self.workload_record(self.isolated)', runner)
         self.assertIn('"openbao_workload_record_restored": True', runner)
