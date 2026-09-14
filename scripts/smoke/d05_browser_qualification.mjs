@@ -227,6 +227,10 @@ try {
     `${JSON.stringify(results, null, 2)}\n`,
   )
   console.log(JSON.stringify(results, null, 2))
+} catch (error) {
+  const diagnostic = error instanceof Error ? `${error.stack ?? error.message}\n` : `${String(error)}\n`
+  await fs.writeFile(path.join(outputDirectory, 'failure.txt'), diagnostic)
+  throw error
 } finally {
   await browser?.close()
   preview.kill('SIGTERM')

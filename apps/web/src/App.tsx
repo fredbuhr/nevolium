@@ -503,7 +503,7 @@ export default function App() {
             key: 'knowledge',
             id: 'knowledge-workspace',
             title: 'Inspecteur',
-            keywords: ['document', 'version', 'chunk', 'knowledge'],
+            keywords: ['document', 'documents', 'version', 'chunk', 'knowledge'],
             content: <KnowledgePanel apiUrl={API_URL} />,
           },
           ...(isAdmin
