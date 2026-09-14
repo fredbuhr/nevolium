@@ -10,9 +10,9 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Checkout cible | `617a5f99f1f22bf8e232d259fcc48914f1ae3e4e` ; checkout serveur propre à ce SHA |
-| Correctif actif | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM et plafond 4096 actifs, 10/10 workflows réussis au checkpoint `617a5f9…` |
-| Correction en cours | Requête ciblée sur les faits et classement lexical des sources ; Worker uniquement, sans nouvel appel modèle |
+| Checkout cible | `a4635462a4380aad2b2b991053c1078e36e5e79a` ; checkout serveur propre à ce SHA |
+| Correctif actif | Requête ciblée et classement des sources déployés ; 10/10 workflows réussis à `a463546…`, attribution LiteLLM et plafond 4096 conservés |
+| Gate courante | Research OpenAI acquis sur cible ; poursuivre charge pilote, upgrade/rollback et restauration indépendante |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -34,7 +34,7 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 | Composant | Dernier code déployé confirmé |
 |---|---|
 | Core | image `69453e7b1348…`, correctif `bef11ff…` actif |
-| Worker | image `933fdacb68ec…`, correctif `ae4e7fb…` actif ; sortie modèle 4096 |
+| Worker | image `cb9b73de90824416a9ce438107af3bf30613248838c6bac282d89d0b7ce23200`, code `a463546…` actif ; sortie modèle 4096 |
 | Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
 | LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
 | Web MCP | image `fcfba65ffada…`, correctif `0e57de2…` actif ; registre synchronisé génération 2 |
@@ -135,7 +135,7 @@ Le checkpoint documentaire final `617a5f99f1f22bf8e232d259fcc48914f1ae3e4e` pass
 workflows. L'unique reset Docker Hub du premier job Foundation a réussi lors de la relance ciblée ;
 les neuf jobs Foundation et D04 sont verts.
 
-## Prochaine action exécutable
+## Historique des essais Research (ne pas rejouer)
 
 Le premier essai OpenAI `a1ea7662-4ab2-421a-9e60-5e6c0d7f2766` a terminé en 18 s avec deux usages et
 deux réservations réglées, mais seulement `web.search`. La qualification a correctement refusé le
@@ -186,17 +186,39 @@ aucun nouvel appel modèle et aucune règle spécifique Debian. Il s'agit d'une 
 garantie de complétude. Contrats Research, Context Pack, gateway, mémoire et ownership réussis
 localement, Ruff F/E9 et compilation réussis. Web MCP local bloqué par le proxy SOCKS du workspace
 (socksio absent), à valider en CI ; aucun changement de dépendance pour contourner ce point.
-CI à vérifier au commit publié. Le serveur reste sur `617a5f9…` jusqu'à confirmation d'activation.
+Les 10 workflows au SHA publié `a4635462a4380aad2b2b991053c1078e36e5e79a` sont verts,
+y compris le contrat Web MCP en CI. Le job local optionnel est skipped conformément à ADR-031.
 
-Après validation CI, construire et activer uniquement le Worker puis lancer deux nouvelles Tasks
-Research séquentielles avec de nouveaux UUID. Chaque Task doit terminer
-Search puis Fetch sur une source Debian officielle, produire un artefact parent cité, deux usages
-attribués au déploiement `openai/gpt-4.1` avec tokens/coûts reportés et deux réservations réglées.
-Arrêter la paire dès le premier résultat invalide et ne rejouer aucune Task. Le
-[protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
+## Research acquis sur cible le 14 septembre 2026
 
-Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
-Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
+Activation du seul Worker à `a463546…`, pollers sains, Core/Web MCP conservés. Retour :
+`nevolium-api-rollback/nevolium-worker:before-relevance-a463546` (image `933fdacb68ec…`).
+Deux nouvelles Tasks ont réussi Search puis Fetch et leur synthèse :
+
+| Task | Artefact parent | Durée | Coût reporté |
+|---|---|---|---|
+| `306fd2fe-afde-4260-b560-153dd2192d16` | `e938acdb-d915-4284-80f7-86df3dd706b8` | 23,591 s | 0,021516 USD |
+| `d1455d14-2999-4c7e-9a4b-8688735d1499` | `46f22a44-0c28-4ee4-af32-996913aa7d00` | 9,524 s | 0,018248 USD |
+
+Réponse correcte : Trixie, publication initiale le 9 août 2025. La date est étayée par l'extrait
+Search de la page officielle des versions (E1). Fetch a lu l'annonce de mise à jour du 10 janvier
+2026 : E2 confirme le nom de code, pas la date initiale ; les claims citent E1 pour cette date.
+Cette limite du classement lexical est conservée, sans prétendre que Fetch a lu l'annonce initiale.
+Quatre usages `openai/gpt-4.1` avec tokens/coûts reportés et quatre réservations réglées,
+total 0,039764 USD. Comptes `41|41|19|24|10|28|5` → `47|47|23|28|14|34|5`, delta exact
+`6|6|4|4|4|6|0`, travaux actifs `0|0|0`, cinq incertains historiques conservés.
+Rapport opérateur : `/var/lib/nevolium/qualification/d04-openai-relevance-20260914T012643Z.jsonl`.
+Résultat final : `CORRECTION_ET_PREUVE_RESEARCH_D04_OK`. Aucun rejeu à prévoir.
+
+## Prochaine action exécutable
+
+Exécuter le runner existant `scripts/qualification/target.py load` sur l'origine HTTPS publique,
+avec un jeton utilisateur éphémère, concurrence 20, p95 ≤2 s, zéro erreur et 180 s par palier.
+Consigner que le générateur est sur la même cible et qu'un compte représente des clients virtuels,
+pas 1 000 comptes réels. Inventaire et compteurs avant/après ; aucun appel IA dans cette lecture.
+Ensuite : séquence mixte Research/PDF/mémoire, upgrade/rollback, restauration indépendante.
+Le [protocole D04](docs/qualification-d04.md) conserve ces trois preuves restantes et leurs seuils.
+Les preuves non affectées restent acquises. Aucun merge, tag H5 ou D05 avant leur validation.
 
 ## Références
 

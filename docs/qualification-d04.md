@@ -3,6 +3,10 @@
 Révision : 2026-09-13. Une branche et une PR : `hardening/d04-real-engine-qualification`,
 [#88](https://github.com/fredbuhr/nevolium/pull/88). [PROJECT_STATE](../PROJECT_STATE.md) est le point
 opérationnel courant. H5 reste ouvert tant que les quatre preuves ci-dessous ne sont pas acquises.
+Au 14 septembre 2026, la paire Research OpenAI est acquise sur cible (`a463546…`) : 23,591 s et
+9,524 s, quatre usages réglés, aucune nouvelle réservation incertaine. La date initiale est
+étayée par E1 (Search) et le nom de code par E1/E2 ; Fetch a lu une annonce de mise à jour.
+Les trois autres preuves restent ouvertes. Les IDs, coûts et limites sont dans le checkpoint.
 
 ## Périmètre fixé
 
@@ -19,7 +23,7 @@ Les [preuves serveur](archive/server-foundation-2026-09-11.md), le
 conservent mesures et limites. Le [protocole local remplacé](archive/qualification-d04-local-protocol-2026-09-13.md)
 est historique ; ne pas exécuter ses prochaines actions.
 
-## Quatre preuves restantes
+## Quatre preuves de sortie
 
 | Preuve | Scénario et seuil fixé avant mesure | Fin de vérification |
 |---|---|---|
