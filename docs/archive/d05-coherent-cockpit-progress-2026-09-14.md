@@ -5,7 +5,8 @@ Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevoli
 `1896468513f92ee5c0d6a811301a1b898cc6abd2`. Le socle fonctionnel est
 `73bba82be620a5e6f548e68fb3bbbfeb8836104a`, le contrat Compose a été corrigé sur
 `48210102a9814a30ef1c35f1245d693c126c5bd0` et l'itération visuelle/multi-écran est
-`47cee6ef1245af70d52279b26ad9c321f698a883`.
+`47cee6ef1245af70d52279b26ad9c321f698a883`. La charte éditoriale est publiée sur
+`1f5db08c7b52502443fa0d5eae754c1801c8d471`, tête validée par 10/10 workflows.
 Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
@@ -26,6 +27,13 @@ snapshot B2, image de rollback, réservation historique ou ancienne Task n'a ét
 | Activation | Une seule configuration active en PostgreSQL ; appels en cours drainés sous le verrou d'admission ; test récent requis ; échec, timeout ou attribution divergente laisse la dernière configuration valide active |
 | Workflows | Les nouvelles Tasks Research, News et routage sémantique figent l'alias actif ; les Tasks antérieures conservent leur alias, y compris après retraite d'une configuration |
 
+Les textes visibles utilisent les mêmes repères en français dans la navigation, les panneaux et
+l'accès rapide : Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents. Les messages
+d'attente et d'erreur décrivent ce que la personne peut comprendre ou faire. Les noms Core, Worker,
+Temporal, Knowledge et les « chunks » restent disponibles dans le code et les diagnostics, sans
+être nécessaires au parcours quotidien. Cette évolution ne renomme aucun identifiant interne,
+statut, endpoint ou contrat métier.
+
 LiteLLM utilise son registre dynamique en base et un sel dédié pour chiffrer les clés fournisseur.
 Core accède uniquement à son endpoint interne ; seul LiteLLM possède l'egress fournisseur. Les
 identifiants de modèle visibles dans l'interface sont explicitement des exemples non qualifiés :
@@ -35,9 +43,10 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
 ## Validation exécutée dans cette session
 
 - TypeScript et build Vite de production : réussis, 142 modules transformés. Le bundle principal
-  produit un avertissement de taille de 539,21 kB, sans échec de build.
+  produit un avertissement de taille d'environ 540 kB, sans échec de build. Ces contrôles ont aussi
+  été rejoués après l'alignement des textes d'interface.
 - Compilation Python, rendu SQL Alembic jusqu'à `0015_model_configurations` et
-  `git diff --check` : réussis.
+  `git diff --check` : réussis. Le contrat statique D05 passe aussi après l'alignement des textes.
 - Contrats D05 cockpit/PWA/sans WebGL, configuration modèle, non-réflexion de la clé en `422`,
   reprise sûre du démarrage et identité de déploiement, gateway LiteLLM, binding de dispatch,
   layouts propriétaires : réussis.

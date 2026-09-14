@@ -97,7 +97,7 @@ export function useKnowledgeChunkInspection({
     )
     if (!targetVersion) {
       handledInspectionTarget.current = inspectionTarget
-      setChunkError('La Version associée à ce résultat de recherche est introuvable.')
+      setChunkError('La version associée à ce résultat de recherche est introuvable.')
       return
     }
 
@@ -138,7 +138,7 @@ export function useKnowledgeChunkInspection({
           setChunkError(
             loadError instanceof Error
               ? loadError.message
-              : `Impossible de charger le chunk #${inspectionTarget.ordinal}.`,
+              : `Impossible de charger le passage #${inspectionTarget.ordinal}.`,
           )
         }
       } finally {

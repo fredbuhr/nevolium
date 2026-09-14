@@ -79,7 +79,7 @@ export function useKnowledgeDocumentActions({
       setImportError(
         importFailure instanceof Error
           ? importFailure.message
-          : 'Impossible d’importer ce Document dans Knowledge.',
+          : 'Impossible d’importer ce document.',
       )
     } finally {
       setImporting(false)
@@ -105,7 +105,7 @@ export function useKnowledgeDocumentActions({
       setReingestError(
         reingestFailure instanceof Error
           ? reingestFailure.message
-          : 'Impossible de relancer l’ingestion du Document.',
+          : 'Impossible de relire ce document.',
       )
     } finally {
       setReingesting(false)

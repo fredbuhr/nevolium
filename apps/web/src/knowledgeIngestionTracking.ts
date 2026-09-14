@@ -62,7 +62,7 @@ export function useKnowledgeIngestionTracking({
               setVersionError(
                 versionsLoadError instanceof Error
                   ? versionsLoadError.message
-                  : 'Impossible d’actualiser les versions du Document.',
+                  : 'Impossible d’actualiser les versions du document.',
               )
             }
           }
@@ -79,7 +79,7 @@ export function useKnowledgeIngestionTracking({
           setTrackingError(
             pollError instanceof Error
               ? pollError.message
-              : 'Impossible de suivre l’ingestion du Document.',
+              : 'Impossible de suivre la préparation du document.',
           )
           timer = window.setTimeout(pollIngestion, 2000)
         }

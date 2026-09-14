@@ -33,10 +33,32 @@ type CommandCenterPanelProps = {
 
 const EXAMPLES = [
   ['Nouvelles de Paris', 'Quelles sont les nouvelles du jour sur la ville de Paris ?'],
-  ['Routage sémantique', "Que s'est-il passé à Paris ce matin ?"],
+  ['Ce matin à Paris', "Que s'est-il passé à Paris ce matin ?"],
   ['Impact bourse', "Quelles sont les nouvelles qui risquent d'impacter la bourse aujourd'hui ?"],
   ['Briefing oral', "Lis-moi les nouvelles qui risquent d'impacter les marchés aujourd'hui."],
 ] as const
+
+const CAPABILITY_LABELS: Record<string, string> = {
+  'news.brief': 'Actualités',
+  'research.run': 'Recherche',
+}
+
+const TASK_STATUS_LABELS: Record<string, string> = {
+  pending: 'en attente',
+  queued: 'en attente',
+  running: 'en cours',
+  completed: 'terminé',
+  failed: 'échec',
+}
+
+function capabilityLabel(value?: string | null) {
+  if (!value) return 'Demande à préciser'
+  return CAPABILITY_LABELS[value] || value
+}
+
+function taskStatusLabel(value: string) {
+  return TASK_STATUS_LABELS[value] || value
+}
 
 export default function CommandCenterPanel({
   command,
@@ -55,8 +77,8 @@ export default function CommandCenterPanel({
   return (
     <section className="command-center" aria-labelledby="command-heading">
       <div>
-        <span className="eyebrow">Nevolium COMMAND</span>
-        <h2 id="command-heading">Demande directement. Nevolium choisit la capacité.</h2>
+        <span className="eyebrow">ASSISTANT NEVOLIUM</span>
+        <h2 id="command-heading">Dites ce que vous cherchez à comprendre ou à faire.</h2>
       </div>
 
       <form className="command-form" onSubmit={onSubmit}>
@@ -65,10 +87,10 @@ export default function CommandCenterPanel({
           onChange={(event) => onCommandChange(event.target.value)}
           minLength={2}
           placeholder="Ex. Que s’est-il passé à Paris ce matin ?"
-          aria-label="Commande Nevolium"
+          aria-label="Demande à Nevolium"
         />
         <button type="submit" disabled={routing || pendingCommandId !== null || !command.trim()}>
-          {routing ? 'Routage…' : pendingCommandId ? 'Analyse sémantique…' : 'Demander à Nevolium'}
+          {routing ? 'Préparation…' : pendingCommandId ? 'Compréhension de la demande…' : 'Demander à Nevolium'}
         </button>
       </form>
 
@@ -82,17 +104,19 @@ export default function CommandCenterPanel({
 
       {route && (
         <div className="route-chip">
-          <span>{route.capability || (route.routing === 'semantic' ? 'analyse sémantique' : 'routage')}</span>
+          <span>{capabilityLabel(route.capability)}</span>
           <small>
             {routeConfidence == null ? '' : `${routeConfidence}% · `}
-            {route.route_reason}
+            {route.routing === 'semantic'
+              ? 'choix proposé par l’IA et vérifié par Nevolium'
+              : 'choix déterminé par votre demande'}
           </small>
         </div>
       )}
 
       {conversationId && (
         <small className="conversation-chip">
-          conversation {conversationId.slice(0, 8)}… persistée côté serveur
+          Conversation enregistrée · {conversationId.slice(0, 8)}…
         </small>
       )}
 
@@ -100,20 +124,20 @@ export default function CommandCenterPanel({
 
       {pendingCommandId && !error && (
         <div className="progress-panel">
-          <strong>Nevolium interprète la demande via une capacité de routage durable.</strong>
-          <span>Le modèle ne peut proposer qu’une capacité enregistrée ; Core valide avant toute exécution.</span>
+          <strong>Nevolium cherche l’espace adapté à votre demande.</strong>
+          <span>Le choix proposé par l’IA est vérifié avant de lancer le travail.</span>
         </div>
       )}
 
       {task && task.capability !== 'news.brief' && !error && (
         <div className="progress-panel">
-          <strong>{task.answer || task.title || `${task.capability} · ${task.status}`}</strong>
+          <strong>{task.answer || task.title || `${capabilityLabel(task.capability)} · ${taskStatusLabel(task.status)}`}</strong>
           <span>
             {task.answer
-              ? `${task.capability} · ${task.status}`
+              ? `${capabilityLabel(task.capability)} · ${taskStatusLabel(task.status)}`
               : task.artifact
                 ? `${task.artifact.title} · ${task.artifact.kind}`
-                : `Tâche durable Nevolium · ${task.status}`}
+                : `Travail Nevolium · ${taskStatusLabel(task.status)}`}
           </span>
         </div>
       )}

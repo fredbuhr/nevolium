@@ -154,7 +154,7 @@ export default function App() {
     const poll = async () => {
       try {
         const response = await nevoliumFetch(`${API_URL}/v1/commands/${pendingCommandId}`)
-        if (!response.ok) throw new Error(`Nevolium Core répond ${response.status}`)
+        if (!response.ok) throw new Error(`Le service Nevolium répond ${response.status}`)
         const state = (await response.json()) as CommandState
         if (cancelled) return
 
@@ -416,8 +416,8 @@ export default function App() {
             <i aria-hidden="true" />
             {online ? 'En ligne' : 'Hors connexion'}
           </span>
-          <span>{deviceClass}</span>
-          <span>layout privé par appareil</span>
+          <span>{{ phone: 'Téléphone', tablet: 'Tablette', desktop: 'Bureau' }[deviceClass]}</span>
+          <span>Disposition privée</span>
         </div>
         <div>
           <label>
@@ -467,7 +467,7 @@ export default function App() {
 
       {!online ? (
         <div className="offline-banner" role="status">
-          Le shell reste lisible, mais les données métier et les actions nécessitent Nevolium Core.
+          Vos espaces restent visibles, mais les données et les actions nécessitent une connexion.
         </div>
       ) : null}
 
@@ -487,7 +487,7 @@ export default function App() {
           {
             key: 'today',
             id: 'today-workspace',
-            title: 'Today',
+            title: 'Aujourd’hui',
             keywords: ['journée', 'tâches', 'priorités'],
             content: <TodayWorkspace apiUrl={API_URL} />,
             minimumWidth: 280,
@@ -495,7 +495,7 @@ export default function App() {
           {
             key: 'projects',
             id: 'projects-workspace',
-            title: 'Projects',
+            title: 'Projets',
             keywords: ['projet', 'ouvrir', 'tâches'],
             content: <ProjectsWorkspace apiUrl={API_URL} />,
           },

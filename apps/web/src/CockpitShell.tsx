@@ -71,21 +71,21 @@ const PANEL_DEFINITIONS = {
   command: {
     id: 'command-center',
     component: 'command',
-    title: 'Command',
+    title: 'Assistant',
     minimumWidth: 240,
     minimumHeight: 220,
   },
   news: {
     id: 'news-intelligence',
     component: 'news',
-    title: 'News',
+    title: 'Actualités',
     minimumWidth: 260,
     minimumHeight: 220,
   },
   research: {
     id: 'research',
     component: 'research',
-    title: 'Research',
+    title: 'Recherche',
     minimumWidth: 260,
     minimumHeight: 240,
   },
@@ -578,7 +578,7 @@ export default function CockpitShell({
       if (!opened) throw new Error('La fenêtre a été refusée par le navigateur.')
       setLayoutState('ready')
       setLayoutRetry(null)
-      setLayoutMessage('Panneau détaché — déplacez sa fenêtre vers l’écran souhaité.')
+      setLayoutMessage('Espace détaché. Vous pouvez déplacer sa fenêtre vers un autre écran.')
     } catch (error) {
       setLayoutState('error')
       setLayoutRetry(null)
@@ -698,7 +698,7 @@ export default function CockpitShell({
                 setPaletteIndex(0)
               }}
               onKeyDown={handlePaletteKey}
-              placeholder="Projet, conversation, Today, document…"
+              placeholder="Projet, conversation, journée, document…"
               aria-label="Rechercher un espace"
               aria-controls="command-palette-results"
               aria-activedescendant={

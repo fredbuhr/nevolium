@@ -31,7 +31,7 @@ export function usePagedCollection<T extends { id: string }>(url: string | null,
     try {
       const response = await nevoliumFetch(url + (next ? `${url.includes('?') ? '&' : '?'}cursor=${encodeURIComponent(next)}` : ''), { signal: controller.signal })
       const rows = await response.json()
-      if (!response.ok) throw new Error(typeof rows?.detail === 'string' ? rows.detail : `Nevolium Core répond ${response.status}`)
+      if (!response.ok) throw new Error(typeof rows?.detail === 'string' ? rows.detail : `Le service Nevolium répond ${response.status}`)
       if (!Array.isArray(rows)) throw new Error('Réponse de pagination invalide.')
       if (generation !== scope.current || controller.signal.aborted) return
       setItems((current) => append ? mergeById(current, rows as T[]) : mergeById(rows as T[], pinned.current ? [pinned.current] : []))
@@ -72,7 +72,7 @@ export function usePagedCollection<T extends { id: string }>(url: string | null,
       try {
         const response = await nevoliumFetch(pinnedUrl, { signal: controller.signal })
         if (response.status === 404) return
-        if (!response.ok) throw new Error(`Nevolium Core répond ${response.status}`)
+        if (!response.ok) throw new Error(`Le service Nevolium répond ${response.status}`)
         const row = await response.json() as T
         if (!controller.signal.aborted) { pinned.current = row; setItems((current) => mergeById(current, [row])) }
       } catch (cause) {

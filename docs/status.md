@@ -3,9 +3,10 @@
 Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête fonctionnelle visuelle est
-`47cee6ef1245af70d52279b26ad9c321f698a883`, avec 10/10 workflows réussis ; le lot n'est ni
-intégré ni déployé.
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête vérifiée est
+`1f5db08c7b52502443fa0d5eae754c1801c8d471`, avec 10/10 workflows réussis ; le lot n'est ni
+intégré ni déployé. L'alignement des textes visibles avec la
+[charte d'identité](identite-nevolium.md) est en cours de publication sur cette même PR.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
@@ -44,7 +45,7 @@ Les cinq réservations uncertain et les anciens essais sont conservés sans reje
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web/OIDC, panneaux persistés, Command Center, Projects, Today, Research, News, Knowledge ; candidat D05 avec identité Mycelium cyan/émeraude/violet, accès rapide, inspecteur, profils/ambiances, layouts par fenêtre, détachement multi-écran, clavier et PWA | Qualifier visuellement et intégrer le candidat D05 |
+| Cockpit | Web/OIDC, panneaux persistés ; candidat D05 avec repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents, identité Mycelium cyan/émeraude/violet, accès rapide, inspecteur, profils/ambiances, layouts par fenêtre, détachement multi-écran, clavier et PWA | Qualifier visuellement et intégrer le candidat D05 |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |

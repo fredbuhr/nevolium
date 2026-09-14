@@ -68,7 +68,7 @@ async function responseError(response: Response) {
   const detail = body?.detail
   if (typeof detail === 'string') return detail
   if (typeof detail?.message === 'string') return detail.message
-  return `Nevolium Core répond ${response.status}`
+  return `Le service Nevolium répond ${response.status}`
 }
 
 function ConfigurationBadge({ configuration }: { configuration: ModelConfiguration }) {
@@ -202,15 +202,15 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
       <div className="workspace-heading">
         <div>
           <span className="eyebrow">INSTANCE · ADMINISTRATEUR</span>
-          <h2 id="model-settings-title">Fournisseur IA</h2>
+          <h2 id="model-settings-title">Modèle et fournisseur IA</h2>
         </div>
-        {inventory ? <span className="run-state">{inventory.active_calls} appel(s) actif(s)</span> : null}
+        {inventory ? <span className="run-state">{inventory.active_calls} demande(s) en cours</span> : null}
       </div>
 
       {loading && !inventory ? (
         <div className="state-panel state-panel-loading" aria-live="polite">
-          <strong>Lecture de la configuration</strong>
-          <span>Nevolium interroge son registre serveur.</span>
+          <strong>Lecture des réglages</strong>
+          <span>Nevolium vérifie la configuration active.</span>
         </div>
       ) : null}
       {error ? (
@@ -275,7 +275,7 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
             required
           />
           <small>
-            Envoyée une fois à LiteLLM côté serveur ; jamais relue par le Web ni renvoyée par l’API.
+            Envoyée une seule fois au service sécurisé ; elle n’est jamais réaffichée.
           </small>
         </label>
         <button type="submit" disabled={submitting || !apiKey || !model.trim()}>
@@ -316,8 +316,8 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
               {configuration.status === 'testing' &&
               RETRYABLE_TEST_STATUSES.has(configuration.test_execution_status ?? '') ? (
                 <p className="candidate-error">
-                  Temporal n’a pas confirmé le démarrage. Relancez exactement le même test ; la
-                  clé reste côté serveur et la configuration active est inchangée.
+                  Le démarrage du test n’a pas été confirmé. Relancez exactement le même test ; la
+                  clé reste protégée et la configuration active est inchangée.
                 </p>
               ) : null}
               <div className="candidate-footer">

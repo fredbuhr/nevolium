@@ -282,6 +282,12 @@ Réserver « neural » et « mycélium » au récit d'identité et au langage vi
 « lien » à « synapse », « idée » à « nœud cognitif », « espace » à « écosystème intelligent ».
 Nommer les outils connus lorsqu'ils sont utiles, sans transformer chaque fonction en métaphore.
 
+Dans le cockpit D05, employer des repères courts et stables : **Assistant, Actualités, Recherche,
+Aujourd'hui, Projets et Documents**. Parler de **passages** lorsqu'une personne consulte le contenu
+d'un document. Réserver **Core, Worker, Temporal, Knowledge, chunk** et les identifiants de capacité
+aux diagnostics ou à la documentation technique. Les réglages administrateur peuvent nommer le
+fournisseur, le modèle, LiteLLM et le coût quand cette précision permet une décision sûre.
+
 ### Les formulations à éviter
 
 Écarter « révolutionnez votre productivité », « libérez votre potentiel », « décuplez vos

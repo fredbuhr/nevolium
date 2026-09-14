@@ -50,7 +50,7 @@ type ResearchRunRead = {
 async function readJson<T>(url: string): Promise<T> {
   const response = await nevoliumFetch(url)
   if (!response.ok) {
-    throw new Error(`Nevolium Core répond ${response.status}`)
+    throw new Error(`Le service Nevolium répond ${response.status}`)
   }
   return (await response.json()) as T
 }

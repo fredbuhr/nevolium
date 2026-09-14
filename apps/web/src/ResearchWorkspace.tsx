@@ -63,7 +63,7 @@ async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const detail = body?.detail
     const message = typeof detail === 'string' ? detail : detail?.message
-    throw new Error(message || `Nevolium Core répond ${response.status}`)
+    throw new Error(message || `Le service Nevolium répond ${response.status}`)
   }
   return body as T
 }
@@ -140,7 +140,7 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
       const accepted = await readJson<ResearchAccepted>(response)
       setTaskId(accepted.task_id)
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Impossible de lancer Research.')
+      setError(submitError instanceof Error ? submitError.message : 'Impossible de lancer la recherche.')
     } finally {
       setSubmitting(false)
     }
@@ -155,8 +155,8 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
     <section className="news-workspace" aria-labelledby="research-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">RESEARCH</span>
-          <h2 id="research-heading">Recherche autonome avec preuves inspectables.</h2>
+          <span className="eyebrow">RECHERCHE</span>
+          <h2 id="research-heading">Explorez une question et gardez les sources à portée de main.</h2>
         </div>
         {run && <span className={`run-state run-state-${run.status}`}>{run.status}</span>}
       </div>
@@ -193,7 +193,7 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
 
           {projectPage.hasMore && <button type="button" disabled={loadingProjects} onClick={() => void projectPage.loadMore()}>Charger les projets suivants</button>}
           <label>
-            <span>Appels outils max.</span>
+            <span>Étapes de recherche max.</span>
             <select value={maxToolCalls} onChange={(event) => setMaxToolCalls(Number(event.target.value))}>
               {[1, 2, 3, 4, 5].map((value) => (
                 <option key={value} value={value}>
@@ -204,7 +204,7 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
           </label>
 
           <button type="submit" disabled={submitting || !projectId || query.trim().length < 3}>
-            {submitting ? 'Lancement…' : 'Lancer Research'}
+            {submitting ? 'Lancement…' : 'Lancer la recherche'}
           </button>
         </div>
       </form>
@@ -228,7 +228,7 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
         <article className="briefing">
           <div className="briefing-topline">
             <div>
-              <span className="eyebrow">SYNTHÈSE GROUNDED</span>
+              <span className="eyebrow">SYNTHÈSE SOURCÉE</span>
               <h3>{run.query}</h3>
             </div>
             <div className="impact-score">
@@ -240,7 +240,7 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
           <div className="brief-summary">{run.answer}</div>
 
           {run.synthesis?.claims.length ? (
-            <section className="sources" aria-label="Affirmations et preuves Research">
+            <section className="sources" aria-label="Affirmations et preuves de la recherche">
               <div className="sources-title">
                 <strong>Affirmations vérifiables</strong>
                 <span>{run.synthesis.claims.length} conclusion(s)</span>
@@ -264,10 +264,10 @@ export default function ResearchWorkspace({ apiUrl }: Props) {
           ) : null}
 
           {run.evidence.length > 0 && (
-            <section className="sources" aria-label="Preuves Research">
+            <section className="sources" aria-label="Preuves de la recherche">
               <div className="sources-title">
                 <strong>Preuves et contexte</strong>
-                <span>Documents canoniques, mémoire dérivée et outils MCP restent distingués.</span>
+                <span>Documents, mémoire et outils de recherche restent clairement distingués.</span>
               </div>
               <div className="source-list">
                 {run.evidence.map((item) => (
