@@ -133,8 +133,14 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   await installApiMock(context)
   const page = await context.newPage()
   const consoleErrors = []
+  const errorResponses = []
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text())
+  })
+  page.on('response', (response) => {
+    if (response.status() >= 400) {
+      errorResponses.push({ status: response.status(), url: response.url() })
+    }
   })
 
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
@@ -207,9 +213,25 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     `${name}: débordement horizontal ${dimensions.scrollWidth}/${dimensions.innerWidth}`,
   )
   assert.equal(await page.locator('canvas').count(), 0, `${name}: le cockpit de base ne doit pas exiger WebGL`)
-  assert.deepEqual(consoleErrors, [], `${name}: erreurs console: ${consoleErrors.join(' | ')}`)
+  const unexpectedResponses = errorResponses.filter((response) => {
+    const url = new URL(response.url)
+    return response.status !== 404 || !url.pathname.startsWith('/v1/ui/workspaces/') || !url.pathname.endsWith('/layout')
+  })
+  assert.deepEqual(
+    unexpectedResponses,
+    [],
+    `${name}: ressources en erreur: ${JSON.stringify(unexpectedResponses)}`,
+  )
+  const unexpectedConsoleErrors = consoleErrors.filter(
+    (message) => !message.includes('status of 404 (Not Found)'),
+  )
+  assert.deepEqual(
+    unexpectedConsoleErrors,
+    [],
+    `${name}: erreurs console: ${unexpectedConsoleErrors.join(' | ')}`,
+  )
 
-  results.push({ name, viewport, dimensions, detachCount, popoutPath, consoleErrors })
+  results.push({ name, viewport, dimensions, detachCount, popoutPath, consoleErrors, errorResponses })
   await context.close()
 }
 
