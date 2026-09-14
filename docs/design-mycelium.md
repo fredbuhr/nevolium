@@ -1,6 +1,7 @@
 # Nevolium — langage visuel Mycelium
 
-Révision : 2026-09-14. Ce contrat traduit les trois références visuelles fournies pendant D05.
+Révision : 2026-09-14. Ce contrat traduit les références visuelles fournies pendant D05,
+y compris les huit images de la reprise « matière organique ».
 Les images restent des inspirations de conversation ; elles ne sont pas attribuées au dépôt et
 ne constituent pas des captures de l'interface livrée.
 
@@ -12,10 +13,13 @@ choisir ce qu'elle veut approfondir ou construire.
 
 Nevolium relie des objets de travail sous contrôle de l'utilisateur. Son interface évoque un
 mycélium neural vivant sans transformer chaque écran en graphe ni masquer l'information utile.
-Une lueur correspond à une sélection, une activité ou une relation compréhensible. Les mouvements
+La bioluminescence de fond appartient à la matière décorative, pas à un état métier. Un signal
+d'activité, de sélection ou d'alerte reste distinct, explicite et compréhensible. Les mouvements
 restent rares, réversibles et supprimés quand l'utilisateur réduit les animations.
 
-« Organique » signifie que l'on peut explorer puis faire évoluer son organisation. Les repères
+Visuellement, « organique » désigne une matière fibreuse irrégulière, ramifiée, avec une lumière
+localisée ; une courbe mathématique lisse et un halo uniforme ne suffisent pas. Dans l'usage,
+on peut explorer puis faire évoluer son organisation. Les repères
 doivent rester stables : l'adaptation ne justifie pas des déplacements imprévisibles de l'interface.
 La densité des liens ne vaut pas leur pertinence ; un lien doit aider à comprendre quelque chose.
 Une idée sans projet ni échéance garde sa place. L'ambiance visuelle ne doit ni imposer une
@@ -37,8 +41,8 @@ activité ou lien métier n'est inventé pour enrichir le décor.
 
 Accueil et Cockpit sont deux présentations d'un même produit. Le retour vers l'une ou l'autre ne
 duplique pas les données et la dernière surface choisie est conservée par compte sur l'appareil.
-Sur grand bureau, la carte, les repères latéraux et les cartes d'accompagnement coexistent. Sur
-bureau compact et tablette, ils se recomposent en une scène puis des cartes. Sur téléphone, les
+Sur bureau, la carte, les repères latéraux et les cartes d'accompagnement coexistent ; les colonnes
+se resserrent sur bureau compact. Sur tablette, la scène précède les cartes. Sur téléphone, les
 nœuds restent des cibles tactiles et le dock fixe devient opaque pour ne pas mêler le texte défilé
 à la navigation. Le cockpit garde la disposition adaptée à chaque classe d'appareil.
 
@@ -56,8 +60,30 @@ nœuds restent des cibles tactiles et le dock fixe devient opaque pour ne pas m�
 
 Les surfaces privilégient le contraste et une transparence modérée. Les filaments ne passent pas
 devant les formulaires. Les états succès, avertissement et erreur ne reposent pas uniquement sur la
-couleur. Le symbole principal est une sphère ouverte faite d'orbites et de nœuds ; sa variante
+couleur. Le symbole principal est une sphère ouverte de filaments fins, inégaux et noués ; sa variante
 maskable conserve le motif dans la zone sûre.
+
+## Matière organique : contrat observable
+
+- **Filaments** : faisceaux d'épaisseurs et d'intensités différentes, bifurcations, jonctions et
+  quelques fils secondaires ; pas d'orbites parfaites, d'arcs parallèles uniformes ni de pointillés
+  qui tournent pour simuler un réseau vivant.
+- **Membranes** : contours fibreux poreux et irréguliers, petits points de lumière et centres
+  sombres réservés aux icônes et aux libellés. Les commandes restent des boutons HTML réels.
+- **Lumière** : cyan et bleu dominants, touches émeraude et violet, foyers lumineux localisés ;
+  ni néon homogène autour de chaque rectangle ni pulsation de toute l'interface.
+- **Profondeur** : paysage nocturne détaillé, eau, relief et végétation discrets, horizon bas ;
+  abandon des montagnes polygonales. Les panneaux du cockpit conservent un fond suffisamment
+  opaque pour lire et travailler, même quand le décor reste visible sur leurs marges.
+- **Stabilité** : le dessin et les cibles partagent les mêmes coordonnées en pixels réels, recalculées
+  au redimensionnement. Le mouvement éventuel change seulement l'intensité, jamais les positions.
+- **Repli** : les textures WebP enrichissent le SVG, elles ne contiennent aucun texte ni contrôle.
+  Sans image, le réseau vectoriel et les commandes restent utilisables. L'ambiance Minimale retire
+  paysage, tissus et textures ; les couleurs forcées donnent des boutons explicitement délimités.
+
+La [note de réalisation](archive/d05-organic-material-2026-09-14.md) conserve les références,
+la provenance des deux textures, les instructions de génération et les limites de qualification.
+Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
 
 ## Personnalisation
 

@@ -158,6 +158,32 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   )
   assert.equal(await page.locator('canvas').count(), 0, `${name}: l’accueil ne doit pas exiger WebGL`)
 
+  async function verifyHomeTargets(label) {
+    await page.waitForFunction(() => {
+      const scene = document.querySelector('.mycelium-scene')
+      return scene && Math.abs(Number(scene.dataset.geometryWidth) - scene.clientWidth) <= 1
+    })
+    const nodes = page.locator('.mycelium-space-node, .mycelium-core-node')
+    for (const node of await nodes.all()) {
+      const box = await node.boundingBox()
+      assert(box && box.width >= 44 && box.height >= 44, `${label}: cible tactile trop petite`)
+      await node.click({ trial: true })
+    }
+    const counts = await page.locator('.mycelium-network').evaluate(node => ({
+      elements: node.querySelectorAll('*').length,
+      animation: getComputedStyle(node.querySelector('.neural-junctions')).animationName,
+    }))
+    assert(counts.elements < 2000, `${label}: budget SVG dépassé`)
+    assert.equal(counts.animation, 'none', `${label}: mouvement réduit non respecté`)
+  }
+  await verifyHomeTargets(name)
+  if (name === 'phone' || name === 'tablet') {
+    await page.setViewportSize(name === 'phone' ? { width: 320, height: 720 } : { width: 1180, height: 820 })
+    await verifyHomeTargets(`${name}-alternate-orientation`)
+    await page.setViewportSize(viewport)
+    await verifyHomeTargets(name)
+  }
+
   const homeDimensions = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,

@@ -740,146 +740,6 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
 .home-principle > span { width: 24px; height: 1px; flex: 0 0 auto; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .home-principle p { margin: 0; }
 
-.mycelium-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-}
-.mycelium-network {
-  position: absolute;
-  inset: -2%;
-  width: 104%;
-  height: 104%;
-  overflow: visible;
-}
-.network-strands-back { stroke-width: 1.25; opacity: .34; }
-.network-strands-front {
-  stroke-width: 2.1;
-  opacity: .72;
-  stroke-dasharray: 5 9 24 7;
-  animation: mycelium-flow 19s linear infinite;
-}
-.network-seeds { opacity: .92; animation: mycelium-breathe 5.5s ease-in-out infinite; }
-.horizon-back { fill: #071522; stroke: rgba(114, 130, 194, .28); stroke-width: 1; }
-.horizon-front { fill: #020a11; }
-
-.mycelium-core-node,
-.mycelium-space-node {
-  position: absolute;
-  z-index: 5;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #f4feff;
-  isolation: isolate;
-}
-.mycelium-core-node {
-  top: 48%;
-  left: 52%;
-  width: clamp(146px, 16vw, 206px);
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(94, 239, 249, .62);
-  background:
-    radial-gradient(circle at 39% 35%, rgba(33, 121, 149, .44), transparent 24%),
-    radial-gradient(circle, rgba(4, 26, 40, .94) 0 58%, rgba(14, 85, 112, .74) 74%, rgba(45, 231, 224, .22));
-  box-shadow:
-    inset 0 0 34px rgba(45, 231, 224, .25),
-    inset 0 0 3px #ecffff,
-    0 0 16px rgba(45, 231, 224, .85),
-    0 0 54px rgba(43, 184, 226, .38),
-    0 0 90px rgba(86, 88, 225, .18);
-  animation: core-breathe 6s ease-in-out infinite;
-}
-.mycelium-core-node::before,
-.mycelium-core-node::after,
-.mycelium-space-node::before {
-  position: absolute;
-  inset: -9px;
-  z-index: -1;
-  border: 1px solid rgba(92, 218, 247, .28);
-  border-radius: inherit;
-  content: "";
-}
-.mycelium-core-node::after { inset: 9px; border-color: rgba(151, 130, 255, .25); }
-.mycelium-core-node img {
-  width: 67%;
-  height: 67%;
-  border-radius: 50%;
-  filter: drop-shadow(0 0 14px rgba(45, 231, 224, .58));
-}
-.core-node-halo {
-  position: absolute;
-  inset: -34px;
-  z-index: -2;
-  border-radius: 50%;
-  opacity: .7;
-  background: conic-gradient(from 80deg, transparent, rgba(45, 231, 224, .18), transparent 31%, rgba(151, 130, 255, .18), transparent 70%);
-  filter: blur(7px);
-  animation: orbit-turn 17s linear infinite;
-}
-.core-node-caption {
-  position: absolute;
-  bottom: 15px;
-  color: #c4e8ed;
-  font-size: 9px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .2s ease, transform .2s ease;
-}
-.mycelium-core-node:hover .core-node-caption,
-.mycelium-core-node:focus-visible .core-node-caption { opacity: 1; transform: translateY(0); }
-
-.mycelium-space-node {
-  top: var(--node-y);
-  left: var(--node-x);
-  width: var(--node-size);
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(95, 202, 255, .56);
-  grid-template-rows: 34px auto;
-  gap: 8px;
-  padding: 18px 10px 13px;
-  background:
-    radial-gradient(circle at 38% 30%, rgba(89, 203, 239, .23), transparent 24%),
-    radial-gradient(circle, rgba(4, 27, 42, .93) 0 57%, rgba(8, 65, 91, .72) 78%, rgba(14, 111, 139, .45));
-  box-shadow: inset 0 0 23px rgba(95, 202, 255, .16), 0 0 13px rgba(45, 231, 224, .42), 0 0 34px rgba(56, 126, 222, .2);
-  transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
-}
-.mycelium-space-node::before { inset: -6px; opacity: .64; }
-.mycelium-space-node:hover,
-.mycelium-space-node:focus-visible {
-  z-index: 8;
-  transform: translate(-50%, -50%) scale(1.07);
-  border-color: #d9ffff;
-  box-shadow: inset 0 0 30px rgba(45, 231, 224, .24), 0 0 19px rgba(45, 231, 224, .72), 0 0 50px rgba(56, 126, 222, .34);
-}
-.mycelium-space-node svg {
-  width: 31px;
-  height: 31px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.45;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 5px currentColor);
-}
-.mycelium-space-node strong { font-size: 12px; font-weight: 570; letter-spacing: .01em; }
-.space-node-orbit {
-  position: absolute;
-  inset: 7px;
-  z-index: -1;
-  border-top: 1px solid rgba(255, 255, 255, .22);
-  border-right: 1px solid transparent;
-  border-radius: 50%;
-  animation: orbit-turn 13s linear infinite reverse;
-}
-.node-tone-emerald { color: #d7ffea; border-color: rgba(120, 240, 173, .6); box-shadow: inset 0 0 23px rgba(120, 240, 173, .12), 0 0 13px rgba(45, 231, 224, .45), 0 0 34px rgba(68, 208, 150, .18); }
-.node-tone-blue { color: #e3f6ff; }
-.node-tone-violet { color: #f0ebff; border-color: rgba(151, 130, 255, .64); box-shadow: inset 0 0 23px rgba(151, 130, 255, .17), 0 0 13px rgba(108, 150, 255, .48), 0 0 36px rgba(151, 130, 255, .2); }
-.node-tone-cyan { color: #e5ffff; border-color: rgba(45, 231, 224, .66); }
 
 .home-aside {
   position: relative;
@@ -1021,32 +881,8 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
   backdrop-filter: blur(18px);
 }
 
-@keyframes mycelium-flow {
-  to { stroke-dashoffset: -90; }
-}
-@keyframes mycelium-breathe {
-  0%, 100% { opacity: .62; }
-  50% { opacity: 1; }
-}
-@keyframes core-breathe {
-  0%, 100% { box-shadow: inset 0 0 34px rgba(45, 231, 224, .22), inset 0 0 3px #ecffff, 0 0 15px rgba(45, 231, 224, .75), 0 0 49px rgba(43, 184, 226, .3), 0 0 82px rgba(86, 88, 225, .14); }
-  50% { box-shadow: inset 0 0 40px rgba(45, 231, 224, .32), inset 0 0 4px #ecffff, 0 0 22px rgba(45, 231, 224, .92), 0 0 67px rgba(43, 184, 226, .43), 0 0 104px rgba(86, 88, 225, .24); }
-}
-@keyframes orbit-turn {
-  to { transform: rotate(360deg); }
-}
-
-.ambience-calm .network-strands-back { opacity: .15; }
-.ambience-calm .network-strands-front { opacity: .42; }
-.ambience-calm .network-seeds { opacity: .55; }
-.ambience-minimal .mycelium-network { opacity: .13; }
-.ambience-minimal .mycelium-space-node,
-.ambience-minimal .mycelium-core-node { box-shadow: inset 0 0 16px rgba(45, 231, 224, .08), 0 0 8px rgba(45, 231, 224, .18); }
-.ambience-minimal .home-stage { background: linear-gradient(180deg, #020b13, #051520); }
-
 @media (max-width: 1320px) {
   .home-layout { grid-template-columns: 140px minmax(0, 1fr); }
-  .mycelium-space-node[data-space="command"] { left: 40%; }
   .home-aside {
     grid-column: 2;
     grid-template-columns: minmax(0, 1.5fr) minmax(240px, .7fr);
@@ -1068,7 +904,6 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
   .home-stage { min-height: 690px; }
   .home-aside { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(250px, .8fr); margin-top: 12px; }
   .home-introduction { top: 7%; left: 4%; width: 260px; }
-  .mycelium-space-node[data-space="command"] { top: 21%; left: 48%; }
 }
 
 @media (max-width: 720px) {
@@ -1103,16 +938,6 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
   .home-introduction h2 { margin: 6px 0 0; font-size: 25px; }
   .home-introduction p { display: none; }
   .home-introduction button { width: min(260px, 84%); min-height: 42px; margin: 11px auto 0; }
-  .mycelium-core-node { top: 52%; left: 50%; width: 122px; }
-  .mycelium-space-node { width: 80px !important; grid-template-rows: 25px auto; gap: 5px; padding: 12px 6px 9px; }
-  .mycelium-space-node svg { width: 24px; height: 24px; }
-  .mycelium-space-node strong { font-size: 9px; }
-  .mycelium-space-node[data-space="command"] { top: 32%; left: 27%; }
-  .mycelium-space-node[data-space="projects"] { top: 31%; left: 73%; }
-  .mycelium-space-node[data-space="research"] { top: 53%; left: 84%; }
-  .mycelium-space-node[data-space="today"] { top: 75%; left: 69%; }
-  .mycelium-space-node[data-space="knowledge"] { top: 76%; left: 30%; }
-  .mycelium-space-node[data-space="news"] { top: 54%; left: 15%; }
   .home-principle { right: 50%; bottom: 2.5%; width: max-content; max-width: 84%; transform: translateX(50%); justify-content: center; font-size: 7px; text-align: center; }
   .home-aside { display: block; margin: 10px; }
   .home-resume-card { border-radius: 20px; }
@@ -1144,7 +969,6 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
 @media (max-width: 420px) {
   .home-brand-lockup span { display: none; }
   .home-introduction h2 { font-size: 22px; }
-  .mycelium-space-node { width: 72px !important; }
   .home-dock button span { font-size: 8px; }
   .home-resume-card small { white-space: normal; }
 }

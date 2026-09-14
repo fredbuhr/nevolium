@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'nevolium-shell-v2'
+const SHELL_CACHE = 'nevolium-shell-v3-organic'
 const SHELL_ASSETS = [
   '/',
   '/popout.html',

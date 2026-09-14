@@ -1,0 +1,192 @@
+/* D05 material pass: the reference is living tissue, not a diagram of perfect orbits. */
+body {
+  background: #020b13;
+}
+body::before { display: none; }
+.app-shell::before,
+.surface-home::before {
+  inset: 0;
+  opacity: 1;
+  mask-image: none;
+  background: linear-gradient(180deg, rgba(1, 9, 16, .1), rgba(1, 9, 16, .05) 65%, rgba(1, 9, 16, .16)), url('/mycelium-landscape.webp') center bottom / cover no-repeat;
+}
+.app-shell.ambience-calm::before { opacity: .6; }
+.app-shell.ambience-minimal::before { background-image: none; background-color: #020b13; }
+.app-shell.surface-home { padding-top: 10px; padding-bottom: 100px; }
+.home-header { padding-bottom: 16px; }
+.home-brand-lockup img, .mycelium-mark { border-radius: 0; filter: drop-shadow(0 0 6px rgba(112, 255, 220, .34)); }
+.home-brand-lockup h1 { font-weight: 300; letter-spacing: .27em; }
+.home-brand-lockup span { font-size: 8px; letter-spacing: .31em; }
+.home-global-search { min-height: 43px; font-size: 13px; background: rgba(1, 18, 29, .8); }
+.home-layout {
+  grid-template-columns: 150px minmax(0, 1fr) minmax(290px, 330px);
+  gap: 20px;
+  min-height: calc(100dvh - 210px);
+}
+.home-rail { min-height: 665px; border-radius: 16px; }
+.home-rail, .home-glass-card {
+  background: linear-gradient(145deg, rgba(1, 21, 34, .88), rgba(1, 16, 26, .77));
+  border-color: rgba(44, 193, 229, .5);
+  backdrop-filter: blur(12px);
+}
+.home-rail button { min-height: 51px; }
+.home-rail button.is-active {
+  background: radial-gradient(ellipse at 15% 45%, rgba(0, 178, 233, .45), transparent 74%), rgba(2, 48, 72, .5);
+  box-shadow: inset 0 0 18px rgba(56, 216, 255, .17), 0 0 16px rgba(30, 168, 217, .12);
+  border-color: rgba(60, 227, 250, .65);
+}
+.home-stage {
+  min-height: clamp(650px, calc(100dvh - 200px), 880px);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+.home-stage::before { display: none; }
+.home-introduction {
+  inset: 3px 20px auto;
+  width: auto;
+  display: grid;
+  grid-template-columns: 1fr 210px;
+  align-items: center;
+  column-gap: 16px;
+  pointer-events: none;
+}
+.home-introduction .eyebrow { grid-column: 1; font-size: 8px; letter-spacing: .2em; }
+.home-introduction h2 { grid-column: 1; margin: 5px 0 0; font-size: clamp(24px, 2vw, 30px); line-height: 1.2; letter-spacing: -.025em; }
+.home-introduction p { display: none; }
+.home-introduction button {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  margin: 0;
+  min-height: 45px;
+  pointer-events: auto;
+  background: linear-gradient(105deg, rgba(1, 28, 43, .84), rgba(6, 63, 86, .5));
+}
+.home-principle { bottom: 3px; right: 20px; max-width: none; font-size: 8px; background: rgba(1, 12, 22, .45); padding: 8px 12px; border-radius: 12px; }
+.mycelium-scene { position: absolute; inset: 86px 0 54px; z-index: 2; }
+.neural-field { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.mycelium-network { position: absolute; inset: 0; }
+.neural-junctions { animation: neural-luminance 9s ease-in-out infinite alternate; }
+.neural-tissue { animation: neural-luminance 13s ease-in-out infinite alternate-reverse; }
+@keyframes neural-luminance { from { opacity: .72; } to { opacity: 1; } }
+.mycelium-core-node, .mycelium-space-node {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 48% 52% 49% 51%;
+  padding: 0;
+  color: #f3fdff;
+  background: none;
+  box-shadow: none;
+  transform: translate(-50%, -50%);
+  transition: background .2s ease, color .2s ease;
+  animation: none;
+}
+.mycelium-core-node::before, .mycelium-core-node::after,
+.mycelium-space-node::before { content: none; }
+.mycelium-space-node > svg { width: clamp(25px, 2.6vw, 35px); height: clamp(25px, 2.6vw, 35px); fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgba(128, 244, 255, .28)); }
+.mycelium-space-node strong { font-size: clamp(12px, .95vw, 14px); font-weight: 470; text-shadow: 0 1px 6px #000; }
+.mycelium-space-node:hover, .mycelium-core-node:hover { background: radial-gradient(ellipse, rgba(41, 211, 229, .14), transparent 74%); color: #fff; transform: translate(-50%, -50%); box-shadow: none; }
+.mycelium-space-node:focus-visible, .mycelium-core-node:focus-visible { outline: 2px solid #e4fff9; outline-offset: 2px; background: rgba(10, 71, 85, .45); }
+.mycelium-core-node img { width: 71%; height: 71%; border-radius: 0; filter: drop-shadow(0 0 6px rgba(127, 255, 224, .38)); }
+.core-node-caption { position: absolute; bottom: 7%; opacity: 0; font-size: 9px; letter-spacing: .18em; text-transform: uppercase; }
+.mycelium-core-node:hover .core-node-caption, .mycelium-core-node:focus-visible .core-node-caption { opacity: 1; }
+.home-aside { align-self: start; gap: 16px; }
+.home-glass-card { border-radius: 16px; }
+.home-resume-card, .home-explore-card { padding: 18px 17px 10px; }
+.home-card-heading h2 { font-size: 23px; font-weight: 430; }
+.home-resume-card > button, .home-explore-card > button { min-height: 70px; }
+.home-resume-card strong, .home-explore-card strong { font-weight: 500; }
+.home-resume-card small, .home-explore-card small { color: #a0b5c5; font-size: 11px; }
+.home-preferences summary { min-height: 74px; }
+.home-dock {
+  bottom: max(18px, env(safe-area-inset-bottom));
+  min-height: 72px;
+  background: linear-gradient(160deg, rgba(0, 37, 57, .94), rgba(0, 15, 27, .94));
+  border-color: rgba(43, 181, 224, .48);
+  box-shadow: inset 0 0 24px rgba(45, 184, 227, .07), 0 15px 38px rgba(0, 0, 0, .34);
+}
+.home-dock button { font-size: 10px; }
+.home-dock-mark { border: 0; border-radius: 46% 54% 49% 51%; background: radial-gradient(ellipse, #00131e 48%, #06445a 69%, #3ee6f1 73%, #042b45 78%, transparent 83%); box-shadow: 0 0 18px rgba(39, 191, 241, .4); }
+.home-dock-mark img { width: 70%; height: 70%; border-radius: 0; }
+.ambience-calm .neural-tissue { opacity: .4; animation: none; }
+.ambience-calm .neural-junctions { opacity: .65; animation: none; }
+.ambience-minimal .neural-tissue, .ambience-minimal .neural-junctions { display: none; }
+.ambience-minimal .neural-membranes { opacity: .35; }
+.ambience-minimal .neural-membrane-texture { display: none; }
+.ambience-calm .neural-membrane-texture { opacity: .65; }
+.ambience-minimal .home-stage { background: none; }
+.ambience-minimal .mycelium-space-node, .ambience-minimal .mycelium-core-node { box-shadow: none; }
+.mycelium-atmosphere { position: fixed; inset: -12% -10% 0; z-index: -1; pointer-events: none; opacity: .34; mask-image: radial-gradient(ellipse, transparent 30%, #000 85%); }
+.ambience-calm .mycelium-atmosphere { opacity: .13; }
+.surface-cockpit { padding-top: 18px; padding-bottom: 90px; }
+.surface-cockpit .cockpit-shell { background: rgba(1, 16, 27, .72); backdrop-filter: blur(16px); border-color: rgba(66, 186, 225, .55); }
+.surface-cockpit .cockpit-context { background: rgba(0, 20, 33, .88); }
+.surface-cockpit .cockpit-dock .command-center,
+.surface-cockpit .cockpit-dock .news-workspace,
+.surface-cockpit .cockpit-dock .workspace-panel { background: linear-gradient(135deg, rgba(3, 27, 43, .96), rgba(0, 13, 23, .91)); }
+
+@media (max-width: 1320px) and (min-width: 1024px) {
+  .home-layout { grid-template-columns: 140px minmax(0, 1fr) 260px; gap: 12px; }
+  .home-rail { min-height: 640px; }
+  .home-stage { min-height: 640px; }
+  .home-aside { grid-column: auto; display: grid; grid-template-columns: 1fr; }
+  .home-explore-card { display: block; }
+  .home-explore-card .home-card-heading h2 { font-size: 17px; }
+  .home-resume-card > button, .home-explore-card > button { min-height: 65px; }
+  .home-introduction { inset-inline: 5px; grid-template-columns: 1fr; }
+  .home-introduction button { display: none; }
+  .home-introduction .eyebrow { font-size: 7px; }
+  .home-introduction h2 { font-size: 25px; }
+  .home-principle { font-size: 7px; right: 0; padding-inline: 0; }
+  .mycelium-scene { inset: 75px 0 44px; }
+}
+@media (max-width: 1023px) {
+  .home-layout { display: block; }
+  .home-stage { min-height: 660px; }
+  .home-introduction { inset: 12px 20px auto; width: auto; }
+  .home-aside { display: grid; grid-template-columns: 1.5fr 1fr; margin: 12px 4px 0; gap: 12px; }
+  .home-explore-card { display: none; }
+  .mycelium-scene { inset: 95px 8px 44px; }
+  .home-principle { right: 20px; bottom: 0; }
+}
+@media (max-width: 720px) {
+  .app-shell.surface-home { padding: 0 0 108px; }
+  .app-shell::before { background-size: auto 100dvh; background-position: 44% top; }
+  .home-header { padding: 9px 12px; background: linear-gradient(#010a13c9, #010a1355); }
+  .home-brand-lockup h1 { font-size: 18px; letter-spacing: .2em; }
+  .home-brand-lockup img { width: 44px; height: 44px; }
+  .home-stage { min-height: 575px; border: 0; border-radius: 0; }
+  .home-introduction { inset: 13px 14px auto; display: block; text-align: center; }
+  .home-introduction h2 { font-size: 23px; margin-top: 6px; }
+  .home-introduction .eyebrow { font-size: 7px; }
+  .home-introduction button { display: none; }
+  .mycelium-scene { inset: 68px 6px 32px; }
+  .mycelium-space-node { gap: 5px; padding: 0; }
+  .mycelium-space-node > svg { width: 25px; height: 25px; }
+  .mycelium-space-node strong { font-size: 11px; font-weight: 480; }
+  .home-principle { bottom: 0; right: 50%; transform: translateX(50%); max-width: 95%; width: max-content; font-size: 6px; padding: 6px; }
+  .home-aside { display: block; margin: 10px; }
+  .home-explore-card { display: none; }
+  .home-preferences { margin-top: 12px; }
+  .home-dock { bottom: max(8px, env(safe-area-inset-bottom)); min-height: 61px; background: #001724; }
+  .home-dock button { font-size: 9px; }
+  .home-resume-card > button { min-height: 69px; }
+  .mycelium-atmosphere { display: none; }
+  .surface-cockpit { padding-top: 12px; padding-bottom: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .neural-junctions, .neural-tissue { animation: none; }
+}
+@media (forced-colors: active) {
+  .neural-field, .app-shell::before { display: none; }
+  .mycelium-space-node, .mycelium-core-node { border: 2px solid ButtonText; background: Canvas; color: ButtonText; }
+}

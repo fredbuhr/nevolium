@@ -59,6 +59,8 @@ jobs:
           VITE_NEVOLIUM_API_URL: http://127.0.0.1:8999
           VITE_NEVOLIUM_AUTH_ENABLED: "false"
         run: pnpm --filter @nevolium/web build
+      - name: Prove deterministic organic geometry and touch targets
+        run: node scripts/smoke/d05_mycelium_geometry.mjs
       - name: Install the ephemeral browser runner
         run: |
           npm install \

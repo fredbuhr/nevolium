@@ -55,12 +55,16 @@ def main() -> None:
 
     cockpit = (WEB / "src/CockpitShell.tsx").read_text(encoding="utf-8")
     home = (WEB / "src/MyceliumHome.tsx").read_text(encoding="utf-8")
+    field = (WEB / "src/MyceliumField.tsx").read_text(encoding="utf-8")
     settings = (WEB / "src/InstanceModelSettings.tsx").read_text(encoding="utf-8")
     device = (WEB / "src/lib/cockpitDevice.ts").read_text(encoding="utf-8")
     styles = (WEB / "src/styles.css").read_text(encoding="utf-8")
     assert "Control+K Meta+K" in cockpit
     assert "Control+K Meta+K" in home
-    assert "mycelium-network" in home and "mycelium-space-node" in home
+    assert "mycelium-network" in field and "mycelium-space-node" in home
+    assert "createMyceliumGeometry" in home and "ResizeObserver" in home
+    assert "branched-bioluminescent-fibres" in field
+    assert "aria-hidden=\"true\"" in field and "mixBlendMode: 'screen'" in field
     assert "Où reprendre le fil" in home
     for delivered_space in (
         "Assistant",

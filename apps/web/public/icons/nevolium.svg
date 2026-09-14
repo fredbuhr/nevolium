@@ -1,24 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nevolium">
   <defs>
-    <radialGradient id="background" cx="35%" cy="28%" r="78%">
-      <stop offset="0" stop-color="#0b3040"/><stop offset=".55" stop-color="#041923"/><stop offset="1" stop-color="#020a12"/>
-    </radialGradient>
-    <linearGradient id="neural" x1="76" y1="106" x2="430" y2="404" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#78f0ad"/><stop offset=".48" stop-color="#2de7e0"/><stop offset=".8" stop-color="#5fcaff"/><stop offset="1" stop-color="#9782ff"/>
+    <linearGradient id="neural" x1="100" y1="95" x2="400" y2="399" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#78f0ad"/><stop offset=".42" stop-color="#2de7e0"/><stop offset=".78" stop-color="#5fcaff"/><stop offset="1" stop-color="#9782ff"/>
     </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#background)"/>
-  <circle cx="256" cy="256" r="163" fill="none" stroke="#2de7e0" stroke-opacity=".12" stroke-width="3"/>
-  <g fill="none" stroke="url(#neural)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
-    <path d="M112 314C69 209 139 100 246 92c107-8 187 84 158 189-29 106-161 166-246 91-76-68-28-202 72-219 98-17 187 83 140 170-48 89-182 87-225-5" stroke-width="13"/>
-    <path d="M149 139c80-51 197-24 235 68 38 92-20 196-115 213-95 17-184-66-165-161 19-94 132-151 214-98 83 53 82 181-1 234" stroke-width="8" stroke-opacity=".88"/>
-    <path d="M93 249c48-88 161-125 251-80 89 45 111 163 45 237M194 91c-60 67-67 167-17 241 50 74 153 91 224 38" stroke-width="5" stroke-opacity=".72"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="url(#neural)" filter="url(#glow)">
+      <path d="M270 57C345 91 413 156 414 244S352 391 263 437C174 425 94 357 80 255" stroke-width="3"/>
+      <path d="M270 57C173 70 108 149 86 241C95 338 173 411 263 437C346 414 412 340 414 244C407 153 338 91 270 57Z" stroke-width="3.3"/>
+      <path d="M153 113C219 88 355 80 388 160C401 196 366 237 321 278C269 326 238 380 263 437" stroke-width="3.4"/>
+      <path d="M86 241C136 172 199 120 270 57C308 108 304 181 266 234C224 293 190 359 193 413" stroke-width="2.4"/>
+      <path d="M111 330C130 248 151 179 153 113C186 100 237 147 266 234C300 332 351 368 384 335" stroke-width="2.4"/>
+      <path d="M111 330C207 354 339 387 384 335C435 271 374 178 326 127" stroke-width="2.8"/>
+      <path d="M153 113C81 219 175 379 263 437M388 160C308 166 203 277 193 413" stroke-width="1.4" stroke-opacity=".65"/>
+    </g>
+    <path d="M270 57C173 70 108 149 86 241M153 113C219 88 355 80 388 160M111 330C207 354 339 387 384 335M263 437C346 414 412 340 414 244" stroke="#e8fff8" stroke-width="3" stroke-opacity=".92"/>
   </g>
-  <g fill="#eaffff" filter="url(#glow)">
-    <circle cx="112" cy="314" r="9"/><circle cx="149" cy="139" r="8"/><circle cx="246" cy="92" r="7"/>
-    <circle cx="404" cy="281" r="9"/><circle cx="370" cy="323" r="7"/><circle cx="269" cy="420" r="8"/><circle cx="145" cy="318" r="6"/>
+  <g fill="#dffff2" filter="url(#glow)">
+    <circle cx="270" cy="57" r="6"/><circle cx="153" cy="113" r="5"/><circle cx="86" cy="241" r="6"/>
+    <circle cx="111" cy="330" r="5"/><circle cx="263" cy="437" r="6"/><circle cx="384" cy="335" r="5"/>
+    <circle cx="414" cy="244" r="5"/><circle cx="388" cy="160" r="5"/>
   </g>
 </svg>

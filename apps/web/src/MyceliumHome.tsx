@@ -9,6 +9,8 @@ import {
 
 import type { CockpitAmbience } from './lib/cockpitDevice'
 import type { CockpitDeviceClass, CockpitProfile } from './CockpitShell'
+import { MyceliumField } from './MyceliumField'
+import { createMyceliumGeometry } from './lib/myceliumGeometry'
 
 export type MyceliumDestinationKey =
   | 'command'
@@ -24,9 +26,6 @@ type Destination = {
   title: string
   description: string
   keywords: string[]
-  x: string
-  y: string
-  size: string
   tone: 'cyan' | 'blue' | 'emerald' | 'violet'
 }
 
@@ -50,9 +49,6 @@ const DESTINATIONS: Destination[] = [
     title: 'Assistant',
     description: 'Approfondir une question sans perdre votre direction.',
     keywords: ['conversation', 'commande', 'idée'],
-    x: '31%',
-    y: '21%',
-    size: '124px',
     tone: 'emerald',
   },
   {
@@ -60,9 +56,6 @@ const DESTINATIONS: Destination[] = [
     title: 'Projets',
     description: 'Donner une forme concrète à ce que vous construisez.',
     keywords: ['projet', 'tâches', 'avancer'],
-    x: '72%',
-    y: '22%',
-    size: '132px',
     tone: 'blue',
   },
   {
@@ -70,9 +63,6 @@ const DESTINATIONS: Destination[] = [
     title: 'Recherche',
     description: 'Explorer une piste et conserver ses sources.',
     keywords: ['sources', 'citations', 'explorer'],
-    x: '82%',
-    y: '50%',
-    size: '116px',
     tone: 'emerald',
   },
   {
@@ -80,9 +70,6 @@ const DESTINATIONS: Destination[] = [
     title: 'Aujourd’hui',
     description: 'Voir ce qui mérite votre attention maintenant.',
     keywords: ['journée', 'priorités', 'tâches'],
-    x: '65%',
-    y: '76%',
-    size: '126px',
     tone: 'violet',
   },
   {
@@ -90,9 +77,6 @@ const DESTINATIONS: Destination[] = [
     title: 'Documents',
     description: 'Retrouver une note, un document et son contexte.',
     keywords: ['document', 'note', 'connaissance'],
-    x: '31%',
-    y: '74%',
-    size: '126px',
     tone: 'cyan',
   },
   {
@@ -100,9 +84,6 @@ const DESTINATIONS: Destination[] = [
     title: 'Actualités',
     description: 'Comprendre ce qui se passe à partir de sources conservées.',
     keywords: ['actualité', 'veille', 'briefing'],
-    x: '16%',
-    y: '48%',
-    size: '112px',
     tone: 'blue',
   },
 ]
@@ -195,103 +176,53 @@ function SpaceIcon({ name }: { name: Destination['key'] | 'home' | 'spaces' | 's
 }
 
 function MyceliumScene({ onOpenSpace }: Pick<MyceliumHomeProps, 'onOpenSpace'>) {
+  const sceneRef = useRef<HTMLDivElement | null>(null)
+  const [bounds, setBounds] = useState({ width: 960, height: 690 })
+  useEffect(() => {
+    const element = sceneRef.current
+    if (!element) return
+    const update = () => {
+      const width = Math.round(element.clientWidth)
+      const height = Math.round(element.clientHeight)
+      if (width < 200 || height < 200) return
+      setBounds(previous => previous.width === width && previous.height === height ? previous : { width, height })
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  const geometry = useMemo(
+    () => createMyceliumGeometry(bounds.width, bounds.height),
+    [bounds.width, bounds.height],
+  )
+  const position = (key: string): CSSProperties => {
+    const node = geometry.nodes.find(candidate => candidate.key === key)!
+    return { left: node.x, top: node.y, width: node.radius * 1.76, height: node.radius * 1.76 }
+  }
   return (
-    <div className="mycelium-scene">
-      <svg className="mycelium-network" viewBox="0 0 1000 760" aria-hidden="true" focusable="false">
-        <defs>
-          <radialGradient id="mycelium-core" cx="48%" cy="43%" r="58%">
-            <stop offset="0" stopColor="#16465b" stopOpacity=".76" />
-            <stop offset=".48" stopColor="#062031" stopOpacity=".58" />
-            <stop offset="1" stopColor="#020b13" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="mycelium-strand" x1="90" y1="100" x2="920" y2="690" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#78f0ad" />
-            <stop offset=".42" stopColor="#2de7e0" />
-            <stop offset=".72" stopColor="#5fcaff" />
-            <stop offset="1" stopColor="#9782ff" />
-          </linearGradient>
-          <linearGradient id="mycelium-horizon" x1="0" y1="0" x2="0" y2="1">
-            <stop stopColor="#f0a468" stopOpacity=".46" />
-            <stop offset=".36" stopColor="#6f70d6" stopOpacity=".18" />
-            <stop offset="1" stopColor="#020b13" stopOpacity="0" />
-          </linearGradient>
-          <filter id="strand-glow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="node-glow" x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="8" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <ellipse cx="520" cy="360" rx="430" ry="330" fill="url(#mycelium-core)" />
-        <g className="network-strands network-strands-back" fill="none" stroke="url(#mycelium-strand)" strokeLinecap="round">
-          <path d="M70 365C163 196 269 164 486 353s319 183 445-43" />
-          <path d="M103 212c194 6 240 169 398 176 171 7 256-211 414-188" />
-          <path d="M128 556c118-155 223-191 381-143 184 56 220 188 387 132" />
-          <path d="M287 76c-49 178 79 210 194 310 126 109 116 218 58 312" />
-          <path d="M715 64c28 159-107 225-205 318-112 107-93 205-56 301" />
-          <path d="M176 118c158 84 207 71 331 257 110 164 235 184 370 242" />
-          <path d="M96 625c177-64 286-178 399-238 151-80 286-57 424-190" />
-          <path d="M56 468c205 17 259-97 439-75 171 20 286 152 455 112" />
-          <path d="M234 38c79 120 50 249 247 338 205 92 267-15 442 78" />
-          <path d="M875 78c-90 96-77 230-345 303-227 62-269-21-437 65" />
-        </g>
-        <g className="network-strands network-strands-front" fill="none" stroke="url(#mycelium-strand)" strokeLinecap="round" filter="url(#strand-glow)">
-          <path d="M157 348C293 247 347 257 501 383c140 114 262 86 344-31" />
-          <path d="M306 165c77 74 79 147 195 214 124 71 203-55 258-161" />
-          <path d="M307 565c56-96 104-151 192-176 114-33 177 72 176 183" />
-          <path d="M499 380c-80-36-196-22-279 72M501 382c93-93 243-76 334 31" />
-          <path d="M498 383c-29-103-103-188-188-225M503 385c75-86 136-150 230-222" />
-        </g>
-
-        <g className="network-seeds" fill="#eaffff" filter="url(#node-glow)">
-          <circle cx="125" cy="271" r="3" /><circle cx="198" cy="176" r="4" />
-          <circle cx="251" cy="536" r="3" /><circle cx="345" cy="88" r="4" />
-          <circle cx="409" cy="240" r="3" /><circle cx="535" cy="111" r="3" />
-          <circle cx="594" cy="635" r="4" /><circle cx="706" cy="104" r="3" />
-          <circle cx="757" cy="623" r="3" /><circle cx="864" cy="263" r="4" />
-          <circle cx="912" cy="484" r="3" /><circle cx="101" cy="491" r="3" />
-        </g>
-
-        <rect x="0" y="612" width="1000" height="148" fill="url(#mycelium-horizon)" opacity=".5" />
-        <path className="horizon-back" d="M0 694 72 647l52 24 75-83 45 46 80-116 66 92 43-31 60 75 76-118 62 91 52-44 62 76 71-115 76 87 67-28 61 68v89H0Z" />
-        <path className="horizon-front" d="M0 723 99 673l55 29 82-55 77 70 85-48 67 54 82-77 72 72 74-35 58 38 82-78 93 80 74-22v59H0Z" />
-      </svg>
-
+    <div ref={sceneRef} className="mycelium-scene" data-geometry-width={bounds.width}>
+      <MyceliumField geometry={geometry} />
       <button
         type="button"
         className="mycelium-core-node"
+        style={position('core')}
         onClick={() => onOpenSpace('command')}
         aria-label="Ouvrir le cockpit Nevolium"
       >
-        <span className="core-node-halo" aria-hidden="true" />
         <img src="/icons/nevolium.svg" alt="" aria-hidden="true" />
         <span className="core-node-caption">Ouvrir</span>
       </button>
-
       {DESTINATIONS.map((destination) => (
         <button
           key={destination.key}
           type="button"
           data-space={destination.key}
           className={`mycelium-space-node node-tone-${destination.tone}`}
-          style={{
-            '--node-x': destination.x,
-            '--node-y': destination.y,
-            '--node-size': destination.size,
-          } as CSSProperties}
+          style={position(destination.key)}
           onClick={() => onOpenSpace(destination.key)}
           aria-label={`${destination.title} — ${destination.description}`}
         >
-          <span className="space-node-orbit" aria-hidden="true" />
           <SpaceIcon name={destination.key} />
           <strong>{destination.title}</strong>
         </button>

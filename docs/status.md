@@ -4,10 +4,14 @@ Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
 unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Son dernier checkpoint de code complet vérifié
-est `73b07f5204fa5446ecd663ce90d68c5175a73e3e` ; ses 10 workflows réussissent. Chromium couvre
+avant la reprise de matière organique est `b122a09d499506797735cbb121f6d5a3326fcf3c` ; ses 10 workflows réussissent. Chromium couvre
 l'Accueil Mycelium et le Cockpit sur bureau/tablette/téléphone ; un second scénario traverse le vrai Keycloak avec PKCE pour les rôles
 administrateur et utilisateur. Le lot n'est ni intégré ni déployé. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
+La [reprise organique](archive/d05-organic-material-2026-09-14.md) remplace les orbites trop
+géométriques par une matière fibreuse bioluminescente et un paysage nocturne ; sa qualification
+exact-head et ses nouvelles captures sont suivies dans la PR. L'acceptation visuelle utilisateur
+reste nécessaire, indépendamment des tests fonctionnels.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
