@@ -26,7 +26,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 
 Sur instruction utilisateur, OpenAI remplace le LLM local. Ne plus relancer la présélection Qwen,
 réparer son DNS ou régler les threads Ollama. Le local attend une nouvelle décision et du matériel
-adapté ; il ne conditionne ni D04, ni D05, ni D13. Voir [ADR-031](docs/decisions/ADR-031-api-first-pilot.md).
+adapté ; il ne conditionne ni D04, ni D05, ni D13. Voir [ADR-031](../decisions/ADR-031-api-first-pilot.md).
 
 `smart` est l'alias de l'API choisie : `NEVOLIUM_API_MODEL` + `NEVOLIUM_API_KEY` dans LiteLLM,
 OpenAI `openai/gpt-4.1` initialement. Aucun secret fournisseur côté Core/Worker/Web. Les nouvelles
@@ -291,12 +291,12 @@ OpenBao éphémères et exécuter le runner existant jusqu'à la preuve de backu
 Le jeton valide reste en place, sans recréation, révocation ni renouvellement de contournement.
 Les six secrets B2/Restic ne sont plus demandés. Après la preuve de restauration, consigner le rapport final,
 repasser la CI du head, finaliser et intégrer #88, poser le tag H5 puis retirer la branche avant D05.
-Le [protocole D04](docs/qualification-d04.md) conserve les seuils et limites.
+Le [protocole D04](../qualification-d04.md) conserve les seuils et limites.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou D05 avant leur validation.
 
 ## Références
 
-[État produit](docs/status.md) · [plan D01–D22](docs/implementation-plan.md) · [workflow](docs/development-workflow.md)
-· [preuves serveur](docs/archive/server-foundation-2026-09-11.md) · [audit D04](docs/archive/d04-progress-audit-2026-09-13.md).
+[État produit](../status.md) · [plan D01–D22](../implementation-plan.md) · [workflow](../development-workflow.md)
+· [preuves serveur](../archive/server-foundation-2026-09-11.md) · [audit D04](../archive/d04-progress-audit-2026-09-13.md).
 Les anciennes refs H/D restent retirées du développement actif. Réservoirs déjà inspectés : prototype
 `ed12d503…`, `consolidate/g49-research-durable-stages` à `57a1a217…` ; aucun merge en bloc.
