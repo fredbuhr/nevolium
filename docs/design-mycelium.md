@@ -6,10 +6,20 @@ ne constituent pas des captures de l'interface livrée.
 
 ## Intention
 
+La [charte d'identité et de langage](identite-nevolium.md) donne le sens de cette direction
+visuelle : garder le fil, faire apparaître des liens compréhensibles et laisser la personne
+choisir ce qu'elle veut approfondir ou construire.
+
 Nevolium relie des objets de travail sous contrôle de l'utilisateur. Son interface évoque un
 mycélium neural vivant sans transformer chaque écran en graphe ni masquer l'information utile.
 Une lueur correspond à une sélection, une activité ou une relation compréhensible. Les mouvements
 restent rares, réversibles et supprimés quand l'utilisateur réduit les animations.
+
+« Organique » signifie que l'on peut explorer puis faire évoluer son organisation. Les repères
+doivent rester stables : l'adaptation ne justifie pas des déplacements imprévisibles de l'interface.
+La densité des liens ne vaut pas leur pertinence ; un lien doit aider à comprendre quelque chose.
+Une idée sans projet ni échéance garde sa place. L'ambiance visuelle ne doit ni imposer une
+lecture scientifique du produit ni exercer une pression pour produire davantage.
 
 Le produit conserve trois surfaces complémentaires :
 

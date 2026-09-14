@@ -9,10 +9,10 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
-| CI | D05 : 10/10 workflows réussis sur `47cee6ef1245af70d52279b26ad9c321f698a883` ; D04 : 10/10 réussis sur la tête testée `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
-| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête vérifiée `47cee6ef1245af70d52279b26ad9c321f698a883` |
+| CI | Dernière tête D05 testée : 10/10 workflows réussis sur `b2f16e77c6f382bdab149cfaebb0bbced56630e2` ; cette preuve précède le présent ajout éditorial. D04 : 10/10 sur `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · base vérifiée de cet ajout documentaire : `b2f16e77c6f382bdab149cfaebb0bbced56630e2` ; relire la tête live |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Qualifier rendu et détachement dans un navigateur authentifié, puis le fournisseur choisi avec une clé explicitement autorisée ; ne pas intégrer ni déployer implicitement |
+| Prochaine action | Reprendre la qualification visuelle D05 avec la charte d'identité : rendu, repères stables et détachement dans un navigateur authentifié ; le test réel du fournisseur choisi reste à effectuer |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -35,6 +35,14 @@ La restauration entre deux VM est une preuve CI distincte. Aucune sauvegarde aut
 - Images attestées : Core `69453e7b1348…`, Worker `cb9b73de908…`, Web MCP `fcfba65ffada…`.
 
 ## D05 : livraison cohérente en cours
+
+L'utilisateur autorise la poursuite, avec une étape préalable exclusivement éditoriale.
+La [charte d'identité](docs/identite-nevolium.md) consigne philosophie, nom, parcours utilisateur,
+valeurs, définitions, signatures proposées, manifeste et règles de ton. README, vision et intention
+visuelle sont alignés. Les signatures restent des propositions ; l'ambition ne vaut pas une
+fonction livrée. Cette étape ne modifie ni code, ni serveur, ni architecture, ni roadmap et ne
+clôture pas la qualification D05. Relecture, longueurs des définitions et liens locaux vérifiés ;
+aucune nouvelle preuve interactive ou fournisseur.
 
 [Inspection datée](docs/archive/d05-entry-inspection-2026-09-14.md) : Dockview, layouts
 propriétaires, panneaux métier, inspecteur documentaire, rôles administrateur, LiteLLM,
