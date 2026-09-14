@@ -2,7 +2,8 @@
 
 Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
-D05 est en développement sur la branche unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md).
+D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md).
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
@@ -11,7 +12,7 @@ Les mesures cible proviennent des sorties opérateur conservées dans le
 Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
 D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
 droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
-D05 n'est ni intégré ni déployé ; une première livraison cohérente est en cours de revue.
+D05 n'est ni intégré ni déployé ; sa livraison cohérente est en cours de revue.
 
 | Domaine | Preuve disponible | Limite |
 |---|---|---|

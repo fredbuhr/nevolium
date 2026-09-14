@@ -10,9 +10,9 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
 | CI | 8/8 workflows exécutés réussis sur `021bd58614e3294da5545765540d9d1c43419bea` ; 10/10 réussis sur la tête D04 testée `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
-| Branche / PR active | `feat/d05-coherent-cockpit`, créée exactement depuis la base ci-dessus ; PR à ouvrir avec la livraison cohérente |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · commit fonctionnel publié `73bba82be620a5e6f548e68fb3bbbfeb8836104a` |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Publier la tête D05, ouvrir une PR unique, puis corriger uniquement les régressions démontrées par sa CI |
+| Prochaine action | Vérifier tous les workflows de la tête courante de #89, puis corriger uniquement une régression démontrée ; ne pas intégrer ni déployer sans revue explicite |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -51,7 +51,8 @@ validation ne la reflètent pas. La dernière configuration valide reste active 
 D06–D09 gardent planification,
 édition et graphes ; aucun graphe 3D décoratif permanent n'entre dans D05.
 
-Validations locales réussies : compilation Python, TypeScript, build Web, contrats cockpit/PWA,
+Validations locales du commit fonctionnel réussies : compilation Python, TypeScript, build Web,
+SQL Alembic hors ligne, contrats cockpit/PWA,
 gateway/configuration modèle, dispatch, Assistant, News, Semantic Router et layouts. Le contrat
 PostgreSQL de migration/bascule et la matrice Compose restent à exécuter dans la CI, Docker étant
 absent de cette session. Le navigateur cloud refuse le serveur loopback local ; aucun contrôle

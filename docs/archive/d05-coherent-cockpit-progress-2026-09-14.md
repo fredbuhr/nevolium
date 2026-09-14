@@ -1,7 +1,10 @@
 # D05 : cockpit cohérent — checkpoint du 14 septembre 2026
 
-Cette livraison est préparée sur `feat/d05-coherent-cockpit`, créée depuis le main live
-`1896468513f92ee5c0d6a811301a1b898cc6abd2`. Elle n'est ni intégrée ni déployée. Le checkout de
+Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89) sur
+`feat/d05-coherent-cockpit`, créée depuis le main live
+`1896468513f92ee5c0d6a811301a1b898cc6abd2`. Son commit fonctionnel est
+`73bba82be620a5e6f548e68fb3bbbfeb8836104a` ; le présent suivi documentaire ne change pas cet arbre.
+Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
 
@@ -58,8 +61,8 @@ Aucune nouvelle clé fournisseur n'était disponible et aucun appel réel suppl�
 effectué. OpenAI `openai/gpt-4.1` reste le seul fournisseur déjà qualifié par D04 ; la présence des
 trois autres choix ne prouve aucune compatibilité. Aucune migration n'est appliquée en production.
 
-Prochaine action : publier cette tête dans une PR unique, exécuter tous ses workflows, corriger les
-seuls défauts démontrés, puis compléter la qualification interactive et le test fournisseur lors
-d'une activation explicitement autorisée. Le rollback du code redescend la migration à
+Prochaine action : vérifier tous les workflows de la tête courante de #89 et corriger les seuls
+défauts démontrés, puis compléter la qualification interactive et le test fournisseur lors d'une
+activation explicitement autorisée. Le rollback du code redescend la migration à
 `0014_capacity_and_data` après arrêt/drainage normal ; il ne doit pas supprimer les configurations
 ou secrets LiteLLM sans examen de leur usage par des Tasks historiques.
