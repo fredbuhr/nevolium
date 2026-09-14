@@ -55,6 +55,10 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
 - GitHub CI sur `47cee6ef1245af70d52279b26ad9c321f698a883` : 10/10 workflows réussis. Cela inclut
   Foundation, PostgreSQL réel, rendu Compose, UI workspace, isolation multi-utilisateur,
   Autonomous Research et le garde-fou D04.
+- GitHub CI sur la tête fonctionnelle et éditoriale `b3dfbb53a1f22d7e0aba8304d1690f8f1a0bf632` :
+  10/10 workflows réussis. Le premier run UI sur `ba337443…` avait révélé une assertion liée au
+  texte « Temporal » ; la correction vérifie le verrou fonctionnel des tâches en cours et le même
+  workflow réussit sur `b3dfbb53…`.
 
 Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
 refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;

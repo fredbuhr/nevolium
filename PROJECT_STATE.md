@@ -9,10 +9,10 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
-| CI | Dernière tête D05 testée : 10/10 workflows réussis sur `1f5db08c7b52502443fa0d5eae754c1801c8d471`. D04 : 10/10 sur `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
-| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · base vérifiée de l'alignement des textes d'interface : `1f5db08c7b52502443fa0d5eae754c1801c8d471` ; relire la tête live |
+| CI | Dernière tête D05 testée : 10/10 workflows réussis sur `b3dfbb53a1f22d7e0aba8304d1690f8f1a0bf632`. D04 : 10/10 sur `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête fonctionnelle vérifiée : `b3dfbb53a1f22d7e0aba8304d1690f8f1a0bf632` ; relire la tête live |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Publier l'alignement des textes d'interface, vérifier la CI de sa tête exacte, puis qualifier le rendu et le détachement dans un navigateur authentifié ; le test réel d'une nouvelle configuration fournisseur reste à effectuer |
+| Prochaine action | Qualifier le rendu, le rechargement et le détachement dans un navigateur authentifié, puis tester réellement la nouvelle configuration fournisseur choisie avant la revue finale D05 |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -64,8 +64,8 @@ D06–D09 gardent planification,
 L'interface emploie désormais les repères Assistant, Actualités, Recherche, Aujourd'hui, Projets
 et Documents. Les noms d'infrastructure et le vocabulaire de stockage restent dans les diagnostics
 et la documentation technique. Les identifiants internes, routes, états et contrats métier ne sont
-pas renommés. TypeScript, build Vite, contrat D05 et `git diff --check` réussissent localement sur
-cet alignement ; la CI de la prochaine tête publiée reste à vérifier.
+pas renommés. TypeScript, build Vite, contrat D05 et `git diff --check` réussissent localement ;
+les 10 workflows GitHub réussissent sur la tête fonctionnelle exacte `b3dfbb53…`.
 
 Validations locales du commit fonctionnel réussies : compilation Python, TypeScript, build Web,
 SQL Alembic hors ligne, contrats cockpit/PWA,
