@@ -178,7 +178,17 @@ def _internal_headers() -> dict[str, str]:
 
 @activity.defn(name="perform_semantic_route")
 async def perform_semantic_route(payload: dict[str, Any]) -> dict[str, Any]:
-    task_input = SemanticRouteTask.model_validate(payload["task_input"])
+    raw_task_input = payload["task_input"]
+    task_input = SemanticRouteTask.model_validate(raw_task_input)
+    model_alias = str(
+        raw_task_input.get("model_alias") or settings.nevolium_semantic_router_model
+    )
+    estimated_cost = Decimal(
+        str(
+            raw_task_input.get("estimated_model_cost_usd")
+            or settings.nevolium_semantic_router_estimated_cost_usd
+        )
+    )
     task_id = str(payload["task_id"])
     execution_id = str(payload.get("workflow_execution_id") or "") or None
     correlation_id = str(payload.get("correlation_id") or "") or None
@@ -194,12 +204,12 @@ async def perform_semantic_route(payload: dict[str, Any]) -> dict[str, Any]:
             task_id=task_id,
             workflow_execution_id=execution_id,
             correlation_id=correlation_id,
-            model_alias=settings.nevolium_semantic_router_model,
+            model_alias=model_alias,
             messages=messages,
             idempotency_key=call_key,
             resume_checkpoint=resume_checkpoint,
             temperature=0.0,
-            estimated_cost_usd=Decimal(str(settings.nevolium_semantic_router_estimated_cost_usd)),
+            estimated_cost_usd=estimated_cost,
             timeout_seconds=SEMANTIC_MODEL_TIMEOUT_SECONDS,
         )
         return result.content
@@ -238,7 +248,7 @@ async def perform_semantic_route(payload: dict[str, Any]) -> dict[str, Any]:
         "title": f"Semantic route — {task_input.text}"[:320],
         "content": {
             "command_id": str(task_input.command_id),
-            "model_alias": settings.nevolium_semantic_router_model,
+            "model_alias": model_alias,
             "proposal": proposal.model_dump(mode="json"),
             "applied": applied,
         },

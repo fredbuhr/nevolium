@@ -4,7 +4,11 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +29,7 @@ from .knowledge import router as knowledge_router
 from .memory import router as memory_router
 from .models import OutboxEvent, Project, RelationshipRecord, Task
 from .model_admission import router as model_admission_router
+from .model_configurations import router as model_configurations_router
 from .work_capacity import router as work_capacity_router
 from .news import router as news_router
 from .openbao import openbao_client
@@ -72,7 +77,28 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Nevolium Core", version=__version__, lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_without_provider_key(
+    request: Request, exc: RequestValidationError
+):
+    if request.url.path != "/v1/admin/model-configurations/tests":
+        return await request_validation_exception_handler(request, exc)
+    # Pydantic includes the complete request input for model-level errors. On this one credential
+    # endpoint that would reflect the provider key into the response body, so omit every input.
+    errors = [
+        {key: value for key, value in error.items() if key != "input"}
+        for error in exc.errors()
+    ]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": jsonable_encoder(errors)},
+    )
+
+
 app.include_router(model_admission_router)
+app.include_router(model_configurations_router)
 app.include_router(work_capacity_router)
 app.add_middleware(
     CORSMiddleware,

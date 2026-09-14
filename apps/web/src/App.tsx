@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react'
 
-import CockpitShell from './CockpitShell'
+import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
+import InstanceModelSettings from './InstanceModelSettings'
 import KnowledgePanel from './KnowledgePanel'
 import NewsWorkspacePanel, {
   type NewsBrief,
@@ -13,45 +14,29 @@ import ResearchWorkspace from './ResearchWorkspace'
 import TodayWorkspace from './TodayWorkspace'
 import { nevoliumFetch } from './lib/apiClient'
 import {
+  getAuthSnapshot,
+  subscribeAuthSession,
+  type NevoliumAuthSnapshot,
+} from './lib/authSession'
+import {
+  cockpitWorkspaceKey,
+  getPresentationDeviceKey,
+  getSavedCockpitProfile,
+  saveCockpitProfile,
+  useCockpitDeviceClass,
+} from './lib/cockpitDevice'
+import {
   type CapabilityTaskView,
   isTerminalTaskStatus,
   loadCapabilityTask,
 } from './taskTracking'
 
-const spaces = [
-  'Command Center',
-  'Today',
-  'Projects',
-  'Knowledge',
-  'Mind 2D / 3D',
-  'Gantt',
-  'Calendar',
-  'People',
-  'News Intelligence',
-  'Research',
-  'Automations',
-  'Agents',
-  'Developer',
-  'Crypto',
-  'Finance',
-  'Home',
-  'Analytics',
-  'Maps',
-  'Approvals',
-  'Activity',
-  'System',
-]
-
-const activeSpaces = new Set([
-  'Command Center',
-  'Today',
-  'Projects',
-  'Knowledge',
-  'News Intelligence',
-  'Research',
-])
-
 const API_URL = (import.meta.env.VITE_NEVOLIUM_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
 
 type NewsRun = {
   task_id: string
@@ -93,6 +78,15 @@ type CommandState = {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
+  const [online, setOnline] = useState(() => navigator.onLine)
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
+  const [profile, setProfile] = useState<CockpitProfile>(() => getSavedCockpitProfile())
+  const [deviceKey] = useState(() => getPresentationDeviceKey())
+  const deviceClass = useCockpitDeviceClass()
+  const workspaceKey = cockpitWorkspaceKey(deviceClass, deviceKey, profile)
+  const isAdmin = !auth.enabled || auth.roles.includes('nevolium-admin')
+
   const [command, setCommand] = useState('Quelles sont les nouvelles du jour sur la ville de Paris ?')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [pendingCommandId, setPendingCommandId] = useState<string | null>(null)
@@ -111,6 +105,28 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false)
   const [routing, setRouting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => subscribeAuthSession(() => setAuth(getAuthSnapshot())), [])
+
+  useEffect(() => {
+    const onOnline = () => setOnline(true)
+    const onOffline = () => setOnline(false)
+    const onInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event as InstallPromptEvent)
+    }
+    const onInstalled = () => setInstallPrompt(null)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    window.addEventListener('beforeinstallprompt', onInstallPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+      window.removeEventListener('beforeinstallprompt', onInstallPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, [])
 
   useEffect(() => {
     if (!pendingCommandId) return
@@ -361,24 +377,80 @@ export default function App() {
   )
 
   return (
-    <main className="shell">
-      <header>
-        <div>
-          <span className="eyebrow">PERSONAL AI OPERATING SYSTEM</span>
-          <h1>Nevolium</h1>
+    <main className="app-shell">
+      <header className="app-header">
+        <div className="brand-lockup">
+          <span className="mycelium-mark" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <div>
+            <span className="eyebrow">ESPACE PERSONNEL</span>
+            <h1>Nevolium</h1>
+          </div>
         </div>
-        <span className="status">cockpit + durable command kernel</span>
+        <div className="session-summary">
+          <span>{auth.username || auth.email || 'Session privée'}</span>
+          <small>{isAdmin ? 'administrateur' : 'utilisateur'}</small>
+        </div>
       </header>
 
-      <section className="hero">
-        <h2>One interface. One world model. Replaceable engines.</h2>
-        <p>
-          Canonical state, durable workflows, policy, events and specialist capabilities behind one
-          persistent conversational command surface.
-        </p>
+      <section className="cockpit-context" aria-label="Contexte du cockpit">
+        <div>
+          <span className={`connection-state ${online ? 'is-online' : 'is-offline'}`}>
+            <i aria-hidden="true" />
+            {online ? 'En ligne' : 'Hors connexion'}
+          </span>
+          <span>{deviceClass}</span>
+          <span>layout privé par appareil</span>
+        </div>
+        <div>
+          <label>
+            Profil
+            <select
+              value={profile}
+              onChange={(event) => {
+                const selected = event.target.value as CockpitProfile
+                saveCockpitProfile(selected)
+                setProfile(selected)
+              }}
+            >
+              <option value="balanced">Équilibré</option>
+              <option value="focus">Concentration</option>
+              <option value="review">Revue</option>
+            </select>
+          </label>
+          {installPrompt ? (
+            <button
+              type="button"
+              onClick={() => {
+                void installPrompt.prompt().then(() => installPrompt.userChoice).then(() => {
+                  setInstallPrompt(null)
+                }).catch(() => setInstallPrompt(null))
+              }}
+            >
+              Installer l’app
+            </button>
+          ) : null}
+        </div>
       </section>
 
+      {!online ? (
+        <div className="offline-banner" role="status">
+          Le shell reste lisible, mais les données métier et les actions nécessitent Nevolium Core.
+        </div>
+      ) : null}
+
       <CockpitShell
+        key={workspaceKey}
+        apiUrl={API_URL}
+        deviceClass={deviceClass}
+        legacyWorkspaceKey={
+          profile === 'balanced' && deviceClass === 'desktop' ? 'cockpit.main' : undefined
+        }
+        profile={profile}
+        workspaceKey={workspaceKey}
         slots={{
           command: commandPanel,
           news: newsPanel,
@@ -389,41 +461,38 @@ export default function App() {
             key: 'today',
             id: 'today-workspace',
             title: 'Today',
+            keywords: ['journée', 'tâches', 'priorités'],
             content: <TodayWorkspace apiUrl={API_URL} />,
-            minimumWidth: 360,
+            minimumWidth: 280,
           },
           {
             key: 'projects',
             id: 'projects-workspace',
             title: 'Projects',
+            keywords: ['projet', 'ouvrir', 'tâches'],
             content: <ProjectsWorkspace apiUrl={API_URL} />,
           },
           {
             key: 'knowledge',
             id: 'knowledge-workspace',
-            title: 'Knowledge',
+            title: 'Inspecteur',
+            keywords: ['document', 'version', 'chunk', 'knowledge'],
             content: <KnowledgePanel apiUrl={API_URL} />,
           },
+          ...(isAdmin
+            ? [
+                {
+                  key: 'model-settings',
+                  id: 'model-settings-workspace',
+                  title: 'Réglages API',
+                  keywords: ['fournisseur', 'modèle', 'clé', 'administrateur'],
+                  content: <InstanceModelSettings apiUrl={API_URL} />,
+                  minimumWidth: 300,
+                },
+              ]
+            : []),
         ]}
       />
-
-      <section className="grid" aria-label="Nevolium spaces">
-        {spaces.map((space) => (
-          <article
-            key={space}
-            className={`card ${activeSpaces.has(space) ? 'card-active' : ''}`}
-          >
-            <span>{space}</span>
-            <small>
-              {space === 'Command Center'
-                ? 'dockable command surface'
-                : activeSpaces.has(space)
-                  ? 'dockable working capability'
-                  : 'planned workspace'}
-            </small>
-          </article>
-        ))}
-      </section>
     </main>
   )
 }

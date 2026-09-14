@@ -41,6 +41,7 @@ def core_values():
                 nevolium_internal_token='a'*64, nevolium_policy_signing_key='b'*64,
                 openbao_token='s.'+('c'*24), nevolium_operations_token='d'*64,
                 database_url='postgresql+asyncpg://nevolium_app:'+('e'*64)+'@postgres/nevolium',
+                litellm_master_key='f'*64,
                 keycloak_issuer='https://auth.example.org/realms/nevolium',
                 nevolium_cors_origins='https://nevolium.example.org')
 
@@ -61,6 +62,7 @@ class Deployment(unittest.TestCase):
                 })
                 self.assertNotIn("model_info", routes["smart"])
                 self.assertEqual(document["router_settings"]["num_retries"], 0)
+                self.assertIs(document["general_settings"]["store_model_in_db"], True)
         fixture = yaml.safe_load((ROOT / "infrastructure/litellm/config.local-qualification.yaml").read_text())
         self.assertEqual(len(fixture["model_list"]), 1)
         local = fixture["model_list"][0]
@@ -70,14 +72,33 @@ class Deployment(unittest.TestCase):
         self.assertEqual(local["model_info"]["output_cost_per_token"], 0)
 
     def test_provider_configuration_rejects_local_or_missing_credentials(self):
-        services = {"litellm": {"environment": {
-            "NEVOLIUM_API_MODEL": "openai/gpt-4.1", "NEVOLIUM_API_KEY": "fixture-key",
-        }}}
+        services = {
+            "litellm": {"environment": {
+                "NEVOLIUM_API_MODEL": "openai/gpt-4.1",
+                "NEVOLIUM_API_KEY": "fixture-key",
+                "LITELLM_MASTER_KEY": "m" * 64,
+                "LITELLM_SALT_KEY": "s" * 64,
+            }},
+            "nevolium-core": {"environment": {
+                "NEVOLIUM_API_MODEL": "openai/gpt-4.1",
+                "LITELLM_URL": "http://litellm:4000",
+                "LITELLM_MASTER_KEY": "m" * 64,
+                "NEVOLIUM_RESEARCH_MODEL": "smart",
+                "NEVOLIUM_NEWS_MODEL": "smart",
+                "NEVOLIUM_SEMANTIC_ROUTER_MODEL": "smart",
+            }},
+            "nevolium-worker": {"environment": {
+                "LITELLM_MASTER_KEY": "m" * 64,
+                "NEVOLIUM_NEWS_MODEL": "smart",
+                "NEVOLIUM_SEMANTIC_ROUTER_MODEL": "smart",
+            }},
+        }
         self.assertEqual(production.validate_model_routes(services), [])
         # Provider selection changes the model and credential together, without a new alias.
         for provider in ("openai", "anthropic", "xai", "moonshot"):
             candidate = copy.deepcopy(services)
             candidate["litellm"]["environment"]["NEVOLIUM_API_MODEL"] = provider + "/fixture-model"
+            candidate["nevolium-core"]["environment"]["NEVOLIUM_API_MODEL"] = provider + "/fixture-model"
             self.assertEqual(production.validate_model_routes(candidate), [])
         for invalid in ("", "CHANGE_ME_KEY", None):
             candidate = copy.deepcopy(services)
@@ -89,15 +110,25 @@ class Deployment(unittest.TestCase):
             self.assertTrue(production.validate_model_routes(candidate))
         for alias in ("local-fast", "unknown", ""):
             candidate = copy.deepcopy(services)
-            candidate["nevolium-core"] = {"environment": {"NEVOLIUM_RESEARCH_MODEL": alias}}
+            candidate["nevolium-core"]["environment"]["NEVOLIUM_RESEARCH_MODEL"] = alias
             self.assertTrue(production.validate_model_routes(candidate))
         for local_service in ("ollama", "vllm"):
             self.assertTrue(production.validate_model_routes({**services, local_service: {}}))
         candidate = copy.deepcopy(services)
-        candidate["nevolium-core"] = {"environment": {"NEVOLIUM_RESEARCH_MODEL": "alternative"}}
+        candidate["nevolium-core"]["environment"]["NEVOLIUM_RESEARCH_MODEL"] = "alternative"
         self.assertTrue(production.validate_model_routes(candidate))
         candidate["litellm"]["environment"]["ANTHROPIC_API_KEY"] = "fixture-alternative-key"
         self.assertEqual(production.validate_model_routes(candidate), [])
+        for service_name, key, value in (
+            ('nevolium-core', 'LITELLM_URL', 'https://litellm.example.org'),
+            ('nevolium-core', 'LITELLM_MASTER_KEY', 'x' * 64),
+            ('nevolium-core', 'NEVOLIUM_API_MODEL', 'anthropic/fixture-model'),
+            ('nevolium-worker', 'LITELLM_MASTER_KEY', 'x' * 64),
+            ('litellm', 'LITELLM_SALT_KEY', 'm' * 64),
+        ):
+            candidate = copy.deepcopy(services)
+            candidate[service_name]['environment'][key] = value
+            self.assertTrue(production.validate_model_routes(candidate), (service_name, key))
 
     def test_openbao_accessor_output_shapes(self):
         accessors = ["abc123", "def456"]
@@ -115,6 +146,8 @@ class Deployment(unittest.TestCase):
         for change in [dict(nevolium_env='prod'), dict(nevolium_auth_enabled=False),
                        dict(nevolium_internal_token='CHANGE_ME_LONG_RANDOM_INTERNAL_TOKEN'),
                        dict(nevolium_policy_signing_key='a'*64), dict(nevolium_cors_origins='*'),
+                       dict(litellm_master_key=''), dict(litellm_url='https://litellm.example.org'),
+                       dict(nevolium_api_model='ollama/qwen3:4b'),
                        dict(openbao_token='c'*64),
                        dict(keycloak_issuer='http://auth.example.org/realms/nevolium'),
                        dict(database_url='postgresql+asyncpg://postgres:secret@db/nevolium')]:
@@ -129,11 +162,13 @@ class Deployment(unittest.TestCase):
             'smart',
         )
         for invalid_alias in ('openai/gpt-5.6', '', 'unknown'):
-            with self.subTest(core_model_alias=invalid_alias), self.assertRaises(ValidationError):
-                CoreSettings(
-                    _env_file=None,
-                    **{**core_values(), 'nevolium_research_model': invalid_alias},
-                )
+            for field in (
+                'nevolium_research_model',
+                'nevolium_news_model',
+                'nevolium_semantic_router_model',
+            ):
+                with self.subTest(core_model_alias=(field, invalid_alias)), self.assertRaises(ValidationError):
+                    CoreSettings(_env_file=None, **{**core_values(), field: invalid_alias})
             with self.subTest(worker_model_alias=invalid_alias), self.assertRaises(ValidationError):
                 WorkerSettings(**{**values, 'nevolium_semantic_router_model': invalid_alias})
         for change in [dict(nevolium_env='prod'),dict(nevolium_memory_projector_mode='auto'),dict(nevolium_memory_projector_mode='stub'),dict(mem0_database_url=''),dict(nevolium_internal_token='development-only-change-me')]:
@@ -205,6 +240,16 @@ class Deployment(unittest.TestCase):
                 valid['services']['nevolium-core']['environment']['NEVOLIUM_RESEARCH_MODEL'],
                 'smart',
             )
+            self.assertEqual(
+                valid['services']['nevolium-core']['environment']['LITELLM_URL'],
+                'http://litellm:4000',
+            )
+            self.assertEqual(
+                valid['services']['nevolium-core']['environment']['LITELLM_MASTER_KEY'],
+                valid['services']['litellm']['environment']['LITELLM_MASTER_KEY'],
+            )
+            self.assertIn('models', valid['services']['nevolium-core']['networks'])
+            self.assertNotIn('egress', valid['services']['nevolium-core']['networks'])
             self.assertNotIn(
                 'NEVOLIUM_RESEARCH_MODEL', valid['services']['nevolium-worker']['environment']
             )

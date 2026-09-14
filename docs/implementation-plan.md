@@ -122,6 +122,11 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 
 ### D05 — cockpit cohérent et langage visuel Mycelium
 
+- **État : en cours** sur `feat/d05-coherent-cockpit` depuis le main
+  `1896468513f92ee5c0d6a811301a1b898cc6abd2` ; voir le
+  [checkpoint daté](archive/d05-coherent-cockpit-progress-2026-09-14.md). La PR et sa CI restent
+  nécessaires avant de déclarer le lot intégré.
+
 - **Prérequis :** D04.
 - **Livraison :** design partagé issu des références utilisateur disponibles : réseau organique,
   labels sobres, centre lisible, panneaux adaptés ; navigation, recherche d'accès rapide,

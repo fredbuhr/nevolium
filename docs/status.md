@@ -1,8 +1,8 @@
 # Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88)
-et ses quatre preuves de sortie sont acquises. Le tag H5 et le retrait de branche restent suivis
-dans [PROJECT_STATE](../PROJECT_STATE.md).
+Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
+ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
+D05 est en développement sur la branche unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md).
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
@@ -11,7 +11,7 @@ Les mesures cible proviennent des sorties opérateur conservées dans le
 Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
 D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
 droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
-D05 n'est pas encore implémenté.
+D05 n'est ni intégré ni déployé ; une première livraison cohérente est en cours de revue.
 
 | Domaine | Preuve disponible | Limite |
 |---|---|---|
@@ -41,7 +41,7 @@ Les cinq réservations uncertain et les anciens essais sont conservés sans reje
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web/OIDC, panneaux persistés, Command Center, Projects, Today, Research, News, Knowledge | D05 : cohérence Mycelium, navigation, états, clavier/mobile/PWA et réglages API administrateur |
+| Cockpit | Web/OIDC, panneaux persistés, Command Center, Projects, Today, Research, News, Knowledge ; candidat D05 avec langage Mycelium, accès rapide, inspecteur, profils appareil, clavier et PWA | Intégrer et qualifier le candidat D05 sur navigateur/CI |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
@@ -60,7 +60,8 @@ avec restauration sur deux VM. Le job LLM local optionnel est skipped conformém
 La présente mise à jour après fusion modifie uniquement la documentation.
 
 API uniquement pour le pilote : autres fournisseurs, capacité commerciale et autres OS ne
-conditionnent pas H5. Les clés restent côté serveur. D05 apporte les réglages fournisseur/modèle ;
+conditionnent pas H5. Les clés restent côté serveur. Le candidat D05 ajoute les réglages
+fournisseur/modèle d'instance avec test réel borné et activation après drainage ;
 le BYOK par compte, les usages avancés et l'éventuel retour local gardent leurs lots du
 [plan D01–D22](implementation-plan.md).
 

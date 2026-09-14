@@ -41,6 +41,7 @@ class ModelUsage:
     cost_usd: Decimal
     cost_reported: bool
     litellm_call_id: str | None = None
+    litellm_model_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -305,6 +306,7 @@ def parse_usage(
         cost_usd=cost_usd,
         cost_reported=cost_reported,
         litellm_call_id=headers.get("x-litellm-call-id") or headers.get("x-litellm-request-id"),
+        litellm_model_id=headers.get("x-litellm-model-id"),
     )
 
 
@@ -317,6 +319,7 @@ def _usage_snapshot(usage: ModelUsage) -> dict[str, Any]:
         "cost_usd": str(usage.cost_usd),
         "cost_reported": usage.cost_reported,
         "litellm_call_id": usage.litellm_call_id,
+        "litellm_model_id": usage.litellm_model_id,
     }
 
 
@@ -333,6 +336,7 @@ def _usage_from_snapshot(payload: dict[str, Any]) -> ModelUsage:
         cost_usd=cost,
         cost_reported=bool(payload.get("cost_reported")),
         litellm_call_id=(str(payload["litellm_call_id"]) if payload.get("litellm_call_id") else None),
+        litellm_model_id=(str(payload["litellm_model_id"]) if payload.get("litellm_model_id") else None),
     )
 
 
@@ -480,6 +484,7 @@ async def _record_usage(
             "source": "litellm-proxy",
             "cost_reported": usage.cost_reported,
             "litellm_call_id": usage.litellm_call_id,
+            "litellm_model_id": usage.litellm_model_id,
             "idempotency_key": idempotency_key,
             "parent_correlation_id": parent_correlation,
         },
@@ -548,6 +553,7 @@ async def chat_completion(
     temperature: float = 0.2,
     estimated_cost_usd: Decimal = Decimal("0"),
     timeout_seconds: float = 90.0,
+    max_output_tokens: int | None = None,
     response_schema: dict[str, Any] | None = None,
     response_schema_name: str | None = None,
 ) -> ChatCompletionResult:
@@ -572,6 +578,8 @@ async def chat_completion(
         raise ValueError("idempotency_key is required for durable model calls")
     if (response_schema is None) != (response_schema_name is None):
         raise ValueError("response_schema and response_schema_name must be supplied together")
+    if max_output_tokens is not None and not 1 <= max_output_tokens <= settings.nevolium_model_max_output_tokens:
+        raise ValueError("max_output_tokens exceeds the configured model gateway bound")
 
     checkpoint = resume_checkpoint or (
         checkpoint_ledger.checkpoint_for(idempotency_key) if checkpoint_ledger is not None else None
@@ -619,7 +627,7 @@ async def chat_completion(
         "model": model_alias,
         "temperature": temperature,
         "messages": messages,
-        "max_tokens": settings.nevolium_model_max_output_tokens,
+        "max_tokens": max_output_tokens or settings.nevolium_model_max_output_tokens,
         # LiteLLM must stop and close its provider request before this Worker's
         # absolute deadline. Otherwise a provider can continue after the durable
         # activity has already failed with an unknown outcome.

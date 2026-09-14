@@ -2,17 +2,17 @@
 
 Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 
-## H5 clôturé ; passage à D05 autorisé
+## H5 clôturé ; D05 actif
 
 | Champ | État attesté |
 |---|---|
-| Base main vérifiée | `021bd58614e3294da5545765540d9d1c43419bea` |
+| Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
 | CI | 8/8 workflows exécutés réussis sur `021bd58614e3294da5545765540d9d1c43419bea` ; 10/10 réussis sur la tête D04 testée `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
-| Branche / PR active | Aucune au moment de cette clôture ; créer une seule branche D05 depuis le présent checkpoint |
+| Branche / PR active | `feat/d05-coherent-cockpit`, créée exactement depuis la base ci-dessus ; PR à ouvrir avec la livraison cohérente |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Créer `feat/d05-coherent-cockpit`, enregistrer ce nom dans son checkpoint puis implémenter D05 en une livraison cohérente |
+| Prochaine action | Publier la tête D05, ouvrir une PR unique, puis corriger uniquement les régressions démontrées par sa CI |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -34,17 +34,29 @@ La restauration entre deux VM est une preuve CI distincte. Aucune sauvegarde aut
 - Clés exclusivement côté serveur ; aucun secret ou jeton dans Git ou les sorties.
 - Images attestées : Core `69453e7b1348…`, Worker `cb9b73de908…`, Web MCP `fcfba65ffada…`.
 
-## D05 : inspection réalisée, implémentation à commencer
+## D05 : livraison cohérente en cours
 
 [Inspection datée](docs/archive/d05-entry-inspection-2026-09-14.md) : Dockview, layouts
 propriétaires, panneaux métier, inspecteur documentaire, rôles administrateur, LiteLLM,
-workflows, budgets et usages canoniques existent et doivent être réutilisés.
+workflows, budgets et usages canoniques ont été réutilisés. Le
+[checkpoint de livraison](docs/archive/d05-coherent-cockpit-progress-2026-09-14.md) décrit le
+shell, le registre de modèle candidat, les preuves exécutées et les limites restantes.
 
-Livrer ensemble le design partagé, la navigation/recherche rapide/l'inspecteur, les états et
-l'accessibilité, les layouts par appareil, la PWA et les réglages administrateur de l'API.
-Le fournisseur sélectionné doit réussir un test réel borné avant bascule ; un échec conserve
-la dernière configuration valide et ne révèle aucune clé. D06–D09 gardent planification,
-édition et graphes. Aucun graphe 3D décoratif permanent dans D05.
+La branche rassemble design partagé, navigation/recherche rapide/inspecteur, états et
+accessibilité, layouts par appareil, PWA et réglages administrateur de l'API. Une configuration
+candidate reçoit un alias immuable, passe un appel réel borné via le gateway canonique et doit
+correspondre à l'identifiant de déploiement LiteLLM avant une activation récente et explicite.
+Un démarrage Temporal indéterminé reprend le même test sans retransmettre la clé et les réponses de
+validation ne la reflètent pas. La dernière configuration valide reste active lors d'un échec.
+D06–D09 gardent planification,
+édition et graphes ; aucun graphe 3D décoratif permanent n'entre dans D05.
+
+Validations locales réussies : compilation Python, TypeScript, build Web, contrats cockpit/PWA,
+gateway/configuration modèle, dispatch, Assistant, News, Semantic Router et layouts. Le contrat
+PostgreSQL de migration/bascule et la matrice Compose restent à exécuter dans la CI, Docker étant
+absent de cette session. Le navigateur cloud refuse le serveur loopback local ; aucun contrôle
+visuel interactif n'est revendiqué. Aucun test avec une nouvelle clé fournisseur ni déploiement
+n'a été effectué.
 
 Aucune image de référence n'existe dans les arbres Git inspectés. Les captures utilisateur
 accessibles dans la conversation devront guider le langage visuel ; ne pas attribuer au dépôt

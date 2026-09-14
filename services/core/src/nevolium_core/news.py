@@ -11,6 +11,7 @@ from .auth import Principal, require_nevolium_user
 from .config import settings
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
+from .model_configurations import selected_model_binding
 from .models import Artifact, Project, Task, WorkflowExecution
 from .schemas import NewsBriefCreate, NewsBriefRead, NewsBriefRunResponse
 from .workflows import run_task
@@ -216,8 +217,17 @@ async def start_news_brief(
             )
 
     task_input = body.model_dump(mode="json")
+    model_alias, model_configuration_id = await selected_model_binding(
+        session, fallback_alias=settings.nevolium_news_model
+    )
     task_input["capability"] = "news.brief"
     task_input["requester_subject"] = subject
+    task_input["model_alias"] = model_alias
+    task_input["model_estimated_cost_usd"] = str(
+        settings.nevolium_news_model_estimated_cost_usd
+    )
+    if model_configuration_id is not None:
+        task_input["model_configuration_id"] = model_configuration_id
     if command_id is not None:
         task_input["command_id"] = str(command_id)
 
@@ -230,6 +240,7 @@ async def start_news_brief(
         owner_type="user",
         owner_ref=subject,
         authority_ceiling=1,
+        budget_usd=settings.nevolium_news_model_estimated_cost_usd,
         input=task_input,
     )
     session.add(task)
@@ -262,6 +273,12 @@ async def start_news_brief(
         request_json={
             **body.model_dump(mode="json"),
             "requester_subject": subject,
+            "model_alias": model_alias,
+            **(
+                {"model_configuration_id": model_configuration_id}
+                if model_configuration_id is not None
+                else {}
+            ),
             **({"command_id": str(command_id)} if command_id is not None else {}),
         },
     )

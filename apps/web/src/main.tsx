@@ -22,8 +22,8 @@ function renderAuthFailure(error: unknown) {
   const message = error instanceof Error ? error.message : 'Impossible d’établir la session Nevolium.'
   root.render(
     <React.StrictMode>
-      <main className="shell">
-        <section className="hero" aria-live="assertive">
+      <main className="app-shell">
+        <section className="auth-failure state-panel state-panel-error" aria-live="assertive">
           <span className="eyebrow">Nevolium · IDENTITÉ</span>
           <h1>Connexion sécurisée indisponible</h1>
           <p>{message}</p>
@@ -46,3 +46,9 @@ async function bootstrap() {
 }
 
 void bootstrap()
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js')
+  })
+}

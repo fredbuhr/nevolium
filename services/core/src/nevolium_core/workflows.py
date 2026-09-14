@@ -369,6 +369,23 @@ async def _require_execution_binding(task: Task, session: AsyncSession) -> None:
 
             expected = _task_id(uuid.UUID(str(value.get("source_id"))), int(value.get("projection_generation") or 1))
             bound = task.id == expected and task.project_id == MEMORY_PROJECT_ID and task.owner_type == "system"
+        elif capability == "model.configuration.test":
+            from .model_configuration_models import ModelConfiguration
+            from .model_configurations import MODEL_CONFIGURATION_PROJECT_ID
+
+            configuration = await session.get(
+                ModelConfiguration,
+                uuid.UUID(str(value.get("model_configuration_id"))),
+            )
+            bound = (
+                configuration is not None
+                and configuration.test_task_id == task.id
+                and configuration.model_alias == str(value.get("model_alias") or "")
+                and configuration.litellm_model_id
+                == str(value.get("litellm_model_id") or "")
+                and task.owner_type == "system"
+                and task.project_id == MODEL_CONFIGURATION_PROJECT_ID
+            )
         elif capability in {"news.brief", "research.autonomous"}:
             project = await session.get(Project, task.project_id)
             subject = str(value.get("requester_subject") or "").strip()
@@ -477,6 +494,7 @@ async def internal_complete_execution(
     body: InternalCompleteRequest,
     session: AsyncSession = Depends(get_session),
 ) -> InternalCompleteResponse:
+    failed_model_id: str | None = None
     execution = await session.scalar(
         select(WorkflowExecution)
         .where(WorkflowExecution.workflow_id == workflow_id)
@@ -525,6 +543,12 @@ async def internal_complete_execution(
     execution.last_error = None
     task.status = "completed"
     task.completed_at = task.completed_at or now
+    if (task.input or {}).get("capability") == "model.configuration.test":
+        from .model_configurations import mark_model_test_completed
+
+        failed_model_id = await mark_model_test_completed(
+            session, task=task, artifact=artifact
+        )
     await enqueue_domain_event(
         session,
         event_type="task.completed",
@@ -546,6 +570,10 @@ async def internal_complete_execution(
         result_json={"artifact_id": str(artifact.id)},
     )
     await session.commit()
+    if failed_model_id is not None:
+        from .model_configurations import _delete_litellm_model
+
+        await _delete_litellm_model(failed_model_id)
     await session.refresh(artifact)
     return InternalCompleteResponse(execution_status="completed", artifact=artifact)
 
@@ -559,6 +587,7 @@ async def internal_fail_execution(
     body: InternalFailRequest,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
+    failed_model_id: str | None = None
     execution = await session.scalar(
         select(WorkflowExecution)
         .where(WorkflowExecution.workflow_id == workflow_id)
@@ -616,10 +645,18 @@ async def internal_fail_execution(
             await session.execute(update(MemoryProjectionRecord).where(
                 MemoryProjectionRecord.task_id == task.id, MemoryProjectionRecord.status != "projected",
             ).values(status="failed", last_error=body.error[:4000]))
+        if (task.input or {}).get("capability") == "model.configuration.test":
+            from .model_configurations import mark_model_test_failed
+
+            failed_model_id = await mark_model_test_failed(session, task=task)
         await session.execute(update(WorkAdmission).where(WorkAdmission.task_id == task.id).values(
             status="finished", lease_token=None, lease_holder=None, lease_until=None,
         ))
         await session.commit()
+        if failed_model_id is not None:
+            from .model_configurations import _delete_litellm_model
+
+            await _delete_litellm_model(failed_model_id)
     return {"status": execution.status}
 
 

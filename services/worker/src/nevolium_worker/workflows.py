@@ -9,6 +9,11 @@ with workflow.unsafe.imports_passed_through():
     from .activities import begin_execution, complete_execution, fail_execution, perform_foundation_work
     from .document_ingestion import perform_document_ingestion
     from .memory_projection import perform_memory_projection
+    from .model_configuration_test import (
+        MODEL_CONFIGURATION_TEST_HEARTBEAT_TIMEOUT_SECONDS,
+        MODEL_CONFIGURATION_TEST_TIMEOUT_SECONDS,
+        perform_model_configuration_test,
+    )
     from .news_activity import perform_news_brief
     from .policy_activities import check_policy_gate
     from .research_agent import (
@@ -165,6 +170,18 @@ class TaskExecutionWorkflow:
                     # Worker early enough for the durable crash-recovery path.
                     heartbeat_timeout=timedelta(
                         seconds=RESEARCH_HEARTBEAT_TIMEOUT_SECONDS
+                    ),
+                    retry_policy=ACTIVITY_RETRY,
+                )
+            elif capability == "model.configuration.test":
+                result = await workflow.execute_activity(
+                    perform_model_configuration_test,
+                    work_payload,
+                    start_to_close_timeout=timedelta(
+                        seconds=MODEL_CONFIGURATION_TEST_TIMEOUT_SECONDS
+                    ),
+                    heartbeat_timeout=timedelta(
+                        seconds=MODEL_CONFIGURATION_TEST_HEARTBEAT_TIMEOUT_SECONDS
                     ),
                     retry_policy=ACTIVITY_RETRY,
                 )

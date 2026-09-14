@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nevolium">
+  <rect width="512" height="512" rx="112" fill="#0b1712"/>
+  <g fill="none" stroke="#85e0b3" stroke-linecap="round" stroke-width="22">
+    <path d="M106 337c73-14 93-89 150-87 62 2 77 79 150 58"/>
+    <path d="M162 158c32 29 49 57 49 92m139-99c-39 28-58 61-60 103"/>
+  </g>
+  <g fill="#d8ffea">
+    <circle cx="105" cy="337" r="27"/>
+    <circle cx="162" cy="158" r="30"/>
+    <circle cx="256" cy="250" r="42"/>
+    <circle cx="350" cy="151" r="30"/>
+    <circle cx="407" cy="308" r="27"/>
+  </g>
+</svg>

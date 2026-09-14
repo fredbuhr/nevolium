@@ -10,6 +10,7 @@ from .config import settings
 from .document_ingestion import perform_document_ingestion
 from .memory_events import MemoryProjectionEventConsumer
 from .memory_projection import perform_memory_projection
+from .model_configuration_test import perform_model_configuration_test
 from .news_activity import perform_news_brief
 from .policy_activities import check_policy_gate
 from .research_agent import perform_autonomous_research
@@ -41,6 +42,7 @@ async def serve() -> None:
             perform_semantic_route,
             prepare_research_context_pack,
             perform_autonomous_research,
+            perform_model_configuration_test,
             perform_memory_projection,
             perform_document_ingestion,
             perform_tool_invocation,
