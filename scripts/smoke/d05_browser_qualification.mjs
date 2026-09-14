@@ -145,7 +145,13 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.getByText('Disposition privée', { exact: true }).waitFor()
+  const privateLayoutLabel = page.getByText('Disposition privée', { exact: true })
+  await privateLayoutLabel.waitFor({ state: 'attached' })
+  assert.equal(
+    await privateLayoutLabel.isVisible(),
+    name !== 'phone',
+    `${name}: visibilité inattendue du libellé de disposition`,
+  )
 
   const quickAccess = page.getByRole('button', { name: /Accès rapide/ })
   await quickAccess.focus()
