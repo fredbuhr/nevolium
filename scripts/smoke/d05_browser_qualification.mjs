@@ -217,8 +217,8 @@ let browser
 try {
   await waitForPreview()
   browser = await chromium.launch({ headless: true })
-  await qualify(browser, 'desktop', { width: 1440, height: 1000 }, {
-    detach: true,
+  await qualify(browser, 'desktop', { width: 1440, height: 1000 }, { detach: true })
+  await qualify(browser, 'desktop-admin', { width: 1440, height: 1000 }, {
     inspectAdmin: true,
   })
   await qualify(browser, 'tablet', { width: 1024, height: 1366 })
