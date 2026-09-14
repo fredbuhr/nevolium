@@ -74,6 +74,9 @@ try {
   assert.equal((await activeModel.locator('strong').textContent())?.trim(), 'openai/gpt-4.1')
   await activeModel.getByText('Configuration serveur', { exact: true }).waitFor()
   await adminPage.getByText('Lecture des réglages', { exact: true }).waitFor({ state: 'hidden' })
+  await adminPage.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  )
   assert.equal(await adminPage.getByLabel('Clé API').getAttribute('type'), 'password')
   await assertNoTokenPersistence(adminPage)
   await adminPage.screenshot({
