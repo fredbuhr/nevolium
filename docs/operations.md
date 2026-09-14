@@ -268,6 +268,30 @@ make backup
 
 For production/off-host backups, point `RESTIC_REPOSITORY` and the corresponding backend credentials in `.env.production` to the chosen encrypted remote repository. `RESTIC_LOCAL_PATH` remains useful for local drills but is not an off-host disaster-recovery strategy.
 
+The private target keeps remote-backup credentials separate from the runtime environment. The D04
+runner creates `/etc/nevolium/restic.env` as `root:root` mode `0600`, accepts only the Backblaze B2
+S3-compatible HTTPS endpoint, and calls the same backup/restore scripts with
+`NEVOLIUM_RESTIC_ENV_FILE`. `NEVOLIUM_COMPOSE_OVERLAYS` is a colon-separated list used when a
+production service was originally activated with more than one overlay; the singular
+`NEVOLIUM_COMPOSE_OVERLAY` remains compatible for existing local and CI procedures.
+
+The target drill requires the operator to retain the independently chosen Restic password outside
+the server. It refuses a raw source set at or above 9 GiB, leaving headroom below B2's 10 GB free
+tier, then performs a full pack read from the remote repository. It snapshots the persistent
+OpenBao recovery material separately inside the encrypted repository so a fresh instance can be
+unsealed without relying on an unencrypted server-side copy. Credentials and recovery material are
+never written to the report or command output.
+
+```bash
+sudo python3 scripts/qualification/target_recovery.py
+```
+
+The runner uses disposable markers rather than private user content. It removes them from the live
+stores after the quiesced snapshot, restores only into a randomly named Compose project with new
+volumes and no published ports, verifies PostgreSQL, JetStream, the original SeaweedFS bytes and an
+OpenBao secret, then deletes the isolated project on success. On failure it stops the isolated
+services, preserves their volumes for inspection and deletes plaintext staging recovery material.
+
 ## Restore
 
 Restore is intentionally destructive and requires an explicit guard:

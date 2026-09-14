@@ -6,14 +6,29 @@ cd "$ROOT_DIR"
 
 ENV_FILE="${NEVOLIUM_COMPOSE_ENV_FILE:-.env}"
 OVERLAY="${NEVOLIUM_COMPOSE_OVERLAY:-compose.override.yaml}"
+OVERLAYS="${NEVOLIUM_COMPOSE_OVERLAYS:-}"
+RESTIC_ENV_FILE="${NEVOLIUM_RESTIC_ENV_FILE:-}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing $ENV_FILE. Create it from the appropriate environment template first." >&2
   exit 2
 fi
 
-COMPOSE_ARGS=(--env-file "$ENV_FILE" -f compose.yaml)
-if [[ -n "$OVERLAY" ]]; then
+COMPOSE_ARGS=(--env-file "$ENV_FILE")
+if [[ -n "$RESTIC_ENV_FILE" ]]; then
+  if [[ ! -f "$RESTIC_ENV_FILE" ]]; then
+    echo "Missing $RESTIC_ENV_FILE." >&2
+    exit 2
+  fi
+  COMPOSE_ARGS+=(--env-file "$RESTIC_ENV_FILE")
+fi
+COMPOSE_ARGS+=(-f compose.yaml)
+if [[ -n "$OVERLAYS" ]]; then
+  IFS=: read -r -a OVERLAY_FILES <<< "$OVERLAYS"
+  for overlay_file in "${OVERLAY_FILES[@]}"; do
+    [[ -n "$overlay_file" ]] && COMPOSE_ARGS+=(-f "$overlay_file")
+  done
+elif [[ -n "$OVERLAY" ]]; then
   COMPOSE_ARGS+=(-f "$OVERLAY")
 fi
 OPS_ARGS=("${COMPOSE_ARGS[@]}" -f compose.ops.yaml)

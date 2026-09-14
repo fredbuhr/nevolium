@@ -129,6 +129,11 @@ L'[exploitation](operations.md#restore) et le
 [déploiement](deployment.md) portent les procédures de sauvegarde, d'activation et de retour arrière.
 Les scripts CI destructifs `recovery.py`/`local_services.py` restent réservés aux projets jetables.
 Ne jamais superposer un overlay de qualification et la production existante.
+Le runner privé `scripts/qualification/target_recovery.py` est distinct : il exige la branche D04
+propre, un dépôt B2 HTTPS/S3, les fichiers privés root `0600`, l'absence de travail/outbox et un
+projet Compose de restauration aléatoire. Il réutilise `backup.sh`/`restore.sh`, restaure sur volumes
+neufs sans ports publiés, relit les quatre marqueurs et prouve que les compteurs de production sont
+inchangés. Le mot de passe Restic doit être enregistré hors serveur avant son unique saisie masquée.
 
 ## Règle de clôture
 

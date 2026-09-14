@@ -1,0 +1,16 @@
+# Production-target recovery probe. This overlay is safe only with a distinct Compose project.
+services:
+  recovery-probe:
+    image: ${NEVOLIUM_RECOVERY_PROBE_IMAGE:-nevolium-nevolium-core:latest}
+    profiles: [ops]
+    entrypoint: ["python"]
+    environment:
+      NATS_URL: nats://nats:4222
+      SEAWEED_FILER_ENDPOINT: http://seaweedfs:8888
+      OPENBAO_ADDR: http://openbao:8200
+    networks: [canonical, assets, secrets]
+    read_only: true
+    tmpfs:
+      - /tmp:size=67108864,mode=1777
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]

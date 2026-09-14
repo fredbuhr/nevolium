@@ -75,6 +75,7 @@ class Evidence:
                        child_peak_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
             self.save()
             print(json.dumps(row), flush=True)
+        return details
 
 
 def versions(names):

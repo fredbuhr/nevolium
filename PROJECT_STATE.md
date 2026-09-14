@@ -239,13 +239,15 @@ mémoire réelle ; Core `69453e7b1348…` et Web MCP `fcfba65ffada…` sont rest
 
 ## Prochaine action exécutable
 
-L'inventaire confirme que Restic n'est pas installé sur l'hôte ; la procédure utilise son image
-0.19.1 épinglée via l'overlay ops. Il reste uniquement à produire un backup Restic chiffré de la
-cible, transférer le dépôt hors serveur, puis le restaurer dans un environnement isolé sur volumes
-neufs et relire PostgreSQL, JetStream, SeaweedFS et OpenBao. La destination hors hôte et ses
-identifiants doivent rester privés et ne peuvent pas être inventés. Après cette preuve, mettre à jour
-le rapport final, repasser la CI du head, finaliser et intégrer #88, poser le tag H5 puis retirer la
-branche avant D05. Le [protocole D04](docs/qualification-d04.md) conserve les seuils et limites.
+L'utilisateur a créé un bucket Backblaze B2 privé et une clé Read/Write limitée à ce bucket ; aucun
+identifiant n'a été transmis ou versionné. Le runner cible prépare un fichier Restic séparé root
+`0600`, appelle l'image 0.19.1 épinglée, sauvegarde directement hors serveur, relit tous les packs et
+restaure dans un projet Compose aléatoire sur volumes neufs. Il vérifie PostgreSQL, JetStream,
+SeaweedFS et OpenBao sans publier de port, puis contrôle que la production est inchangée. Faire passer
+sa CI au head publié, avancer le checkout cible et exécuter une seule fois
+`sudo python3 scripts/qualification/target_recovery.py` avec les six saisies masquées. Après cette
+preuve, consigner le rapport final, repasser la CI du head, finaliser et intégrer #88, poser le tag H5
+puis retirer la branche avant D05. Le [protocole D04](docs/qualification-d04.md) conserve les seuils et limites.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou D05 avant leur validation.
 
 ## Références

@@ -45,6 +45,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Prove TLS, public access, bounded reads and honest account counts
         run: uv run --locked --project services/worker python scripts/qualification/contract.py
+      - name: Prove target recovery runner safety boundaries
+        run: uv run --locked --project services/worker python scripts/qualification/target_recovery_contract.py
 
   real-document-memory:
     runs-on: ubuntu-latest
