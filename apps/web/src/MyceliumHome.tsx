@@ -201,11 +201,12 @@ function MyceliumScene({ onOpenSpace }: Pick<MyceliumHomeProps, 'onOpenSpace'>) 
     return { left: node.x, top: node.y, width: node.radius * 1.76, height: node.radius * 1.76 }
   }
   return (
-    <div ref={sceneRef} className="mycelium-scene" data-geometry-width={bounds.width}>
+    <div ref={sceneRef} className="mycelium-scene" data-geometry-width={bounds.width} data-geometry-height={bounds.height}>
       <MyceliumField geometry={geometry} />
       <button
         type="button"
         className="mycelium-core-node"
+        data-node-key="core"
         style={position('core')}
         onClick={() => onOpenSpace('command')}
         aria-label="Ouvrir le cockpit Nevolium"
@@ -218,6 +219,7 @@ function MyceliumScene({ onOpenSpace }: Pick<MyceliumHomeProps, 'onOpenSpace'>) 
           key={destination.key}
           type="button"
           data-space={destination.key}
+          data-node-key={destination.key}
           className={`mycelium-space-node node-tone-${destination.tone}`}
           style={position(destination.key)}
           onClick={() => onOpenSpace(destination.key)}

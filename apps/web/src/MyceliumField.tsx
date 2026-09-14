@@ -17,13 +17,20 @@ export const MyceliumField = memo(function MyceliumField({ geometry, ambient = f
   const { width, height, fibres, sheaths, membranes, sparks } = geometry
   return (
     <svg
+      key={`${width}:${height}`}
       className={ambient ? 'mycelium-ambient-field neural-field' : 'mycelium-network neural-field'}
       viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
+      preserveAspectRatio="none"
       aria-hidden="true"
       focusable="false"
       data-material="branched-bioluminescent-fibres"
     >
       <defs>
+        <filter id={`${id}-luminous-alpha`} colorInterpolationFilters="sRGB">
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  1 1 1 0 0" />
+        </filter>
         <filter id={`${id}-bloom`} x="-8%" y="-8%" width="116%" height="116%">
           <feGaussianBlur stdDeviation="2.1" />
         </filter>
@@ -57,6 +64,7 @@ export const MyceliumField = memo(function MyceliumField({ geometry, ambient = f
         {membranes.map(({ node }, index) => (
           <image
             key={node.key}
+            data-node-key={node.key}
             className="neural-membrane-texture"
             href="/mycelium-membrane.webp"
             x={node.x - node.radius * 1.33}
@@ -64,6 +72,7 @@ export const MyceliumField = memo(function MyceliumField({ geometry, ambient = f
             width={node.radius * 2.66}
             height={node.radius * 2.66}
             transform={`rotate(${index * 67} ${node.x} ${node.y})`}
+            filter={`url(#${id}-luminous-alpha)`}
             style={{ mixBlendMode: 'screen' }}
           />
         ))}

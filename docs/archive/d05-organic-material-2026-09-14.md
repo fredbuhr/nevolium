@@ -26,8 +26,8 @@ compréhension rétroactive n'est prétendue au-delà des échanges et images r�
 - `myceliumGeometry.ts` produit de façon déterministe des faisceaux ramifiés, jonctions, gaines
   translucides et membranes vectorielles irrégulières. Le même calcul place les vrais boutons ;
   `ResizeObserver` recalcule au redimensionnement, sans boucle par image ni dépendance nouvelle.
-- `MyceliumField.tsx` enrichit les membranes d'une texture tissée en fusion éclaircissante
-  (`screen`) ; le fond noir de l'image n'obscurcit pas le réseau. Les sept rotations limitent la
+- `MyceliumField.tsx` enrichit les membranes d'une texture tissée, avec alpha calculé à partir
+  de sa lumière puis fusion éclaircissante (`screen`). Les sept rotations limitent la
   répétition visible. Le SVG reste utilisable sans texture ; aucun libellé n'est dans l'image.
 - `mycelium-organic.css` accorde paysage nocturne, verre sombre et lumière locale. L'introduction
   est séparée des nœuds pour préserver leurs cibles ; téléphone et tablette gardent les mêmes
@@ -82,6 +82,15 @@ Le scénario Chromium conserve les dix captures Accueil/Cockpit et les parcours 
 Il ajoute un essai réel de cliquabilité des sept nœuds, des redimensionnements à 320 px et en
 tablette paysage, la limite de 2 000 éléments SVG et l'arrêt d'animation en mouvement réduit.
 Ces contrôles sont des budgets vérifiables, pas une mesure de fluidité sur tous les appareils.
+
+Le premier passage `d8ab3a7643268424b2ce87e9c1f500678d5d9af6` réussit les dix workflows,
+mais la relecture des images révèle des rectangles noirs de texture et des captures compactes
+désalignées. Il n'est donc pas retenu comme validation visuelle. La reprise ajoute un vrai alpha
+au compositing SVG, des dimensions explicites et un remontage du dessin au redimensionnement.
+Le test compare désormais les centres des textures et des boutons dans le navigateur. Les dix
+captures utilisent le viewport réellement testé (pas un agrandissement full-page intermédiaire),
+avec contrôle d'alignement avant et après capture. Les formulaires Dockview se recomposent selon
+la largeur de leur panneau, pas seulement celle de l'écran. La tête finale reste à relire dans la PR.
 
 Le Chromium local s'arrête au lancement (`SIGTRAP`) dans cet environnement ; les captures
 complètes doivent provenir de GitHub Actions. Le rendu isolé du composant SVG sert seulement à

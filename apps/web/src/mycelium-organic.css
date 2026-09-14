@@ -133,6 +133,21 @@ body::before { display: none; }
 .surface-cockpit .cockpit-dock .command-center,
 .surface-cockpit .cockpit-dock .news-workspace,
 .surface-cockpit .cockpit-dock .workspace-panel { background: linear-gradient(135deg, rgba(3, 27, 43, .96), rgba(0, 13, 23, .91)); }
+.cockpit-dock .command-center, .cockpit-dock .news-workspace, .cockpit-dock .workspace-panel {
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+}
+.cockpit-dock h2 { font-size: clamp(21px, 4.3cqi, 29px); overflow-wrap: anywhere; }
+.cockpit-dock input, .cockpit-dock textarea, .cockpit-dock select { min-width: 0; }
+.cockpit-dock .command-form { grid-template-columns: minmax(0, 1fr) auto; }
+@container (max-width: 680px) {
+  .cockpit-dock .news-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cockpit-dock .command-form { grid-template-columns: 1fr; }
+}
+@container (max-width: 360px) {
+  .cockpit-dock .news-controls { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 1320px) and (min-width: 1024px) {
   .home-layout { grid-template-columns: 140px minmax(0, 1fr) 260px; gap: 12px; }

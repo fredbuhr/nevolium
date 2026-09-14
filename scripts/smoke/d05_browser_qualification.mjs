@@ -162,12 +162,18 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     await page.waitForFunction(() => {
       const scene = document.querySelector('.mycelium-scene')
       return scene && Math.abs(Number(scene.dataset.geometryWidth) - scene.clientWidth) <= 1
+        && Math.abs(Number(scene.dataset.geometryHeight) - scene.clientHeight) <= 1
     })
     const nodes = page.locator('.mycelium-space-node, .mycelium-core-node')
     for (const node of await nodes.all()) {
       const box = await node.boundingBox()
       assert(box && box.width >= 44 && box.height >= 44, `${label}: cible tactile trop petite`)
       await node.click({ trial: true })
+      const key = await node.getAttribute('data-node-key')
+      const membrane = await page.locator(`.neural-membrane-texture[data-node-key="${key}"]`).boundingBox()
+      assert(membrane && Math.abs(membrane.x + membrane.width / 2 - box.x - box.width / 2) < 1
+        && Math.abs(membrane.y + membrane.height / 2 - box.y - box.height / 2) < 1,
+      `${label}: membrane et commande ${key} désalignées`)
     }
     const counts = await page.locator('.mycelium-network').evaluate(node => ({
       elements: node.querySelectorAll('*').length,
@@ -186,17 +192,24 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   const homeDimensions = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
     scrollWidth: document.documentElement.scrollWidth,
+    sceneWidth: document.querySelector('.mycelium-scene').clientWidth,
+    sceneHeight: document.querySelector('.mycelium-scene').clientHeight,
   }))
   assert(
     homeDimensions.scrollWidth <= homeDimensions.innerWidth + 1,
     `${name}: débordement horizontal de l’accueil ${homeDimensions.scrollWidth}/${homeDimensions.innerWidth}`,
   )
 
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  await deviceLabel.waitFor({ state: 'visible' })
   await page.screenshot({
     path: path.join(outputDirectory, `nevolium-d05-${name}-home.png`),
-    fullPage: true,
+    fullPage: false,
   })
+  await verifyHomeTargets(`${name}-after-capture`)
 
   const homeSearch = page.getByRole('button', { name: /Rechercher dans Nevolium/ })
   await homeSearch.focus()
@@ -269,7 +282,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   )
 
   const screenshotPath = path.join(outputDirectory, `nevolium-d05-${name}.png`)
-  await page.screenshot({ path: screenshotPath, fullPage: true })
+  await page.screenshot({ path: screenshotPath, fullPage: false })
 
   let popoutPath = null
   if (detach) {
@@ -303,7 +316,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({
       path: path.join(outputDirectory, 'nevolium-d05-desktop-admin.png'),
-      fullPage: true,
+      fullPage: false,
     })
   }
 
@@ -336,7 +349,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     `${name}: erreurs console: ${unexpectedConsoleErrors.join(' | ')}`,
   )
 
-  results.push({ name, viewport, dimensions, detachCount, popoutPath, consoleErrors, errorResponses })
+  results.push({ name, viewport, homeDimensions, dimensions, detachCount, popoutPath, consoleErrors, errorResponses })
   await context.close()
 }
 
