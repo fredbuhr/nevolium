@@ -27,6 +27,21 @@ Le produit conserve trois surfaces complémentaires :
 2. **Cockpit** — panneaux lisibles, redimensionnables et détachables pour travailler ;
 3. **Explorateur** — relations canoniques 2D puis 3D en D08–D09, jamais décor permanent de D05.
 
+## Implémentation D05
+
+L'Accueil Mycelium est une carte d'orientation SVG 2D. Son noyau et ses six nœuds ouvrent les
+espaces réels Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents dans le cockpit
+Dockview existant. Le réseau exprime cette navigation ; il ne prétend pas représenter les relations
+canoniques entre les données, qui restent du ressort des explorateurs D08–D09. Aucun compteur,
+activité ou lien métier n'est inventé pour enrichir le décor.
+
+Accueil et Cockpit sont deux présentations d'un même produit. Le retour vers l'une ou l'autre ne
+duplique pas les données et la dernière surface choisie est conservée par compte sur l'appareil.
+Sur grand bureau, la carte, les repères latéraux et les cartes d'accompagnement coexistent. Sur
+bureau compact et tablette, ils se recomposent en une scène puis des cartes. Sur téléphone, les
+nœuds restent des cibles tactiles et le dock fixe devient opaque pour ne pas mêler le texte défilé
+à la navigation. Le cockpit garde la disposition adaptée à chaque classe d'appareil.
+
 ## Identité et couleurs
 
 | Rôle | Valeur de référence | Usage |

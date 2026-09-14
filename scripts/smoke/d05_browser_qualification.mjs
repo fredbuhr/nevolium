@@ -146,7 +146,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.getByRole('heading', { name: 'Où voulez-vous reprendre le fil ?' }).waitFor()
+  await page.getByRole('heading', { name: 'Où reprendre le fil ?' }).waitFor()
   const expectedDeviceLabel = viewport.width < 640 ? 'Téléphone' : viewport.width < 1024 ? 'Tablette' : 'Bureau'
   const deviceLabel = page.getByText(expectedDeviceLabel, { exact: true })
   await deviceLabel.waitFor({ state: 'visible' })

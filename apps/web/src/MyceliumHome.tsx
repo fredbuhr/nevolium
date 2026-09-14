@@ -499,7 +499,7 @@ export default function MyceliumHome({
         <section className="home-stage" aria-label="Espaces reliés de Nevolium">
           <div className="home-introduction">
             <span className="eyebrow">VOTRE ESPACE DE PENSÉE ET D’ACTION</span>
-            <h2 id="mycelium-home-title">Où voulez-vous reprendre le fil&nbsp;?</h2>
+            <h2 id="mycelium-home-title">Où reprendre le fil&nbsp;?</h2>
             <p>
               Commencez par une idée, une source ou un projet. Nevolium garde le contexte pendant
               que vous avancez.

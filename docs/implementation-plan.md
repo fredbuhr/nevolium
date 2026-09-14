@@ -126,8 +126,9 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
   `feat/d05-coherent-cockpit` depuis le main
   `1896468513f92ee5c0d6a811301a1b898cc6abd2` ; voir le
   [checkpoint daté](archive/d05-coherent-cockpit-progress-2026-09-14.md) et le
-  [contrat visuel Mycelium](design-mycelium.md). La tête fonctionnelle, visuelle et authentifiée
-  `705f4d977773a478cd73709dadee922620a84348` passe 10/10 workflows. Les cinq formats Chromium,
+  [contrat visuel Mycelium](design-mycelium.md). Le checkpoint de code fonctionnel, visuel et authentifié
+  `73b07f5204fa5446ecd663ce90d68c5175a73e3e` passe 10/10 workflows. L'Accueil Mycelium et le
+  Cockpit sont qualifiés dans cinq formats Chromium ;
   le popout, le vrai parcours OIDC/PKCE et la séparation administrateur/utilisateur sont qualifiés ;
   restent la revue utilisateur manuelle, le test réel du fournisseur choisi et l'intégration.
 

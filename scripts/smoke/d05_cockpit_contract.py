@@ -61,7 +61,7 @@ def main() -> None:
     assert "Control+K Meta+K" in cockpit
     assert "Control+K Meta+K" in home
     assert "mycelium-network" in home and "mycelium-space-node" in home
-    assert "Où voulez-vous reprendre le fil" in home
+    assert "Où reprendre le fil" in home
     for delivered_space in (
         "Assistant",
         "Actualités",

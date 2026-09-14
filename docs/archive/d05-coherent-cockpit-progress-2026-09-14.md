@@ -7,7 +7,9 @@ Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevoli
 `48210102a9814a30ef1c35f1245d693c126c5bd0` et l'itération visuelle/multi-écran est
 `47cee6ef1245af70d52279b26ad9c321f698a883`. La charte éditoriale est publiée sur
 `1f5db08c7b52502443fa0d5eae754c1801c8d471`. Le checkpoint fonctionnel, visuel et authentifié
-`705f4d977773a478cd73709dadee922620a84348` est validé par 10/10 workflows.
+`705f4d977773a478cd73709dadee922620a84348` est validé par 10/10 workflows. L'Accueil Mycelium
+fonctionnel est ajouté sur `93d96aeec46c08fe382f3591523fb97923293f54` et son correctif de
+géométrie responsive `73b07f5204fa5446ecd663ce90d68c5175a73e3e` passe à nouveau 10/10 workflows.
 Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
@@ -16,6 +18,7 @@ snapshot B2, image de rollback, réservation historique ou ancienne Task n'a ét
 
 | Zone | Comportement |
 |---|---|
+| Accueil Mycelium | Surface SVG 2D distincte du cockpit, noyau neural et six nœuds ouvrant uniquement les espaces réels ; recherche, cartes utiles, dock tactile et choix Accueil/Cockpit persisté par compte sur l'appareil |
 | Cockpit | Identité Mycelium nuit/pétrole, cyan/émeraude/bleu/violet, logo neural original, navigation tactile, accès rapide `Ctrl/Cmd+K` et inspecteur documentaire existant |
 | États et accès | Chargement, vide, erreur, retry, synchronisation visible, boucle/restauration de focus clavier et `prefers-reduced-motion` |
 | Layouts | Dockview conservé ; clés propriétaires côté Core et clés de présentation distinctes par appareil, fenêtre, classe téléphone/tablette/bureau et profil manuel équilibré/concentration/revue ; migration des anciennes clés |
@@ -43,8 +46,8 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
 
 ## Validation exécutée dans cette session
 
-- TypeScript et build Vite de production : réussis, 142 modules transformés. Le bundle principal
-  produit un avertissement de taille d'environ 540 kB, sans échec de build. Ces contrôles ont aussi
+- TypeScript et build Vite de production : réussis, 143 modules transformés. Le bundle principal
+  produit un avertissement de taille d'environ 559 kB, sans échec de build. Ces contrôles ont aussi
   été rejoués après l'alignement des textes d'interface.
 - Compilation Python, rendu SQL Alembic jusqu'à `0015_model_configurations` et
   `git diff --check` : réussis. Le contrat statique D05 passe aussi après l'alignement des textes.
@@ -83,6 +86,15 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   Deux captures et le rapport JSON sont conservés dans l'artefact
   `d05-authenticated-browser-qualification` (`10365161395`, digest
   `sha256:0da6b15d42c1081939a08f7ee1d78a4f17381100b8489b5680e9d9a7151396c1`).
+- Qualification du nouvel Accueil Mycelium sur `73b07f5204fa5446ecd663ce90d68c5175a73e3e` : 10/10
+  workflows réussis. Le scénario UI produit, pour les cinq formats précédents, une capture Accueil
+  et une capture Cockpit, soit dix images. Il vérifie aussi les six destinations, l'ouverture du bon
+  panneau, la persistance de surface, le clavier et l'absence de Canvas/WebGL. Une première exécution
+  sur `93d96aeec46c08fe382f3591523fb97923293f54` a détecté le nœud Assistant masqué à 1024 px ; la
+  géométrie a été corrigée sans contourner le test. L'artefact `d05-browser-qualification`
+  (`10368003873`, digest
+  `sha256:87598d51b8fe42b4d1bf065d727c9b3b5fc338ce4d2b8d2c9910b2bfae291cd1`) contient les captures
+  relues et `qualification.json`.
 
 Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
 refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;
