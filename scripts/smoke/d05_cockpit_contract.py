@@ -62,7 +62,8 @@ def main() -> None:
     assert "handlePaletteDialogKey" in cockpit and "paletteReturnFocusRef" in cockpit
     assert "disableDnd={deviceClass === 'phone'}" in cockpit
     assert "api.addPopoutGroup(activePanel" in cockpit
-    assert "deviceClass !== 'phone'" in cockpit and "Détacher" in cockpit
+    assert "deviceClass === 'desktop'" in cockpit and "Détacher" in cockpit
+    assert cockpit.count("deviceClass !== 'desktop'") >= 3
     assert "layoutRetry === 'save'" in cockpit and "queueLayoutSave(api)" in cockpit
     assert "window.sessionStorage" in device
     assert "cockpit.v3.${deviceClass}.${deviceKey}.${windowKey}.${profile}" in device

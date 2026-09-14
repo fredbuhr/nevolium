@@ -9,8 +9,8 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
-| CI | 10/10 workflows réussis sur `705f4d977773a478cd73709dadee922620a84348`, dont Chromium avec vrai OIDC/PKCE, isolation des rôles et restauration D04 entre deux hôtes |
-| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête fonctionnelle, visuelle et authentifiée vérifiée : `705f4d977773a478cd73709dadee922620a84348` ; relire la tête live |
+| CI | 10/10 workflows réussis sur `96c29fb9a37efe666935705ce047a74a55184556`, dont Chromium avec vrai OIDC/PKCE, isolation des rôles et restauration D04 entre deux hôtes |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · dernier checkpoint complet vérifié : `96c29fb9a37efe666935705ce047a74a55184556` ; relire la tête live |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
 | Prochaine action | Faire la revue utilisateur manuelle et tester réellement la configuration fournisseur choisie avant la clôture D05 |
 
@@ -66,9 +66,12 @@ et Documents. Les noms d'infrastructure et le vocabulaire de stockage restent da
 et la documentation technique. Les identifiants internes, routes, états et contrats métier ne sont
 pas renommés. TypeScript, build Vite, contrat D05 et `git diff --check` réussissent localement.
 Le workflow UI exécute désormais Chromium et conserve cinq captures : bureau, administration,
-bureau compact, tablette et téléphone. Sur `72aafd1c…`, il vérifie aussi la recherche
-« documents », le retour du focus, le popout réel, les classes d'appareil, l'absence de
-débordement de page et le chemin sans Canvas/WebGL.
+bureau compact, tablette et téléphone. La revue de ces captures a conduit à faire de la tablette
+une surface à activité visible unique par défaut, avec navigation par onglets et séparation
+Dockview volontaire toujours possible ; le détachement multi-écran reste réservé au bureau.
+Le scénario vérifie aussi la recherche « documents », le retour du focus, le passage réel entre
+onglets compacts, le popout bureau, les classes d'appareil, l'absence de débordement de page et le
+chemin sans Canvas/WebGL.
 
 Validations locales du commit fonctionnel réussies : compilation Python, TypeScript, build Web,
 SQL Alembic hors ligne, contrats cockpit/PWA,

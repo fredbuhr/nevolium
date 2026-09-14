@@ -59,7 +59,7 @@ Ils ne modifient ni les données métier, ni les permissions, ni le fournisseur 
 |---|---|
 | Bureau, un écran | panneaux Dockview, inspecteur et mode concentration |
 | Bureau, plusieurs écrans | détachement manuel du panneau actif ; fermeture réintégrable ; chaque fenêtre principale garde une clé distincte |
-| Tablette | un ou deux panneaux selon l'orientation, commandes tactiles explicites |
+| Tablette | une activité visible par défaut en onglets ; le glisser Dockview permet une seconde vue lorsque l'espace et l'orientation le permettent |
 | Téléphone | une activité principale en onglets ; aucun glisser obligatoire ni popout |
 
 Le placement automatique sur un moniteur précis reste optionnel : il dépend d'une API navigateur
@@ -72,7 +72,7 @@ ouvrir plusieurs applications complètes ne crée pas une nouvelle autorité mé
 - Aucun WebGL n'est nécessaire au cockpit D05 ; les fonctions essentielles gardent une voie 2D/liste.
 - Les animations sont décoratives, courtes et suspendues avec `prefers-reduced-motion`.
 - Le focus clavier est visible dans les champs, panneaux et commandes.
-- Les cibles tactiles importantes mesurent au moins 44 px sur téléphone.
+- Les cibles tactiles importantes mesurent au moins 44 px sur téléphone et tablette.
 - Les panneaux masqués ne doivent pas déclencher un moteur IA ou un rafraîchissement coûteux.
 - La PWA D05 met en cache son shell, pas les réponses authentifiées ni les mutations `/v1/`.
 

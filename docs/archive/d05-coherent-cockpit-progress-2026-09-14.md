@@ -20,7 +20,7 @@ snapshot B2, image de rollback, réservation historique ou ancienne Task n'a ét
 | États et accès | Chargement, vide, erreur, retry, synchronisation visible, boucle/restauration de focus clavier et `prefers-reduced-motion` |
 | Layouts | Dockview conservé ; clés propriétaires côté Core et clés de présentation distinctes par appareil, fenêtre, classe téléphone/tablette/bureau et profil manuel équilibré/concentration/revue ; migration des anciennes clés |
 | Reprise sûre | Une erreur de lecture crée un layout utilisable mais suspend sa persistance : elle ne peut pas écraser silencieusement la disposition distante ; le retry réattache la sauvegarde sérialisée |
-| Multi-appareil | Panneaux en onglets et glisser désactivé sur téléphone ; panneau actif détachable sur bureau dans une page hôte neutre et déplaçable vers un autre écran ; shell installable sans cache métier ni mutation `/v1/` |
+| Multi-appareil | Une activité visible par défaut en onglets sur téléphone et tablette ; glisser désactivé sur téléphone et disponible sur tablette pour créer volontairement une seconde vue ; panneau actif détachable sur bureau dans une page hôte neutre et déplaçable vers un autre écran ; shell installable sans cache métier ni mutation `/v1/` |
 | Sans WebGL | Aucun import Three, React Three Fiber ou graphe 3D dans le chemin Web D05 ; aucun décor 3D permanent |
 | Réglages d'instance | Route administrateur et panneau OpenAI/Anthropic/xAI/Moonshot ; clé masquée envoyée une fois au registre LiteLLM interne, jamais stockée par Core, le Web ou une réponse API, y compris une erreur de validation |
 | Vérification | Alias candidat immuable, Task/Temporal canonique, appel réel de huit tokens de sortie maximum, budget/réservation/usage existants et correspondance obligatoire de `x-litellm-model-id` |
@@ -68,18 +68,21 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   par le workflow UI dans l'artefact `d05-browser-qualification`.
 - La première capture à 1024 px a montré des contrôles de briefing trop serrés ; les grilles News
   et Assistant sont maintenant empilées sur les largeurs compactes. La reprise visuelle a réussi.
+- La revue des captures authentifiées a montré que les deux colonnes par défaut comprimaient encore
+  la tablette à 820 px. La disposition compacte ouvre désormais un seul espace visible en onglets ;
+  le test Chromium traverse Actualités puis revient à Assistant, et le popout est limité au bureau.
 - GitHub CI sur le checkpoint `9c1c0a53e674ad1d6818c88aee32e1f1efea16e5` : 10/10 workflows
   réussis. Une première tentative d'isolation a rencontré un téléchargement Docker `502` et la
   première restauration D04 a interrogé PostgreSQL trop tôt ; leurs relances ciblées ont réussi
   sans changement de code.
-- Qualification Chromium authentifiée sur `705f4d977773a478cd73709dadee922620a84348` : le navigateur
+- Qualification Chromium authentifiée sur `96c29fb9a37efe666935705ce047a74a55184556` : le navigateur
   suit le vrai flux Keycloak OIDC/PKCE vers le Web et Core. Le compte administrateur voit la
   configuration serveur active `openai/gpt-4.1` et le champ de clé masqué ; le compte standard ne
   reçoit pas les réglages d'instance. Les accès API sans session, administrateur et utilisateur
   répondent respectivement `401`, `200` et `403`. Aucun jeton n'est retrouvé dans le stockage Web.
   Deux captures et le rapport JSON sont conservés dans l'artefact
-  `d05-authenticated-browser-qualification` (`10363664524`, digest
-  `sha256:411325b1fa17f959913664ec51276beb41569f2e0f074d64f07274ebbec91fff`).
+  `d05-authenticated-browser-qualification` (`10365161395`, digest
+  `sha256:0da6b15d42c1081939a08f7ee1d78a4f17381100b8489b5680e9d9a7151396c1`).
 
 Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
 refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;

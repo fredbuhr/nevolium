@@ -216,7 +216,7 @@ function createDefaultLayout(
   }
 
   api.addPanel(PANEL_DEFINITIONS.command)
-  if (deviceClass === 'phone') {
+  if (deviceClass !== 'desktop') {
     addPanelWithin(api, PANEL_DEFINITIONS.news)
     addPanelWithin(api, PANEL_DEFINITIONS.research)
     api.getPanel(PANEL_DEFINITIONS.command.id)?.api.setActive()
@@ -240,7 +240,7 @@ function openPanel(api: CockpitApi, key: CockpitPanelKey, deviceClass: CockpitDe
     return
   }
   const created =
-    deviceClass === 'phone' ? addPanelWithin(api, definition) : api.addPanel(definition)
+    deviceClass !== 'desktop' ? addPanelWithin(api, definition) : api.addPanel(definition)
   created.api.setActive()
 }
 
@@ -255,7 +255,7 @@ function openExtraPanel(
     return
   }
   const created =
-    deviceClass === 'phone'
+    deviceClass !== 'desktop'
       ? addExtraWithin(api, panel)
       : api.addPanel({
           id: panel.id,
@@ -618,7 +618,7 @@ export default function CockpitShell({
             ))}
           </div>
           <div className="toolbar-actions">
-            {deviceClass !== 'phone' ? (
+            {deviceClass === 'desktop' ? (
               <button
                 type="button"
                 disabled={!ready}

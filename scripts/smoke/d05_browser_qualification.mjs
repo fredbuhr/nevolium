@@ -175,8 +175,32 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     `${name}: le focus doit revenir à l’accès rapide`,
   )
 
+  const assistantHeading = page.getByRole('heading', {
+    name: 'Dites ce que vous cherchez à comprendre ou à faire.',
+  })
+  const newsHeading = page.getByRole('heading', {
+    name: 'Comprenez ce qui se passe à partir de sources conservées.',
+  })
+  assert.equal(await assistantHeading.isVisible(), true, `${name}: Assistant doit être visible`)
+  assert.equal(
+    await newsHeading.isVisible(),
+    name === 'desktop' || name === 'desktop-admin' || name === 'compact-desktop',
+    `${name}: disposition initiale inattendue`,
+  )
+  if (name === 'tablet' || name === 'phone') {
+    await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Actualités' }).click()
+    await newsHeading.waitFor({ state: 'visible' })
+    assert.equal(await assistantHeading.isVisible(), false, `${name}: un seul espace doit rester visible`)
+    await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Assistant' }).click()
+    await assistantHeading.waitFor({ state: 'visible' })
+  }
+
   const detachCount = await page.getByRole('button', { name: 'Détacher', exact: true }).count()
-  assert.equal(detachCount, name === 'phone' ? 0 : 1, `${name}: action Détacher inattendue`)
+  assert.equal(
+    detachCount,
+    name === 'desktop' || name === 'desktop-admin' || name === 'compact-desktop' ? 1 : 0,
+    `${name}: action Détacher inattendue`,
+  )
 
   const screenshotPath = path.join(outputDirectory, `nevolium-d05-${name}.png`)
   await page.screenshot({ path: screenshotPath, fullPage: true })

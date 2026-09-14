@@ -3,8 +3,8 @@
 Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Sa tête fonctionnelle, visuelle et authentifiée vérifiée
-est `705f4d977773a478cd73709dadee922620a84348` ; ses 10 workflows réussissent. Chromium couvre
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Son dernier checkpoint complet vérifié
+est `96c29fb9a37efe666935705ce047a74a55184556` ; ses 10 workflows réussissent. Chromium couvre
 bureau/tablette/téléphone et un second scénario traverse le vrai Keycloak avec PKCE pour les rôles
 administrateur et utilisateur. Le lot n'est ni intégré ni déployé. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
@@ -46,7 +46,7 @@ Les cinq réservations uncertain et les anciens essais sont conservés sans reje
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web/OIDC, panneaux persistés ; candidat D05 avec repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents, identité Mycelium cyan/émeraude/violet, accès rapide, inspecteur, profils/ambiances, layouts par fenêtre, détachement multi-écran, clavier et PWA ; cinq vues Chromium qualifiées | Essai utilisateur authentifié puis intégration du candidat D05 |
+| Cockpit | Web/OIDC, panneaux persistés ; candidat D05 avec repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents, identité Mycelium cyan/émeraude/violet, accès rapide, inspecteur, profils/ambiances, tablette et téléphone à activité visible unique par défaut, layouts par fenêtre, détachement multi-écran sur bureau, clavier et PWA ; cinq vues Chromium qualifiées | Revue humaine puis intégration du candidat D05 |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
