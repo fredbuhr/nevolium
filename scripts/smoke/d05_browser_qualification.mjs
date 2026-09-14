@@ -146,7 +146,13 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
   const expectedDeviceLabel = viewport.width < 640 ? 'Téléphone' : viewport.width < 1024 ? 'Tablette' : 'Bureau'
-  await page.getByText(expectedDeviceLabel, { exact: true }).waitFor()
+  const deviceLabel = page.getByText(expectedDeviceLabel, { exact: true })
+  await deviceLabel.waitFor({ state: 'attached' })
+  assert.equal(
+    await deviceLabel.isVisible(),
+    name !== 'phone',
+    `${name}: visibilité inattendue de la classe d’appareil`,
+  )
   const privateLayoutLabel = page.getByText('Disposition privée', { exact: true })
   await privateLayoutLabel.waitFor({ state: 'attached' })
   assert.equal(
