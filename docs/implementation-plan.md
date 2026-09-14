@@ -125,8 +125,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 - **État : en revue** dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur
   `feat/d05-coherent-cockpit` depuis le main
   `1896468513f92ee5c0d6a811301a1b898cc6abd2` ; voir le
-  [checkpoint daté](archive/d05-coherent-cockpit-progress-2026-09-14.md). Sa CI reste nécessaire
-  avant de déclarer le lot intégré.
+  [checkpoint daté](archive/d05-coherent-cockpit-progress-2026-09-14.md). Les 10/10 workflows de
+  `48210102a9814a30ef1c35f1245d693c126c5bd0` réussissent ; le lot reste à revoir et intégrer.
 
 - **Prérequis :** D04.
 - **Livraison :** design partagé issu des références utilisateur disponibles : réseau organique,

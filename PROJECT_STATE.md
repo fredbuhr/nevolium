@@ -9,10 +9,10 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 | Base main vérifiée | `1896468513f92ee5c0d6a811301a1b898cc6abd2` |
 | D04 / H5 | D04 intégré par #88 ; tag `H5` sur `db07f7a90cc406ddc80683521bbf1744e3a2b668` |
 | Nettoyage | `hardening/d04-real-engine-qualification` supprimée après vérification de sa tête fusionnée |
-| CI | 8/8 workflows exécutés réussis sur `021bd58614e3294da5545765540d9d1c43419bea` ; 10/10 réussis sur la tête D04 testée `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
-| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · commit fonctionnel publié `73bba82be620a5e6f548e68fb3bbbfeb8836104a` |
+| CI | D05 : 10/10 workflows réussis sur `48210102a9814a30ef1c35f1245d693c126c5bd0` ; D04 : 10/10 réussis sur la tête testée `2946df59664c01d77abc3b5720fff1dbbf96cb4c` |
+| Branche / PR active | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) · tête vérifiée `48210102a9814a30ef1c35f1245d693c126c5bd0` |
 | Cible | Checkout serveur vérifié inchangé à `61d7687088dcbb002febd4c5f1a97f33edcb1269` |
-| Prochaine action | Vérifier tous les workflows de la tête courante de #89, puis corriger uniquement une régression démontrée ; ne pas intégrer ni déployer sans revue explicite |
+| Prochaine action | Revue de #89, références visuelles Nevolium et qualification interactive/fournisseur explicitement autorisée ; ne pas intégrer ni déployer implicitement |
 
 La sortie opérateur `H5_OK`, l'absence de la branche D04 et la cible du tag ont été
 revérifiées depuis GitHub. Aucun checkout, conteneur ou service de production n'a été modifié.
@@ -53,9 +53,9 @@ D06–D09 gardent planification,
 
 Validations locales du commit fonctionnel réussies : compilation Python, TypeScript, build Web,
 SQL Alembic hors ligne, contrats cockpit/PWA,
-gateway/configuration modèle, dispatch, Assistant, News, Semantic Router et layouts. Le contrat
-PostgreSQL de migration/bascule et la matrice Compose restent à exécuter dans la CI, Docker étant
-absent de cette session. Le navigateur cloud refuse le serveur loopback local ; aucun contrôle
+gateway/configuration modèle, dispatch, Assistant, News, Semantic Router et layouts. Les 10
+workflows GitHub de `48210102…` réussissent, dont PostgreSQL réel, matrice Compose et contrôles de
+non-régression D04. Le navigateur cloud refuse le serveur loopback local ; aucun contrôle
 visuel interactif n'est revendiqué. Aucun test avec une nouvelle clé fournisseur ni déploiement
 n'a été effectué.
 

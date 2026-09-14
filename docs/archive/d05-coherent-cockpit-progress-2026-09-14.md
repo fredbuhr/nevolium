@@ -3,7 +3,8 @@
 Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89) sur
 `feat/d05-coherent-cockpit`, créée depuis le main live
 `1896468513f92ee5c0d6a811301a1b898cc6abd2`. Son commit fonctionnel est
-`73bba82be620a5e6f548e68fb3bbbfeb8836104a` ; le présent suivi documentaire ne change pas cet arbre.
+`73bba82be620a5e6f548e68fb3bbbfeb8836104a` ; le contrat Compose a été corrigé sur
+`48210102a9814a30ef1c35f1245d693c126c5bd0`, dont les dix workflows réussissent.
 Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
@@ -41,13 +42,16 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   layouts propriétaires : réussis.
 - Régressions Assistant déterministe/propriétaire, Semantic Router, News et fins d'exécution : réussies.
 - Contrats Settings/secret/routage LiteLLM exécutables sans Docker : réussis.
+- GitHub CI sur `48210102a9814a30ef1c35f1245d693c126c5bd0` : 10/10 workflows réussis. Cela inclut
+  Foundation, PostgreSQL réel, rendu Compose, UI workspace, isolation multi-utilisateur,
+  Autonomous Research et le garde-fou D04.
 
-Le contrat PostgreSQL ajouté couvre migration, unicité de l'actif, échec sans perte de l'ancien,
-refus pendant un appel actif et bascule après drainage. Il attend son exécution CI avec PostgreSQL.
-La matrice Compose attend également la CI car Docker n'est pas installé dans cette session. Ruff
-n'a pas pu être lancé localement à cause de l'environnement `uvx` sans `/proc/self/exe`. Les builds
-de packages n'ont pas été rejoués sur la tête finale car le runtime local fournit uv 0.12.11 tandis
-que le dépôt exige 0.12.13. Les gates Foundation et Code quality de la PR restent obligatoires.
+Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
+refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;
+la comparaison d'identités LiteLLM est évaluée dans le profil `ai` qui instancie ce service. Docker
+reste absent localement. Ruff n'a pas pu être lancé localement à cause de l'environnement `uvx`
+sans `/proc/self/exe`, mais le gate Code quality réussit. Les builds de packages n'ont pas été
+rejoués localement avec uv 0.12.13, mais les gates verrouillés de la CI réussissent.
 
 Le navigateur cloud a refusé les deux URL loopback du serveur de prévisualisation avec
 `ERR_BLOCKED_BY_CLIENT`. Aucun contrôle interactif ou rendu visuel n'est donc revendiqué, malgré le
@@ -61,8 +65,8 @@ Aucune nouvelle clé fournisseur n'était disponible et aucun appel réel suppl�
 effectué. OpenAI `openai/gpt-4.1` reste le seul fournisseur déjà qualifié par D04 ; la présence des
 trois autres choix ne prouve aucune compatibilité. Aucune migration n'est appliquée en production.
 
-Prochaine action : vérifier tous les workflows de la tête courante de #89 et corriger les seuls
-défauts démontrés, puis compléter la qualification interactive et le test fournisseur lors d'une
-activation explicitement autorisée. Le rollback du code redescend la migration à
+Prochaine action : revoir #89, fournir les références visuelles Nevolium manquantes, puis compléter
+la qualification interactive et le test fournisseur lors d'une activation explicitement
+autorisée. Le rollback du code redescend la migration à
 `0014_capacity_and_data` après arrêt/drainage normal ; il ne doit pas supprimer les configurations
 ou secrets LiteLLM sans examen de leur usage par des Tasks historiques.

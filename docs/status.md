@@ -3,7 +3,8 @@
 Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md).
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Ses 10/10 workflows réussissent sur
+`48210102a9814a30ef1c35f1245d693c126c5bd0` ; le lot n'est ni intégré ni déployé.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
