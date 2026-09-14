@@ -39,8 +39,8 @@ Les arbres récursifs non tronqués de main et du prototype
 `ed12d503aa500a6e7700e9ac82d823e0e815f33d` ne contiennent aucun fichier
 PNG/JPEG/WebP/GIF/SVG/FIG de référence. Les images des anciennes conversations sont absentes ici.
 
-Le prototype a été inspecté dans `app/KairoCockpit.tsx`, `app/KairoApp.tsx`,
-`brand.css`, `AssistantDrawer.tsx` et `SecretVaultSettings.tsx`.
+Le prototype a été inspecté dans les deux écrans d'entrée du répertoire `apps/web/src/app/`,
+`apps/web/src/brand.css`, `AssistantDrawer.tsx` et `SecretVaultSettings.tsx`.
 Il contient une marque organique CSS et une préférence de réduction du mouvement ; ses écrans
 dépendent aussi de Mycelium 3D, de Brain et d'API historiques.
 Le coffre de secrets générique n'est pas un réglage d'instance LiteLLM qualifié.

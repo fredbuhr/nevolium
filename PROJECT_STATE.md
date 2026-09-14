@@ -18,7 +18,9 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 
 Les opérations H5 sont déjà autorisées. La commande documentée n'a **pas été exécutée** ;
 ce checkpoint ne clôture pas H5. La CI ci-dessus concerne les SHA nommés, pas la présente
-mise à jour documentaire. Aucun checkout serveur ni conteneur n'a été modifié par l'agent.
+mise à jour documentaire. Le commit documentaire `b75bc0d…` a échoué au contrôle d'identité :
+les chemins cités du prototype contenaient l'ancien nom. La note a été corrigée sans changer
+le contrôle ; vérifier la CI de la nouvelle tête. Aucun checkout serveur ni conteneur modifié.
 
 ## Preuves et exploitation à préserver
 
