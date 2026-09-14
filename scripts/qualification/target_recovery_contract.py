@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 from common import Evidence
 from target_recovery import FREE_TIER_GUARD_BYTES, Runner
@@ -37,7 +38,8 @@ class Contract(unittest.TestCase):
             path.write_text("\n".join(f"{key}={value}" for key, value in values.items()) + "\n")
             path.chmod(0o600)
             runner = self.runner(root)
-            self.assertEqual(runner.configure_restic(), values)
+            with mock.patch.object(Runner, "private_file"):
+                self.assertEqual(runner.configure_restic(), values)
             leaked = " ".join(values.values())
             scrubbed = runner.scrub(leaked)
             self.assertNotIn(values["RESTIC_PASSWORD"], scrubbed)
