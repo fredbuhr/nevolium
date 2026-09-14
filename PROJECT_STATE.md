@@ -12,7 +12,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
 | Checkout cible | `29638ae8dbf05a5dbcc9383d94d5d546ee6c54e7` ; checkout serveur propre à ce SHA |
 | Correctif actif | `bef11ff317565d9d05da278a8fcebaec6b736dc8` ; bootstrap interne déployé, registre génération 2, 10/10 workflows réussis |
-| Correctif candidat | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM publiée, CI en cours |
+| Correctif candidat | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM publiée, 10/10 workflows réussis au checkpoint `449a688…` |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -121,6 +121,8 @@ Le candidat `ae4e7fb…` préfère l'en-tête de déploiement `x-litellm-model-n
 réécrit avec l'alias. Contrats gateway, Research, Context Pack, News et routage sémantique, Ruff F/E9,
 Ruff ciblé, compilation et diff réussissent localement sans appel fournisseur. Le contrat SQL
 d'admission attend la base jetable de CI et n'a pas été exécuté contre une base locale persistante.
+Les 10 workflows GitHub sont verts au checkpoint exact `449a68800f5527afa55f0df004b2e8abf91c3183`,
+y compris Autonomous Research, Foundation et D04.
 
 ## Prochaine action exécutable
 
@@ -159,11 +161,11 @@ second essai n'a pas été créé. Les comptes sont `38|38|17|22|8|25|5`, travau
 La même lecture a montré que LiteLLM remet l'alias `smart` dans le champ `model`, donc l'attribution
 canonique doit lire son en-tête de déploiement. Ne pas rejouer cette Task.
 
-**Attendre la CI du correctif `ae4e7fb…`.** Si elle est verte, construire uniquement le Worker,
-sauvegarder `production.env`, remplacer uniquement `NEVOLIUM_MODEL_MAX_OUTPUT_TOKENS=256` par la
-borne documentée `4096`, puis activer ce Worker sans travail actif. Après contrôle de l'identité du
-déploiement LiteLLM, lancer deux nouvelles Tasks Research séquentielles avec de nouveaux UUID. Le
-[protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
+Construire uniquement le Worker candidat, sauvegarder `production.env`, remplacer uniquement
+`NEVOLIUM_MODEL_MAX_OUTPUT_TOKENS=256` par la borne documentée `4096`, puis activer ce Worker sans
+travail actif. Après contrôle de l'identité du déploiement LiteLLM, lancer deux nouvelles Tasks
+Research séquentielles avec de nouveaux UUID. Le [protocole D04](docs/qualification-d04.md) porte la
+suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
