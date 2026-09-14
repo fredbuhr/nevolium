@@ -6,8 +6,8 @@ Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevoli
 `73bba82be620a5e6f548e68fb3bbbfeb8836104a`, le contrat Compose a été corrigé sur
 `48210102a9814a30ef1c35f1245d693c126c5bd0` et l'itération visuelle/multi-écran est
 `47cee6ef1245af70d52279b26ad9c321f698a883`. La charte éditoriale est publiée sur
-`1f5db08c7b52502443fa0d5eae754c1801c8d471`. Le checkpoint fonctionnel, visuel et documentaire
-`9c1c0a53e674ad1d6818c88aee32e1f1efea16e5` est validé par 10/10 workflows.
+`1f5db08c7b52502443fa0d5eae754c1801c8d471`. Le checkpoint fonctionnel, visuel et authentifié
+`705f4d977773a478cd73709dadee922620a84348` est validé par 10/10 workflows.
 Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
@@ -72,6 +72,14 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   réussis. Une première tentative d'isolation a rencontré un téléchargement Docker `502` et la
   première restauration D04 a interrogé PostgreSQL trop tôt ; leurs relances ciblées ont réussi
   sans changement de code.
+- Qualification Chromium authentifiée sur `705f4d977773a478cd73709dadee922620a84348` : le navigateur
+  suit le vrai flux Keycloak OIDC/PKCE vers le Web et Core. Le compte administrateur voit la
+  configuration serveur active `openai/gpt-4.1` et le champ de clé masqué ; le compte standard ne
+  reçoit pas les réglages d'instance. Les accès API sans session, administrateur et utilisateur
+  répondent respectivement `401`, `200` et `403`. Aucun jeton n'est retrouvé dans le stockage Web.
+  Deux captures et le rapport JSON sont conservés dans l'artefact
+  `d05-authenticated-browser-qualification` (`10363664524`, digest
+  `sha256:411325b1fa17f959913664ec51276beb41569f2e0f074d64f07274ebbec91fff`).
 
 Le contrat PostgreSQL prouve en CI migration, unicité de l'actif, échec sans perte de l'ancien,
 refus pendant un appel actif et bascule après drainage. La matrice Compose réelle passe également ;
@@ -80,10 +88,10 @@ reste absent localement. Ruff n'a pas pu être lancé localement à cause de l'e
 sans `/proc/self/exe`, mais le gate Code quality réussit. Les builds de packages n'ont pas été
 rejoués localement avec uv 0.12.13, mais les gates verrouillés de la CI réussissent.
 
-Le navigateur cloud a refusé le loopback local avec `ERR_BLOCKED_BY_CLIENT`, mais la même
-prévisualisation isolée a ensuite été qualifiée avec Chromium dans GitHub Actions. Ses appels métier
-sont simulés de manière déterministe : cette preuve porte sur le rendu, le clavier, les tailles
-d'écran et le popout, pas sur OIDC ni sur un fournisseur réel. Les deux vues de cockpit et l'identité
+Le navigateur cloud a refusé le loopback local avec `ERR_BLOCKED_BY_CLIENT`, mais Chromium dans
+GitHub Actions qualifie désormais deux chemins complémentaires : prévisualisation responsive avec
+API déterministe, puis authentification réelle avec Keycloak et Core. Aucun de ces chemins n'appelle
+un fournisseur payant. Les deux vues de cockpit et l'identité
 sphérique fournies pendant D05 ont été inspectées directement ; elles servent d'inspiration au
 [contrat visuel](../design-mycelium.md), pas de captures à reproduire à l'identique.
 
@@ -93,7 +101,7 @@ Aucune nouvelle clé fournisseur n'était disponible et aucun appel réel suppl�
 effectué. OpenAI `openai/gpt-4.1` reste le seul fournisseur déjà qualifié par D04 ; la présence des
 trois autres choix ne prouve aucune compatibilité. Aucune migration n'est appliquée en production.
 
-Prochaine action : réaliser l'essai utilisateur authentifié et tester le fournisseur choisi lors
-d'une activation explicitement autorisée. Le rollback du code redescend la migration à
+Prochaine action : faire la revue utilisateur manuelle et tester le fournisseur choisi lors d'une
+activation explicitement autorisée. Le rollback du code redescend la migration à
 `0014_capacity_and_data` après arrêt/drainage normal ; il ne doit pas supprimer les configurations
 ou secrets LiteLLM sans examen de leur usage par des Tasks historiques.
