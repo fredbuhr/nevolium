@@ -1,15 +1,14 @@
 # Nevolium — ordre des livraisons
 
-Révision : 2026-09-13. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
+Révision : 2026-09-14. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
 et critères de sortie. [PROJECT_STATE](../PROJECT_STATE.md) seul indique le lot actif et les preuves.
-La table donne le séquencement ; elle ne déclare pas tous les lots livrés. **D01–D03 sont terminés**
-(#84–#87). Le reste de D02 a été réuni en une seule PR avec validation commune.
-**Lot actif : D04/H5 (#88)**, campagne commune et validation de la cible avant les fonctions produit. D03 a été livré dans une seule PR #87.
+La table donne le séquencement ; elle ne déclare pas tous les lots livrés. **D01–D04 et H5 sont
+terminés** (#84–#88). **Lot actif : D05 (#89)**, cockpit cohérent et langage visuel Mycelium.
 Le détail opérationnel et les preuves restent dans le checkpoint.
 
 Décision du 13 septembre : génération et routage par API, OpenAI en premier. La qualification locale
-est retirée du chemin actif. D04 conserve seulement quatre preuves restantes : Research via OpenAI,
-charge bornée du pilote, upgrade/rollback et restauration indépendante. D05 livrera le sélecteur
+est retirée du chemin actif. D04 a acquis les quatre preuves H5 : Research via OpenAI, charge bornée
+du pilote, upgrade/rollback et restauration indépendante. D05 livre le sélecteur
 fournisseur/modèle dans les réglages du cockpit ; D13 complétera le BYOK par compte.
 Le LLM local attend une nouvelle décision et un meilleur matériel, sans échéance imposée à ces lots.
 Voir l'[ADR-031](decisions/ADR-031-api-first-pilot.md).
@@ -44,7 +43,7 @@ du produit visé, mais une voie 2D accessible reste disponible.
 
 - R0–R7 : reset terminé. Ne plus le reprendre comme prochaine étape.
 - H1–H3 : intégrés ; le P0 de dispatch H4 est corrigé par #83.
-- H4 affecté à D01–D03 : terminé ; H5 : D04, non terminé. Aucune nouvelle fonction produit avant cette sortie.
+- H4 affecté à D01–D03 : terminé ; H5 affecté à D04 : terminé et tagué.
 - G51 : base de planification présente, reprise dans D06.
 - Anciens blocs 0–2 : fondations présentes, intégrations optionnelles encore à finir.
 - Ancien bloc 3 : D05–D13 ; bloc 4 : D11–D16 ; bloc 5 : D17–D20 ; bloc 6 : D01–D04/D21–D22.

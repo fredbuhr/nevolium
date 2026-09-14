@@ -2,9 +2,10 @@
 
 Cette livraison est publiée dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89) sur
 `feat/d05-coherent-cockpit`, créée depuis le main live
-`1896468513f92ee5c0d6a811301a1b898cc6abd2`. Son commit fonctionnel est
-`73bba82be620a5e6f548e68fb3bbbfeb8836104a` ; le contrat Compose a été corrigé sur
-`48210102a9814a30ef1c35f1245d693c126c5bd0`, dont les dix workflows réussissent.
+`1896468513f92ee5c0d6a811301a1b898cc6abd2`. Le socle fonctionnel est
+`73bba82be620a5e6f548e68fb3bbbfeb8836104a`, le contrat Compose a été corrigé sur
+`48210102a9814a30ef1c35f1245d693c126c5bd0` et l'itération visuelle/multi-écran est
+`47cee6ef1245af70d52279b26ad9c321f698a883`.
 Elle n'est ni intégrée ni déployée. Le checkout de
 production attesté reste `61d7687088dcbb002febd4c5f1a97f33edcb1269` ; aucun conteneur, volume,
 snapshot B2, image de rollback, réservation historique ou ancienne Task n'a été modifié.
@@ -13,11 +14,11 @@ snapshot B2, image de rollback, réservation historique ou ancienne Task n'a ét
 
 | Zone | Comportement |
 |---|---|
-| Cockpit | Langage sombre organique Mycelium en CSS, navigation tactile, accès rapide `Ctrl/Cmd+K`, activation d'un panneau déjà ouvert et inspecteur documentaire existant |
+| Cockpit | Identité Mycelium nuit/pétrole, cyan/émeraude/bleu/violet, logo neural original, navigation tactile, accès rapide `Ctrl/Cmd+K` et inspecteur documentaire existant |
 | États et accès | Chargement, vide, erreur, retry, synchronisation visible, boucle/restauration de focus clavier et `prefers-reduced-motion` |
-| Layouts | Dockview conservé ; clés propriétaires côté Core et clés de présentation distinctes par appareil, classe téléphone/tablette/bureau et profil manuel équilibré/concentration/revue |
+| Layouts | Dockview conservé ; clés propriétaires côté Core et clés de présentation distinctes par appareil, fenêtre, classe téléphone/tablette/bureau et profil manuel équilibré/concentration/revue ; migration des anciennes clés |
 | Reprise sûre | Une erreur de lecture crée un layout utilisable mais suspend sa persistance : elle ne peut pas écraser silencieusement la disposition distante ; le retry réattache la sauvegarde sérialisée |
-| Multi-appareil | Panneaux en onglets et glisser désactivé sur téléphone, contrôles tactiles, shell installable avec manifeste/icônes/service worker ; aucune donnée métier ni mutation `/v1/` mise en cache |
+| Multi-appareil | Panneaux en onglets et glisser désactivé sur téléphone ; panneau actif détachable sur bureau dans une page hôte neutre et déplaçable vers un autre écran ; shell installable sans cache métier ni mutation `/v1/` |
 | Sans WebGL | Aucun import Three, React Three Fiber ou graphe 3D dans le chemin Web D05 ; aucun décor 3D permanent |
 | Réglages d'instance | Route administrateur et panneau OpenAI/Anthropic/xAI/Moonshot ; clé masquée envoyée une fois au registre LiteLLM interne, jamais stockée par Core, le Web ou une réponse API, y compris une erreur de validation |
 | Vérification | Alias candidat immuable, Task/Temporal canonique, appel réel de huit tokens de sortie maximum, budget/réservation/usage existants et correspondance obligatoire de `x-litellm-model-id` |
@@ -34,7 +35,7 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
 ## Validation exécutée dans cette session
 
 - TypeScript et build Vite de production : réussis, 142 modules transformés. Le bundle principal
-  produit un avertissement de taille d'environ 537 kB, sans échec de build.
+  produit un avertissement de taille de 539,21 kB, sans échec de build.
 - Compilation Python, rendu SQL Alembic jusqu'à `0015_model_configurations` et
   `git diff --check` : réussis.
 - Contrats D05 cockpit/PWA/sans WebGL, configuration modèle, non-réflexion de la clé en `422`,
@@ -42,7 +43,7 @@ administrateur. Une configuration retirée doit être retestée sous une nouvell
   layouts propriétaires : réussis.
 - Régressions Assistant déterministe/propriétaire, Semantic Router, News et fins d'exécution : réussies.
 - Contrats Settings/secret/routage LiteLLM exécutables sans Docker : réussis.
-- GitHub CI sur `48210102a9814a30ef1c35f1245d693c126c5bd0` : 10/10 workflows réussis. Cela inclut
+- GitHub CI sur `47cee6ef1245af70d52279b26ad9c321f698a883` : 10/10 workflows réussis. Cela inclut
   Foundation, PostgreSQL réel, rendu Compose, UI workspace, isolation multi-utilisateur,
   Autonomous Research et le garde-fou D04.
 
@@ -54,10 +55,10 @@ sans `/proc/self/exe`, mais le gate Code quality réussit. Les builds de package
 rejoués localement avec uv 0.12.13, mais les gates verrouillés de la CI réussissent.
 
 Le navigateur cloud a refusé les deux URL loopback du serveur de prévisualisation avec
-`ERR_BLOCKED_BY_CLIENT`. Aucun contrôle interactif ou rendu visuel n'est donc revendiqué, malgré le
-build réussi. Les anciennes références visuelles ne sont pas accessibles ; la seule image jointe à
-la reprise représente le dialogue système Debian de redémarrage de services et n'est pas une
-référence de design Nevolium.
+`ERR_BLOCKED_BY_CLIENT` et aucun navigateur exécutable n'est présent dans ce conteneur. Aucun
+contrôle interactif du cockpit n'est donc revendiqué, malgré le build réussi. Les deux vues de
+cockpit et l'identité sphérique fournies pendant D05 ont été inspectées directement ; elles servent
+d'inspiration au [contrat visuel](../design-mycelium.md), pas de captures à reproduire à l'identique.
 
 ## Limites et prochaine action
 
@@ -65,8 +66,7 @@ Aucune nouvelle clé fournisseur n'était disponible et aucun appel réel suppl�
 effectué. OpenAI `openai/gpt-4.1` reste le seul fournisseur déjà qualifié par D04 ; la présence des
 trois autres choix ne prouve aucune compatibilité. Aucune migration n'est appliquée en production.
 
-Prochaine action : revoir #89, fournir les références visuelles Nevolium manquantes, puis compléter
-la qualification interactive et le test fournisseur lors d'une activation explicitement
-autorisée. Le rollback du code redescend la migration à
+Prochaine action : qualifier le rendu et le détachement dans un navigateur authentifié, puis tester
+le fournisseur choisi lors d'une activation explicitement autorisée. Le rollback du code redescend la migration à
 `0014_capacity_and_data` après arrêt/drainage normal ; il ne doit pas supprimer les configurations
 ou secrets LiteLLM sans examen de leur usage par des Tasks historiques.
