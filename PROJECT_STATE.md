@@ -270,14 +270,19 @@ Le diagnostic puis la reprise opérateur confirment la suppression de l'unique m
 à 12:20 UTC s'arrête dans `seed-source-recovery-evidence` sur
 `identite durable du jeton OpenBao inattendue`, après les écritures des trois marqueurs et avant backup.
 Rapport : `/var/lib/nevolium/qualification/d04-off-host-recovery-20260914T122009Z.6fb33b/recovery.json`.
-Le dépôt contient encore zéro snapshot au précontrôle. Le nettoyage final a été tenté sans message
-d'échec affiché ; les compteurs et l'absence des trois marqueurs restent à confirmer par lecture.
+Le dépôt contient encore zéro snapshot au précontrôle. Le diagnostic opérateur suivant confirme
+`display_name=token-nevolium-core` ; seul le contrôle du nom échoue. Policy, période 604800 s,
+renewable et orphan sont valides, et l'accessor correspond aux métadonnées du bootstrap.
+Les comptes sont revenus à `52|52|25|30|16|39|5`, travaux/outbox `0|0|0|0` ; marqueur SQL absent,
+stream JetStream absent et objet SeaweedFS absent (404). Aucun nettoyage résiduel à refaire.
 
-Prochaine action : extraire exclusivement les propriétés non secrètes de la réponse lookup-self déjà
-journalisée, comparer l'accessor en mémoire aux métadonnées de bootstrap sans l'afficher, et vérifier
-le nettoyage dans les trois magasins. Le renouvellement existant valide accessor/policy/période/orphan ;
-le runner ajoute un nom d'affichage exact. Ne pas supposer lequel diffère ni renouveler/révoquer le jeton
-pour contourner ce contrôle. D04 reste ouvert ; aucune reprise de backup avant diagnostic.
+Le correctif exige le nom exact observé `token-nevolium-core`, conserve tous les contrôles de droits
+et d'identité et conserve le nom réel dans l'empreinte comparée après restauration. Le lookup est
+déplacé avant toute écriture de marqueur. Les tests couvrent la réponse préfixée, les droits/périodes
+invalides et le rejet avant écriture ; le test PostgreSQL réel reste requis en CI.
+Prochaine action : après CI du candidat, avancer le checkout depuis `a876af5…`, fournir les trois parts
+OpenBao éphémères et exécuter le runner existant jusqu'à la preuve de backup/restauration isolée.
+Le jeton valide reste en place, sans recréation, révocation ni renouvellement de contournement.
 Les six secrets B2/Restic ne sont plus demandés. Après la preuve de restauration, consigner le rapport final,
 repasser la CI du head, finaliser et intégrer #88, poser le tag H5 puis retirer la branche avant D05.
 Le [protocole D04](docs/qualification-d04.md) conserve les seuils et limites.

@@ -524,7 +524,7 @@ SELECT concat_ws('|',
         if (
             not isinstance(data.get("accessor"), str)
             or not data["accessor"]
-            or data.get("display_name") != "nevolium-core"
+            or data.get("display_name") != "token-nevolium-core"
             or data.get("policies") != ["nevolium-core"]
             or period != 604800
             or data.get("renewable") is not True
@@ -610,6 +610,9 @@ SELECT concat_ws('|',
 
     def seed_markers(self) -> dict[str, object]:
         self.recovery_material()
+        # Validate the existing workload before writing disposable store markers.
+        openbao = self.workload_record(self.source)
+        self.openbao_workload_record_sha256 = str(openbao["record_sha256"])
         # Arm cleanup before sending a write: the database may commit even when
         # the command response is missing, malformed or interrupted.
         self.source_markers_created = True
@@ -631,8 +634,6 @@ RETURNING id;
             SEAWEED_PROBE,
             ["seed", self.seaweed_path, self.probe_value],
         )
-        openbao = self.workload_record(self.source)
-        self.openbao_workload_record_sha256 = str(openbao["record_sha256"])
         return {
             "postgres_artifact_id": str(self.probe_id),
             "jetstream": {"stream": self.nats_stream, "sequence": 1},

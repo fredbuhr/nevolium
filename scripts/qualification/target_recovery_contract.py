@@ -57,6 +57,7 @@ ROLLBACK;
 
                 with (
                     mock.patch.object(runner, "recovery_material", return_value=["one", "two", "three"]),
+                    mock.patch.object(runner, "workload_record", return_value={"record_sha256": "fixture"}),
                     mock.patch.object(runner, "query", side_effect=database),
                     mock.patch.object(runner, "source_probe", side_effect=CommandFailure("store unavailable")),
                     mock.patch.object(runner, "unseal_openbao"),
@@ -173,7 +174,7 @@ ROLLBACK;
                     "accessor": "stable-accessor",
                     "creation_time": 1_700_000_000,
                     "creation_ttl": 604800,
-                    "display_name": "nevolium-core",
+                    "display_name": "token-nevolium-core",
                     "entity_id": "",
                     "explicit_max_ttl": 0,
                     "issue_time": "2026-09-12T00:00:00Z",
@@ -195,6 +196,51 @@ ROLLBACK;
                 restored = runner.workload_record(["isolated"])
             self.assertEqual(source["record_sha256"], restored["record_sha256"])
             self.assertEqual(source["period_seconds"], 604800)
+
+    def test_workload_keeps_identity_and_policy_guards(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self.runner(Path(directory))
+            runner.env_file.write_text("OPENBAO_TOKEN=s." + "a" * 24 + "\n")
+            valid = {
+                "accessor": "fixture-accessor",
+                "display_name": "token-nevolium-core",
+                "policies": ["nevolium-core"],
+                "period": 604800,
+                "renewable": True,
+                "orphan": True,
+            }
+            for field, bad in (
+                ("display_name", "token-other"),
+                ("display_name", "nevolium-core"),
+                ("policies", ["root"]),
+                ("policies", ["nevolium-core", "default"]),
+                ("period", 3600),
+                ("renewable", False),
+                ("orphan", False),
+                ("accessor", ""),
+            ):
+                with self.subTest(field=field, bad=bad), mock.patch.object(
+                    runner, "bao_as", return_value=mock.Mock(
+                        stdout=json.dumps({"data": {**valid, field: bad}})
+                    )
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "identite durable"):
+                        runner.workload_record(["source"])
+
+    def test_workload_rejection_happens_before_any_marker_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self.runner(Path(directory))
+            with (
+                mock.patch.object(runner, "recovery_material"),
+                mock.patch.object(runner, "workload_record", side_effect=RuntimeError("identity")),
+                mock.patch.object(runner, "query") as query,
+                mock.patch.object(runner, "source_probe") as probe,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "identity"):
+                    runner.seed_markers()
+                query.assert_not_called()
+                probe.assert_not_called()
+                self.assertFalse(runner.source_markers_created)
 
     def test_missing_b2_repository_code_10_is_initialized(self):
         with tempfile.TemporaryDirectory() as directory:
