@@ -6,11 +6,13 @@ const DEVICE_KEY_STORAGE = 'nevolium.presentation.device.v1'
 const WINDOW_KEY_STORAGE = 'nevolium.presentation.window.v1'
 const PROFILE_STORAGE = 'nevolium.presentation.profile.v2'
 const AMBIENCE_STORAGE = 'nevolium.presentation.ambience.v1'
+const SURFACE_STORAGE = 'nevolium.presentation.surface.v1'
 const WORKSPACE_KEY_PART_MAX_LENGTH = 40
 const PROFILE_VALUES = new Set<CockpitProfile>(['balanced', 'focus', 'review'])
 const AMBIENCE_VALUES = new Set<CockpitAmbience>(['neural', 'calm', 'minimal'])
 
 export type CockpitAmbience = 'neural' | 'calm' | 'minimal'
+export type CockpitSurface = 'home' | 'cockpit'
 
 function classifyViewport(width: number): CockpitDeviceClass {
   if (width < 640) return 'phone'
@@ -86,6 +88,24 @@ export function saveCockpitAmbience(ambience: CockpitAmbience, subjectRef?: stri
     window.localStorage.setItem(preferenceKey(AMBIENCE_STORAGE, subjectRef), ambience)
   } catch {
     // Presentation still works for storage-restricted/private browsing sessions.
+  }
+}
+
+export function getSavedCockpitSurface(subjectRef?: string | null): CockpitSurface {
+  try {
+    return window.localStorage.getItem(preferenceKey(SURFACE_STORAGE, subjectRef)) === 'cockpit'
+      ? 'cockpit'
+      : 'home'
+  } catch {
+    return 'home'
+  }
+}
+
+export function saveCockpitSurface(surface: CockpitSurface, subjectRef?: string | null) {
+  try {
+    window.localStorage.setItem(preferenceKey(SURFACE_STORAGE, subjectRef), surface)
+  } catch {
+    // The home and cockpit remain navigable when browser storage is unavailable.
   }
 }
 

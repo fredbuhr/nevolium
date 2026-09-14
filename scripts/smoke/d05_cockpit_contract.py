@@ -54,10 +54,24 @@ def main() -> None:
     assert "src/main.tsx" not in popout and "id=\"root\"" not in popout
 
     cockpit = (WEB / "src/CockpitShell.tsx").read_text(encoding="utf-8")
+    home = (WEB / "src/MyceliumHome.tsx").read_text(encoding="utf-8")
     settings = (WEB / "src/InstanceModelSettings.tsx").read_text(encoding="utf-8")
     device = (WEB / "src/lib/cockpitDevice.ts").read_text(encoding="utf-8")
     styles = (WEB / "src/styles.css").read_text(encoding="utf-8")
     assert "Control+K Meta+K" in cockpit
+    assert "Control+K Meta+K" in home
+    assert "mycelium-network" in home and "mycelium-space-node" in home
+    assert "Où voulez-vous reprendre le fil" in home
+    for delivered_space in (
+        "Assistant",
+        "Actualités",
+        "Recherche",
+        "Aujourd’hui",
+        "Projets",
+        "Documents",
+    ):
+        assert delivered_space in home, delivered_space
+    assert "model-settings" in home and "isAdmin" in home
     assert "role=\"dialog\"" in cockpit and "aria-modal=\"true\"" in cockpit
     assert "handlePaletteDialogKey" in cockpit and "paletteReturnFocusRef" in cockpit
     assert "disableDnd={deviceClass === 'phone'}" in cockpit
@@ -71,6 +85,8 @@ def main() -> None:
     assert "WORKSPACE_KEY_PART_MAX_LENGTH = 40" in device
     assert "preferenceKey(PROFILE_STORAGE, subjectRef)" in device
     assert "preferenceKey(AMBIENCE_STORAGE, subjectRef)" in device
+    assert "preferenceKey(SURFACE_STORAGE, subjectRef)" in device
+    assert "getSavedCockpitSurface" in device and "saveCockpitSurface" in device
     assert "saveTimer = undefined" in cockpit
     assert "legacyWorkspaceKeys" in cockpit and "cockpit.main" in (WEB / "src/App.tsx").read_text(
         encoding="utf-8"
@@ -100,8 +116,9 @@ def main() -> None:
         assert forbidden not in reachable_source, forbidden
 
     print(
-        "D05 COCKPIT CONTRACT PASS: neural identity, account preferences, per-window layouts, "
-        "panel popouts, safe restore, keyboard/touch, installable icons and no-WebGL baseline are present"
+        "D05 COCKPIT CONTRACT PASS: functional Mycelium home, neural identity, account preferences, "
+        "per-window layouts, panel popouts, safe restore, keyboard/touch, installable icons and "
+        "no-WebGL baseline are present"
     )
 
 

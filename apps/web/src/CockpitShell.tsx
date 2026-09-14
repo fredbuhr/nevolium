@@ -41,7 +41,9 @@ type CockpitShellProps = {
   apiUrl?: string
   deviceClass: CockpitDeviceClass
   extraPanels?: CockpitExtraPanel[]
+  initialPanelKey?: string
   legacyWorkspaceKeys?: string[]
+  onOpenHome: () => void
   profile: CockpitProfile
   slots: CockpitSlots
   workspaceKey: string
@@ -302,7 +304,9 @@ export default function CockpitShell({
   apiUrl = DEFAULT_API_URL,
   deviceClass,
   extraPanels = [],
+  initialPanelKey,
   legacyWorkspaceKeys = [],
+  onOpenHome,
   profile,
   slots,
   workspaceKey,
@@ -468,6 +472,8 @@ export default function CockpitShell({
         } else if (!api.activePanel) {
           createDefaultLayout(api, profile, deviceClass, normalizedExtras)
         }
+        const requestedPanel = paletteItems.find((item) => item.key === initialPanelKey)
+        if (requestedPanel) requestedPanel.open(api)
         attachPersistence(api)
         if (restoredLegacyLayout) {
           queueLayoutSave(api)
@@ -496,6 +502,8 @@ export default function CockpitShell({
       deviceClass,
       legacyWorkspaceKeys,
       normalizedExtras,
+      initialPanelKey,
+      paletteItems,
       profile,
       workspaceKey,
     ],
@@ -592,6 +600,10 @@ export default function CockpitShell({
     <CockpitContentContext.Provider value={cockpitContent}>
       <section className="cockpit-shell" aria-label="Cockpit Nevolium">
         <nav className="cockpit-toolbar" aria-label="Navigation du cockpit">
+          <button className="cockpit-home-button" type="button" onClick={onOpenHome}>
+            <span aria-hidden="true">⌂</span>
+            Accueil
+          </button>
           <button
             className="quick-access-button"
             type="button"

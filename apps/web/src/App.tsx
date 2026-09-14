@@ -4,6 +4,7 @@ import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
 import InstanceModelSettings from './InstanceModelSettings'
 import KnowledgePanel from './KnowledgePanel'
+import MyceliumHome, { type MyceliumDestinationKey } from './MyceliumHome'
 import NewsWorkspacePanel, {
   type NewsBrief,
   type NewsMode,
@@ -24,10 +25,13 @@ import {
   getPresentationDeviceKey,
   getSavedCockpitAmbience,
   getSavedCockpitProfile,
+  getSavedCockpitSurface,
   legacyCockpitWorkspaceKey,
   saveCockpitAmbience,
   saveCockpitProfile,
+  saveCockpitSurface,
   type CockpitAmbience,
+  type CockpitSurface,
   useCockpitDeviceClass,
 } from './lib/cockpitDevice'
 import {
@@ -92,6 +96,10 @@ export default function App() {
   const [ambience, setAmbience] = useState<CockpitAmbience>(() =>
     getSavedCockpitAmbience(auth.subject),
   )
+  const [surface, setSurface] = useState<CockpitSurface>(() =>
+    getSavedCockpitSurface(auth.subject),
+  )
+  const [requestedPanelKey, setRequestedPanelKey] = useState<MyceliumDestinationKey>('command')
   const [deviceKey] = useState(() => getPresentationDeviceKey())
   const [windowKey] = useState(() => getPresentationWindowKey())
   const deviceClass = useCockpitDeviceClass()
@@ -394,132 +402,167 @@ export default function App() {
     />
   )
 
+  const updateProfile = (selected: CockpitProfile) => {
+    saveCockpitProfile(selected, auth.subject)
+    setProfile(selected)
+  }
+
+  const updateAmbience = (selected: CockpitAmbience) => {
+    saveCockpitAmbience(selected, auth.subject)
+    setAmbience(selected)
+  }
+
+  const openSpace = (key: MyceliumDestinationKey) => {
+    setRequestedPanelKey(key)
+    saveCockpitSurface('cockpit', auth.subject)
+    setSurface('cockpit')
+  }
+
+  const openHome = () => {
+    saveCockpitSurface('home', auth.subject)
+    setSurface('home')
+  }
+
+  const requestInstallation = () => {
+    if (!installPrompt) return
+    void installPrompt
+      .prompt()
+      .then(() => installPrompt.userChoice)
+      .then(() => setInstallPrompt(null))
+      .catch(() => setInstallPrompt(null))
+  }
+
   return (
-    <main className={`app-shell ambience-${ambience}`}>
-      <header className="app-header">
-        <div className="brand-lockup">
-          <img className="mycelium-mark" src="/icons/nevolium.svg" alt="" aria-hidden="true" />
-          <div>
-            <span className="eyebrow">MYCÉLIUM PERSONNEL</span>
-            <h1>Nevolium</h1>
-          </div>
-        </div>
-        <div className="session-summary">
-          <span>{auth.username || auth.email || 'Session privée'}</span>
-          <small>{isAdmin ? 'administrateur' : 'utilisateur'}</small>
-        </div>
-      </header>
-
-      <section className="cockpit-context" aria-label="Contexte du cockpit">
-        <div>
-          <span className={`connection-state ${online ? 'is-online' : 'is-offline'}`}>
-            <i aria-hidden="true" />
-            {online ? 'En ligne' : 'Hors connexion'}
-          </span>
-          <span>{{ phone: 'Téléphone', tablet: 'Tablette', desktop: 'Bureau' }[deviceClass]}</span>
-          <span>Disposition privée</span>
-        </div>
-        <div>
-          <label>
-            Profil
-            <select
-              value={profile}
-              onChange={(event) => {
-                const selected = event.target.value as CockpitProfile
-                saveCockpitProfile(selected, auth.subject)
-                setProfile(selected)
-              }}
-            >
-              <option value="balanced">Équilibré</option>
-              <option value="focus">Concentration</option>
-              <option value="review">Revue</option>
-            </select>
-          </label>
-          <label>
-            Ambiance
-            <select
-              value={ambience}
-              onChange={(event) => {
-                const selected = event.target.value as CockpitAmbience
-                saveCockpitAmbience(selected, auth.subject)
-                setAmbience(selected)
-              }}
-            >
-              <option value="neural">Neurale</option>
-              <option value="calm">Calme</option>
-              <option value="minimal">Minimale</option>
-            </select>
-          </label>
-          {installPrompt ? (
-            <button
-              type="button"
-              onClick={() => {
-                void installPrompt.prompt().then(() => installPrompt.userChoice).then(() => {
-                  setInstallPrompt(null)
-                }).catch(() => setInstallPrompt(null))
-              }}
-            >
-              Installer l’app
+    <main className={`app-shell ambience-${ambience} surface-${surface}`}>
+      {surface === 'home' ? (
+        <MyceliumHome
+          ambience={ambience}
+          deviceClass={deviceClass}
+          installAvailable={Boolean(installPrompt)}
+          isAdmin={isAdmin}
+          online={online}
+          profile={profile}
+          sessionName={auth.username || auth.email || 'Nevolium'}
+          onAmbienceChange={updateAmbience}
+          onInstall={requestInstallation}
+          onOpenSpace={openSpace}
+          onProfileChange={updateProfile}
+        />
+      ) : (
+        <>
+          <header className="app-header cockpit-app-header">
+            <button className="brand-lockup" type="button" onClick={openHome}>
+              <img className="mycelium-mark" src="/icons/nevolium.svg" alt="" aria-hidden="true" />
+              <div>
+                <span className="eyebrow">PENSER · RELIER · AVANCER</span>
+                <h1>Nevolium</h1>
+              </div>
             </button>
+            <div className="session-summary">
+              <span>{auth.username || auth.email || 'Session privée'}</span>
+              <small>{isAdmin ? 'administrateur' : 'utilisateur'}</small>
+            </div>
+          </header>
+
+          <section className="cockpit-context" aria-label="Contexte du cockpit">
+            <div>
+              <span className={`connection-state ${online ? 'is-online' : 'is-offline'}`}>
+                <i aria-hidden="true" />
+                {online ? 'En ligne' : 'Hors connexion'}
+              </span>
+              <span>{{ phone: 'Téléphone', tablet: 'Tablette', desktop: 'Bureau' }[deviceClass]}</span>
+              <span>Disposition privée</span>
+            </div>
+            <div>
+              <label>
+                Profil
+                <select
+                  value={profile}
+                  onChange={(event) => updateProfile(event.target.value as CockpitProfile)}
+                >
+                  <option value="balanced">Équilibré</option>
+                  <option value="focus">Concentration</option>
+                  <option value="review">Revue</option>
+                </select>
+              </label>
+              <label>
+                Ambiance
+                <select
+                  value={ambience}
+                  onChange={(event) => updateAmbience(event.target.value as CockpitAmbience)}
+                >
+                  <option value="neural">Neurale</option>
+                  <option value="calm">Calme</option>
+                  <option value="minimal">Minimale</option>
+                </select>
+              </label>
+              {installPrompt ? (
+                <button type="button" onClick={requestInstallation}>
+                  Installer l’app
+                </button>
+              ) : null}
+            </div>
+          </section>
+
+          {!online ? (
+            <div className="offline-banner" role="status">
+              Vos espaces restent visibles, mais les données et les actions nécessitent une connexion.
+            </div>
           ) : null}
-        </div>
-      </section>
 
-      {!online ? (
-        <div className="offline-banner" role="status">
-          Vos espaces restent visibles, mais les données et les actions nécessitent une connexion.
-        </div>
-      ) : null}
-
-      <CockpitShell
-        key={workspaceKey}
-        apiUrl={API_URL}
-        deviceClass={deviceClass}
-        legacyWorkspaceKeys={legacyWorkspaceKeys}
-        profile={profile}
-        workspaceKey={workspaceKey}
-        slots={{
-          command: commandPanel,
-          news: newsPanel,
-          research: <ResearchWorkspace apiUrl={API_URL} />,
-        }}
-        extraPanels={[
-          {
-            key: 'today',
-            id: 'today-workspace',
-            title: 'Aujourd’hui',
-            keywords: ['journée', 'tâches', 'priorités'],
-            content: <TodayWorkspace apiUrl={API_URL} />,
-            minimumWidth: 280,
-          },
-          {
-            key: 'projects',
-            id: 'projects-workspace',
-            title: 'Projets',
-            keywords: ['projet', 'ouvrir', 'tâches'],
-            content: <ProjectsWorkspace apiUrl={API_URL} />,
-          },
-          {
-            key: 'knowledge',
-            id: 'knowledge-workspace',
-            title: 'Inspecteur',
-            keywords: ['document', 'documents', 'version', 'chunk', 'knowledge'],
-            content: <KnowledgePanel apiUrl={API_URL} />,
-          },
-          ...(isAdmin
-            ? [
-                {
-                  key: 'model-settings',
-                  id: 'model-settings-workspace',
-                  title: 'Réglages API',
-                  keywords: ['fournisseur', 'modèle', 'clé', 'administrateur'],
-                  content: <InstanceModelSettings apiUrl={API_URL} />,
-                  minimumWidth: 300,
-                },
-              ]
-            : []),
-        ]}
-      />
+          <CockpitShell
+            key={workspaceKey}
+            apiUrl={API_URL}
+            deviceClass={deviceClass}
+            initialPanelKey={requestedPanelKey}
+            legacyWorkspaceKeys={legacyWorkspaceKeys}
+            onOpenHome={openHome}
+            profile={profile}
+            workspaceKey={workspaceKey}
+            slots={{
+              command: commandPanel,
+              news: newsPanel,
+              research: <ResearchWorkspace apiUrl={API_URL} />,
+            }}
+            extraPanels={[
+              {
+                key: 'today',
+                id: 'today-workspace',
+                title: 'Aujourd’hui',
+                keywords: ['journée', 'tâches', 'priorités'],
+                content: <TodayWorkspace apiUrl={API_URL} />,
+                minimumWidth: 280,
+              },
+              {
+                key: 'projects',
+                id: 'projects-workspace',
+                title: 'Projets',
+                keywords: ['projet', 'ouvrir', 'tâches'],
+                content: <ProjectsWorkspace apiUrl={API_URL} />,
+              },
+              {
+                key: 'knowledge',
+                id: 'knowledge-workspace',
+                title: 'Documents',
+                keywords: ['document', 'documents', 'inspecteur', 'version', 'knowledge'],
+                content: <KnowledgePanel apiUrl={API_URL} />,
+              },
+              ...(isAdmin
+                ? [
+                    {
+                      key: 'model-settings',
+                      id: 'model-settings-workspace',
+                      title: 'Réglages API',
+                      keywords: ['fournisseur', 'modèle', 'clé', 'administrateur'],
+                      content: <InstanceModelSettings apiUrl={API_URL} />,
+                      minimumWidth: 300,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </>
+      )}
     </main>
   )
 }

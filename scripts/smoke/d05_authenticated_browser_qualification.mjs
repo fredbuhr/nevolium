@@ -65,6 +65,7 @@ try {
   })
   const adminPage = await adminContext.newPage()
   await login(adminPage, 'nevolium-dev', 'nevolium-dev')
+  await adminPage.locator('.mycelium-network').waitFor({ state: 'visible' })
   await adminPage.getByText('nevolium-dev', { exact: true }).waitFor()
   await adminPage.getByText('administrateur', { exact: true }).waitFor()
   await adminPage.getByRole('button', { name: 'Réglages API', exact: true }).click()
@@ -94,6 +95,7 @@ try {
   })
   const userPage = await userContext.newPage()
   await login(userPage, 'nevolium-dev-2', 'nevolium-dev-2')
+  await userPage.locator('.mycelium-network').waitFor({ state: 'visible' })
   await userPage.getByText('nevolium-dev-2', { exact: true }).waitFor()
   await userPage.getByText('utilisateur', { exact: true }).waitFor()
   assert.equal(

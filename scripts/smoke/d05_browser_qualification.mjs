@@ -9,6 +9,7 @@ const outputDirectory = path.join(repositoryRoot, 'artifacts/d05-browser')
 const previewOrigin = 'http://127.0.0.1:4173'
 const apiOrigin = 'http://127.0.0.1:8999'
 const playwrightModule = process.env.NEVOLIUM_PLAYWRIGHT_MODULE
+const chromiumExecutable = process.env.NEVOLIUM_CHROMIUM_EXECUTABLE
 
 assert(playwrightModule, 'NEVOLIUM_PLAYWRIGHT_MODULE must point to the ephemeral Playwright module')
 const { chromium } = await import(pathToFileURL(playwrightModule).href)
@@ -145,13 +146,52 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
+  await page.getByRole('heading', { name: 'Où voulez-vous reprendre le fil ?' }).waitFor()
   const expectedDeviceLabel = viewport.width < 640 ? 'Téléphone' : viewport.width < 1024 ? 'Tablette' : 'Bureau'
   const deviceLabel = page.getByText(expectedDeviceLabel, { exact: true })
-  await deviceLabel.waitFor({ state: 'attached' })
+  await deviceLabel.waitFor({ state: 'visible' })
+  assert.equal(await page.locator('.mycelium-network').count(), 1, `${name}: réseau Mycelium absent`)
   assert.equal(
-    await deviceLabel.isVisible(),
+    await page.locator('.mycelium-space-node').count(),
+    6,
+    `${name}: les six espaces livrés doivent être accessibles`,
+  )
+  assert.equal(await page.locator('canvas').count(), 0, `${name}: l’accueil ne doit pas exiger WebGL`)
+
+  const homeDimensions = await page.evaluate(() => ({
+    innerWidth: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+  assert(
+    homeDimensions.scrollWidth <= homeDimensions.innerWidth + 1,
+    `${name}: débordement horizontal de l’accueil ${homeDimensions.scrollWidth}/${homeDimensions.innerWidth}`,
+  )
+
+  await page.screenshot({
+    path: path.join(outputDirectory, `nevolium-d05-${name}-home.png`),
+    fullPage: true,
+  })
+
+  const homeSearch = page.getByRole('button', { name: /Rechercher dans Nevolium/ })
+  await homeSearch.focus()
+  await page.keyboard.press('Control+K')
+  await page.getByRole('dialog', { name: 'Ouvrir un espace' }).waitFor()
+  await page.getByRole('searchbox', { name: 'Rechercher un espace' }).fill('documents')
+  await page.getByRole('option', { name: /Documents/ }).waitFor()
+  await page.keyboard.press('Escape')
+  await page.waitForFunction(() => document.activeElement?.classList.contains('home-global-search'))
+
+  await page.locator('.mycelium-space-node[data-space="command"]').click()
+  await page.getByRole('heading', {
+    name: 'Dites ce que vous cherchez à comprendre ou à faire.',
+  }).waitFor()
+
+  const cockpitDeviceLabel = page.getByText(expectedDeviceLabel, { exact: true })
+  await cockpitDeviceLabel.waitFor({ state: 'attached' })
+  assert.equal(
+    await cockpitDeviceLabel.isVisible(),
     name !== 'phone',
-    `${name}: visibilité inattendue de la classe d’appareil`,
+    `${name}: visibilité inattendue de la classe d’appareil dans le cockpit`,
   )
   const privateLayoutLabel = page.getByText('Disposition privée', { exact: true })
   await privateLayoutLabel.waitFor({ state: 'attached' })
@@ -166,7 +206,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   await page.keyboard.press('Control+K')
   await page.getByRole('dialog', { name: 'Ouvrir un espace' }).waitFor()
   await page.getByRole('searchbox', { name: 'Rechercher un espace' }).fill('documents')
-  await page.getByRole('option', { name: /Inspecteur/ }).waitFor()
+  await page.getByRole('option', { name: /Documents/ }).waitFor()
   await page.keyboard.press('Escape')
   assert.equal(await page.getByRole('dialog').count(), 0, `${name}: la palette doit se fermer`)
   await page.waitForFunction(() => document.activeElement?.classList.contains('quick-access-button'))
@@ -277,7 +317,10 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 let browser
 try {
   await waitForPreview()
-  browser = await chromium.launch({ headless: true })
+  browser = await chromium.launch({
+    headless: true,
+    ...(chromiumExecutable ? { executablePath: chromiumExecutable } : {}),
+  })
   await qualify(browser, 'desktop', { width: 1440, height: 1000 }, { detach: true })
   await qualify(browser, 'desktop-admin', { width: 1440, height: 1000 }, {
     inspectAdmin: true,
