@@ -210,6 +210,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     )
     assert.equal(await page.getByLabel('Clé API').getAttribute('type'), 'password')
     await page.getByText(/exemples non qualifiés/).waitFor()
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({
       path: path.join(outputDirectory, 'nevolium-d05-desktop-admin.png'),
       fullPage: true,

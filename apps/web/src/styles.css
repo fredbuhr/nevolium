@@ -415,6 +415,7 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
 .command-palette-results > button.is-selected { border-color: var(--line-strong); background: rgba(45, 231, 224, .09); }
 
 @media (max-width: 1100px) {
+  .command-form { grid-template-columns: 1fr; }
   .news-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
