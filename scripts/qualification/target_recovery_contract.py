@@ -1,6 +1,7 @@
 """Static and unit contracts for the private-target recovery runner."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -62,6 +63,68 @@ class Contract(unittest.TestCase):
         self.assertEqual(FREE_TIER_GUARD_BYTES, 9 * 1024**3)
         self.assertLess(FREE_TIER_GUARD_BYTES, 10_000_000_000)
 
+    def test_recovery_material_uses_only_three_unseal_shares(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runner = self.runner(root)
+            keys = ["share-one", "share-two", "share-three"]
+            revoked_root = "revoked-root-token"
+            runner.openbao_recovery_file.write_text(json.dumps({
+                "unseal_keys_b64": keys,
+                "unseal_threshold": 2,
+                "root_token": revoked_root,
+            }))
+            self.assertEqual(runner.recovery_material(), keys)
+            self.assertEqual(runner.scrub(" ".join([*keys, revoked_root])), (
+                "[REDACTED] [REDACTED] [REDACTED] [REDACTED]"
+            ))
+
+    def test_recovery_material_rejects_wrong_share_layout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runner = self.runner(root)
+            for payload in (
+                {"unseal_keys_b64": ["one", "two"], "unseal_threshold": 2},
+                {"unseal_keys_b64": ["one", "two", "three"], "unseal_threshold": 1},
+            ):
+                runner.openbao_recovery_file.write_text(json.dumps(payload))
+                with self.assertRaises(RuntimeError):
+                    runner.recovery_material()
+
+    def test_workload_fingerprint_ignores_only_dynamic_ttl(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            runner = self.runner(root)
+            runner.env_file.write_text("OPENBAO_TOKEN=s." + "a" * 24 + "\n")
+
+            def lookup(ttl: int):
+                return mock.Mock(stdout=json.dumps({"data": {
+                    "accessor": "stable-accessor",
+                    "creation_time": 1_700_000_000,
+                    "creation_ttl": 604800,
+                    "display_name": "nevolium-core",
+                    "entity_id": "",
+                    "explicit_max_ttl": 0,
+                    "issue_time": "2026-09-12T00:00:00Z",
+                    "meta": None,
+                    "num_uses": 0,
+                    "orphan": True,
+                    "path": "auth/token/create",
+                    "period": 604800,
+                    "policies": ["nevolium-core"],
+                    "renewable": True,
+                    "ttl": ttl,
+                    "type": "service",
+                }}))
+
+            with mock.patch.object(
+                Runner, "bao_as", side_effect=(lookup(500000), lookup(499000))
+            ):
+                source = runner.workload_record(["source"])
+                restored = runner.workload_record(["isolated"])
+            self.assertEqual(source["record_sha256"], restored["record_sha256"])
+            self.assertEqual(source["period_seconds"], 604800)
+
     def test_evidence_case_returns_details_without_changing_gate(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "evidence.json"
@@ -84,6 +147,11 @@ class Contract(unittest.TestCase):
         self.assertIn('"--read-only"', runner)
         self.assertIn('"--cap-drop", "ALL"', runner)
         self.assertNotIn("NEVOLIUM_RECOVERY_PROBE_IMAGE", runner)
+        self.assertIn('default=Path("/run/nevolium/openbao-recovery.json")', runner)
+        self.assertIn('self.workload_record(self.isolated)', runner)
+        self.assertIn('"openbao_workload_record_restored": True', runner)
+        self.assertIn('{"unseal_keys_b64": keys, "unseal_threshold": 2}', runner)
+        self.assertNotIn('["write", "-format=json", self.openbao_path', runner)
 
 
 if __name__ == "__main__":

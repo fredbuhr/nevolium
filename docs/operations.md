@@ -277,20 +277,27 @@ production service was originally activated with more than one overlay; the sing
 
 The target drill requires the operator to retain the independently chosen Restic password outside
 the server. It refuses a raw source set at or above 9 GiB, leaving headroom below B2's 10 GB free
-tier, then performs a full pack read from the remote repository. It snapshots the persistent
-OpenBao recovery material separately inside the encrypted repository so a fresh instance can be
-unsealed without relying on an unencrypted server-side copy. Credentials and recovery material are
-never written to the report or command output.
+tier, then performs a full pack read from the remote repository. It snapshots only the three
+OpenBao unseal shares and their threshold separately inside the encrypted repository so a fresh
+instance can be unsealed without relying on an unencrypted server-side copy. The historical
+recovery export is supplied temporarily as a root-owned `0600` file below `/run`; an old revoked
+root token in that export is ignored. The sanitized recovery snapshot contains no root token.
+Credentials and recovery material are never written to the report or command output.
 
 ```bash
-sudo python3 scripts/qualification/target_recovery.py
+sudo python3 scripts/qualification/target_recovery.py \
+  --openbao-recovery-file /run/nevolium/openbao-recovery.json
 ```
 
-The runner uses disposable markers rather than private user content. It removes them from the live
-stores after the quiesced snapshot, restores only into a randomly named Compose project with new
-volumes and no published ports, verifies PostgreSQL, JetStream, the original SeaweedFS bytes and an
-OpenBao secret, then deletes the isolated project on success. On failure it stops the isolated
-services, preserves their volumes for inspection and deletes plaintext staging recovery material.
+The runner uses disposable markers rather than private user content in PostgreSQL, JetStream and
+SeaweedFS. OpenBao is not modified with a privileged test secret: the existing periodic
+`nevolium-core` token performs `lookup-self`, and the runner fingerprints its stable persisted
+record (accessor, policy, period and parentage) before backup. It removes the three disposable
+markers from the live stores after the quiesced snapshot, restores only into a randomly named
+Compose project with new volumes and no published ports, verifies the three markers and the exact
+OpenBao workload-token record, then deletes the isolated project on success. On failure it stops
+the isolated services, preserves their volumes for inspection and deletes plaintext staging
+recovery material.
 
 ## Restore
 

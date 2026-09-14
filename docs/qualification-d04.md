@@ -36,7 +36,7 @@ est historique ; ne pas exécuter ses prochaines actions.
 | Research via OpenAI | Deux nouvelles Tasks séquentielles ; chacune termine dans la borne existante de 600 s, fait `web.search` puis `web.fetch`, produit une synthèse factuelle citée ; deux usages modèle avec tokens/coût reportés et réservations réglées | Deux résultats canoniques consultables, sans nouvel état financier inconnu ni doublon |
 | Charge du pilote | Lectures 1/10/100/1 000 clients virtuels, concurrence 20, zéro erreur, p95 ≤2 s et 180 s maximum par palier ; puis un Research + un PDF + une projection mémoire sous les quotas existants | Pas d'OOM, dépassement de quota ni travail oublié ; PDF ≤210 s, mémoire ≤240 s et Research ≤600 s hors attentes d'admission mesurées séparément |
 | Upgrade et rollback | Garder les anciennes images/configurations ; activer Core/Worker/Web/LiteLLM cohérents, contrôler santé et frontières, revenir aux images précédentes puis au candidat, sans rétrograder le schéma ni exécuter d'ancienne Task | Données/IDs inchangés, services prêts, OIDC/accès propriétaire et refus anonyme corrects |
-| Restauration indépendante | Backup Restic chiffré de la cible, transfert hors serveur, restauration en environnement isolé sur volumes neufs avec les procédures existantes | Lecture SQL, message JetStream, objet SeaweedFS et secret OpenBao attendus ; rapport identifiant source/destination et versions |
+| Restauration indépendante | Backup Restic chiffré de la cible, transfert hors serveur, restauration en environnement isolé sur volumes neufs avec les procédures existantes | Lecture SQL, message JetStream, objet SeaweedFS et enregistrement persistant du jeton workload OpenBao attendus ; rapport identifiant source/destination et versions |
 
 Ce sont des critères de pilote, pas une certification commerciale ni 1 000 générations simultanées.
 La restauration de deux VM CI prouve le mécanisme, pas encore la récupération du serveur utilisateur.
@@ -131,9 +131,13 @@ Les scripts CI destructifs `recovery.py`/`local_services.py` restent réservés 
 Ne jamais superposer un overlay de qualification et la production existante.
 Le runner privé `scripts/qualification/target_recovery.py` est distinct : il exige la branche D04
 propre, un dépôt B2 HTTPS/S3, les fichiers privés root `0600`, l'absence de travail/outbox et un
-projet Compose de restauration aléatoire. Il réutilise `backup.sh`/`restore.sh`, restaure sur volumes
-neufs sans ports publiés, relit les quatre marqueurs et prouve que les compteurs de production sont
-inchangés. Le mot de passe Restic doit être enregistré hors serveur avant son unique saisie masquée.
+projet Compose de restauration aléatoire. L'export OpenBao déchiffré n'est fourni que temporairement
+dans `/run`, root `0600`. Le runner n'utilise que ses trois parts (seuil deux), ignore tout ancien
+jeton root révoqué et ne sauvegarde qu'une copie assainie sans jeton root dans Restic. Il réutilise
+`backup.sh`/`restore.sh`, restaure sur volumes neufs sans ports publiés, relit les trois marqueurs
+jetables et compare l'enregistrement persistant du jeton workload OpenBao sans écriture privilégiée.
+Il prouve aussi que les compteurs de production sont inchangés. Le mot de passe Restic doit être
+enregistré hors serveur avant son unique saisie masquée.
 
 ## Règle de clôture
 

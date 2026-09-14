@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Qualify an encrypted off-host Restic backup of the private production target.
 
-The runner writes disposable markers to the four canonical stores, calls the existing
-quiesced backup and restore procedures, removes the source markers, and restores the
-remote snapshot into a new Compose project. Credentials never appear in reports or logs.
+The runner writes disposable markers to PostgreSQL, NATS and SeaweedFS, fingerprints
+the existing OpenBao workload-token record, calls the existing quiesced backup and
+restore procedures, removes the source markers, and restores the remote snapshot into
+a new Compose project. Credentials never appear in reports or logs.
 """
 
 from __future__ import annotations
@@ -103,6 +104,7 @@ class Runner:
         self.isolated_ops: list[str] = []
         self.isolated_project = ""
         self.recovery_probe_image = ""
+        self.openbao_workload_record_sha256 = ""
         self.isolated_started = False
         self.source_markers_created = False
         self.probe_id = uuid.uuid4()
@@ -111,8 +113,6 @@ class Runner:
         self.nats_stream = f"D04_RECOVERY_{suffix.upper()}"
         self.nats_subject = f"d04.recovery.{suffix}"
         self.seaweed_path = f"d04-recovery/{suffix}.bin"
-        self.openbao_path = f"secret/data/nevolium/d04-recovery-{suffix}"
-        self.openbao_metadata_path = f"secret/metadata/nevolium/d04-recovery-{suffix}"
 
     def emit(self, event: str, **values: object) -> None:
         print(json.dumps({"event": event, **values}, separators=(",", ":")), flush=True)
@@ -476,18 +476,82 @@ SELECT concat_ws('|',
                 allowed=(0, 1),
             )
 
-    def recovery_material(self, path: Path | None = None) -> tuple[list[str], str]:
+    def recovery_material(self, path: Path | None = None) -> list[str]:
         source = path or self.openbao_recovery_file
         value = json.loads(source.read_text())
+        if not isinstance(value, dict):
+            raise RuntimeError("materiel de recuperation OpenBao inattendu")
         keys = value.get("unseal_keys_b64") or value.get("keys_base64")
         root_token = value.get("root_token")
-        if not isinstance(keys, list) or len(keys) < 2 or not all(
+        threshold = value.get("unseal_threshold", value.get("secret_threshold", 2))
+        if not isinstance(keys, list) or len(keys) != 3 or not all(
             isinstance(key, str) and key for key in keys
-        ) or not isinstance(root_token, str) or not root_token:
+        ) or threshold != 2:
             raise RuntimeError("materiel de recuperation OpenBao inattendu")
         self.redactions.update(keys)
-        self.redactions.add(root_token)
-        return keys, root_token
+        if isinstance(root_token, str) and root_token:
+            self.redactions.add(root_token)
+        return keys
+
+    def workload_record(self, base: list[str]) -> dict[str, object]:
+        production = self.env_values(self.env_file)
+        workload_token = production.get("OPENBAO_TOKEN", "")
+        if not workload_token:
+            raise RuntimeError("OPENBAO_TOKEN absent")
+        self.redactions.add(workload_token)
+        value = json.loads(
+            self.bao_as(
+                base,
+                workload_token,
+                ["token", "lookup", "-format=json"],
+            ).stdout
+        )
+        data = value.get("data") if isinstance(value, dict) else None
+        if not isinstance(data, dict):
+            raise RuntimeError("reponse lookup-self OpenBao inattendue")
+        try:
+            period = int(data.get("period") or 0)
+        except (TypeError, ValueError):
+            raise RuntimeError("periode du jeton OpenBao inattendue") from None
+        if (
+            not isinstance(data.get("accessor"), str)
+            or not data["accessor"]
+            or data.get("display_name") != "nevolium-core"
+            or data.get("policies") != ["nevolium-core"]
+            or period != 604800
+            or data.get("renewable") is not True
+            or data.get("orphan") is not True
+        ):
+            raise RuntimeError("identite durable du jeton OpenBao inattendue")
+        stable = {
+            key: data.get(key)
+            for key in (
+                "accessor",
+                "creation_time",
+                "creation_ttl",
+                "display_name",
+                "entity_id",
+                "explicit_max_ttl",
+                "issue_time",
+                "meta",
+                "num_uses",
+                "orphan",
+                "path",
+                "period",
+                "policies",
+                "renewable",
+                "type",
+            )
+        }
+        serialized = json.dumps(stable, sort_keys=True, separators=(",", ":"))
+        return {
+            "record_sha256": hashlib.sha256(serialized.encode()).hexdigest(),
+            "accessor_sha256": hashlib.sha256(data["accessor"].encode()).hexdigest(),
+            "policy": "nevolium-core",
+            "period_seconds": period,
+            "orphan": True,
+            "renewable": True,
+        }
 
     def unseal_openbao(self, base: list[str], keys: list[str]) -> None:
         deadline = time.monotonic() + 180
@@ -537,12 +601,7 @@ SELECT concat_ws('|',
         raise RuntimeError("service restaure non pret apres 120 secondes") from last_error
 
     def seed_markers(self) -> dict[str, object]:
-        _, root_token = self.recovery_material()
-        production = self.env_values(self.env_file)
-        workload_token = production.get("OPENBAO_TOKEN", "")
-        if not workload_token:
-            raise RuntimeError("OPENBAO_TOKEN absent")
-        self.redactions.add(workload_token)
+        self.recovery_material()
         inserted = self.query(f"""
 INSERT INTO artifacts (id, project_id, kind, title, content)
 SELECT '{self.probe_id}'::uuid, id, 'd04-recovery-proof',
@@ -562,35 +621,23 @@ RETURNING id;
             SEAWEED_PROBE,
             ["seed", self.seaweed_path, self.probe_value],
         )
-        self.bao_as(
-            self.source,
-            root_token,
-            ["write", "-format=json", self.openbao_path, "-"],
-            input_text=json.dumps({"data": {"value": self.probe_value}}),
-        )
-        readback = json.loads(
-            self.bao_as(
-                self.source,
-                workload_token,
-                ["read", "-format=json", self.openbao_path],
-            ).stdout
-        )
-        if readback["data"]["data"]["value"] != self.probe_value:
-            raise RuntimeError("marqueur OpenBao non relu avant backup")
+        openbao = self.workload_record(self.source)
+        self.openbao_workload_record_sha256 = str(openbao["record_sha256"])
         return {
             "postgres_artifact_id": str(self.probe_id),
             "jetstream": {"stream": self.nats_stream, "sequence": 1},
             "seaweed_object_sha256": hashlib.sha256(self.probe_value.encode()).hexdigest(),
-            "openbao_value_sha256": hashlib.sha256(self.probe_value.encode()).hexdigest(),
+            "openbao_workload": openbao,
         }
 
     def cleanup_source_markers(self) -> dict[str, bool]:
         if not self.source_markers_created:
             return {"needed": False}
-        keys, root_token = self.recovery_material()
+        keys = self.recovery_material()
         outcomes: dict[str, bool] = {}
         try:
             self.unseal_openbao(self.source, keys)
+            outcomes["openbao_unseal"] = True
         except Exception:
             outcomes["openbao_unseal"] = False
         try:
@@ -616,16 +663,6 @@ RETURNING id;
             outcomes["seaweed"] = True
         except Exception:
             outcomes["seaweed"] = False
-        try:
-            self.bao_as(
-                self.source,
-                root_token,
-                ["delete", "-format=json", self.openbao_metadata_path],
-                allowed=(0, 2),
-            )
-            outcomes["openbao"] = True
-        except Exception:
-            outcomes["openbao"] = False
         self.source_markers_created = not all(outcomes.values())
         if not all(outcomes.values()):
             raise RuntimeError("nettoyage incomplet des marqueurs source")
@@ -659,7 +696,7 @@ RETURNING id;
             ),
         )
         self.run(["bash", "scripts/ops/backup.sh"], env=env, timeout=1800)
-        keys, _ = self.recovery_material()
+        keys = self.recovery_material()
         self.unseal_openbao(self.source, keys)
         after = self.snapshots()
         new_primary = [row for row in after if str(row["id"]) not in before]
@@ -668,15 +705,28 @@ RETURNING id;
         primary = str(new_primary[0]["id"])
 
         before_recovery = {str(row["id"]) for row in after}
-        self.run(
-            self.source_ops + [
-                "run", "--rm", "-T", "-v",
-                f"{self.openbao_recovery_file}:/recovery/openbao-recovery.json:ro",
-                "restic", "backup", "/recovery/openbao-recovery.json",
-                "--tag", "nevolium", "--tag", "d04-openbao-recovery-material",
-            ],
-            timeout=600,
-        )
+        with tempfile.TemporaryDirectory(
+            prefix="nevolium-d04-recovery.", dir="/run"
+        ) as directory:
+            os.chmod(directory, 0o700)
+            sanitized = Path(directory) / "openbao-recovery.json"
+            self.atomic_private_write(
+                sanitized,
+                json.dumps(
+                    {"unseal_keys_b64": keys, "unseal_threshold": 2},
+                    separators=(",", ":"),
+                )
+                + "\n",
+            )
+            self.run(
+                self.source_ops + [
+                    "run", "--rm", "-T", "-v",
+                    f"{sanitized}:/recovery/openbao-recovery.json:ro",
+                    "restic", "backup", "/recovery/openbao-recovery.json",
+                    "--tag", "nevolium", "--tag", "d04-openbao-recovery-material",
+                ],
+                timeout=600,
+            )
         final = self.snapshots()
         recovery = [row for row in final if str(row["id"]) not in before_recovery]
         if len(recovery) != 1:
@@ -740,11 +790,9 @@ RETURNING id;
         else:
             raise RuntimeError("PostgreSQL restaure non pret")
 
-        keys, _ = self.recovery_material(restored_recovery)
+        keys = self.recovery_material(restored_recovery)
         self.unseal_openbao(self.isolated, keys)
 
-        production = self.env_values(self.env_file)
-        workload_token = production["OPENBAO_TOKEN"]
         sql_value = self.query(
             f"SELECT content->>'value' FROM artifacts WHERE id='{self.probe_id}'::uuid;",
             isolated=True,
@@ -764,13 +812,9 @@ RETURNING id;
         expected_digest = hashlib.sha256(self.probe_value.encode()).hexdigest()
         if seaweed_digest != expected_digest:
             raise RuntimeError("objet SeaweedFS restaure invalide")
-        secret = json.loads(self.bao_as(
-            self.isolated,
-            workload_token,
-            ["read", "-format=json", self.openbao_path],
-        ).stdout)
-        if secret["data"]["data"]["value"] != self.probe_value:
-            raise RuntimeError("secret OpenBao restaure invalide")
+        openbao = self.workload_record(self.isolated)
+        if openbao["record_sha256"] != self.openbao_workload_record_sha256:
+            raise RuntimeError("enregistrement workload OpenBao restaure invalide")
         shutil.rmtree(recovery_target)
         return {
             "fresh_volumes": True,
@@ -778,7 +822,7 @@ RETURNING id;
             "jetstream_sequence_1": True,
             "seaweed_original_bytes_sha256": expected_digest,
             "openbao_unsealed_from_encrypted_recovery_material": True,
-            "openbao_workload_read": True,
+            "openbao_workload_record_restored": True,
         }
 
     def cleanup_isolated(self, *, success: bool) -> None:
@@ -805,7 +849,7 @@ def main() -> None:
     parser.add_argument(
         "--openbao-recovery-file",
         type=Path,
-        default=Path("/etc/nevolium/openbao-recovery.json"),
+        default=Path("/run/nevolium/openbao-recovery.json"),
     )
     parser.add_argument(
         "--report-dir", type=Path, default=Path("/var/lib/nevolium/qualification")
@@ -826,7 +870,9 @@ def main() -> None:
         runner.emit("preflight_ok", counts=counts_before, active=active)
         evidence.case("b2-restic-repository", 120, runner.initialize_repository)
         evidence.case("free-tier-source-size", 180, runner.raw_volume_size)
-        evidence.data["markers"] = evidence.case("seed-four-source-markers", 180, runner.seed_markers)
+        evidence.data["markers"] = evidence.case(
+            "seed-source-recovery-evidence", 180, runner.seed_markers
+        )
         evidence.save()
         snapshots = evidence.case("quiesced-encrypted-off-host-backup", 1800, runner.backup)
         evidence.data["snapshots"] = snapshots
