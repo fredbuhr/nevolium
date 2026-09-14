@@ -1,6 +1,6 @@
 # Nevolium : checkpoint de reprise
 
-Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant toute action.
+Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant toute action.
 
 ## Source canonique et lot actif
 
@@ -10,9 +10,9 @@ Dernière revue : 2026-09-13. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Acquis intégrés | Reset R0–R7, H1–H4, D01–D03 ; dernier jalon produit G51 Daily Spine |
 | Lot actif | **D04 : moteurs réels et exploitation, sortie H5** ; D05 non commencé |
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
-| Checkout cible | `5f4bdd35ee2a4743e45986d88523b7d83bb505f8` ; checkout serveur propre à ce SHA |
-| Correctif actif | `0e57de2b840f1692fa5dbff20f3fa98792182207` ; Worker et Web MCP actifs, 10/10 workflows réussis au checkpoint `5f4bdd3…` |
-| Correctif candidat | `bef11ff317565d9d05da278a8fcebaec6b736dc8` ; bootstrap interne corrigé, 10/10 workflows réussis |
+| Checkout cible | `29638ae8dbf05a5dbcc9383d94d5d546ee6c54e7` ; checkout serveur propre à ce SHA |
+| Correctif actif | `bef11ff317565d9d05da278a8fcebaec6b736dc8` ; bootstrap interne déployé, registre génération 2, 10/10 workflows réussis |
+| Correctif candidat | `ae4e7fba0dcb7e426df7f673e36ead9b63d0c356` ; attribution du déploiement LiteLLM publiée, CI en cours |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -33,11 +33,11 @@ prévu en D05 ; tous les fournisseurs n'ont pas à être testés pour fermer H5.
 
 | Composant | Dernier code déployé confirmé |
 |---|---|
-| Core | image `e5c245924d50…`, construite au SHA technique `7fb2211…` |
-| Worker | image `babd504b95f2…`, correctif `0e57de2…` actif |
+| Core | image `69453e7b1348…`, correctif `bef11ff…` actif |
+| Worker | image `695e06a8ca32…`, correctif `bef11ff…` actif |
 | Web | image `55a970ff01c4…`, construite au SHA technique `7fb2211…` |
 | LiteLLM | image épinglée `29a0daf2593d…` ; routes API `smart`/`alternative`, sans route locale |
-| Web MCP | image `fcfba65ffada…`, correctif `0e57de2…` actif ; registre encore à resynchroniser |
+| Web MCP | image `fcfba65ffada…`, correctif `0e57de2…` actif ; registre synchronisé génération 2 |
 
 Le checkout serveur a été avancé à `a4ec6491eb2a44e8ee4e8c4a31b293f562100405`. La première préparation
 s'est arrêtée au contrôle après sortie de l'éditeur sans enregistrer. La reprise sans éditeur a réussi :
@@ -66,6 +66,13 @@ volontairement `endpoint_url`, mais le bootstrap essayait de comparer ce champ a
 `http://nevolium-web-mcp:8090/mcp`. La lecture SQL et l'environnement Worker prouvent que les deux
 valeurs réelles sont identiques sur 32 octets. Le registre reste en génération 1, les comptes restent
 `35|35|15|20|6|23|5`, les travaux actifs `0|0|0` et aucune Task/OpenAI n'a été lancée.
+
+Le checkout a ensuite été avancé à `29638ae8dbf05a5dbcc9383d94d5d546ee6c54e7`. Core
+`69453e7b1348…` et Worker `695e06a8ca32…` ont été activés ; Web MCP `fcfba65ffada…` est resté
+inchangé. Le bootstrap interne a réussi et le registre est passé de génération 1 à 2 : seul le schéma
+`web.search` a changé, `web.fetch` et les deux politiques read-only A1 sont restés cohérents. Les
+pollers Temporal sont sains, les comptes sont restés `35|35|15|20|6|23|5`, les travaux actifs
+`0|0|0`, le jeton administrateur éphémère a été effacé et aucune Task/OpenAI n'a été lancée.
 
 Sauvegarde privée existante : `/etc/nevolium/api-rollback.9KmtYC` (ancien environnement et configurations).
 Images conservées : `nevolium-api-rollback/{nevolium-core,nevolium-worker,nevolium-web,litellm}:9KmtYC`.
@@ -110,6 +117,10 @@ une vue interne minimale du binding ToolServer, protégée par le jeton interser
 reste expurgée. Le bootstrap vérifie cette vue avant toute synchronisation. Contrats Web MCP, Tool/Task,
 Research, OpenAPI, Ruff F/E9 et compilation réussis localement sans appel externe. Les 10 workflows
 GitHub sont verts ; l'unique reset réseau Docker Hub de Foundation a réussi lors de la relance ciblée.
+Le candidat `ae4e7fb…` préfère l'en-tête de déploiement `x-litellm-model-name` au champ de réponse
+réécrit avec l'alias. Contrats gateway, Research, Context Pack, News et routage sémantique, Ruff F/E9,
+Ruff ciblé, compilation et diff réussissent localement sans appel fournisseur. Le contrat SQL
+d'admission attend la base jetable de CI et n'a pas été exécuté contre une base locale persistante.
 
 ## Prochaine action exécutable
 
@@ -139,12 +150,20 @@ synthèse n'a été lancée et le second essai n'a pas été créé. Les comptes
 `35|35|15|20|6|23|5`, les travaux actifs `0|0|0` et les cinq réservations historiques `uncertain`
 restent inchangées. Ne rejouer aucune Task connue.
 
-**Construire le Core et le Worker au checkpoint contenant `bef11ff…`.** Remplacer ensuite ces deux
-services sans travail actif, puis resynchroniser le registre avec un jeton administrateur éphémère.
-Web MCP `fcfba65ffada…` reste actif et n'a pas à être reconstruit.
-Après la génération de registre attendue, lancer deux nouvelles Tasks Research séquentielles. Ne pas
-réutiliser les UUID connus ni COLD-03/04/05. Le [protocole D04](docs/qualification-d04.md) porte la suite
-finie et les limites, sans nouveau sous-lot.
+Le bootstrap corrigé est déployé et le registre est synchronisé. La nouvelle Task
+`e6af6434-22da-4efc-b2f2-881d039fd5c6` a terminé `web.search` puis `web.fetch` sur
+`https://www.debian.org/download.fr.html`. Les deux usages OpenAI ont des tokens/coûts reportés et
+leurs réservations sont réglées. La synthèse a toutefois atteint exactement l'ancienne limite cible de
+256 jetons et son JSON a été coupé au caractère 825 ; le workflow a échoué sans artefact parent et le
+second essai n'a pas été créé. Les comptes sont `38|38|17|22|8|25|5`, travaux actifs `0|0|0`.
+La même lecture a montré que LiteLLM remet l'alias `smart` dans le champ `model`, donc l'attribution
+canonique doit lire son en-tête de déploiement. Ne pas rejouer cette Task.
+
+**Attendre la CI du correctif `ae4e7fb…`.** Si elle est verte, construire uniquement le Worker,
+sauvegarder `production.env`, remplacer uniquement `NEVOLIUM_MODEL_MAX_OUTPUT_TOKENS=256` par la
+borne documentée `4096`, puis activer ce Worker sans travail actif. Après contrôle de l'identité du
+déploiement LiteLLM, lancer deux nouvelles Tasks Research séquentielles avec de nouveaux UUID. Le
+[protocole D04](docs/qualification-d04.md) porte la suite finie et les limites, sans nouveau sous-lot.
 
 Sortie H5 : Research OpenAI, charge bornée du pilote, upgrade/rollback, restauration indépendante.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou démarrage D05 avant cette sortie.
