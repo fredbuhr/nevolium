@@ -112,8 +112,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 - **Sortie :** rapport daté de ces quatre preuves, versions/matériel/limites, aucun P0/P1 bloquant
   l'usage privé, CI requise verte, PR intégrée et baseline/tag H5. Aucun benchmark de LLM local,
   essai de tous les fournisseurs ou nouvelle fonction produit n'est ajouté à la sortie.
-- **Livraison active : #88**, une campagne commune dans `hardening/d04-real-engine-qualification`.
-  Un échec ouvre seulement une correction du défaut constaté, sans nouvelle branche ni sous-lot.
+- **Livraison intégrée : #88**, commit `db07f7a90cc406ddc80683521bbf1744e3a2b668` ; quatre preuves et CI finale acquises.
+  Le tag H5 et le retrait de la branche fusionnée sont suivis dans `PROJECT_STATE.md`.
 - **Limites :** qualification du premier serveur Linux x86_64. Capacité commerciale en D21 ; autres OS,
   offline et distribution dans les lots prévus. Aucun achat, merge ou déploiement implicite.
   L'identité canonique Nevolium reste celle de l'[ADR-030](decisions/ADR-030-nevolium-canonical-identity.md).

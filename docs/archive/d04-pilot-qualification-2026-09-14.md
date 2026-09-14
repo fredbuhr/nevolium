@@ -90,7 +90,9 @@ notamment [D04](https://github.com/fredbuhr/nevolium/actions/runs/34843637197),
 [Foundation](https://github.com/fredbuhr/nevolium/actions/runs/34843637139)
 et [Research](https://github.com/fredbuhr/nevolium/actions/runs/34843637213).
 Le job local optionnel est skipped conformément à ADR-031.
-La CI de la tête documentaire finale et la fusion sont vérifiées séparément lors de la clôture de #88.
+La tête documentaire finale `2946df59664c01d77abc3b5720fff1dbbf96cb4c` passe également 10/10 workflows.
+La PR #88 est intégrée par `db07f7a90cc406ddc80683521bbf1744e3a2b668`. Le tag H5 et le retrait de branche sont suivis
+dans PROJECT_STATE ; ils ne modifient pas les preuves de production.
 
 D05 peut suivre la clôture H5 : cockpit Mycelium cohérent, navigation/états/clavier/accessibilité,
 layouts par appareil et réglages API administrateur, selon le plan existant.

@@ -1,13 +1,14 @@
 # Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-14. Les quatre preuves de sortie D04 sont acquises ; la clôture de
-[#88](https://github.com/fredbuhr/nevolium/pull/88) est suivie dans [PROJECT_STATE](../PROJECT_STATE.md).
+Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88)
+et ses quatre preuves de sortie sont acquises. Le tag H5 et le retrait de branche restent suivis
+dans [PROJECT_STATE](../PROJECT_STATE.md).
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
 ## Acquis canoniques et qualification
 
-Reset R0–R7, H1–H4 et D01–D03 intégrés ; dernier jalon produit G51 Daily Spine.
+Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
 D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
 droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
 D05 n'est pas encore implémenté.
@@ -54,8 +55,9 @@ et clients PC/téléphone/tablette ; offline, synchronisation et packaging suive
 
 Le code qualifié `61d7687…` passe 10/10 workflows CI, dont Research, Foundation et D04,
 avec restauration sur deux VM. Le job LLM local optionnel est skipped conformément à
-[ADR-031](decisions/ADR-031-api-first-pilot.md). La CI finale et l'intégration de #88 sont
-des étapes de clôture distinctes des preuves opérateur.
+[ADR-031](decisions/ADR-031-api-first-pilot.md). La tête finale `2946df59664c01d77abc3b5720fff1dbbf96cb4c` passe aussi
+10/10 workflows avant fusion de #88. Le commit de fusion est `db07f7a90cc406ddc80683521bbf1744e3a2b668`.
+La présente mise à jour après fusion modifie uniquement la documentation.
 
 API uniquement pour le pilote : autres fournisseurs, capacité commerciale et autres OS ne
 conditionnent pas H5. Les clés restent côté serveur. D05 apporte les réglages fournisseur/modèle ;

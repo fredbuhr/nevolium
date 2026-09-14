@@ -6,13 +6,17 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md` puis vérifier GitHub live.
 
 | Champ | État attesté |
 |---|---|
-| Base main vérifiée | `45b74baa3ddf8910f2aaa3d23c63f3e9bbedcf60` ; D03 intégré par #87 |
-| Acquis | Reset R0–R7, H1–H4, D01–D03 ; quatre preuves D04 acquises sur cible |
-| Opération active | Clôture D04/H5 dans [#88](https://github.com/fredbuhr/nevolium/pull/88) |
-| Branche | `hardening/d04-real-engine-qualification` ; unique branche de livraison D04 |
+| Base main vérifiée | `db07f7a90cc406ddc80683521bbf1744e3a2b668` ; D04 intégré par #88 |
+| Acquis | Reset R0–R7, H1–H4 et D01–D04 intégrés ; quatre preuves D04 acquises sur cible |
+| Opération active | Finalisation H5 : #88 fusionnée, tag H5 à créer |
+| Branche | `hardening/d04-real-engine-qualification` fusionnée, à supprimer ; aucune branche D05 créée |
 | Cible | Checkout `61d7687088dcbb002febd4c5f1a97f33edcb1269`, récupération réussie |
-| CI code qualifié | 10/10 workflows verts à `61d7687…` ; CI documentaire finale à vérifier avant fusion |
-| Étape suivante | Fusion de #88, tag H5 et retrait de la branche, puis ouverture de D05 |
+| CI tête fusionnée | 10/10 workflows verts à `2946df59664c01d77abc3b5720fff1dbbf96cb4c` ; mise à jour après fusion documentaire uniquement |
+| Étape suivante | Créer le tag H5 sur le commit de fusion et supprimer la branche fusionnée, puis ouvrir D05 |
+
+La connexion GitHub actuelle permet fusion et fichiers, mais ne fournit pas d'action de création
+de tag/release ni de suppression de branche. Ces deux opérations restent à effectuer via GitHub ;
+aucune nouvelle autorisation n'est requise et aucune qualification serveur n'est à relancer.
 
 ## Preuves acquises et limites
 
