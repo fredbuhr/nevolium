@@ -244,10 +244,6 @@ class Deployment(unittest.TestCase):
                 valid['services']['nevolium-core']['environment']['LITELLM_URL'],
                 'http://litellm:4000',
             )
-            self.assertEqual(
-                valid['services']['nevolium-core']['environment']['LITELLM_MASTER_KEY'],
-                valid['services']['litellm']['environment']['LITELLM_MASTER_KEY'],
-            )
             self.assertIn('models', valid['services']['nevolium-core']['networks'])
             self.assertNotIn('egress', valid['services']['nevolium-core']['networks'])
             self.assertNotIn(
@@ -287,6 +283,11 @@ class Deployment(unittest.TestCase):
             )
             with_tools=config(['-f','compose.web-mcp.yaml','-f','compose.web-mcp.production.yaml','--profile','search','--profile','ai'])
             self.assertEqual(production.validate(with_tools),[])
+            self.assertEqual(
+                with_tools['services']['nevolium-core']['environment']['LITELLM_MASTER_KEY'],
+                with_tools['services']['litellm']['environment']['LITELLM_MASTER_KEY'],
+            )
+            self.assertIn('models', with_tools['services']['litellm']['networks'])
             self.assertEqual(set(with_tools['services']['nevolium-web-mcp']['networks']),{'search','egress'})
             self.assertNotIn('NEVOLIUM_INTERNAL_TOKEN',with_tools['services']['nevolium-web-mcp']['environment'])
             self.assertEqual(
