@@ -12,7 +12,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Branche / PR | `hardening/d04-real-engine-qualification`, [#88](https://github.com/fredbuhr/nevolium/pull/88), draft ; une seule branche active |
 | Checkout cible | `a4635462a4380aad2b2b991053c1078e36e5e79a` ; checkout serveur propre à ce SHA |
 | Correctif actif | Requête ciblée et classement des sources déployés ; 10/10 workflows réussis à `a463546…`, attribution LiteLLM et plafond 4096 conservés |
-| Gate courante | Research OpenAI et charge de lecture acquis ; poursuivre séquence mixte, upgrade/rollback et restauration indépendante |
+| Gate courante | Research OpenAI, charge complète et upgrade/rollback acquis ; seule la restauration indépendante reste avant H5 |
 | Schéma / images | `0014_capacity_and_data` ; baseline images v9 ; pas de migration ni de nouvelle dépendance dans le pivot |
 | Cible H5 | Serveur Linux x86_64 Netcup, 12 CPU, 32 Gio, 1 Tio ; pilote de 3–4 personnes |
 
@@ -210,7 +210,7 @@ total 0,039764 USD. Comptes `41|41|19|24|10|28|5` → `47|47|23|28|14|34|5`, del
 Rapport opérateur : `/var/lib/nevolium/qualification/d04-openai-relevance-20260914T012643Z.jsonl`.
 Résultat final : `CORRECTION_ET_PREUVE_RESEARCH_D04_OK`. Aucun rejeu à prévoir.
 
-## Prochaine action exécutable
+## Charge et rollback acquis sur cible
 
 La charge de lecture est acquise sur la cible au code `a463546…`. Le runner a vérifié TLS, le refus
 anonyme/invalide et cinq routes internes non exposées, puis les quatre paliers avec concurrence 20 :
@@ -220,15 +220,32 @@ générateur tournait dans le conteneur Core de la même cible, limité à 2 CPU
 mesuré reste 12 CPU, 32 Gio. Aucun conteneur n'a redémarré ou subi d'OOM ; comptes inchangés
 `47|47|23|28|14|34|5`, travaux actifs `0|0|0`, aucun appel IA. Rapport :
 `/var/lib/nevolium/qualification/d04-load-20260914T014343Z.LMEDPZ/load.json`.
-L'inventaire confirme que Restic n'est pas installé sur l'hôte ; la procédure utilise son image
-épinglée via l'overlay ops. `target_and_off_host_restore_validated=false` confirme que la restauration
-de cette cible reste à exécuter.
+La séquence mixte suivante a lancé simultanément un Research, un PDF Docling et une projection
+Mem0/Graphiti. Research a terminé en 13,217 s avec deux usages `openai/gpt-4.1`, deux réservations
+réglées et un coût reporté de 0,017448 USD. Docling 2.126.0 a produit un chunk après 1,471 s
+d'attente d'admission et 39,499 s d'exécution. La mémoire réelle a attendu 43,378 s pendant Docling,
+puis a terminé en 21,451 s avec `graphiti-neo4j` et `mem0-pgvector`. Les états
+`waiting → active → finished` et l'absence de deux travaux lourds simultanés pour le propriétaire
+prouvent l'application du quota. Les trois parcours et leurs cinq Tasks/workflows/artefacts ont terminé ; delta
+canonique exact `5|5|2|2|2|5|0`, comptes finaux `52|52|25|30|16|39|5`, cinq incertains historiques,
+aucun travail ou outbox oublié. Rapport :
+`/var/lib/nevolium/qualification/d04-mixed-rollback-20260914T063303Z.Y09SHw/mixed.jsonl`.
 
-Prochaine opération : une séquence mixte avec un Research, un PDF Docling et une projection
-Mem0/Graphiti, attentes d'admission et durées séparées, puis retour temporaire au Worker précédent et
-réactivation du candidat avec contrôles de santé, accès et invariants. Ensuite, seule la restauration
-indépendante restera avant la clôture H5. Le [protocole D04](docs/qualification-d04.md) conserve les
-seuils et limites.
+Le même bloc a ensuite activé l'ancien Worker `933fdacb68ec…`, vérifié pollers, services,
+configuration de production et accès publics `200|401|401|404`, sans modifier les compteurs ni
+rejouer de Task. Le candidat `cb9b73de908…` a été réactivé et contrôlé avec la limite 4096 et la
+mémoire réelle ; Core `69453e7b1348…` et Web MCP `fcfba65ffada…` sont restés inchangés. Résultat :
+`CHARGE_MIXTE_ET_ROLLBACK_D04_OK`.
+
+## Prochaine action exécutable
+
+L'inventaire confirme que Restic n'est pas installé sur l'hôte ; la procédure utilise son image
+0.19.1 épinglée via l'overlay ops. Il reste uniquement à produire un backup Restic chiffré de la
+cible, transférer le dépôt hors serveur, puis le restaurer dans un environnement isolé sur volumes
+neufs et relire PostgreSQL, JetStream, SeaweedFS et OpenBao. La destination hors hôte et ses
+identifiants doivent rester privés et ne peuvent pas être inventés. Après cette preuve, mettre à jour
+le rapport final, repasser la CI du head, finaliser et intégrer #88, poser le tag H5 puis retirer la
+branche avant D05. Le [protocole D04](docs/qualification-d04.md) conserve les seuils et limites.
 Les preuves non affectées restent acquises. Aucun merge, tag H5 ou D05 avant leur validation.
 
 ## Références
