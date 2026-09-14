@@ -545,6 +545,30 @@ export default function MyceliumHome({
             </button>
           </section>
 
+          <section className="home-glass-card home-explore-card">
+            <div className="home-card-heading">
+              <div>
+                <span className="eyebrow">EXPLORER</span>
+                <h2>Faire apparaître les liens</h2>
+              </div>
+            </div>
+            <button type="button" onClick={() => onOpenSpace('research')}>
+              <SpaceIcon name="research" />
+              <span><strong>Éclairer une question</strong><small>Explorer et conserver les sources</small></span>
+              <b aria-hidden="true">→</b>
+            </button>
+            <button type="button" onClick={() => onOpenSpace('news')}>
+              <SpaceIcon name="news" />
+              <span><strong>Comprendre ce qui change</strong><small>Ouvrir votre espace Actualités</small></span>
+              <b aria-hidden="true">→</b>
+            </button>
+            <button type="button" onClick={() => onOpenSpace('command')}>
+              <SpaceIcon name="command" />
+              <span><strong>Faire évoluer une idée</strong><small>Réfléchir avec l’Assistant</small></span>
+              <b aria-hidden="true">→</b>
+            </button>
+          </section>
+
           <details className="home-glass-card home-preferences">
             <summary>
               <span>

@@ -538,6 +538,7 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
 .home-global-search svg,
 .home-rail svg,
 .home-resume-card svg,
+.home-explore-card svg,
 .home-dock svg,
 .home-introduction button svg {
   width: 22px;
@@ -888,7 +889,8 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
   gap: 12px;
 }
 .home-glass-card { border-radius: 19px; }
-.home-resume-card { padding: 17px 13px 10px; }
+.home-resume-card,
+.home-explore-card { padding: 17px 13px 10px; }
 .home-card-heading {
   display: flex;
   align-items: flex-start;
@@ -898,7 +900,8 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
 }
 .home-card-heading h2 { margin: 5px 0 0; font-size: 22px; font-weight: 440; }
 .home-card-heading > span { color: var(--quiet); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
-.home-resume-card > button {
+.home-resume-card > button,
+.home-explore-card > button {
   display: grid;
   grid-template-columns: 31px 1fr 16px;
   align-items: center;
@@ -912,11 +915,17 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
   background: transparent;
   text-align: left;
 }
-.home-resume-card > button:hover { color: #fff; background: linear-gradient(90deg, rgba(45, 231, 224, .06), transparent); }
-.home-resume-card > button > span { display: grid; gap: 4px; min-width: 0; }
-.home-resume-card strong { font-size: 13px; font-weight: 600; }
-.home-resume-card small { overflow: hidden; color: #829aa7; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.home-resume-card b { color: #65ecea; font-weight: 400; }
+.home-resume-card > button:hover,
+.home-explore-card > button:hover { color: #fff; background: linear-gradient(90deg, rgba(45, 231, 224, .06), transparent); }
+.home-resume-card > button > span,
+.home-explore-card > button > span { display: grid; gap: 4px; min-width: 0; }
+.home-resume-card strong,
+.home-explore-card strong { font-size: 13px; font-weight: 600; }
+.home-resume-card small,
+.home-explore-card small { overflow: hidden; color: #829aa7; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.home-resume-card b,
+.home-explore-card b { color: #65ecea; font-weight: 400; }
+.home-explore-card .home-card-heading h2 { font-size: 18px; }
 .home-preferences { overflow: hidden; }
 .home-preferences summary {
   display: flex;
@@ -1037,10 +1046,12 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
 
 @media (max-width: 1320px) {
   .home-layout { grid-template-columns: 140px minmax(0, 1fr); }
+  .mycelium-space-node[data-space="command"] { left: 40%; }
   .home-aside {
     grid-column: 2;
     grid-template-columns: minmax(0, 1.5fr) minmax(240px, .7fr);
   }
+  .home-explore-card { display: none; }
   .home-stage { min-height: 700px; }
 }
 
@@ -1057,6 +1068,7 @@ kbd { border: 1px solid rgba(126, 190, 207, .24); border-radius: 6px; padding: 2
   .home-stage { min-height: 690px; }
   .home-aside { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(250px, .8fr); margin-top: 12px; }
   .home-introduction { top: 7%; left: 4%; width: 260px; }
+  .mycelium-space-node[data-space="command"] { top: 21%; left: 48%; }
 }
 
 @media (max-width: 720px) {
