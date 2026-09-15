@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static Web contract for the D06 list/Kanban/Gantt planning surface."""
+"""Static Web contract for the D06 list/Kanban/Gantt/calendar planning surface."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ WEB = ROOT / "apps/web"
 def main() -> int:
     workspace = (WEB / "src/PlanningWorkspace.tsx").read_text(encoding="utf-8")
     gantt = (WEB / "src/PlanningGantt.tsx").read_text(encoding="utf-8")
+    calendar = (WEB / "src/PlanningCalendar.tsx").read_text(encoding="utf-8")
     schedule_editor = (WEB / "src/PlanningScheduleEditor.tsx").read_text(encoding="utf-8")
     critical_hook = (WEB / "src/lib/usePlanningCriticalPath.ts").read_text(encoding="utf-8")
     app = (WEB / "src/App.tsx").read_text(encoding="utf-8")
@@ -29,7 +30,10 @@ def main() -> int:
     assert "planning-critical-summary" in workspace
     assert "planning-critical-badge" in workspace
     assert "PlanningScheduleEditor" in workspace
+    assert "PlanningCalendar" in workspace
+    assert "type ViewMode = 'list' | 'kanban' | 'gantt' | 'calendar'" in workspace
     assert "setEditingTaskId(task.id)" in workspace
+    assert "onEditSchedule={setEditingTaskId}" in workspace
     assert "criticalPath.refresh()" in workspace
     assert "DndContext" in workspace
     assert "useDraggable" in workspace and "useDroppable" in workspace
@@ -52,6 +56,8 @@ def main() -> int:
     assert "/v1/tasks/" not in schedule_editor
     assert "type=\"datetime-local\"" in schedule_editor
     assert "canonicalTimestamp" in schedule_editor
+    assert "dependencyStatusLabel" in schedule_editor
+    assert "finding.detail" not in schedule_editor
 
     assert "/planning/critical-path" in critical_hook
     assert "critical_task_ids" in critical_hook
@@ -71,6 +77,17 @@ def main() -> int:
     assert "criticalTaskIds" in gantt
     assert "`◆ ${source.title}`" in gantt
 
+    # Calendar is only a renderer over canonical timestamps: no local fetch, RRULE expansion or writes.
+    assert "Intl.DateTimeFormat().resolvedOptions().timeZone" in calendar
+    assert "plannedStart < end && plannedEnd > start" in calendar
+    assert "plannedStart >= start && plannedStart < end" in calendar
+    assert "onEditSchedule(entry.task.id)" in calendar
+    assert "recurrence_rule" in calendar
+    assert "RRULE" not in calendar and "FREQ=" not in calendar
+    assert "nevoliumFetch" not in calendar and "fetch(" not in calendar
+    assert "planning-calendar-agenda" in calendar
+    assert "planning-calendar-scroll" in calendar
+
     assert "import PlanningWorkspace from './PlanningWorkspace'" in app
     assert "key: 'planning'" in app
     assert "id: 'planning-workspace'" in app
@@ -81,6 +98,9 @@ def main() -> int:
         "'planning.list'",
         "'planning.kanban'",
         "'planning.gantt'",
+        "'planning.calendar'",
+        "'planning.calendarTimezone'",
+        "'planning.calendarAgenda'",
         "'planning.column.todo'",
         "'planning.column.execution'",
         "'planning.column.done'",
@@ -91,6 +111,9 @@ def main() -> int:
         "'planning.editSchedule'",
         "'planning.schedulePreview'",
         "'planning.scheduleApply'",
+        "'planning.scheduleDependencySatisfied'",
+        "'planning.scheduleDependencyIncomplete'",
+        "'planning.scheduleDependencyViolated'",
         "'planning.cancel'",
     ):
         assert i18n.count(token) >= 2, token
@@ -103,15 +126,21 @@ def main() -> int:
     assert ".planning-schedule-editor" in styles
     assert ".planning-replan-preview.is-invalid" in styles
     assert ".planning-schedule-actions" in styles
+    assert ".planning-calendar-grid" in styles
+    assert ".planning-calendar-agenda" in styles
+    assert ".planning-calendar-scroll" in styles
+    assert "grid-template-columns: repeat(7" in styles
     assert "@media (max-width: 820px)" in styles
     assert "grid-template-columns: 1fr" in styles
+    assert "@media (max-width: 520px)" in styles
     assert "@media (prefers-reduced-motion: reduce)" in styles
     assert "import './planning.css'" in entrypoint
 
     print(
         "D06 PLANNING WORKSPACE PASS: one canonical projection feeds bilingual List/Kanban/"
-        "read-only Gantt, workflow-managed statuses stay locked, Core critical-path results are "
-        "surfaced, and schedule mutations require cancellable preview/validate/apply instead of "
+        "read-only Gantt/calendar, workflow-managed statuses stay locked, Core critical-path results "
+        "are surfaced, calendar intervals use DST-safe local day boundaries without recurrence "
+        "fabrication, and schedule mutations require cancellable preview/validate/apply instead of "
         "writing dates directly through the legacy Task PATCH"
     )
     return 0
