@@ -17,3 +17,5 @@ export interface NevoliumGraphSnapshot {
   nodes: NevoliumGraphNode[]
   edges: NevoliumGraphEdge[]
 }
+
+export * from './mindmap'
