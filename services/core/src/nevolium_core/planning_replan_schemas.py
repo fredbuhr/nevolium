@@ -7,6 +7,9 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
+PlanningField = Literal["planned_start_at", "planned_end_at", "due_at"]
+
+
 class PlanningWindowRead(BaseModel):
     planned_start_at: datetime | None = None
     planned_end_at: datetime | None = None
@@ -64,7 +67,17 @@ class ReplanTaskPreview(BaseModel):
     expected_version: int = Field(ge=1)
     current: PlanningWindowRead
     proposed: PlanningWindowRead
-    changed_fields: list[Literal["planned_start_at", "planned_end_at", "due_at"]]
+    changed_fields: list[PlanningField]
+
+
+class ReplanSuggestionRead(BaseModel):
+    task_id: uuid.UUID
+    title: str
+    expected_version: int = Field(ge=1)
+    current: PlanningWindowRead
+    proposed: PlanningWindowRead
+    changed_fields: list[PlanningField]
+    triggered_by_dependency_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
 class ReplanDependencyFinding(BaseModel):
@@ -82,14 +95,16 @@ class ReplanPreviewRead(BaseModel):
     preview_digest: str
     can_apply: bool
     changed_task_count: int = Field(ge=0)
+    suggested_task_count: int = Field(ge=0)
     changes: list[ReplanTaskPreview]
+    suggested_changes: list[ReplanSuggestionRead] = Field(default_factory=list)
     dependency_findings: list[ReplanDependencyFinding] = Field(default_factory=list)
 
 
 class ReplanAppliedTaskRead(BaseModel):
     task_id: uuid.UUID
     planning_version: int = Field(ge=1)
-    changed_fields: list[Literal["planned_start_at", "planned_end_at", "due_at"]]
+    changed_fields: list[PlanningField]
 
 
 class ReplanApplyRead(BaseModel):
