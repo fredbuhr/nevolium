@@ -11,6 +11,7 @@ import './mycelium-organic.css'
 import './connected-cockpit.css'
 import './planning.css'
 import './knowledge.css'
+import './mindmap.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 
