@@ -50,6 +50,12 @@ type TaskDependency = {
   created_at: string
 }
 
+type PlanningStructureUpdateRead = {
+  task_id: string
+  progress_percent: number
+  planning_version: number
+}
+
 type GanttScheduleProposal = {
   taskId: string
   plannedStartAt: string
@@ -262,6 +268,39 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
                 started_at: updated.started_at,
                 completed_at: updated.completed_at,
                 updated_at: updated.updated_at,
+              }
+            : item,
+        ),
+      )
+    } catch (cause) {
+      setMutationError(cause instanceof Error ? cause.message : t('planning.errorUpdate'))
+    } finally {
+      setSavingTaskId(null)
+    }
+  }
+
+  async function updatePlanningProgress(taskId: string, progressPercent: number) {
+    const task = page.items.find((item) => item.id === taskId)
+    if (!task || task.progress_percent === progressPercent) return
+    setSavingTaskId(task.id)
+    setMutationError(null)
+    try {
+      const response = await nevoliumFetch(`${apiUrl}/v1/tasks/${encodeURIComponent(task.id)}/planning-structure`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expected_version: task.planning_version,
+          progress_percent: progressPercent,
+        }),
+      })
+      const updated = await readJson<PlanningStructureUpdateRead>(response)
+      page.setItems((current) =>
+        current.map((item) =>
+          item.id === task.id
+            ? {
+                ...item,
+                progress_percent: updated.progress_percent,
+                planning_version: updated.planning_version,
               }
             : item,
         ),
@@ -504,6 +543,9 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           dependencies={dependencyPage.items}
           criticalTaskIds={criticalPath.data?.critical_task_ids || []}
           onScheduleProposal={openGanttProposal}
+          onProgressProposal={(taskId, progressPercent) => {
+            void updatePlanningProgress(taskId, progressPercent)
+          }}
         />
       ) : null}
 
