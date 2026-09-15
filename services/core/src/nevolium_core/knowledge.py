@@ -126,6 +126,7 @@ async def search_knowledge(
         Document.status == "ready",
         Document.metadata_json["owner_subject"].astext == principal.subject,
         DocumentVersion.status == "completed",
+        DocumentVersion.search_status == "ready",
         DocumentVersion.generation == latest_completed_generation,
         document_vector.op("@@")(query_vector),
     ]
