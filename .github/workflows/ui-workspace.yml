@@ -97,6 +97,8 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/d06_recurrence_db_contract.py
       - name: Prove D06 work calendar versioning and isolation on PostgreSQL
         run: uv run --locked --project services/core python scripts/smoke/d06_work_calendar_db_contract.py
+      - name: Prove D06 explicit downstream replan effects on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_replan_effects_db_contract.py
 
   cockpit-browser-qualification:
     runs-on: ubuntu-latest
