@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import './d08_layout_persistence_unit.mjs'
+import { qualifyMindMapExit } from './d08_mindmap_exit.mjs'
 
 // Reuses the D08 runner's API fixture. These are browser regressions, not a
 // substitute for the independent owner-scoped PostgreSQL integration job.
@@ -145,7 +146,9 @@ export async function qualifyMindMapStability(harness) {
   await map.locator('.mindmap-canvas').screenshot({ path: path.join(output, 'stability-reload-canvas.png') })
   assert.deepEqual(reloaded.errors, [])
   await reloaded.context.close()
+
+  const exit = await qualifyMindMapExit(harness)
   return { jointDrag: true, jointUndoRedoAfterLocale: true, localeWithoutRestore: true,
     failedSaveRetainedAcrossLocale: true, explicitRetry: true, latestSnapshotSerialized: true,
-    reloadedPositions: 3, maxLayoutInFlight: state.maxLayoutInFlight }
+    reloadedPositions: 3, maxLayoutInFlight: state.maxLayoutInFlight, exit }
 }
