@@ -45,8 +45,8 @@ def main() -> int:
     assert "planning_version: updated.planning_version" in workspace
     assert "apiUrl={apiUrl}" in workspace and "projectId={selectedProjectId}" in workspace
     assert "criticalPath.refresh()" in workspace
-    assert "void page.reload()" in workspace
-    assert "onApplied={() =>" in workspace
+    assert "await page.reload()" in workspace
+    assert "refreshPlanningAfterApply" in workspace
     assert "DndContext" in workspace
     assert "useDraggable" in workspace and "useDroppable" in workspace
     assert "['todo', 'completed'].includes(task.status)" in workspace
