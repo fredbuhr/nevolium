@@ -155,7 +155,16 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
         heap_bytes: performance.memory?.usedJSHeapSize ?? null, user_agent: navigator.userAgent }
     })
     measurements.push({ nodes: count, edges: count - 1, viewport: '1280x900', quality: 'eco', ...measured, ...environment })
-    if (count === 201) await fixture.page.screenshot({ path: path.join(target, 'graph-201.png') })
+    if (count === 201) {
+      const overlapping = await surface.locator('.spatial-labels').evaluate(element => {
+        const boxes = [...element.querySelectorAll('button')].filter(button => getComputedStyle(button).visibility === 'visible')
+          .map(button => button.getBoundingClientRect())
+        return boxes.some((box, i) => boxes.slice(i + 1).some(other => box.left < other.right && box.right > other.left
+          && box.top < other.bottom && box.bottom > other.top))
+      })
+      assert.equal(overlapping, false, 'D09 dense graph labels overlap')
+      await fixture.page.screenshot({ path: path.join(target, 'graph-201.png') })
+    }
     await fixture.context.close()
     assert.equal(fixture.errors.length, 0, fixture.errors.join('\n'))
   }

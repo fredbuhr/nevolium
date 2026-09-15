@@ -17,8 +17,8 @@ Sa tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f` passe **9/9 workflows
 avec un arbre identique au merge. Le handoff main `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`
 passe **8/8 workflows push**. D08 n'est pas déployé sur le pilote.
 
-D09 est implémenté sur la branche de la PR #93 draft, en qualification. Ses preuves exactes et les
-limites matérielles restent dans [PROJECT_STATE](../PROJECT_STATE.md) et le
+D09 est implémenté sur la branche de la PR #93 draft, en qualification. La référence fonctionnelle `825cee775870cd97bc860e7d4ea63501f4cb07bb` passe **8/8 workflows PR**.
+Ses preuves exactes et les limites matérielles restent dans [PROJECT_STATE](../PROJECT_STATE.md) et le
 [suivi D09](archive/d09-spatial-progress-2026-09-15.md). Ce statut ne déclare pas D09 intégré.
 
 ## Acquis canoniques
@@ -36,7 +36,8 @@ limites matérielles restent dans [PROJECT_STATE](../PROJECT_STATE.md) et le
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
 | Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
-| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D08 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
+| Mycelium 3D D09 | Renderer interactif et persistance sur #93, 13 scénarios Chromium verts | Non intégré/déployé ; mesures physiques GPU intégré/tablette requises |
+| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
 
@@ -138,7 +139,8 @@ Le téléphone commence en 2D même si une préférence 3D a été enregistrée 
 
 Les nouveaux scénarios Chromium utilisent une API simulée ; les contrats PostgreSQL existants sont
 une preuve distincte. Ils ne constituent pas une preuve de déploiement, ni une mesure sur tablette
-physique ou GPU intégré. Les résultats de cette livraison restent à qualifier sur son head final.
+physique ou GPU intégré. Le head fonctionnel `825cee7` passe les 13 scénarios D09 ; le checkpoint documente son descendant
+et le gate matériel encore ouvert. Mesures et captures sont conservées dans le suivi D09.
 
 ## Écarts à conserver dans la suite
 

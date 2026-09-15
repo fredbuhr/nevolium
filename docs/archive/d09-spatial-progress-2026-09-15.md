@@ -61,12 +61,50 @@ propriété est supprimée ; le test explicite WebGL2, la boundary d'erreur et l
 contexte restent les seules voies de secours. Les erreurs console du navigateur sont conservées
 pour diagnostiquer les erreurs interceptées par une boundary.
 
-## Gate restant
+## Qualification logicielle acquise
 
-1. Qualifier le head de cette livraison en CI, examiner captures et mesures, corriger les échecs.
-2. Mesurer sur les appareils physiques visés, avec matériel/version navigateur/taille du graphe
-   et profil enregistrés ; vérifier sélection, gestes, pause et stabilité mémoire.
-3. Enregistrer le résultat final avant décision d'intégration. D10 n'est pas commencé.
+Head `825cee775870cd97bc860e7d4ea63501f4cb07bb` : **8/8 workflows PR success**.
+UI run [35023375224](https://github.com/fredbuhr/nevolium/actions/runs/35023375224),
+job navigateur `104564386555`. Les contrats UI/PostgreSQL et les parcours D05–D08 restent verts.
+
+D09 passe ses 13 scénarios : sélection 2D↔3D, caméra séparée, erreur/retry/sérialisation,
+conversion/navigation Planning, orbite, panneau masqué, document masqué, mouvement réduit,
+reconnexion coalescée, perte WebGL, WebGL indisponible dès l'entrée, FR/EN/reload, téléphone facultatif.
+Aucune erreur JavaScript non interceptée. Les 404 de layouts absents et la 503 injectée sont attendues
+par le protocole ; les logs console sont conservés.
+
+Artefact [D09 10418842039](https://github.com/fredbuhr/nevolium/actions/runs/35023375224/artifacts/10418842039),
+ZIP SHA-256 `3e245fd234eb38975a2000351a13b4b6a78aa4d975bbf7ae34400736af0367aa` vérifié après téléchargement.
+Captures `desktop-3d.png`, `graph-201.png`, `phone-3d.png` examinées ; `result.json` conserve les données.
+La revue du graphe dense a repéré un chevauchement de labels : le descendant de ce head masque les
+labels de priorité inférieure en collision, garde le label sélectionné et ajuste les bords.
+Une assertion navigateur vérifie maintenant l'absence de chevauchement.
+
+| Nœuds / liens synthétiques | FPS observés | Heap JS observé | Géométries | Draw calls |
+|---|---:|---:|---:|---:|
+| 51 / 50 | 32 | 15,2 Mo | 3 | 3 |
+| 201 / 200 | 28 | 29,4 Mo | 3 | 3 |
+| 501 / 500 | 23 | 44,7 Mo | 3 | 3 |
+
+Environnement : HeadlessChrome 140.0.7339.16, Linux x86_64, ANGLE Vulkan SwiftShader/Subzero,
+viewport 1280×900, profil économique. FPS sur une fenêtre d'environ 1,5 s ; heap JS ponctuel,
+ni mémoire GPU/RSS ni preuve d'absence de fuite sur longue session. Aucun seuil de FPS matériel
+n'est déduit de ces valeurs. Le jeu 501 est un stress synthétique au-delà du snapshot produit.
+
+## Gate matériel restant et reprise
+
+Le plan D09 demande des mesures sur **GPU intégré et tablette physique**. Le présent environnement
+ne fournit pas ces appareils. La PR reste draft ; la clôture D09 et D10 ne sont pas déclarées acquises.
+
+1. Vérifier main, le head live de #93 et ses checks, puis utiliser ce même build pour la campagne.
+2. Pour chaque appareil, consigner modèle/GPU, OS, version navigateur, alimentation, taille du
+   viewport, nombre d'objets/liens et profil 3D. Tester d'abord les graphes servis dans les limites Core.
+3. Exécuter sélection 2D↔3D, orbite/zoom/tactile, modification d'un objet puis retour au graphe,
+   sauvegarde/reload, panneau/onglet masqué et reconnexion. Vérifier le chemin 2D sur téléphone.
+4. Mesurer FPS/temps de frame et mémoire au départ, pendant une session de 10 minutes et après
+   plusieurs masquages/retours. Si l'API heap n'existe pas, consigner l'outil système utilisé et ne pas
+   comparer sa mesure à `performance.memory` comme s'il s'agissait du même indicateur.
+5. Ajouter les preuves et limites observées ici, puis décider de l'intégration conformément au plan.
 
 Le pilote reste D05/0015. Revenir en 2D suffit à désactiver la fonctionnalité ; le rollback code reste
 la base de PR ci-dessus, sans migration de données à annuler. Ne pas restaurer d'anciennes positions
