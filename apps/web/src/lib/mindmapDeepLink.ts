@@ -1,9 +1,11 @@
 export type MindMapDeepLink = {
-  projectId: string
+  projectId: string | null
   nodeKey: string
+  entityType: 'project' | 'task' | 'document'
+  entityId: string
 }
 
-const ENTITY_KEY = /^(project|task|document):[^\s:][^\s]*$/
+const ENTITY_KEY = /^(project|task|document):([^\s:][^\s]*)$/
 const MAX_VALUE_LENGTH = 200
 
 function clean(value: string | null): string {
@@ -12,17 +14,25 @@ function clean(value: string | null): string {
 }
 
 export function readMindMapDeepLink(url = new URL(window.location.href)): MindMapDeepLink | null {
-  const projectId = clean(url.searchParams.get('mindmapProject'))
   const nodeKey = clean(url.searchParams.get('mindmap'))
-  if (!projectId || !nodeKey || !ENTITY_KEY.test(nodeKey)) return null
-  return { projectId, nodeKey }
+  const match = ENTITY_KEY.exec(nodeKey)
+  if (!match) return null
+  const projectHint = clean(url.searchParams.get('mindmapProject')) || null
+  const entityType = match[1] as MindMapDeepLink['entityType']
+  return {
+    projectId: projectHint || (entityType === 'project' ? match[2] : null),
+    nodeKey,
+    entityType,
+    entityId: match[2],
+  }
 }
 
 export function replaceMindMapDeepLink(projectId: string | null, nodeKey: string | null) {
   const url = new URL(window.location.href)
-  if (projectId && nodeKey) {
-    url.searchParams.set('mindmapProject', projectId)
+  if (nodeKey) {
     url.searchParams.set('mindmap', nodeKey)
+    if (projectId) url.searchParams.set('mindmapProject', projectId)
+    else url.searchParams.delete('mindmapProject')
   } else {
     url.searchParams.delete('mindmapProject')
     url.searchParams.delete('mindmap')
