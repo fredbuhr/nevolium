@@ -15,6 +15,7 @@ from .db import get_session
 from .document_models import DocumentCitation, DocumentVersion
 from .editable_knowledge import (
     AUTHORED_PARSER,
+    MAX_AUTHORED_TEXT_CHARS,
     AuthoredKnowledgeCreate,
     AuthoredKnowledgeRead,
     CitationCreate,
@@ -36,7 +37,7 @@ class PortableKnowledgeDocument(BaseModel):
     kind: KnowledgeKind = "note"
     epistemic_status: EpistemicStatus | None = None
     content_json: dict[str, Any] = Field(default_factory=dict)
-    content_text: str = ""
+    content_text: str = Field(default="", max_length=MAX_AUTHORED_TEXT_CHARS)
     citations: list[CitationCreate] = Field(default_factory=list, max_length=100)
 
 
@@ -133,6 +134,8 @@ async def import_knowledge(
             session,
         )
 
+    if len(body.payload) > MAX_AUTHORED_TEXT_CHARS:
+        raise HTTPException(status_code=422, detail="Imported text is too large")
     title = (body.title or "Imported knowledge").strip()
     return await create_authored_knowledge(
         AuthoredKnowledgeCreate(
