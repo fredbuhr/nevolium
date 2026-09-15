@@ -1,4 +1,4 @@
-import { useMemo, type ComponentProps } from 'react'
+import { useCallback, useMemo, useState, type ComponentProps } from 'react'
 import { Gantt, Willow } from '@svar-ui/react-gantt'
 import '@svar-ui/react-gantt/all.css'
 
@@ -26,11 +26,13 @@ type Props = {
   tasks: PlanningGanttTask[]
   dependencies: PlanningDependency[]
   criticalTaskIds?: string[]
+  onScheduleProposal: (taskId: string, plannedStartAt: string, plannedEndAt: string) => void
 }
 
 type GanttTasks = NonNullable<ComponentProps<typeof Gantt>['tasks']>
 type GanttLinks = NonNullable<ComponentProps<typeof Gantt>['links']>
 type GanttScales = NonNullable<ComponentProps<typeof Gantt>['scales']>
+type GanttInit = NonNullable<ComponentProps<typeof Gantt>['init']>
 
 const LINK_TYPES: Record<PlanningDependency['dependency_type'], 'e2s' | 's2s' | 'e2e' | 's2e'> = {
   FS: 'e2s',
@@ -50,8 +52,14 @@ function validDate(value?: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-export default function PlanningGantt({ tasks, dependencies, criticalTaskIds = [] }: Props) {
+export default function PlanningGantt({
+  tasks,
+  dependencies,
+  criticalTaskIds = [],
+  onScheduleProposal,
+}: Props) {
   const { t } = useI18n()
+  const [resetRevision, setResetRevision] = useState(0)
 
   const mapped = useMemo(() => {
     const critical = new Set(criticalTaskIds)
@@ -98,6 +106,40 @@ export default function PlanningGantt({ tasks, dependencies, criticalTaskIds = [
     }
   }, [criticalTaskIds, dependencies, tasks])
 
+  const init = useCallback<GanttInit>((api) => {
+    // SVAR remains a renderer/input surface, never the canonical store. Structural actions are
+    // blocked; horizontal drag/resize may preview locally, but the final date update is intercepted
+    // and handed to Nevolium's preview/validate/apply flow before anything is persisted.
+    for (const action of [
+      'show-editor',
+      'add-task',
+      'delete-task',
+      'add-link',
+      'update-link',
+      'delete-link',
+      'move-task',
+      'copy-task',
+      'indent-task',
+    ]) {
+      api.intercept(action, () => false)
+    }
+    api.intercept('drag-task', (event) => {
+      if (typeof event.top !== 'undefined') return false
+    })
+    api.intercept('update-task', ({ id, task, inProgress }) => {
+      const start = task.start instanceof Date ? task.start : null
+      const end = task.end instanceof Date ? task.end : null
+      if (!start || !end) return false
+      if (inProgress) return undefined
+
+      onScheduleProposal(String(id), start.toISOString(), end.toISOString())
+      // Recreate the widget from canonical props immediately after the final gesture, so the local
+      // preview cannot survive as parallel state while the user reviews the server-side preview.
+      setResetRevision((revision) => revision + 1)
+      return false
+    })
+  }, [onScheduleProposal])
+
   if (mapped.tasks.length === 0) {
     return (
       <div className="progress-panel planning-gantt-empty">
@@ -112,7 +154,7 @@ export default function PlanningGantt({ tasks, dependencies, criticalTaskIds = [
   return (
     <section className="planning-gantt" aria-label={t('planning.gantt')}>
       <div className="planning-gantt-note">
-        <span>{t('planning.ganttReadonly')}</span>
+        <span>{t('planning.ganttValidatedEdit')}</span>
         {mapped.hiddenCount > 0 ? (
           <small>{mapped.hiddenCount} {t('planning.ganttHidden')}</small>
         ) : null}
@@ -120,10 +162,11 @@ export default function PlanningGantt({ tasks, dependencies, criticalTaskIds = [
       <div className="planning-gantt-canvas">
         <Willow>
           <Gantt
+            key={resetRevision}
             tasks={mapped.tasks}
             links={mapped.links}
             scales={SCALES}
-            readonly
+            init={init}
             autoScale
           />
         </Willow>
