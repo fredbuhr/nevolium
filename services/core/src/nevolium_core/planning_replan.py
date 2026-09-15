@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import heapq
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import or_, select
@@ -23,6 +24,7 @@ from .planning_replan_schemas import (
     ReplanDependencyFinding,
     ReplanPreviewRead,
     ReplanRequest,
+    ReplanSuggestionRead,
     ReplanTaskPatch,
     ReplanTaskPreview,
 )
@@ -30,6 +32,9 @@ from .planning_structure import _ensure_profile_locked, _serialize_project_plann
 from .planning_work_calendar import WorkCalendarDefinition, add_working_seconds, build_work_calendar
 from .planning_work_calendar_schemas import ProjectWorkCalendarRead
 from .project_access import get_owned_project
+
+MAX_REPLAN_EFFECT_TASKS = 1000
+MAX_REPLAN_EFFECT_DEPENDENCIES = 5000
 
 
 @dataclass(slots=True)
@@ -73,6 +78,18 @@ def _changed_fields(current: PlanningWindowRead, proposed: PlanningWindowRead) -
     ]
 
 
+def _shift_window(window: PlanningWindowRead, delta: timedelta) -> PlanningWindowRead:
+    return PlanningWindowRead(
+        planned_start_at=(
+            window.planned_start_at + delta if window.planned_start_at is not None else None
+        ),
+        planned_end_at=(
+            window.planned_end_at + delta if window.planned_end_at is not None else None
+        ),
+        due_at=window.due_at + delta if window.due_at is not None else None,
+    )
+
+
 def _validate_window(window: PlanningWindowRead, *, milestone: bool) -> None:
     if window.planned_end_at is not None and window.planned_start_at is None:
         raise HTTPException(status_code=422, detail="planned_end_at requires planned_start_at")
@@ -97,52 +114,83 @@ def _validate_window(window: PlanningWindowRead, *, milestone: bool) -> None:
         )
 
 
+def _dependency_points(
+    dependency: TaskDependency,
+    predecessor: PlanningWindowRead,
+    successor: PlanningWindowRead,
+) -> tuple[datetime | None, datetime | None, str]:
+    kind = dependency.dependency_type
+    if kind == "FS":
+        return (
+            predecessor.planned_end_at,
+            successor.planned_start_at,
+            "predecessor finish + working lag <= successor start",
+        )
+    if kind == "SS":
+        return (
+            predecessor.planned_start_at,
+            successor.planned_start_at,
+            "predecessor start + working lag <= successor start",
+        )
+    if kind == "FF":
+        return (
+            predecessor.planned_end_at,
+            successor.planned_end_at,
+            "predecessor finish + working lag <= successor finish",
+        )
+    if kind == "SF":
+        return (
+            predecessor.planned_start_at,
+            successor.planned_end_at,
+            "predecessor start + working lag <= successor finish",
+        )
+    raise RuntimeError(f"Unsupported dependency type: {kind}")
+
+
+def _required_successor_boundary(
+    dependency: TaskDependency,
+    predecessor: PlanningWindowRead,
+    successor: PlanningWindowRead,
+    work_calendar: WorkCalendarDefinition,
+) -> tuple[datetime | None, datetime | None, str]:
+    left, right, label = _dependency_points(dependency, predecessor, successor)
+    if left is None or right is None:
+        return None, right, label
+    try:
+        required = add_working_seconds(left, dependency.lag_seconds, work_calendar)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Dependency lag exceeds work-calendar capacity bound",
+                "dependency_id": str(dependency.id),
+            },
+        ) from exc
+    return required, right, label
+
+
 def _dependency_finding(
     dependency: TaskDependency,
     predecessor: PlanningWindowRead,
     successor: PlanningWindowRead,
     work_calendar: WorkCalendarDefinition,
 ) -> ReplanDependencyFinding:
+    required, right, label = _required_successor_boundary(
+        dependency,
+        predecessor,
+        successor,
+        work_calendar,
+    )
     kind = dependency.dependency_type
-    if kind == "FS":
-        left = predecessor.planned_end_at
-        right = successor.planned_start_at
-        label = "predecessor finish + working lag <= successor start"
-    elif kind == "SS":
-        left = predecessor.planned_start_at
-        right = successor.planned_start_at
-        label = "predecessor start + working lag <= successor start"
-    elif kind == "FF":
-        left = predecessor.planned_end_at
-        right = successor.planned_end_at
-        label = "predecessor finish + working lag <= successor finish"
-    elif kind == "SF":
-        left = predecessor.planned_start_at
-        right = successor.planned_end_at
-        label = "predecessor start + working lag <= successor finish"
-    else:  # The database constraint should make this unreachable.
-        raise RuntimeError(f"Unsupported dependency type: {kind}")
-
-    if left is None or right is None:
+    if required is None or right is None:
         status = "incomplete"
         detail = f"{kind} incomplete: {label} cannot be evaluated without both timestamps"
+    elif required <= right:
+        status = "satisfied"
+        detail = f"{kind} satisfied: {label}"
     else:
-        try:
-            required = add_working_seconds(left, dependency.lag_seconds, work_calendar)
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "message": "Dependency lag exceeds work-calendar capacity bound",
-                    "dependency_id": str(dependency.id),
-                },
-            ) from exc
-        if required <= right:
-            status = "satisfied"
-            detail = f"{kind} satisfied: {label}"
-        else:
-            status = "violated"
-            detail = f"{kind} violated: {label}"
+        status = "violated"
+        detail = f"{kind} violated: {label}"
 
     return ReplanDependencyFinding(
         dependency_id=dependency.id,
@@ -153,6 +201,134 @@ def _dependency_finding(
         status=status,
         detail=detail,
     )
+
+
+async def _suggest_downstream_changes(
+    *,
+    project_id: uuid.UUID,
+    explicit_ids: set[uuid.UUID],
+    explicit_windows: dict[uuid.UUID, PlanningWindowRead],
+    work_calendar: WorkCalendarDefinition,
+    session: AsyncSession,
+) -> list[ReplanSuggestionRead]:
+    task_rows = list(
+        (
+            await session.execute(
+                select(Task, TaskPlanningProfile)
+                .outerjoin(TaskPlanningProfile, TaskPlanningProfile.task_id == Task.id)
+                .where(Task.project_id == project_id)
+                .order_by(Task.id)
+                .limit(MAX_REPLAN_EFFECT_TASKS + 1)
+            )
+        ).all()
+    )
+    if len(task_rows) > MAX_REPLAN_EFFECT_TASKS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Replan effects are limited to {MAX_REPLAN_EFFECT_TASKS} project tasks",
+        )
+
+    all_tasks = {task.id: task for task, _profile in task_rows}
+    all_profiles = {task.id: profile for task, profile in task_rows}
+    task_ids = set(all_tasks)
+    if not explicit_ids <= task_ids:
+        raise HTTPException(status_code=404, detail="Replanning task not found")
+
+    dependencies = list(
+        (
+            await session.execute(
+                select(TaskDependency)
+                .where(
+                    TaskDependency.predecessor_task_id.in_(task_ids),
+                    TaskDependency.successor_task_id.in_(task_ids),
+                )
+                .order_by(TaskDependency.id)
+                .limit(MAX_REPLAN_EFFECT_DEPENDENCIES + 1)
+            )
+        ).scalars()
+    )
+    if len(dependencies) > MAX_REPLAN_EFFECT_DEPENDENCIES:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Replan effects are limited to "
+                f"{MAX_REPLAN_EFFECT_DEPENDENCIES} project dependencies"
+            ),
+        )
+
+    outgoing: dict[uuid.UUID, list[TaskDependency]] = {task_id: [] for task_id in task_ids}
+    indegree = {task_id: 0 for task_id in task_ids}
+    for dependency in dependencies:
+        outgoing[dependency.predecessor_task_id].append(dependency)
+        indegree[dependency.successor_task_id] += 1
+    for edges in outgoing.values():
+        edges.sort(key=lambda item: (str(item.successor_task_id), str(item.id)))
+
+    ready = [(str(task_id), task_id) for task_id, degree in indegree.items() if degree == 0]
+    heapq.heapify(ready)
+    order: list[uuid.UUID] = []
+    while ready:
+        _key, task_id = heapq.heappop(ready)
+        order.append(task_id)
+        for dependency in outgoing[task_id]:
+            successor_id = dependency.successor_task_id
+            indegree[successor_id] -= 1
+            if indegree[successor_id] == 0:
+                heapq.heappush(ready, (str(successor_id), successor_id))
+    if len(order) != len(task_ids):
+        raise HTTPException(status_code=409, detail="Planning dependency graph contains a cycle")
+
+    windows = {task_id: _window(task) for task_id, task in all_tasks.items()}
+    windows.update(explicit_windows)
+    affected = set(explicit_ids)
+    triggers: dict[uuid.UUID, set[uuid.UUID]] = {}
+
+    for predecessor_id in order:
+        if predecessor_id not in affected:
+            continue
+        predecessor_window = windows[predecessor_id]
+        for dependency in outgoing[predecessor_id]:
+            successor_id = dependency.successor_task_id
+            successor_window = windows[successor_id]
+            required, right, _label = _required_successor_boundary(
+                dependency,
+                predecessor_window,
+                successor_window,
+                work_calendar,
+            )
+            if required is None or right is None or required <= right:
+                continue
+            if successor_id in explicit_ids:
+                continue
+            delta = required - right
+            windows[successor_id] = _shift_window(successor_window, delta)
+            affected.add(successor_id)
+            triggers.setdefault(successor_id, set()).add(dependency.id)
+
+    suggestions: list[ReplanSuggestionRead] = []
+    for task_id in order:
+        dependency_ids = triggers.get(task_id)
+        if not dependency_ids:
+            continue
+        task = all_tasks[task_id]
+        current = _window(task)
+        proposed = windows[task_id]
+        changed_fields = _changed_fields(current, proposed)
+        if not changed_fields:
+            continue
+        profile = all_profiles[task_id]
+        suggestions.append(
+            ReplanSuggestionRead(
+                task_id=task_id,
+                title=task.title,
+                expected_version=profile.planning_version if profile is not None else 1,
+                current=current,
+                proposed=proposed,
+                changed_fields=changed_fields,
+                triggered_by_dependency_ids=sorted(dependency_ids, key=str),
+            )
+        )
+    return suggestions
 
 
 def _preview_digest(
@@ -200,8 +376,6 @@ def _preview_digest(
             }
             for item in sorted(findings, key=lambda item: str(item.dependency_id))
         ],
-        # Bind previews to unchanged dependency endpoints too. A concurrent schedule edit therefore
-        # invalidates apply even if it came through an older path that did not carry expected_version.
         "context_windows": [
             {
                 "task_id": str(task_id),
@@ -343,6 +517,13 @@ async def _build_preview(
         )
         for dependency in dependencies
     ]
+    suggestions = await _suggest_downstream_changes(
+        project_id=project.id,
+        explicit_ids=set(update_ids),
+        explicit_windows=proposed_windows,
+        work_calendar=work_calendar,
+        session=session,
+    )
     digest = _preview_digest(
         project_id=project.id,
         changes=changes,
@@ -356,7 +537,9 @@ async def _build_preview(
         preview_digest=digest,
         can_apply=all(item.status != "violated" for item in findings),
         changed_task_count=sum(bool(item.changed_fields) for item in changes),
+        suggested_task_count=len(suggestions),
         changes=changes,
+        suggested_changes=suggestions,
         dependency_findings=findings,
     )
     return _PreviewState(preview=preview, tasks=tasks, profiles=profiles)
