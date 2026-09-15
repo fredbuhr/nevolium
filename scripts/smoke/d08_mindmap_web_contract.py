@@ -3,7 +3,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKSPACE = ROOT / "apps/web/src/MindMapWorkspace.tsx"
+WORKSPACE = ROOT / "apps/web/src/MindMapWorkspace/index.tsx"
 APP = ROOT / "apps/web/src/App.tsx"
 MAIN = ROOT / "apps/web/src/main.tsx"
 I18N = ROOT / "apps/web/src/i18n.tsx"
@@ -37,9 +37,24 @@ def main() -> int:
     assert "COPY packages/graph ./packages/graph" in dockerfile
     assert "Math.random" not in graph
 
-    # Renderer/input capabilities required by the D08 slice.
+    # XYFlow is deliberately uncontrolled: internal measurement changes must never feed a React loop.
     assert "<ReactFlow" in workspace
-    assert "useNodesState" in workspace
+    assert "defaultNodes={renderedNodes}" in workspace
+    assert "defaultEdges={renderedEdges}" in workspace
+    assert "useNodesState" not in workspace
+    assert "onNodesChange=" not in workspace
+    assert "nodes={renderedNodes" not in workspace
+    assert "nodes={visibleNodes.map" not in workspace
+    assert "edges={visibleEdges.map" not in workspace
+    assert "const DEFAULT_VIEWPORT" in workspace
+    assert "const FIT_VIEW_OPTIONS" in workspace
+    assert "const PRO_OPTIONS" in workspace
+    assert "const collapsedGroups = useMemo(" in workspace
+    assert "const renderedNodes = useMemo<FlowNode[]>" in workspace
+    assert "const renderedEdges = useMemo<Edge[]>" in workspace
+    assert "key={flowKey}" in workspace
+
+    # Renderer/input capabilities required by the D08 slice.
     assert "onNodeDragStop" in workspace
     assert "onMoveEnd" in workspace
     assert "selectionOnDrag" in workspace
@@ -118,8 +133,8 @@ def main() -> int:
         assert i18n.count(f"'{key}'") == 2, key
 
     print(
-        "D08 WEB CONTRACT PASS: Core identities feed XYFlow; layout/groups stay presentation-only; "
-        "typed links, export, deep links and idea conversion are explicit and FR/EN"
+        "D08 WEB CONTRACT PASS: canonical data feed an uncontrolled XYFlow renderer; layout/groups "
+        "stay presentation-only; typed links, export, deep links and idea conversion are FR/EN"
     )
     return 0
 
