@@ -17,6 +17,7 @@ from .events import append_audit, enqueue_domain_event
 from .models import Task
 from .planning_models import ProjectWorkCalendar, TaskDependency, TaskPlanningProfile
 from .planning_replan_schemas import (
+    MAX_REPLAN_UPDATES,
     PlanningWindowRead,
     ReplanAppliedTaskRead,
     ReplanApplyRead,
@@ -200,6 +201,21 @@ def _dependency_finding(
         lag_seconds=dependency.lag_seconds,
         status=status,
         detail=detail,
+    )
+
+
+def _ensure_atomic_replan_capacity(*, explicit_task_count: int, suggested_task_count: int) -> None:
+    total_task_count = explicit_task_count + suggested_task_count
+    if total_task_count <= MAX_REPLAN_UPDATES:
+        return
+    raise HTTPException(
+        status_code=422,
+        detail={
+            "message": "Downstream effects exceed the atomic replanning task limit",
+            "explicit_task_count": explicit_task_count,
+            "suggested_task_count": suggested_task_count,
+            "max_task_count": MAX_REPLAN_UPDATES,
+        },
     )
 
 
@@ -523,6 +539,10 @@ async def _build_preview(
         explicit_windows=proposed_windows,
         work_calendar=work_calendar,
         session=session,
+    )
+    _ensure_atomic_replan_capacity(
+        explicit_task_count=len(update_ids),
+        suggested_task_count=len(suggestions),
     )
     digest = _preview_digest(
         project_id=project.id,
