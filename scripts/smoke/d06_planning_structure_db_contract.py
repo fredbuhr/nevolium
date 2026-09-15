@@ -304,7 +304,11 @@ async def main() -> None:
                 session,
             ),
         )
-        assert stale_apply.detail["current_version"] == 3
+        stale_task_id = uuid.UUID(stale_apply.detail["task_id"])
+        expected_versions = {item.task_id: item.expected_version for item in replan_request.updates}
+        assert stale_task_id in versions
+        assert stale_apply.detail["current_version"] == versions[stale_task_id]
+        assert stale_apply.detail["current_version"] > expected_versions[stale_task_id]
         await session.rollback()
 
         violating_request = ReplanRequest(
