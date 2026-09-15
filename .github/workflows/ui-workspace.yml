@@ -29,6 +29,8 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/d06_critical_path_contract.py
       - name: Prove D06 bounded recurrence and DST semantics
         run: uv run --locked --project services/core python scripts/smoke/d06_recurrence_contract.py
+      - name: Prove D06 work calendar and DST semantics
+        run: uv run --locked --project services/core python scripts/smoke/d06_work_calendar_contract.py
       - name: Prove D06 list, Kanban and Gantt planning workspace
         run: python scripts/smoke/d06_planning_workspace_contract.py
       - name: Prove canonical Project ownership contract
@@ -62,6 +64,9 @@ jobs:
           services/core/src/nevolium_core/planning_schemas.py
           services/core/src/nevolium_core/planning_structure.py
           services/core/src/nevolium_core/planning_structure_schemas.py
+          services/core/src/nevolium_core/planning_work_calendar.py
+          services/core/src/nevolium_core/planning_work_calendar_schemas.py
+          services/core/src/nevolium_core/planning_work_calendars.py
           services/core/src/nevolium_core/workflows.py
 
   planning-structure-integration:
@@ -90,6 +95,8 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/d06_planning_structure_db_contract.py
       - name: Prove D06 virtual recurrence pagination and isolation on PostgreSQL
         run: uv run --locked --project services/core python scripts/smoke/d06_recurrence_db_contract.py
+      - name: Prove D06 work calendar versioning and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_work_calendar_db_contract.py
 
   cockpit-browser-qualification:
     runs-on: ubuntu-latest
