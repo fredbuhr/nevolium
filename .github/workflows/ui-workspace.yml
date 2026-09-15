@@ -25,7 +25,9 @@ jobs:
         run: python scripts/smoke/d06_locale_contract.py
       - name: Prove D06 canonical planning structure and projection
         run: uv run --locked --project services/core python scripts/smoke/d06_planning_structure_contract.py
-      - name: Prove D06 list and Kanban planning workspace
+      - name: Prove D06 deterministic critical path engine
+        run: uv run --locked --project services/core python scripts/smoke/d06_critical_path_contract.py
+      - name: Prove D06 list, Kanban and Gantt planning workspace
         run: python scripts/smoke/d06_planning_workspace_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
@@ -44,6 +46,9 @@ jobs:
           services/core/src/nevolium_core/ui_models.py
           services/core/src/nevolium_core/project_access.py
           services/core/src/nevolium_core/planning.py
+          services/core/src/nevolium_core/planning_critical_path.py
+          services/core/src/nevolium_core/planning_critical_path_schemas.py
+          services/core/src/nevolium_core/planning_engine.py
           services/core/src/nevolium_core/planning_models.py
           services/core/src/nevolium_core/planning_projection.py
           services/core/src/nevolium_core/planning_projection_schemas.py
@@ -74,7 +79,7 @@ jobs:
       - name: Apply canonical migrations through D06
         working-directory: services/core
         run: uv run --locked alembic upgrade head
-      - name: Prove D06 projection, cycles, conflicts and project isolation on PostgreSQL
+      - name: Prove D06 projection, critical path, cycles, conflicts and project isolation on PostgreSQL
         run: uv run --locked --project services/core python scripts/smoke/d06_planning_structure_db_contract.py
 
   cockpit-browser-qualification:
