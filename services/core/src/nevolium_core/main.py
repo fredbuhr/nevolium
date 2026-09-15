@@ -36,7 +36,6 @@ from .news import router as news_router
 from .openbao import openbao_client
 from .outbox import OutboxRelay
 from .planning import router as planning_router
-from .planning_structure import router as planning_structure_router
 from .project_access import (
     entity_belongs_to_principal,
     get_owned_project,
@@ -122,7 +121,6 @@ app.include_router(research_results_router)
 app.include_router(news_router)
 app.include_router(assistant_router)
 app.include_router(planning_router)
-app.include_router(planning_structure_router)
 app.include_router(ui_layouts_router)
 app.include_router(resources_router)
 app.include_router(assets_router)
@@ -193,15 +191,67 @@ async def readiness(request: Request) -> SystemReadiness:
     return SystemReadiness(status="ready", checks=checks)
 
 
-@app.get("/v1/system/readiness", response_model=SystemReadiness)
-async def system_readiness(request: Request) -> SystemReadiness:
-    return await readiness(request)
+@app.get("/health/trust", response_model=SystemReadiness)
+async def trust_readiness() -> SystemReadiness:
+    keycloak_ok, openbao_ok, seaweed_ok = await asyncio.gather(
+        _keycloak_ready(), openbao_client.health(), _seaweed_ready(), return_exceptions=True
+    )
+    checks = {
+        "keycloak": keycloak_ok is True,
+        "openbao": openbao_ok is True,
+        "seaweedfs": seaweed_ok is True,
+    }
+    if not all(checks.values()):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "trust-boundary-not-ready", "checks": checks},
+        )
+    return SystemReadiness(status="ready", checks=checks)
+
+
+@app.get("/v1/system/components")
+async def components(
+    _principal: Principal = Depends(require_nevolium_admin),
+) -> dict:
+    return load_component_registry()
+
+
+@app.get("/v1/system/architecture")
+async def architecture(
+    _principal: Principal = Depends(require_nevolium_admin),
+) -> dict[str, object]:
+    return {
+        "canonical_state": "postgresql",
+        "canonical_objects": "seaweedfs-filer",
+        "durable_execution": "temporal",
+        "event_bus": "nats-jetstream",
+        "event_delivery": "transactional-outbox-at-least-once",
+        "identity": "keycloak-jwt-jwks",
+        "secret_values": "openbao",
+        "conversation_state": "postgresql",
+        "canonical_documents": "postgresql-document-version-chunks",
+        "document_parser": "docling",
+        "capability_registry": "nevolium-core",
+        "tool_registry": "nevolium-core-postgresql",
+        "tool_transport": "mcp-streamable-http",
+        "tool_policy": "deny-by-default-explicit-enable",
+        "autonomous_research": "pydanticai-planner-grounded-synthesis-policy-bound-mcp-child-tasks",
+        "command_routing": "deterministic-first-semantic-later",
+        "derived_context_graph": "graphiti-neo4j",
+        "derived_memory": "mem0",
+        "model_gateway": "litellm",
+        "news_discovery": "searxng",
+        "news_speech": "kokoro-fastapi",
+        "policy_default": "deny",
+        "policy_authority": "nevolium-core-signed-capability-token",
+        "model_budget_ledger": "postgresql",
+    }
 
 
 @app.get("/v1/system/outbox", response_model=OutboxStats)
 async def outbox_stats(
     request: Request,
-    principal: Principal = Depends(require_nevolium_admin),
+    _principal: Principal = Depends(require_nevolium_admin),
     session: AsyncSession = Depends(get_session),
 ) -> OutboxStats:
     pending = await session.scalar(
@@ -379,17 +429,52 @@ async def create_relationship(
     principal: Principal = Depends(require_nevolium_user),
     session: AsyncSession = Depends(get_session),
 ) -> RelationshipRecord:
-    await require_same_owner_entities(session, principal, [(body.source_type, body.source_id), (body.target_type, body.target_id)])
+    await require_same_owner_entities(
+        session,
+        source_type=body.source_type,
+        source_id=body.source_id,
+        target_type=body.target_type,
+        target_id=body.target_id,
+        principal=principal,
+    )
     correlation_id = uuid.uuid4()
-    relationship = RelationshipRecord(**body.model_dump(), owner_subject=principal.subject)
+    relationship = RelationshipRecord(
+        owner_subject=principal.subject,
+        source_type=body.source_type,
+        source_id=body.source_id,
+        relation_type=body.relation_type,
+        target_type=body.target_type,
+        target_id=body.target_id,
+        metadata_json=body.metadata,
+    )
     session.add(relationship)
     await session.flush()
-    await enqueue_domain_event(session, event_type="relationship.created", aggregate_type="relationship",
-                               aggregate_id=relationship.id, correlation_id=correlation_id,
-                               payload={"relationship_id": str(relationship.id), "kind": relationship.kind})
-    await append_audit(session, actor_type="user", actor_id=principal.subject, action="relationship.create",
-                       resource_type="relationship", resource_id=str(relationship.id), authority_level=1,
-                       correlation_id=correlation_id, request_json=body.model_dump(mode="json"))
+    await enqueue_domain_event(
+        session,
+        event_type="relationship.created",
+        aggregate_type="relationship",
+        aggregate_id=relationship.id,
+        correlation_id=correlation_id,
+        payload={
+            "relationship_id": str(relationship.id),
+            "source_type": relationship.source_type,
+            "source_id": str(relationship.source_id),
+            "relation_type": relationship.relation_type,
+            "target_type": relationship.target_type,
+            "target_id": str(relationship.target_id),
+        },
+    )
+    await append_audit(
+        session,
+        actor_type="user",
+        actor_id=principal.subject,
+        action="relationship.create",
+        resource_type="relationship",
+        resource_id=str(relationship.id),
+        authority_level=1,
+        correlation_id=correlation_id,
+        request_json=body.model_dump(mode="json"),
+    )
     await session.commit()
     await session.refresh(relationship)
     return relationship
