@@ -10,6 +10,7 @@
 .spatial-workspace button:disabled { cursor: default; opacity: 0.45; }
 .spatial-tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid #345653; border-radius: 12px; }
 .spatial-tabs button[aria-pressed="true"] { color: #d6fff4; background: #164b46; border-color: #5ba595; }
+.spatial-toolbar > button[aria-pressed="true"], .spatial-navigation > button[aria-pressed="true"] { background: #133e39; border-color: #548f7c; color: #dcf8e9; }
 .spatial-save, .spatial-hint, .spatial-group-summary { font-size: 12px; color: #aec4c4; }
 .spatial-save[data-spatial-save="error"] { color: #f5c295; }
 .spatial-viewport { position: relative; height: clamp(380px, 56vh, 700px); min-width: 0; overflow: hidden; border-radius: 20px; border: 1px solid #274440; background: radial-gradient(ellipse at 46% 48%, #122525 0%, #071115 42%, #02080d 85%); }

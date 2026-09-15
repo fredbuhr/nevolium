@@ -9,7 +9,7 @@ import './d09-hardware.css'
 declare const __D09_BUILD__: { source_commit: string; checkout_commit: string; dirty: boolean; built_at: string }
 type Event = { at_ms: number; kind: string; detail?: string }
 type Run = Recording & {
-  configuration: { case_id: CaseId; nodes: number; edges: number; quality: Quality; reduced_motion: boolean }
+  configuration: { case_id: CaseId; nodes: number; edges: number; quality: Quality; reduced_motion: boolean; ambient_motion: boolean }
   device: { model: string; gpu_class: string; power: string }
 }
 class Boundary extends Component<{ children: ReactNode; fail: () => void }, { failed: boolean }> {
@@ -37,6 +37,7 @@ function App() {
   const [selected, setSelected] = useState<string[]>([])
   const [command, setCommand] = useState<CameraCommand | null>(null)
   const [reducedMotion, setReducedMotion] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [animate, setAnimate] = useState(true)
   const viewport = useRef<HTMLDivElement>(null)
   const labels = useRef(new Map<string, HTMLButtonElement>())
   const recording = useRef<Run | null>(null)
@@ -129,7 +130,7 @@ function App() {
     started.current = performance.now(); events.current = []; renderers.current = []; cycle.current = 0
     eventCounts.current = {}; coalescedEvents.current = 0; droppedEvents.current = 0
     const next: Run = { started_at: new Date().toISOString(), target_ms: duration * 1000, active_ms: 0, samples: [], gaps: [],
-      configuration: { case_id: caseId, nodes: data.nodes.length, edges: data.edges.length, quality, reduced_motion: reducedMotion }, device: { ...device } }
+      configuration: { case_id: caseId, nodes: data.nodes.length, edges: data.edges.length, quality, reduced_motion: reducedMotion, ambient_motion: animate && !reducedMotion }, device: { ...device } }
     recording.current = next; recordingNow.current = true; setRun(next); setRunning(true)
     setFailed(false); setEnabled(true); setObservations({}); setNotes(''); event('recording-started')
     viewport.current?.scrollIntoView({ block: 'center' })
@@ -204,10 +205,13 @@ function App() {
         <button disabled={!active} onClick={() => issue('reset')}>Vue d’ensemble</button>
         <button disabled={!active} aria-label="Zoom avant" onClick={() => issue('in')}>+</button>
         <button disabled={!active} aria-label="Zoom arrière" onClick={() => issue('out')}>−</button>
+        <button aria-pressed={animate && !reducedMotion} disabled={reducedMotion} onClick={() => {
+          setAnimate(value => !value); event('ambient-motion', String(!animate))
+        }}>Animer le réseau</button>
         <button disabled={!active} onClick={pause}>Masquer 2 s</button></div>
       <div ref={viewport} className="spatial-viewport" data-active={active}>
         {active ? <Boundary fail={fail}><Scene graph={data} nodes={data.nodes} groups={data.groups} rootId="project:hardware"
-          selected={selected} quality={quality} camera={camera} command={command} reducedMotion={reducedMotion} labels={labels}
+          selected={selected} quality={quality} camera={camera} command={command} reducedMotion={reducedMotion || !animate} labels={labels}
           onSelect={select} onCamera={cameraChanged} onCommandHandled={handled} onFailure={fail} onMetrics={onMetrics} /></Boundary>
           : <p className="spatial-placeholder">{failed ? 'Scène indisponible' : enabled ? 'Scène en pause' : 'Démarrer pour activer la 3D'}</p>}
         <div className="spatial-labels">{active ? labelNodes.map(node => <button key={node.id}
@@ -215,7 +219,8 @@ function App() {
           aria-pressed={selected.includes(node.id)} onClick={() => select(node.id, false)}>{node.label}</button>) : null}</div>
       </div>
       <p className="hardware-live" aria-live="off">{metrics ? `Dernière fenêtre : ${metrics.fps} FPS · profil ${metrics.tier} · ${metrics.calls} appels de rendu · ${metrics.geometries} géométries` : 'Les mesures apparaîtront après les premières images.'}
-        {running ? ` · ${Math.floor((run?.active_ms || 0) / 1000)} s mesurées` : ''}{reducedMotion ? ' · mouvement réduit actif : rendu à la demande' : ''}</p>
+        {running ? ` · ${Math.floor((run?.active_ms || 0) / 1000)} s mesurées` : ''}{reducedMotion || !animate ? ' · mouvement réduit actif : rendu à la demande' : ''}</p>
+      <p className="spatial-hint">Respiration et circulation lumineuse sont une ambiance visuelle. Elles ne signalent pas l’exécution d’une tâche. « Animer le réseau » permet de figer la scène.</p>
     </div>
     <details open={Boolean(run && !running)}><summary>Observations à joindre au rapport</summary><div className="hardware-grid">
       {['Orbite et zoom', 'Sélection et centrage', 'Gestes tactiles', 'Retour après masquage'].map(label => <label key={label}>{label}

@@ -13,6 +13,7 @@ const messages = {
     restore: 'Recharger les réglages 3D', refresh: 'Actualiser les données',
     pending: 'Actualisation…', failedRefresh: 'Actualisation impossible. Réessayez pour lire les dernières données.',
     group: 'Groupes', selected: 'Sélection',
+    animate: 'Animer le réseau', lifeHint: 'La lumière exprime la vitalité du réseau, pas l’exécution d’une tâche.',
   },
   en: {
     title: '3D Mycelium', view2d: '2D view', view3d: '3D view', quality: '3D quality',
@@ -26,6 +27,7 @@ const messages = {
     restore: 'Reload 3D preferences', refresh: 'Refresh data',
     pending: 'Refreshing…', failedRefresh: 'Refresh failed. Retry to read the latest data.',
     group: 'Groups', selected: 'Selection',
+    animate: 'Animate the network', lifeHint: 'Light expresses the vitality of the network, not task execution.',
   },
 } as const
 

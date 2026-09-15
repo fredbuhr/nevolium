@@ -33,6 +33,21 @@ async function open(options = {}, unavailable = false) {
 async function waitMeasured(page, ms) {
   await page.waitForFunction(value => Number(document.querySelector('[data-active-ms]')?.getAttribute('data-active-ms')) >= value, ms, { timeout: 30000 })
 }
+async function changedPixels(page, first, second) {
+  return page.evaluate(async ([a, b]) => {
+    const read = async source => {
+      const image = new Image(); image.src = source; await image.decode()
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height
+      const context = canvas.getContext('2d'); context.drawImage(image, 0, 0)
+      return context.getImageData(0, 0, canvas.width, canvas.height).data
+    }
+    const aa = await read(a), bb = await read(b)
+    if (aa.length !== bb.length) throw new Error('Animation comparison dimensions changed')
+    let changed = 0
+    for (let i = 0; i < aa.length; i += 4) if (Math.abs(aa[i] - bb[i]) + Math.abs(aa[i + 1] - bb[i + 1]) + Math.abs(aa[i + 2] - bb[i + 2]) > 24) changed++
+    return changed
+  }, [first, second].map(buffer => `data:image/png;base64,${buffer.toString('base64')}`))
+}
 try {
   const desktop = await open()
   const page = desktop.page
@@ -52,7 +67,7 @@ try {
   const canvas = page.locator('canvas'), box = await canvas.boundingBox()
   assert(box)
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-  assert.equal(await page.getByLabel('Sélectionner un objet', { exact: true }).inputValue(), 'task:hardware-1', 'Membrane raycast must select the real 3D object')
+  assert.equal(await page.getByLabel('Sélectionner un objet', { exact: true }).inputValue(), 'task:hardware-1', 'Neuron volume raycast must select the real 3D object')
   await page.mouse.move(box.x + box.width * .7, box.y + box.height * .5)
   await page.mouse.down(); await page.mouse.move(box.x + box.width * .8, box.y + box.height * .6, { steps: 10 }); await page.mouse.up()
   await page.getByRole('button', { name: 'Masquer 2 s', exact: true }).click()
@@ -66,6 +81,20 @@ try {
   await surface.scrollIntoViewIfNeeded()
   await surface.locator('canvas').waitFor()
   await surface.screenshot({ path: path.join(output, 'desktop.png') })
+  const aliveBefore = await surface.screenshot({ path: path.join(output, 'life-before.png') })
+  await page.waitForTimeout(1700)
+  const aliveAfter = await surface.screenshot({ path: path.join(output, 'life-after.png') })
+  const animatedPixels = await changedPixels(page, aliveBefore, aliveAfter)
+  assert(animatedPixels > 120, `Neural bodies and flow must visibly animate with a stationary camera (${animatedPixels} changed pixels)`)
+  await page.getByRole('button', { name: 'Animer le réseau', exact: true }).click()
+  await surface.scrollIntoViewIfNeeded(); await page.waitForTimeout(500)
+  const calmBefore = await surface.screenshot()
+  await page.waitForTimeout(1200)
+  const calmAfter = await surface.screenshot({ path: path.join(output, 'calm.png') })
+  const calmPixels = await changedPixels(page, calmBefore, calmAfter)
+  assert(calmPixels < 3, `Calm mode must stop material and flow animation (${calmPixels} changed pixels)`)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent === 'Animer le réseau' && button.disabled))
   await page.getByRole('button', { name: 'Arrêter', exact: true }).click()
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Exporter le rapport JSON', exact: true }).first().click()
@@ -108,6 +137,31 @@ try {
   await phone.page.getByRole('button', { name: 'Arrêter', exact: true }).tap()
   await phone.context.close()
 
+  const demo = await open()
+  await demo.page.getByLabel('Jeu synthétique', { exact: true }).selectOption('small')
+  await demo.page.getByLabel('Qualité', { exact: true }).selectOption('balanced')
+  await demo.page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
+  await demo.page.locator('canvas').waitFor(); await waitMeasured(demo.page, 1500)
+  await demo.page.getByLabel('Sélectionner un objet', { exact: true }).selectOption('task:hardware-1')
+  await demo.page.getByRole('button', { name: 'Centrer', exact: true }).click()
+  await demo.page.locator('.spatial-viewport').scrollIntoViewIfNeeded()
+  await demo.page.locator('canvas').waitFor()
+  await demo.page.locator('.spatial-viewport').screenshot({ path: path.join(output, 'neuron-closeup.png') })
+  const film = await demo.page.locator('canvas').evaluate(canvas => new Promise((resolve, reject) => {
+    const chunks = [], stream = canvas.captureStream(15)
+    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 1800000 })
+    recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data) }
+    recorder.onerror = event => { stream.getTracks().forEach(track => track.stop()); reject(String(event.error)) }
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(track => track.stop())
+      resolve(Array.from(new Uint8Array(await new Blob(chunks, { type: 'video/webm' }).arrayBuffer())))
+    }
+    recorder.start(); setTimeout(() => recorder.stop(), 7000)
+  }))
+  assert(film.length > 1000, 'Animated preview must contain recorded frames')
+  await fs.writeFile(path.join(output, 'neural-life.webm'), Buffer.from(film))
+  await demo.context.close()
+
   const unavailable = await open({}, true)
   await unavailable.page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
   await unavailable.page.getByRole('alert').waitFor()
@@ -117,7 +171,8 @@ try {
   assert.deepEqual(errors, [])
   assert.deepEqual(requests, [], 'Self-contained kit must make no HTTP requests')
   const result = { status: 'passed', scope: 'Offline file:// kit, Chromium SwiftShader; short software check, no hardware qualification',
-    checks: ['no-network', 'real-scene-render', 'membrane-raycast', 'select-focus-orbit', 'pause-remount', 'partial-report-export', 'touch-viewport', 'effective-dpr', 'no-webgl'],
+    checks: ['no-network', 'real-scene-render', 'neuron-volume-raycast', 'select-focus-orbit', 'pause-remount', 'partial-report-export', 'touch-viewport', 'effective-dpr', 'no-webgl', 'visible-neural-animation', 'calm-static', 'reduced-motion-control', 'recorded-neural-preview'],
+    animation: { animated_changed_pixels: animatedPixels, calm_changed_pixels: calmPixels },
     source_commit: report.build.source_commit }
   await fs.writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2) + '\n')
   console.log('D09 HARDWARE KIT PASS', result)

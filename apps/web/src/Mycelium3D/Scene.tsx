@@ -8,7 +8,8 @@ import {
   type CameraCommand, type CameraPose, type Quality, type QualityWindow,
   type SceneMetrics, type SpatialGroup, type SpatialNode, type Tier,
 } from './presentation'
-import { OrganicFilaments, OrganicGroups, OrganicNodes } from './OrganicField'
+import { OrganicFilaments, OrganicGroups } from './OrganicField'
+import { NeuralBodies, neuralRadius } from './NeuralBodies'
 import { organicPositions, type PoseMap } from './organicGeometry'
 
 export type SceneProps = {
@@ -104,10 +105,14 @@ function CameraAndMetrics(props: SceneProps & { poses: PoseMap; tier: Tier; onTi
     for (const { id, element, width, height } of labels) {
       const pose = p.poses.get(id)
       if (!pose) { element.style.visibility = 'hidden'; continue }
+      const depth = -projected.copy(pose).applyMatrix4(camera.matrixWorldInverse).z
+      const node = p.nodes.find(item => item.id === id)
+      const screenRadius = node ? Math.min(neuralRadius(node) * (p.selected.includes(id) ? 1.12 : 1) / Math.max(0.1, depth), 0.105)
+        * size.height / (2 * Math.tan(48 * Math.PI / 360)) : 0
       projected.copy(pose).project(camera)
       let visible = projected.z >= -1 && projected.z <= 1 && Math.abs(projected.x) < 0.92 && Math.abs(projected.y) < 0.9
       const x = THREE.MathUtils.clamp((projected.x + 1) * size.width / 2, width / 2 + 8, size.width - width / 2 - 8)
-      const y = THREE.MathUtils.clamp((-projected.y + 1) * size.height / 2 + 12, 8, size.height - height - 8)
+      const y = THREE.MathUtils.clamp((-projected.y + 1) * size.height / 2 + Math.max(12, screenRadius * 1.3 + 8), 8, size.height - height - 8)
       const box = { left: x - width / 2, right: x + width / 2, top: y, bottom: y + height }
       if (occupied.some(other => box.left < other.right + 6 && box.right + 6 > other.left
         && box.top < other.bottom + 6 && box.bottom + 6 > other.top)) visible = false
@@ -170,8 +175,8 @@ export default function Scene(props: SceneProps) {
     onPointerMissed={() => props.onSelect('', false)}
   >
     <CameraAndMetrics {...props} poses={poses} tier={tier} onTier={setAutoTier} />
-    <OrganicFilaments graph={visibleGraph} poses={poses} layout={spatial} selected={props.selected} tier={tier} />
+    <OrganicFilaments graph={visibleGraph} poses={poses} layout={spatial} selected={props.selected} tier={tier} reducedMotion={props.reducedMotion} />
     <OrganicGroups groups={props.groups} poses={poses} />
-    <OrganicNodes nodes={props.nodes} graph={visibleGraph} poses={poses} selected={props.selected} reducedMotion={props.reducedMotion} onSelect={props.onSelect} />
+    <NeuralBodies nodes={props.nodes} graph={visibleGraph} poses={poses} selected={props.selected} tier={tier} reducedMotion={props.reducedMotion} onSelect={props.onSelect} />
   </Canvas>
 }

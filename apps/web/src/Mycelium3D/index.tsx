@@ -35,6 +35,7 @@ export default function SpatialWorkspace(props: Props) {
   const [intersecting, setIntersecting] = useState(false)
   const [documentVisible, setDocumentVisible] = useState(!document.hidden)
   const [reducedMotion, setReducedMotion] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [animate, setAnimate] = useState(true)
   const [command, setCommand] = useState<CameraCommand | null>(null)
   const commandSequence = useRef(0)
   const commandHandled = useCallback(() => setCommand(null), [])
@@ -80,6 +81,8 @@ export default function SpatialWorkspace(props: Props) {
         onChange={event => state.update({ quality: event.target.value as typeof state.value.quality })}>
         {(['auto', 'eco', 'balanced', 'high'] as const).map(value => <option key={value} value={value}>{m[value]}</option>)}
       </select></label> : null}
+      {state.view === '3d' ? <button type="button" aria-pressed={animate && !reducedMotion} disabled={reducedMotion}
+        onClick={() => setAnimate(value => !value)}>{m.animate}</button> : null}
       <span className="spatial-save" data-spatial-save={state.persistence.status} aria-live="polite">{saveCopy[state.persistence.status]}</span>
       {state.persistence.status === 'error' ? <button type="button" onClick={state.persistence.retry}>{saveCopy.retry}</button> : null}
     </div>
@@ -97,14 +100,14 @@ export default function SpatialWorkspace(props: Props) {
         <button type="button" aria-label={m.zoomOut} onClick={() => issue('out')}>−</button>
         <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button>
       </div>
-      <p className="spatial-hint">{m.hint}</p>
+      <p className="spatial-hint">{m.hint} {m.lifeHint}</p>
       <div ref={viewport} className="spatial-viewport" aria-label={m.title}
-        data-spatial-active={active} data-spatial-reduced-motion={reducedMotion}
+        data-spatial-active={active} data-spatial-reduced-motion={reducedMotion || !animate}
         data-spatial-metrics={metrics ? JSON.stringify(metrics) : ''} data-spatial-nodes={props.nodes.length}>
         {active ? <SceneBoundary onFailure={state.fail}>
           <Suspense fallback={<p className="spatial-placeholder">{m.loading}</p>}>
             <Scene {...props} rootId={`project:${props.projectId}`} camera={state.value.camera}
-              command={command} onCommandHandled={commandHandled} quality={state.value.quality} reducedMotion={reducedMotion}
+              command={command} onCommandHandled={commandHandled} quality={state.value.quality} reducedMotion={reducedMotion || !animate}
               labels={labels} onCamera={cameraSave} onFailure={state.fail} onMetrics={setMetrics} />
           </Suspense>
         </SceneBoundary> : <p className="spatial-placeholder">{m.paused}</p>}

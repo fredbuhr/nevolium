@@ -27,10 +27,28 @@ export function organicPositions(layout: NevoliumSpatialLayout): PoseMap {
 }
 
 export const GROWTH_DETAIL = {
-  eco: { segments: 18, strands: 2 },
-  balanced: { segments: 26, strands: 3 },
-  high: { segments: 34, strands: 4 },
+  eco: { segments: 18, strands: 2, pulses: 48 },
+  balanced: { segments: 26, strands: 3, pulses: 80 },
+  high: { segments: 34, strands: 4, pulses: 128 },
 } as const
+
+export function growthHubs(graph: NevoliumGraphSnapshot, poses: PoseMap) {
+  const hubs = new Map<string, { nodeId: string; direction: THREE.Vector3; count: number }>()
+  for (const edge of graph.edges) {
+    if (edge.source === edge.target || !poses.has(edge.source) || !poses.has(edge.target)) continue
+    for (const [a, b] of [[edge.source, edge.target], [edge.target, edge.source]]) {
+      const direction = poses.get(b)!.clone().sub(poses.get(a)!)
+      const key = growthSector(a, direction)
+      const hub = hubs.get(key) || { nodeId: a, direction: new THREE.Vector3(), count: 0 }
+      hub.direction.add(direction.normalize()); hub.count++; hubs.set(key, hub)
+    }
+  }
+  for (const hub of hubs.values()) hub.direction.normalize()
+  return hubs
+}
+function growthSector(id: string, direction: THREE.Vector3) {
+  return `${id}:${direction.x < 0 ? 0 : 1}${direction.y < 0 ? 0 : 1}${direction.z < 0 ? 0 : 1}`
+}
 
 type Batch = { positions: number[]; colors: number[] }
 const batch = (): Batch => ({ positions: [], colors: [] })
@@ -49,23 +67,17 @@ function vertex(data: Batch, point: THREE.Vector3, tint: THREE.Color, light: num
 export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layout: NevoliumSpatialLayout, tier: Tier, selected: string[]) {
   const settings = GROWTH_DETAIL[tier]
   const body = batch(), fibres = batch()
-  const widths: number[] = []
+  const widths: number[] = [], flow: number[] = []
   const edges = [...graph.edges].filter(edge => poses.has(edge.source) && poses.has(edge.target)
     && edge.source !== edge.target).sort((a, b) => a.id.localeCompare(b.id))
   const parents = new Map(layout.placements.map(p => [p.id, p.parentId]))
-  const hubs = new Map<string, { direction: THREE.Vector3; count: number }>()
-  const sector = (a: string, b: string) => {
-    const d = poses.get(b)!.clone().sub(poses.get(a)!)
-    return `${a}:${d.x < 0 ? 0 : 1}${d.y < 0 ? 0 : 1}${d.z < 0 ? 0 : 1}`
-  }
-  // Adjacent canonical edges share their initial growth direction and then bifurcate.
-  for (const edge of edges) for (const [a, b] of [[edge.source, edge.target], [edge.target, edge.source]]) {
-    const key = sector(a, b)
-    const hub = hubs.get(key) || { direction: new THREE.Vector3(), count: 0 }
-    hub.direction.add(poses.get(b)!.clone().sub(poses.get(a)!).normalize()); hub.count++
-    hubs.set(key, hub)
-  }
-  for (const hub of hubs.values()) hub.direction.normalize()
+  const hubs = growthHubs(graph, poses)
+  const sector = (a: string, b: string) => growthSector(a, poses.get(b)!.clone().sub(poses.get(a)!))
+  // Visual circulation is a bounded material animation, never evidence of data transfer.
+  const flowing = new Set([...edges].sort((a, b) => {
+    const priority = (edge: typeof a) => selected.includes(edge.source) || selected.includes(edge.target) ? 0 : 1
+    return priority(a) - priority(b) || seed(`${a.id}:flow`) - seed(`${b.id}:flow`)
+  }).slice(0, settings.pulses).map(edge => edge.id))
   for (const edge of edges) {
     const from = poses.get(edge.source)!, to = poses.get(edge.target)!
     const length = from.distanceTo(to)
@@ -102,6 +114,8 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
       vertex(body, points[i - 1], tint, variation); vertex(body, points[i], tint, variation)
       widths.push((primary || highlighted ? 0.8 : 0.5) * (0.7 + Math.abs(Math.cos(t * Math.PI)) * 0.55)
         * (0.85 + seed(edge.id) * 0.3))
+      flow.push((i - 1) / settings.segments, t, seed(`${edge.id}:flow`),
+        flowing.has(edge.id) ? (selected.length && !highlighted ? 0.12 : 1) : 0)
     }
     for (let strand = 0; strand < settings.strands; strand++) {
       const trace = points.map((p, i) => {
@@ -118,5 +132,6 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
       }
     }
   }
-  return { body: geometry(body), fibres: geometry(fibres), widths: new Float32Array(widths), edgeIds: edges.map(edge => edge.id) }
+  return { body: geometry(body), fibres: geometry(fibres), widths: new Float32Array(widths), flow: new Float32Array(flow),
+    edgeIds: edges.map(edge => edge.id), flowingIds: [...flowing] }
 }

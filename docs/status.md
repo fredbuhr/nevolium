@@ -40,7 +40,7 @@ mesurée. La correction du dessin trop technologique est en cours de qualificati
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
 | Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
-| Mycelium 3D D09 | Renderer interactif et persistance sur #93, parcours Chromium et retour matériel positif ; dessin organique révisé | Non intégré/déployé ; revue du dessin, preuve mémoire/GPU intégré/cockpit à compléter |
+| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; reprise neuronale en volume avec respiration et circulation lumineuse après retours utilisateur | Non intégré/déployé ; nouveau rendu/animation à qualifier, preuve mémoire/GPU intégré/cockpit à compléter |
 | Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée

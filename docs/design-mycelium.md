@@ -15,7 +15,7 @@ Nevolium relie des objets de travail sous contrôle de l'utilisateur. Son interf
 mycélium neural vivant sans transformer chaque écran en graphe ni masquer l'information utile.
 La bioluminescence de fond appartient à la matière décorative, pas à un état métier. Un signal
 d'activité, de sélection ou d'alerte reste distinct, explicite et compréhensible. Les mouvements
-restent rares, réversibles et supprimés quand l'utilisateur réduit les animations.
+restent lents, localisés, réversibles et supprimés quand l'utilisateur réduit les animations.
 
 Visuellement, « organique » désigne une matière fibreuse irrégulière, ramifiée, avec une lumière
 localisée ; une courbe mathématique lisse et un halo uniforme ne suffisent pas. Dans l'usage,
@@ -113,14 +113,26 @@ Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
 
 ## Traduction spatiale D09
 
-Après le retour utilisateur du 15 septembre sur l'aspect trop technologique de la vue 3D,
-la matière D05 est réutilisée : membranes fibreuses instanciées aux positions 3D, départs
-communs qui bifurquent vers les seuls objets réellement reliés, gaines effilées et fibres
-secondaires irrégulières. Les cages géométriques sont retirées ; les groupes deviennent des
-voiles discrets et l'activité réelle module localement la membrane. Les positions et cibles
-restent stables. Les traversées secondaires sont atténuées pour préserver la lecture.
-La [reprise D09](archive/d09-organic-revision-2026-09-15.md) distingue le rapport matériel reçu,
-l'implémentation et l'acceptation visuelle encore attendue.
+Le second retour utilisateur du 15 septembre demande un organisme neuronal vivant, au-delà
+des membranes circulaires de la première reprise. D09 emploie désormais des corps 3D lobés,
+éclairés en volume, avec des surfaces nervurées et des dendrites effilées. Leur silhouette
+change avec l'orbite : aucun anneau ni panneau orienté vers la caméra ne représente l'objet.
+Les dendrites sont une partie locale du corps ; seuls les filaments canoniques relient les objets.
+
+Une respiration asynchrone déforme légèrement la matière autour des centres fixes. Les vagues
+lumineuses parcourent la fibre elle-même, avec un front et un sillage doux, selon un nombre borné
+de connexions. Elles expriment une vitalité visuelle même au repos, **pas une exécution de tâche
+ou un transfert de données**. L'activité réelle garde une nuance locale distincte, et son état
+textuel reste dans les surfaces métier. La sélection éclaire son voisinage.
+
+« Animer le réseau » permet de figer les animations ; le mouvement réduit système les supprime.
+Le panneau masqué démonte toujours le renderer. Les centres, la caméra et les identités restent
+stables ; la déformation ne déplace pas les cibles. Les branches locales et le diamètre apparent
+restent bornés près de la caméra. Les étiquettes sont décalées sous les volumes pour les dégager.
+
+La [première reprise](archive/d09-organic-revision-2026-09-15.md) et la
+[reprise neuronale vivante](archive/d09-neural-life-2026-09-15.md) distinguent les rapports reçus,
+l'implémentation, les preuves animées et l'acceptation visuelle encore attendue.
 
 ## Personnalisation
 
