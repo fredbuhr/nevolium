@@ -64,3 +64,29 @@ Cette relecture conduit à regrouper Profil/Ambiance sous « Personnaliser » su
 à traduire les statuts du contexte et à recadrer les captures après défilement. L’état de connexion
 est annoncé aux lecteurs d’écran à son changement, sans relire toute la carte à chaque horodatage.
 Ce dernier ajustement doit passer sa propre CI avant remise du rendu.
+
+## Qualification de la correction — 15 septembre 2026
+
+La tête `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` corrige les noms accessibles explicites
+de Profil/Ambiance, après l’échec du dernier contrôle de personnalisation de `ced7b9e…`.
+Les assertions ne sont pas retirées : la nouvelle suite passe intégralement.
+
+- [UI workspace](https://github.com/fredbuhr/nevolium/actions/runs/34911818001) : contrat, géométrie,
+  cinq formats, détachement bureau, centrage réversible, parcours relié bureau/téléphone,
+  sélection canonique de document, retour d’erreur conservé et activation distincte réussis.
+- [Isolation et OIDC](https://github.com/fredbuhr/nevolium/actions/runs/34911818090) : vrais comptes
+  distincts, lecture des relations entrantes/sortantes, refus anonyme/autre propriétaire,
+  bornes/curseur et parcours administrateur/utilisateur réussis.
+- [Captures UI](https://github.com/fredbuhr/nevolium/actions/runs/34911818001/artifacts/10374354225) :
+  artefact `10374354225`, archive téléchargée et SHA-256 revérifié
+  `9f9bffefa9803664391da09094324f020e34aa84c4f357f9a01eb7125a0543ba`.
+  Relecture du nouvel accueil, du fil relié bureau et du volet mobile sur cette tête exacte.
+- TypeScript, Vite, contrats D05/identité, géométrie et vérification de diff repassent localement.
+  Le bundle principal reste à environ 577 ko non compressé ; l’avertissement n’est pas masqué.
+
+Les dix workflows de cette tête sont réussis, y compris Foundation et D04 ; le job optionnel
+de services LLM locaux reste ignoré conformément au pilote API. Aucune campagne D04 du serveur n’a été rejouée.
+Les captures UI utilisent des exemples et des réponses fournisseur simulés : aucune preuve
+d’acceptation de la clé du pilote, aucun appel payant ni test fournisseur relancé. Le retour
+sur l’intuitivité, la revue sur appareils physiques et la lecture du badge réel restent nécessaires.
+La correction est publiée dans la PR #89, sans fusion ni déploiement ; le serveur n’a pas été modifié.

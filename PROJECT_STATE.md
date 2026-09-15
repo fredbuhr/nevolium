@@ -2,7 +2,7 @@
 
 Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live.
 
-## H5 clôturé ; D05 : correction de navigation en qualification
+## H5 clôturé ; D05 : navigation reliée à présenter à l’utilisateur
 
 | Champ | État attesté |
 |---|---|
@@ -13,9 +13,9 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live.
 | Production | `c17c7e24cee60432275bb021c389bad481e3f4ff` réellement déployé sur le serveur pilote ; Core, Worker, Web, Web MCP et LiteLLM en exécution sans redémarrage après contrôle |
 | Données | Migration `0015_model_configurations` ; cinq réservations historiques `uncertain` conservées. Table de configuration vide au déploiement ; l’utilisateur a depuis saisi une clé, résultat non revérifié |
 | Récupération | Sel LiteLLM stable provisionné sans affichage ; snapshot de récupération `cb0696461e1bc6a3cad54260dccd7b564e2d6d5c684c9f7174a0fd091a623bc5` et snapshot quiescent pré-D05 `71f19a4691a6a45891aa0d59dfcd8237b58eaf2aaa738608e3f8e21facf5a524`, tous deux chiffrés sur B2 et relus |
-| Correction en cours | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites |
-| Validation de la correction | `36a153a…` : UI responsive/connectée et isolation réussies ; Foundation seul échoue au téléchargement Keycloak (HTTP 502). `ced7b9e…` : captures mobiles produites, scénarios métier exécutés ; dernier contrôle de personnalisation bloqué sur le nom exact du champ Ambiance. Noms accessibles explicités, nouvelle CI requise |
-| Prochaine action | Vérifier la CI de la tête après ajustement mobile et relire ses captures ; présenter le rendu à l’utilisateur, sans déployer ni fusionner avant cette revue. Lire séparément le badge du fournisseur déjà saisi, sans renvoyer la clé |
+| Correction implémentée | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites |
+| Tête de code vérifiée | `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` : 10/10 workflows réussis. UI responsive/connectée et isolation/OIDC réussies ; captures UI téléchargées, empreinte vérifiée et rendu relu. Le compte rendu suivant ne change que la documentation et ne remplace pas cette preuve exact-head |
+| Prochaine action | Présenter la correction et recueillir le retour utilisateur ; vérifier les contrôles de la tête live avant toute intégration. Aucun déploiement ni fusion effectué. Lire séparément le badge du fournisseur déjà saisi, sans renvoyer la clé |
 
 ## Livraison D05 et limite de clôture
 
@@ -44,7 +44,7 @@ D05 n'est ni clos ni intégré. Gantt/calendrier, édition, mindmap et Mycelium 
 
 Le retour utilisateur rouvre la validation de navigation : les fenêtres classiques et le paysage
 ne répondaient pas suffisamment au concept. La [correction reliée](docs/archive/d05-connected-navigation-2026-09-14.md)
-est en préparation sur la même PR, sans migration ni déploiement. L’inspecteur ne crée aucune
+est implémentée et en revue sur la même PR, sans migration ni déploiement. L’inspecteur ne crée aucune
 relation et ne lance aucune IA. Les exemples du scénario navigateur sont des fixtures, pas des données du pilote.
 
 ## Exploitation à préserver

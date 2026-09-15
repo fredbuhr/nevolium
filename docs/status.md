@@ -1,12 +1,10 @@
 # Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
+Révision : 2026-09-15. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
 D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Son dernier checkpoint de code complet vérifié
-avant la reprise de matière organique est `b122a09d499506797735cbb121f6d5a3326fcf3c` ; ses 10 workflows réussissent. Chromium couvre
-l'Accueil Mycelium et le Cockpit sur bureau/tablette/téléphone ; un second scénario traverse le vrai Keycloak avec PKCE pour les rôles
-administrateur et utilisateur. Le runtime `c17c7e24…` a depuis été déployé sur le pilote ; le lot n’est pas intégré. Les textes visibles sont alignés avec la
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Le runtime `c17c7e24…`, qualifié par dix workflows,
+a été déployé sur le pilote ; le lot n’est pas intégré. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
 La [reprise organique](archive/d05-organic-material-2026-09-14.md) remplace les orbites trop
 géométriques par une matière fibreuse bioluminescente et un paysage nocturne ; sa qualification
@@ -14,7 +12,10 @@ exact-head et ses nouvelles captures sont suivies dans la PR. L'acceptation visu
 reste nécessaire, indépendamment des tests fonctionnels. Le retour suivant rouvre la navigation :
 la correction [fil connecté](archive/d05-connected-navigation-2026-09-14.md) ajoute l’inspection
 du parent, du voisinage et des relations canoniques, un fond neutre et l’état du test IA explicite.
-Elle n’est pas déployée ; ses preuves restent à vérifier sur sa propre tête.
+La tête `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` passe la suite UI responsive/connectée et
+l’isolation entre comptes avec le vrai Keycloak/OIDC. Ses captures sont relues ; les états fournisseur
+des scénarios UI restent simulés. Cette correction n’est pas déployée. L’état des autres contrôles
+et la prochaine action sont consignés dans le checkpoint ; l’acceptation visuelle n’est pas déduite de la CI.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
@@ -27,7 +28,7 @@ D05 n’est pas intégré ; le pilote exécute le runtime `c17c7e24…`, la corr
 
 | Domaine | Preuve disponible | Limite |
 |---|---|---|
-| Serveur et état durable | Debian 13 durci, PostgreSQL `0014_capacity_and_data`, Temporal, JetStream, SeaweedFS ; charge mixte et restauration B2 acquises | Premier serveur Linux x86_64 |
+| Serveur et état durable | Debian 13 durci, PostgreSQL `0014_capacity_and_data` qualifié D04 puis `0015_model_configurations` déployé D05 ; Temporal, JetStream, SeaweedFS ; charge mixte et restauration B2 acquises | Premier serveur Linux x86_64 |
 | Identité | TLS, OIDC/PKCE, comptes nominatifs et TOTP ; bootstrap retiré, refus anonyme/faux jeton/routes internes vérifiés | Ergonomie et nouveaux parcours |
 | Worker | Confinement, bundle hors ligne, Temporal réel ; mixte et rollback acquis | Capacité commerciale non qualifiée |
 | Documents | Docling 2.126.0, PDF propriétaire, version/chunks/source ; 39,499 s en mixte | Scans complexes, tableaux et gros documents hors essai |
@@ -69,7 +70,7 @@ Le code qualifié `61d7687…` passe 10/10 workflows CI, dont Research, Foundati
 avec restauration sur deux VM. Le job LLM local optionnel est skipped conformément à
 [ADR-031](decisions/ADR-031-api-first-pilot.md). La tête finale `2946df59664c01d77abc3b5720fff1dbbf96cb4c` passe aussi
 10/10 workflows avant fusion de #88. Le commit de fusion est `db07f7a90cc406ddc80683521bbf1744e3a2b668`.
-La présente mise à jour après fusion modifie uniquement la documentation.
+Ces preuves D04 restent acquises ; elles ne valident pas à elles seules les modifications D05.
 
 API uniquement pour le pilote : autres fournisseurs, capacité commerciale et autres OS ne
 conditionnent pas H5. Les clés restent côté serveur. Le candidat D05 ajoute les réglages
