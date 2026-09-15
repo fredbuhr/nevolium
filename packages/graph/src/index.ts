@@ -19,3 +19,4 @@ export interface NevoliumGraphSnapshot {
 }
 
 export * from './mindmap'
+export * from './spatial'
