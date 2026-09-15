@@ -14,8 +14,8 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live.
 | Données | Migration `0015_model_configurations` ; cinq réservations historiques `uncertain` conservées. Le premier essai utilisateur a échoué avant LiteLLM/OpenAI sur l’ordre d’insertion Task/configuration ; table toujours vide, configuration serveur conservée |
 | Récupération | Sel LiteLLM stable provisionné sans affichage ; snapshot de récupération `cb0696461e1bc6a3cad54260dccd7b564e2d6d5c684c9f7174a0fd091a623bc5` et snapshot quiescent pré-D05 `71f19a4691a6a45891aa0d59dfcd8237b58eaf2aaa738608e3f8e21facf5a524`, tous deux chiffrés sur B2 et relus |
 | Correction implémentée | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites ; Task du test persistée avant sa configuration liée |
-| Tête de code vérifiée | `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` : 10/10 workflows réussis. UI responsive/connectée et isolation/OIDC réussies ; captures UI téléchargées, empreinte vérifiée et rendu relu. Le compte rendu suivant ne change que la documentation et ne remplace pas cette preuve exact-head |
-| Prochaine action | Qualifier le correctif de clé sur PostgreSQL réel avec la CI, puis préparer une mise à jour pilote contrôlée avant un unique nouvel essai utilisateur. Aucun déploiement ni fusion effectué |
+| Tête de code vérifiée | `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` : 10/10 workflows réussis. Le véritable endpoint HTTP persiste la Task avant sa configuration dans PostgreSQL ; UI responsive/connectée et isolation/OIDC restent vertes |
+| Prochaine action | Déployer Core et Web depuis `e275b7b` avec `d05_connected_fix_deploy.sh` (SHA-256 `22259920fdce633f6458bb116fe112b54a8ac7f76fdfa78eb55e442a047078fb`), contrôler sa sortie, puis effectuer un unique nouvel essai utilisateur. Aucun déploiement ni fusion encore effectué |
 
 ## Livraison D05 et limite de clôture
 

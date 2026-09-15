@@ -104,3 +104,10 @@ Le correctif persiste explicitement la Task, vérifie son insertion, puis ajoute
 la même transaction. Le contrat PostgreSQL appelle maintenant le véritable endpoint HTTP avec les
 transports LiteLLM/Temporal neutralisés, et exige la réponse `202` ainsi que la présence des deux lignes.
 Aucune migration, donnée de production ou relance fournisseur n’est incluse dans ce changement.
+
+Le correctif `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` passe ensuite les dix workflows.
+Le job `capacity-and-data-integration` exécute le nouvel appel HTTP sur PostgreSQL réel et atteste
+explicitement la Task avant sa clé étrangère, puis la conservation de la configuration valide et
+l’activation après drainage. Core et Web sont les seuls services de production dont le code change
+depuis `c17c7e24`; la mise à jour préparée les reconstruit avec des images de retour dédiées et ne
+modifie ni le schéma, ni les données, ni les snapshots existants.

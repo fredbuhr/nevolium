@@ -21,7 +21,9 @@ Le premier essai de clé sur le pilote a exposé un défaut d’ordre d’insert
 référençait sa Task avant que PostgreSQL ne l’ait créée. La transaction a été annulée avec un `500`,
 sans candidat ni appel à LiteLLM/OpenAI ; la configuration serveur reste active. La même PR persiste
 désormais la Task avant la configuration et étend le contrat PostgreSQL au véritable endpoint HTTP.
-Ce correctif doit réussir sa propre CI puis être déployé avant un nouvel essai.
+Le correctif `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` réussit ses dix workflows ;
+le test PostgreSQL appelle le véritable endpoint, obtient `202` et retrouve la Task et sa
+configuration. Il doit être déployé avant un nouvel essai utilisateur.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
