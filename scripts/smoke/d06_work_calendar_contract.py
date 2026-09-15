@@ -32,6 +32,13 @@ def main() -> int:
         raise AssertionError("backwards work interval passed validation")
 
     try:
+        ProjectWorkCalendarUpdate(expected_version=1, timezone=None)
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("explicit null work calendar field passed validation")
+
+    try:
         ProjectWorkCalendarUpdate(
             expected_version=1,
             timezone="Mars/Olympus",
@@ -106,8 +113,9 @@ def main() -> int:
     assert utc_result == datetime(2026, 9, 17, 8, 0, tzinfo=UTC)
 
     print(
-        "D06 WORK CALENDAR PASS: validated weekly intervals/exceptions, 24/7 default, split office "
-        "hours, holiday overrides, work-duration addition and Europe/Paris 23h/25h DST days hold"
+        "D06 WORK CALENDAR PASS: validated non-null weekly intervals/exceptions, 24/7 default, "
+        "split office hours, holiday overrides, work-duration addition and Europe/Paris 23h/25h "
+        "DST days hold"
     )
     return 0
 
