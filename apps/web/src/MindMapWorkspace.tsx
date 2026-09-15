@@ -259,9 +259,13 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
           await readJson<WorkspaceLayoutRead>(layoutResponse)
         }
         if (controller.signal.aborted) return
+        const linkedNode = new URL(window.location.href).searchParams.get('mindmap')
         setSnapshot(nextSnapshot)
         setLayout(nextLayout)
-        setNodes(buildFlowNodes(nextSnapshot, nextLayout))
+        setNodes(buildFlowNodes(nextSnapshot, nextLayout).map((node) => ({
+          ...node,
+          selected: node.id === linkedNode,
+        })))
         setEdges(buildFlowEdges(nextSnapshot))
         setPast([])
         setFuture([])
@@ -311,6 +315,14 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
     applyLayout(next)
   }
 
+  function commitDraggedNode(dragged: Node) {
+    const nextNodes = nodes.map((node) => node.id === dragged.id
+      ? { ...node, position: dragged.position }
+      : node)
+    setNodes(nextNodes)
+    commitNodePositions(nextNodes)
+  }
+
   function undo() {
     const previous = past.at(-1)
     if (!previous) return
@@ -327,9 +339,10 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
     applyLayout(next, { recordHistory: false })
   }
 
-  function updateDeepLink(nodeId: string) {
+  function updateDeepLink(nodeId: string | null) {
     const url = new URL(window.location.href)
-    url.searchParams.set('mindmap', nodeId)
+    if (nodeId) url.searchParams.set('mindmap', nodeId)
+    else url.searchParams.delete('mindmap')
     window.history.replaceState({}, '', url)
   }
 
@@ -409,8 +422,9 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
           nodes={visibleNodes}
           edges={visibleEdges}
           onNodesChange={onNodesChange}
-          onNodeDragStop={() => commitNodePositions(nodes)}
+          onNodeDragStop={(_, node) => commitDraggedNode(node)}
           onNodeClick={(_, node) => updateDeepLink(node.id)}
+          onPaneClick={() => updateDeepLink(null)}
           onSelectionChange={({ nodes: selected }) => setSelectionCount(selected.length)}
           onMoveEnd={(_, viewport) => {
             const next = { ...layout, viewport }
