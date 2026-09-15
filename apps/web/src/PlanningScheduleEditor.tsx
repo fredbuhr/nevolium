@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from './i18n'
 import { nevoliumFetch } from './lib/apiClient'
 
+type PlanningField = 'planned_start_at' | 'planned_end_at' | 'due_at'
+
 type EditableTask = {
   id: string
   title: string
@@ -19,6 +21,11 @@ type PlanningWindow = {
   due_at?: string | null
 }
 
+type ReplanUpdate = PlanningWindow & {
+  task_id: string
+  expected_version: number
+}
+
 type DependencyFinding = {
   dependency_id: string
   predecessor_task_id: string
@@ -29,26 +36,38 @@ type DependencyFinding = {
   detail: string
 }
 
+type ReplanSuggestion = {
+  task_id: string
+  title: string
+  expected_version: number
+  current: PlanningWindow
+  proposed: PlanningWindow
+  changed_fields: PlanningField[]
+  triggered_by_dependency_ids: string[]
+}
+
 type ReplanPreview = {
   project_id: string
   preview_digest: string
   can_apply: boolean
   changed_task_count: number
+  suggested_task_count: number
   changes: Array<{
     task_id: string
     current_version: number
     expected_version: number
     current: PlanningWindow
     proposed: PlanningWindow
-    changed_fields: Array<'planned_start_at' | 'planned_end_at' | 'due_at'>
+    changed_fields: PlanningField[]
   }>
+  suggested_changes: ReplanSuggestion[]
   dependency_findings: DependencyFinding[]
 }
 
 type AppliedTask = {
   task_id: string
   planning_version: number
-  changed_fields: Array<'planned_start_at' | 'planned_end_at' | 'due_at'>
+  changed_fields: PlanningField[]
 }
 
 type Props = {
@@ -56,7 +75,7 @@ type Props = {
   projectId: string
   task: EditableTask
   onCancel: () => void
-  onApplied: (task: EditableTask & PlanningWindow, result: AppliedTask) => void
+  onApplied: () => void
 }
 
 function localInputValue(value?: string | null) {
@@ -95,6 +114,7 @@ export default function PlanningScheduleEditor({
   const [plannedEnd, setPlannedEnd] = useState(() => localInputValue(task.planned_end_at))
   const [due, setDue] = useState(() => localInputValue(task.due_at))
   const [preview, setPreview] = useState<ReplanPreview | null>(null)
+  const [previewUpdates, setPreviewUpdates] = useState<ReplanUpdate[]>([])
   const [previewing, setPreviewing] = useState(false)
   const [applying, setApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -104,6 +124,7 @@ export default function PlanningScheduleEditor({
     setPlannedEnd(localInputValue(task.planned_end_at))
     setDue(localInputValue(task.due_at))
     setPreview(null)
+    setPreviewUpdates([])
     setError(null)
   }, [task])
 
@@ -116,7 +137,7 @@ export default function PlanningScheduleEditor({
     }
   }, [due, plannedEnd, plannedStart, task.kind])
 
-  const update = {
+  const update: ReplanUpdate = {
     task_id: task.id,
     expected_version: task.planning_version,
     ...proposed,
@@ -124,6 +145,7 @@ export default function PlanningScheduleEditor({
 
   function invalidatePreview() {
     setPreview(null)
+    setPreviewUpdates([])
     setError(null)
   }
 
@@ -133,7 +155,7 @@ export default function PlanningScheduleEditor({
     return t('planning.scheduleDependencyViolated')
   }
 
-  async function requestPreview() {
+  async function requestPreview(updates: ReplanUpdate[] = [update]) {
     setPreviewing(true)
     setError(null)
     try {
@@ -142,20 +164,38 @@ export default function PlanningScheduleEditor({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ updates: [update] }),
+          body: JSON.stringify({ updates }),
         },
       )
-      setPreview(await readJson<ReplanPreview>(response))
+      const nextPreview = await readJson<ReplanPreview>(response)
+      setPreview(nextPreview)
+      setPreviewUpdates(updates)
     } catch (cause) {
       setPreview(null)
+      setPreviewUpdates([])
       setError(cause instanceof Error ? cause.message : t('planning.schedulePreviewError'))
     } finally {
       setPreviewing(false)
     }
   }
 
+  async function includeSuggestedEffects() {
+    if (!preview?.suggested_changes.length) return
+    const effects: ReplanUpdate[] = preview.suggested_changes.map((suggestion) => ({
+      task_id: suggestion.task_id,
+      expected_version: suggestion.expected_version,
+      ...suggestion.proposed,
+    }))
+    await requestPreview([update, ...effects])
+  }
+
   async function applyPreview() {
-    if (!preview || !preview.can_apply || preview.changed_task_count === 0) return
+    if (
+      !preview
+      || !preview.can_apply
+      || preview.changed_task_count === 0
+      || previewUpdates.length === 0
+    ) return
     setApplying(true)
     setError(null)
     try {
@@ -164,15 +204,18 @@ export default function PlanningScheduleEditor({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ updates: [update], preview_digest: preview.preview_digest }),
+          body: JSON.stringify({
+            updates: previewUpdates,
+            preview_digest: preview.preview_digest,
+          }),
         },
       )
       const result = await readJson<{ updated: AppliedTask[] }>(response)
-      const applied = result.updated.find((item) => item.task_id === task.id)
-      if (!applied) throw new Error(t('planning.scheduleApplyError'))
-      onApplied({ ...task, ...proposed, planning_version: applied.planning_version }, applied)
+      if (result.updated.length === 0) throw new Error(t('planning.scheduleApplyError'))
+      onApplied()
     } catch (cause) {
       setPreview(null)
+      setPreviewUpdates([])
       setError(cause instanceof Error ? cause.message : t('planning.scheduleApplyError'))
     } finally {
       setApplying(false)
@@ -249,6 +292,29 @@ export default function PlanningScheduleEditor({
                 </li>
               ))}
             </ul>
+          ) : null}
+          {preview.suggested_changes.length > 0 ? (
+            <div className="planning-replan-effects">
+              <strong>{t('planning.scheduleSuggestedEffects')}</strong>
+              <small>
+                {preview.suggested_task_count} {t('planning.scheduleSuggestedTaskCount')}
+              </small>
+              <ul>
+                {preview.suggested_changes.map((suggestion) => (
+                  <li key={suggestion.task_id}>
+                    <strong>{suggestion.title}</strong> · {suggestion.changed_fields.length} {' '}
+                    {t('planning.scheduleSuggestedFields')}
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => void includeSuggestedEffects()}
+                disabled={previewing || applying}
+              >
+                {t('planning.scheduleIncludeEffects')}
+              </button>
+            </div>
           ) : null}
         </div>
       ) : (
