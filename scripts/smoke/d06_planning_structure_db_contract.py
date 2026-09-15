@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real PostgreSQL proof for D06 planning hierarchy, conflicts and dependency cycles."""
+"""Real PostgreSQL proof for D06 planning hierarchy, projection, conflicts and dependency cycles."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from sqlalchemy import delete
 from nevolium_core.auth import Principal
 from nevolium_core.db import SessionFactory, engine
 from nevolium_core.models import Project, Task
+from nevolium_core.planning_projection import list_project_planning_tasks
 from nevolium_core.planning_structure import (
     create_task_dependency,
     list_task_dependencies,
@@ -85,6 +86,61 @@ async def main() -> None:
             session,
         )
         assert profile_b.planning_version == 2 and profile_b.parent_task_id == c_id
+
+        full_response = Response()
+        projection = await list_project_planning_tasks(
+            project_id,
+            full_response,
+            100,
+            None,
+            owner,
+            session,
+        )
+        assert {item.id for item in projection} == {a_id, b_id, c_id, ranged_id}
+        assert foreign_id not in {item.id for item in projection}
+        projected_a = next(item for item in projection if item.id == a_id)
+        assert projected_a.parent_task_id == b_id
+        assert projected_a.planning_version == 2
+        assert projected_a.kind == "task"
+        assert full_response.headers.get("X-Nevolium-Next-Cursor") == ""
+
+        first_page_response = Response()
+        first_page = await list_project_planning_tasks(
+            project_id,
+            first_page_response,
+            2,
+            None,
+            owner,
+            session,
+        )
+        next_cursor = first_page_response.headers.get("X-Nevolium-Next-Cursor")
+        assert len(first_page) == 2 and next_cursor
+        second_page_response = Response()
+        second_page = await list_project_planning_tasks(
+            project_id,
+            second_page_response,
+            2,
+            next_cursor,
+            owner,
+            session,
+        )
+        assert len(second_page) == 2
+        assert {item.id for item in first_page}.isdisjoint({item.id for item in second_page})
+        assert {item.id for item in [*first_page, *second_page]} == {a_id, b_id, c_id, ranged_id}
+        assert second_page_response.headers.get("X-Nevolium-Next-Cursor") == ""
+
+        await expect_status(
+            404,
+            list_project_planning_tasks(
+                foreign_project_id,
+                Response(),
+                50,
+                None,
+                owner,
+                session,
+            ),
+        )
+        await session.rollback()
 
         cycle = await expect_status(
             409,
@@ -196,8 +252,9 @@ async def main() -> None:
 
     await engine.dispose()
     print(
-        "D06 PLANNING DB PASS: optimistic conflicts, milestone duration, IANA timezone, "
-        "owner/project isolation and hierarchy/dependency cycle rejection hold on PostgreSQL"
+        "D06 PLANNING DB PASS: canonical projection pagination, optimistic conflicts, milestone "
+        "duration, IANA timezone, owner/project isolation and hierarchy/dependency cycle rejection "
+        "hold on PostgreSQL"
     )
 
 
