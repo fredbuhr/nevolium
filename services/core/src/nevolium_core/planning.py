@@ -15,6 +15,8 @@ from .pagination import PageCursor, decode_cursor, encode_cursor
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
+from .planning_projection import list_project_planning_tasks
+from .planning_projection_schemas import PlanningTaskRead
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
 from .planning_structure import (
     create_task_dependency,
@@ -245,4 +247,10 @@ router.add_api_route(
     delete_task_dependency,
     methods=["DELETE"],
     status_code=204,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/tasks",
+    list_project_planning_tasks,
+    methods=["GET"],
+    response_model=list[PlanningTaskRead],
 )
