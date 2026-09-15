@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real PostgreSQL proof for D06 planning hierarchy, projection, conflicts and dependency cycles."""
+"""Real PostgreSQL proof for D06 planning structure, projection and critical path."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from sqlalchemy import delete
 from nevolium_core.auth import Principal
 from nevolium_core.db import SessionFactory, engine
 from nevolium_core.models import Project, Task
+from nevolium_core.planning_critical_path import read_project_critical_path
 from nevolium_core.planning_projection import list_project_planning_tasks
 from nevolium_core.planning_structure import (
     create_task_dependency,
@@ -54,14 +55,29 @@ async def main() -> None:
         await session.flush()
 
         start = datetime(2026, 9, 16, 8, 0, tzinfo=UTC)
-        a = Task(project_id=project.id, title="A")
-        b = Task(project_id=project.id, title="B")
-        c = Task(project_id=project.id, title="C")
+        a = Task(
+            project_id=project.id,
+            title="A",
+            planned_start_at=start,
+            planned_end_at=start + timedelta(seconds=10),
+        )
+        b = Task(
+            project_id=project.id,
+            title="B",
+            planned_start_at=start,
+            planned_end_at=start + timedelta(seconds=5),
+        )
+        c = Task(
+            project_id=project.id,
+            title="C",
+            planned_start_at=start,
+            planned_end_at=start + timedelta(seconds=3),
+        )
         ranged = Task(
             project_id=project.id,
             title="Ranged task",
             planned_start_at=start,
-            planned_end_at=start + timedelta(hours=2),
+            planned_end_at=start + timedelta(seconds=2),
         )
         foreign = Task(project_id=foreign_project.id, title="Foreign")
         session.add_all([a, b, c, ranged, foreign])
@@ -207,6 +223,26 @@ async def main() -> None:
         )
         assert second.predecessor_task_id == b_id and second.successor_task_id == c_id
 
+        critical = await read_project_critical_path(project_id, owner, session)
+        assert critical.network_complete is True
+        assert critical.project_duration_seconds == 18
+        assert critical.project_task_count == 4
+        assert critical.eligible_task_count == 4
+        assert critical.dependency_count == 2
+        assert critical.critical_task_ids == [a_id, b_id, c_id]
+        assert critical.critical_dependency_ids == [first.id, second.id]
+        critical_rows = {item.task_id: item for item in critical.tasks}
+        assert critical_rows[a_id].slack_seconds == 0
+        assert critical_rows[b_id].earliest_start_seconds == 10
+        assert critical_rows[c_id].earliest_start_seconds == 15
+        assert critical_rows[ranged_id].slack_seconds == 16
+
+        await expect_status(
+            404,
+            read_project_critical_path(foreign_project_id, owner, session),
+        )
+        await session.rollback()
+
         dependency_cycle = await expect_status(
             409,
             create_task_dependency(
@@ -252,9 +288,9 @@ async def main() -> None:
 
     await engine.dispose()
     print(
-        "D06 PLANNING DB PASS: canonical projection pagination, optimistic conflicts, milestone "
-        "duration, IANA timezone, owner/project isolation and hierarchy/dependency cycle rejection "
-        "hold on PostgreSQL"
+        "D06 PLANNING DB PASS: projection pagination, deterministic critical path, optimistic "
+        "conflicts, milestone duration, IANA timezone, owner/project isolation and hierarchy/"
+        "dependency cycle rejection hold on PostgreSQL"
     )
 
 
