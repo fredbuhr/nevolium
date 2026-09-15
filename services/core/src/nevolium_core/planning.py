@@ -20,12 +20,7 @@ from .planning_critical_path_schemas import CriticalPathRead
 from .planning_projection import list_project_planning_tasks
 from .planning_projection_schemas import PlanningTaskRead
 from .planning_replan import apply_project_replan, preview_project_replan
-from .planning_replan_schemas import (
-    ReplanApplyRead,
-    ReplanApplyRequest,
-    ReplanPreviewRead,
-    ReplanRequest,
-)
+from .planning_replan_schemas import ReplanApplyRead, ReplanPreviewRead
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
 from .planning_structure import (
     _ensure_profile_locked,
