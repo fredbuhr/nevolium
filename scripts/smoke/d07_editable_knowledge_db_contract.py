@@ -41,58 +41,67 @@ async def main() -> None:
         p_decision = Project(name="D07 decision", owner_subject=owner.subject)
         p_foreign = Project(name="D07 foreign", owner_subject=foreign.subject)
         session.add_all([p_source, p_decision, p_foreign]); await session.flush()
+        source_project_id, decision_project_id = p_source.id, p_decision.id
+        foreign_project_id = p_foreign.id
 
-        source = Document(project_id=p_source.id, title="Architecture source", status="ready",
+        source = Document(project_id=source_project_id, title="Architecture source", status="ready",
                           kind="source", metadata_json={"owner_subject": owner.subject})
         session.add(source); await session.flush()
-        sv = DocumentVersion(document_id=source.id, generation=1, parser="fixture",
+        source_id = source.id
+        sv = DocumentVersion(document_id=source_id, generation=1, parser="fixture",
                              status="completed", chunk_count=1, search_status="ready",
                              metadata_json={})
         session.add(sv); await session.flush()
-        sc = DocumentChunk(document_version_id=sv.id, ordinal=0,
+        source_version_id = sv.id
+        sc = DocumentChunk(document_version_id=source_version_id, ordinal=0,
                            text="Evidence for a modular architecture with explicit ownership.",
                            content_sha256="2" * 64, metadata_json={})
-        asset = Asset(project_id=p_source.id, bucket="d07-proof",
+        session.add(sc); await session.flush()
+        source_chunk_id = sc.id
+        asset = Asset(project_id=source_project_id, bucket="d07-proof",
                       object_key=f"proof-{uuid.uuid4()}.txt", mime_type="text/plain",
                       size_bytes=10, sha256="3" * 64,
                       metadata_json={"owner_subject": owner.subject})
-        foreign_asset = Asset(project_id=p_foreign.id, bucket="d07-proof",
+        foreign_asset = Asset(project_id=foreign_project_id, bucket="d07-proof",
                               object_key=f"foreign-{uuid.uuid4()}.txt", mime_type="text/plain",
                               size_bytes=10, sha256="4" * 64,
                               metadata_json={"owner_subject": foreign.subject})
-        session.add_all([sc, asset, foreign_asset]); await session.commit()
+        session.add_all([asset, foreign_asset]); await session.flush()
+        asset_id, foreign_asset_id = asset.id, foreign_asset.id
+        await session.commit()
 
         first = await create_authored_knowledge(
             AuthoredKnowledgeCreate(
-                project_id=p_decision.id, title="Architecture decision", kind="decision",
+                project_id=decision_project_id, title="Architecture decision", kind="decision",
                 epistemic_status="supported", content_json={"text": "modular"},
                 content_text="Choose modular architecture for the Nevolium workspace.",
-                citations=[CitationCreate(source_document_id=source.id,
-                    source_document_version_id=sv.id, source_chunk_id=sc.id,
+                citations=[CitationCreate(source_document_id=source_id,
+                    source_document_version_id=source_version_id, source_chunk_id=source_chunk_id,
                     label="Architecture evidence")]), owner, session)
         assert first.generation == 1 and first.version.content_sha256
         doc_id, v1 = first.id, first.version.id
         cites = await list_version_citations(v1, owner, session)
-        assert len(cites) == 1 and cites[0].source_chunk_id == sc.id
+        assert len(cites) == 1 and cites[0].source_chunk_id == source_chunk_id
 
         found = await search_knowledge(q="modular architecture", project_id=None, offset=0,
                                        limit=20, principal=owner, session=session)
-        assert any(r.document_id == doc_id and r.document_project_id == p_decision.id for r in found)
-        scoped = await search_knowledge(q="Nevolium workspace", project_id=p_source.id, offset=0,
+        assert any(r.document_id == doc_id and r.document_project_id == decision_project_id for r in found)
+        scoped = await search_knowledge(q="Nevolium workspace", project_id=source_project_id, offset=0,
                                         limit=20, principal=owner, session=session)
         assert doc_id not in {r.document_id for r in scoped}
         hidden = await search_knowledge(q="modular architecture", project_id=None, offset=0,
                                         limit=20, principal=foreign, session=session)
         assert doc_id not in {r.document_id for r in hidden}
-        await rejected(404, search_knowledge(q="modular architecture", project_id=p_decision.id,
+        await rejected(404, search_knowledge(q="modular architecture", project_id=decision_project_id,
                                              offset=0, limit=20, principal=foreign, session=session))
         await session.rollback()
 
         second = await create_authored_version(doc_id, AuthoredKnowledgeVersionCreate(
             expected_generation=1, content_json={"text": "modular-v2"},
             content_text="Keep modular architecture and record provenance.",
-            citations=[CitationCreate(source_document_id=source.id,
-                source_document_version_id=sv.id, source_chunk_id=sc.id)]), owner, session)
+            citations=[CitationCreate(source_document_id=source_id,
+                source_document_version_id=source_version_id, source_chunk_id=source_chunk_id)]),
+            owner, session)
         assert second.generation == 2
         await rejected(409, create_authored_version(doc_id, AuthoredKnowledgeVersionCreate(
             expected_generation=1, content_json={}, content_text="stale"), owner, session))
@@ -110,23 +119,25 @@ async def main() -> None:
         assert restored.version.metadata_json["restored_from_version_id"] == str(v1)
 
         linked = await create_document_asset_link(doc_id, DocumentAssetLinkCreate(
-            asset_id=asset.id, role="attachment", label="Evidence"), owner, session)
-        assert linked.asset_id == asset.id
+            asset_id=asset_id, role="attachment", label="Evidence"), owner, session)
+        assert linked.asset_id == asset_id
         await rejected(404, create_document_asset_link(doc_id, DocumentAssetLinkCreate(
-            asset_id=foreign_asset.id, role="attachment"), owner, session))
+            asset_id=foreign_asset_id, role="attachment"), owner, session))
         await session.rollback()
         await rejected(404, create_authored_version(doc_id, AuthoredKnowledgeVersionCreate(
             expected_generation=4, content_json={}, content_text="foreign"), foreign, session))
         await session.rollback()
 
-        # Destroy only the derived text projection. Canonical content/provenance must survive.
         broken = await session.get(DocumentVersion, restored.version.id, with_for_update=True)
+        assert broken is not None
+        broken_id = broken.id
         broken.search_status, broken.search_error = "failed", "forced D07 projection failure"
-        await session.execute(delete(DocumentChunk).where(DocumentChunk.document_version_id == broken.id))
+        await session.execute(delete(DocumentChunk).where(DocumentChunk.document_version_id == broken_id))
         await session.commit()
-        canonical = await session.get(DocumentVersion, broken.id)
+        canonical = await session.get(DocumentVersion, broken_id)
+        assert canonical is not None
         assert canonical.content_text == first.version.content_text and canonical.search_status == "failed"
-        assert len(await list_version_citations(broken.id, owner, session)) == 1
+        assert len(await list_version_citations(broken_id, owner, session)) == 1
         missing = await search_knowledge(q="Nevolium workspace", project_id=None, offset=0,
                                          limit=20, principal=owner, session=session)
         assert doc_id not in {r.document_id for r in missing}
