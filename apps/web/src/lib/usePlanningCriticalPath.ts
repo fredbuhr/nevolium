@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { nevoliumFetch } from './apiClient'
 
@@ -29,6 +29,8 @@ export function usePlanningCriticalPath(apiUrl: string, projectId: string | null
   const [data, setData] = useState<CriticalPathView | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [revision, setRevision] = useState(0)
+  const refresh = useCallback(() => setRevision((current) => current + 1), [])
 
   useEffect(() => {
     setData(null)
@@ -62,7 +64,7 @@ export function usePlanningCriticalPath(apiUrl: string, projectId: string | null
     })()
 
     return () => controller.abort()
-  }, [apiUrl, projectId])
+  }, [apiUrl, projectId, revision])
 
-  return { data, loading, error }
+  return { data, loading, error, refresh }
 }
