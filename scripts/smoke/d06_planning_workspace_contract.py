@@ -32,8 +32,11 @@ def main() -> int:
     assert "PlanningScheduleEditor" in workspace
     assert "PlanningCalendar" in workspace
     assert "type ViewMode = 'list' | 'kanban' | 'gantt' | 'calendar'" in workspace
-    assert "setEditingTaskId(task.id)" in workspace
-    assert "onEditSchedule={setEditingTaskId}" in workspace
+    assert "openScheduleEditor(task.id)" in workspace
+    assert "onEditSchedule={openScheduleEditor}" in workspace
+    assert "onScheduleProposal={openGanttProposal}" in workspace
+    assert "planned_start_at: ganttProposal.plannedStartAt" in workspace
+    assert "planned_end_at: editingBaseTask.kind === 'milestone'" in workspace
     assert "apiUrl={apiUrl}" in workspace and "projectId={selectedProjectId}" in workspace
     assert "criticalPath.refresh()" in workspace
     assert "DndContext" in workspace
@@ -68,7 +71,24 @@ def main() -> int:
     assert "import { Gantt, Willow } from '@svar-ui/react-gantt'" in gantt
     assert "@svar-ui/react-gantt/all.css" in gantt
     assert "ComponentProps<typeof Gantt>" in gantt
-    assert "readonly" in gantt
+    assert "readonly" not in gantt
+    assert "api.intercept('update-task'" in gantt
+    assert "if (inProgress) return undefined" in gantt
+    assert "onScheduleProposal(String(id), start.toISOString(), end.toISOString())" in gantt
+    assert "setResetRevision((revision) => revision + 1)" in gantt
+    assert "api.intercept('drag-task'" in gantt
+    assert "typeof event.top !== 'undefined'" in gantt
+    for blocked_action in (
+        "'add-task'",
+        "'delete-task'",
+        "'add-link'",
+        "'update-link'",
+        "'delete-link'",
+        "'move-task'",
+        "'copy-task'",
+        "'indent-task'",
+    ):
+        assert blocked_action in gantt
     assert "FS: 'e2s'" in gantt
     assert "SS: 's2s'" in gantt
     assert "FF: 'e2e'" in gantt
@@ -147,10 +167,10 @@ def main() -> int:
 
     print(
         "D06 PLANNING WORKSPACE PASS: one canonical projection feeds bilingual List/Kanban/"
-        "read-only Gantt/calendar, workflow-managed statuses stay locked, Core critical-path and "
-        "virtual recurrence results are surfaced without local RRULE expansion, virtual occurrence "
-        "edits resolve to the source Task, and schedule mutations require cancellable preview/"
-        "validate/apply instead of writing dates directly through the legacy Task PATCH"
+        "editable Gantt/calendar; Gantt drag/resize proposals are reset to canonical state and routed "
+        "through cancellable preview/validate/apply, structural Gantt mutations stay blocked, Core "
+        "critical-path and virtual recurrence results remain authoritative, and dates never write "
+        "directly through the legacy Task PATCH"
     )
     return 0
 
