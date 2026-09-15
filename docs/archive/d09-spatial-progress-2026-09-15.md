@@ -109,3 +109,32 @@ ne fournit pas ces appareils. La PR reste draft ; la clôture D09 et D10 ne sont
 Le pilote reste D05/0015. Revenir en 2D suffit à désactiver la fonctionnalité ; le rollback code reste
 la base de PR ci-dessus, sans migration de données à annuler. Ne pas restaurer d'anciennes positions
 2D à partir du document de présentation 3D.
+
+## Reprise — banc matériel exécutable
+
+GitHub live revérifié : `main` b68e1e8, #93 draft au head `0c9befec02551d4b82c3e7222262cfc2365d8aaa`,
+**8/8 workflows PR verts**. UI run `35024132634`, artefact spatial `10418404693`, SHA-256
+`e3d92782e692db50570a7910821aee74c850413e7ee5d311c15a86236f74f225`. Ce descendant valide aussi
+l'absence de collision des labels. Les valeurs ponctuelles SwiftShader sont 30/26/23 FPS,
+heap 16,1/18,2/47,4 Mo pour 51/201/501 nœuds ; les limites précédentes restent applicables.
+
+Le protocole seul ne fournissait pas de fichier directement ouvrable sur les appareils. Le présent
+descendant ajoute un **banc autonome** qui importe `Mycelium3D/Scene.tsx`, sans copier son renderer
+ni changer le build produit. La CI produit un HTML avec JS/CSS intégrés, références source/checkout,
+statut de modifications locales et digest dans `build.json` ; CSP sans accès réseau.
+
+Le kit collecte fenêtres FPS, heap disponible, viewport, GPU annoncé, événements de masquage et
+incidents ; les pauses ne deviennent pas du temps mesuré, les valeurs indisponibles restent `null`,
+les données retenues sont bornées. Il offre dix minutes mesurées et un démontage/remontage toutes
+les deux minutes. Les cas 51/50, 201/300, 401/1000 et stress 501/1500 incluent trois groupes et
+huit Tasks synthétiques actives : ne pas comparer leurs coûts directement au fixture sans groupes
+ni activité de la qualification logicielle précédente.
+
+Les contrats ciblés vérifient tailles/liens, interruptions, mémoire absente et fin de durée ; le
+scénario navigateur du kit vérifie ouverture `file://` hors ligne, commandes, pause/remontage,
+export d'une campagne incomplète, tactile émulé et absence WebGL. Sa CI reste une preuve logicielle
+courte sous SwiftShader. Les checks du head live et le corps de #93 portent les résultats exacts.
+La validation de dix minutes physiques n'est pas déclarée acquise.
+
+[Mode d'emploi et portée du banc](../qualification-d09-hardware.md). Le kit ne remplace pas les essais
+du cockpit complet/2D/persistance serveur. Aucun déploiement, aucune clôture D09 et aucun D10 engagé.

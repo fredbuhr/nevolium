@@ -156,6 +156,8 @@ jobs:
         run: node --experimental-strip-types scripts/smoke/d09_spatial_graph_contract.mjs
       - name: Prove D09 bounded camera and adaptive quality
         run: node --experimental-strip-types scripts/smoke/d09_presentation_contract.mjs
+      - name: Prove D09 hardware measurements preserve interruptions and unknown memory
+        run: node --experimental-strip-types scripts/smoke/d09_measurements_contract.mjs
       - name: Install the locked Web workspace
         run: pnpm install --frozen-lockfile
       - name: Build the isolated D05 preview
@@ -165,6 +167,10 @@ jobs:
         run: pnpm --filter @nevolium/web build
       - name: Prove deterministic organic geometry and touch targets
         run: node scripts/smoke/d05_mycelium_geometry.mjs
+      - name: Build the self-contained D09 physical hardware kit
+        env:
+          NEVOLIUM_QUALIFICATION_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node apps/web/qualification.build.mjs
       - name: Install the ephemeral browser runner
         run: |
           npm install \
@@ -189,6 +195,10 @@ jobs:
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d08_mindmap_browser_qualification.mjs
+      - name: Qualify D09 offline hardware kit and incomplete evidence export
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d09_hardware_kit_browser.mjs
       - name: Preserve D05 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -224,4 +234,18 @@ jobs:
         with:
           name: d09-spatial-browser-qualification
           path: artifacts/d09-spatial-browser
+          if-no-files-found: warn
+      - name: Preserve D09 physical hardware kit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d09-hardware-kit
+          path: artifacts/d09-hardware-kit
+          if-no-files-found: error
+      - name: Preserve D09 hardware kit browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d09-hardware-browser
+          path: artifacts/d09-hardware-browser
           if-no-files-found: warn
