@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real PostgreSQL proof for D07 editable knowledge and provenance."""
+"""Real PostgreSQL proof for the D07 editable-knowledge exit path."""
 from __future__ import annotations
 
 import asyncio
@@ -17,6 +17,9 @@ from nevolium_core.editable_knowledge import (
     list_version_citations, restore_authored_version, update_authored_metadata,
 )
 from nevolium_core.knowledge import search_knowledge
+from nevolium_core.knowledge_exchange import (
+    KnowledgeImportRequest, export_knowledge, import_knowledge,
+)
 from nevolium_core.models import Asset, Project
 
 
@@ -44,20 +47,6 @@ async def main() -> None:
         source_project_id, decision_project_id = p_source.id, p_decision.id
         foreign_project_id = p_foreign.id
 
-        source = Document(project_id=source_project_id, title="Architecture source", status="ready",
-                          kind="source", metadata_json={"owner_subject": owner.subject})
-        session.add(source); await session.flush()
-        source_id = source.id
-        sv = DocumentVersion(document_id=source_id, generation=1, parser="fixture",
-                             status="completed", chunk_count=1, search_status="ready",
-                             metadata_json={})
-        session.add(sv); await session.flush()
-        source_version_id = sv.id
-        sc = DocumentChunk(document_version_id=source_version_id, ordinal=0,
-                           text="Evidence for a modular architecture with explicit ownership.",
-                           content_sha256="2" * 64, metadata_json={})
-        session.add(sc); await session.flush()
-        source_chunk_id = sc.id
         asset = Asset(project_id=source_project_id, bucket="d07-proof",
                       object_key=f"proof-{uuid.uuid4()}.txt", mime_type="text/plain",
                       size_bytes=10, sha256="3" * 64,
@@ -69,6 +58,19 @@ async def main() -> None:
         session.add_all([asset, foreign_asset]); await session.flush()
         asset_id, foreign_asset_id = asset.id, foreign_asset.id
         await session.commit()
+
+        imported = await import_knowledge(
+            KnowledgeImportRequest(
+                project_id=source_project_id, format="markdown", title="Architecture source",
+                kind="note", epistemic_status="supported",
+                payload="# Architecture evidence\n\nUse a modular architecture with explicit ownership."),
+            owner, session)
+        assert imported.generation == 1 and imported.version.search_status == "ready"
+        source_id, source_version_id = imported.id, imported.version.id
+        source_chunk = await session.scalar(select(DocumentChunk).where(
+            DocumentChunk.document_version_id == source_version_id).order_by(DocumentChunk.ordinal))
+        assert source_chunk is not None
+        source_chunk_id = source_chunk.id
 
         first = await create_authored_knowledge(
             AuthoredKnowledgeCreate(
@@ -149,14 +151,27 @@ async def main() -> None:
         found_again = await search_knowledge(q="Nevolium workspace", project_id=None, offset=0,
                                              limit=20, principal=owner, session=session)
         assert doc_id in {r.document_id for r in found_again}
+
+        exported = await export_knowledge(doc_id, "nevolium-json", owner, session)
+        assert exported.lossless and exported.media_type == "application/vnd.nevolium.knowledge+json"
+        copied = await import_knowledge(KnowledgeImportRequest(
+            project_id=source_project_id, format="nevolium-json", payload=exported.content,
+            title="Architecture decision copy"), owner, session)
+        assert copied.generation == 1 and copied.version.content_text == recovered.version.content_text
+        assert len(await list_version_citations(copied.version.id, owner, session)) == 1
+
         versions = list((await session.execute(select(DocumentVersion).where(
             DocumentVersion.document_id == doc_id).order_by(DocumentVersion.generation))).scalars())
         assert [v.generation for v in versions] == [1, 2, 3, 4, 5]
         assert versions[2].metadata_json["title"] == "Architecture decision — approved"
         assert versions[3].search_status == "failed" and versions[4].search_status == "ready"
+        owned_copy = await session.scalar(select(Document).where(
+            Document.id == copied.id,
+            Document.metadata_json["owner_subject"].astext == owner.subject))
+        assert owned_copy is not None
 
     await engine.dispose()
-    print("D07 POSTGRES PASS: versions, provenance, owner-wide search, restore, Assets, isolation and projection-failure recovery")
+    print("D07 POSTGRES PASS: import, sourced decision, global search, version restore, Assets, isolation, projection recovery and lossless export/import")
 
 
 if __name__ == "__main__":
