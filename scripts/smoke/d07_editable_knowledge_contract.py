@@ -8,6 +8,7 @@ MODEL = ROOT / "services/core/src/nevolium_core/document_models.py"
 MIGRATION = ROOT / "services/core/migrations/versions/0018_editable_knowledge.py"
 EDITABLE = ROOT / "services/core/src/nevolium_core/editable_knowledge.py"
 KNOWLEDGE = ROOT / "services/core/src/nevolium_core/knowledge.py"
+EXCHANGE = ROOT / "services/core/src/nevolium_core/knowledge_exchange.py"
 
 
 def main() -> int:
@@ -15,6 +16,7 @@ def main() -> int:
     migration = MIGRATION.read_text(encoding="utf-8")
     editable = EDITABLE.read_text(encoding="utf-8")
     knowledge = KNOWLEDGE.read_text(encoding="utf-8")
+    exchange = EXCHANGE.read_text(encoding="utf-8")
 
     assert 'revision = "0018_editable_knowledge"' in migration
     assert 'down_revision = "0017_project_work_calendar"' in migration
@@ -70,6 +72,8 @@ def main() -> int:
         '"/v1/knowledge/items/{document_id}/metadata"',
         '"/v1/knowledge/versions/{version_id}/citations"',
         '"/v1/knowledge/items/{document_id}/assets"',
+        '"/v1/knowledge/import"',
+        '"/v1/knowledge/items/{document_id}/export"',
     ):
         assert route in knowledge
     assert "project_id: uuid.UUID | None = None" in knowledge
@@ -77,10 +81,20 @@ def main() -> int:
     assert 'Document.metadata_json["owner_subject"].astext == principal.subject' in knowledge
     assert 'DocumentVersion.search_status == "ready"' in knowledge
 
+    assert 'ExchangeFormat = Literal["nevolium-json", "markdown", "plain"]' in exchange
+    assert "class PortableKnowledgeDocument" in exchange
+    assert "PORTABLE_FORMAT_VERSION = 1" in exchange
+    assert 'media_type="application/vnd.nevolium.knowledge+json"' in exchange
+    assert "lossless=True" in exchange
+    assert exchange.count("lossless=False") >= 2
+    assert '"exchange_format": body.format' in exchange
+    assert "create_authored_knowledge" in exchange
+    assert "_portable_citations" in exchange
+
     print(
         "D07 EDITABLE KNOWLEDGE PASS: canonical Document supports authored kinds, immutable "
         "rich/plain generations, version-bound citations, Asset links, optimistic concurrency, "
-        "restore-by-new-generation, owner-wide search, failed-projection exclusion and safe rollback"
+        "restore, owner-wide healthy search, safe rollback and documented JSON/Markdown/plain exchange"
     )
     return 0
 
