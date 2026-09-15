@@ -111,6 +111,17 @@ La [note de réalisation](archive/d05-organic-material-2026-09-14.md) conserve l
 la provenance des deux textures, les instructions de génération et les limites de qualification.
 Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
 
+## Traduction spatiale D09
+
+Après le retour utilisateur du 15 septembre sur l'aspect trop technologique de la vue 3D,
+la matière D05 est réutilisée : membranes fibreuses instanciées aux positions 3D, départs
+communs qui bifurquent vers les seuls objets réellement reliés, gaines effilées et fibres
+secondaires irrégulières. Les cages géométriques sont retirées ; les groupes deviennent des
+voiles discrets et l'activité réelle module localement la membrane. Les positions et cibles
+restent stables. Les traversées secondaires sont atténuées pour préserver la lecture.
+La [reprise D09](archive/d09-organic-revision-2026-09-15.md) distingue le rapport matériel reçu,
+l'implémentation et l'acceptation visuelle encore attendue.
+
 ## Personnalisation
 
 Les profils `Équilibré`, `Concentration` et `Revue` organisent les panneaux. Les ambiances

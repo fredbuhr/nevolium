@@ -160,6 +160,8 @@ jobs:
         run: node --experimental-strip-types scripts/smoke/d09_measurements_contract.mjs
       - name: Install the locked Web workspace
         run: pnpm install --frozen-lockfile
+      - name: Prove organic D09 material preserves canonical edges and bounds geometry
+        run: node --experimental-strip-types scripts/smoke/d09_organic_geometry_contract.mjs
       - name: Build the isolated D05 preview
         env:
           VITE_NEVOLIUM_API_URL: http://127.0.0.1:8999

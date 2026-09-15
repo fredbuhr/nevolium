@@ -46,13 +46,25 @@ function App() {
   const pauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cycle = useRef(0)
   const events = useRef<Event[]>([])
+  const eventCounts = useRef<Record<string, number>>({})
+  const coalescedEvents = useRef(0)
+  const droppedEvents = useRef(0)
   const renderers = useRef<{ segment: number; renderer: string; vendor: string; version: string }[]>([])
   const data = useMemo(() => fixture(caseId), [caseId])
   const active = enabled && visible && intersecting && !paused && !failed
   const activeNow = useRef(active)
   activeNow.current = active
   const event = useCallback((kind: string, detail?: string) => {
-    if (recording.current && events.current.length < 200) events.current.push({ at_ms: performance.now() - started.current, kind, detail })
+    if (!recording.current) return
+    eventCounts.current[kind] = (eventCounts.current[kind] || 0) + 1
+    const at_ms = performance.now() - started.current
+    const last = events.current.at(-1)
+    if (kind === 'camera-changed' && last?.kind === kind && at_ms - last.at_ms < 1000) { coalescedEvents.current++; return }
+    if (events.current.length >= 200) {
+      const replace = events.current.findIndex(item => item.kind === 'camera-changed')
+      events.current.splice(Math.max(0, replace), 1); droppedEvents.current++
+    }
+    events.current.push({ at_ms, kind, detail })
   }, [])
   useEffect(() => {
     const onVisible = () => { setVisible(!document.hidden); event(document.hidden ? 'document-hidden' : 'document-visible') }
@@ -115,6 +127,7 @@ function App() {
   }, [event, pause, stop])
   function start() {
     started.current = performance.now(); events.current = []; renderers.current = []; cycle.current = 0
+    eventCounts.current = {}; coalescedEvents.current = 0; droppedEvents.current = 0
     const next: Run = { started_at: new Date().toISOString(), target_ms: duration * 1000, active_ms: 0, samples: [], gaps: [],
       configuration: { case_id: caseId, nodes: data.nodes.length, edges: data.edges.length, quality, reduced_motion: reducedMotion }, device: { ...device } }
     recording.current = next; recordingNow.current = true; setRun(next); setRunning(true)
@@ -139,11 +152,13 @@ function App() {
       environment: { user_agent: navigator.userAgent, hardware_concurrency: navigator.hardwareConcurrency,
         device_memory_gb: (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null,
         touch_points: navigator.maxTouchPoints, renderers: renderers.current },
-      ...value, summary: summarize(value), events: events.current, observations, notes,
+      ...value, summary: summarize(value), events: events.current,
+      event_counts: eventCounts.current, coalesced_camera_events: coalescedEvents.current, dropped_events: droppedEvents.current,
+      observations, notes,
       limits: ['FPS are renderer windows, not individual frame-time percentiles.',
         'JS heap may be unavailable or approximate; it excludes GPU and process memory.',
         'Duration complete does not establish performance acceptance or absence of leaks.',
-        'This recorder retains up to 1000 samples and 200 events; its own memory is included.'] }
+        'This recorder retains up to 1000 samples and 200 events; camera events are coalesced and dropped-event counts are reported; its own memory is included.'] }
     const blob = new Blob([JSON.stringify(report, null, 2) + '\n'], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a'); link.href = url; link.download = `nevolium-d09-${value.configuration.case_id}-${value.started_at.replaceAll(':', '-')}.json`
