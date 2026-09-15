@@ -181,6 +181,10 @@ jobs:
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d07_knowledge_browser_qualification.mjs
+      - name: Qualify D08 editable mindmap, persistence, provenance and touch
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d08_mindmap_browser_qualification.mjs
       - name: Preserve D05 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -201,4 +205,11 @@ jobs:
         with:
           name: d07-knowledge-browser-qualification
           path: artifacts/d07-knowledge-browser
+          if-no-files-found: error
+      - name: Preserve D08 mindmap browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d08-mindmap-browser-qualification
+          path: artifacts/d08-mindmap-browser
           if-no-files-found: error
