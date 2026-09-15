@@ -64,7 +64,8 @@ def main() -> int:
     assert "preview.changed_task_count === 0" in schedule_editor
     assert "setPreview(null)" in schedule_editor
     assert "onCancel" in schedule_editor
-    assert "planning_version: applied.planning_version" in schedule_editor
+    assert "onApplied()" in schedule_editor
+    assert "result.updated.length === 0" in schedule_editor
     assert "/v1/tasks/" not in schedule_editor
     assert "type=\"datetime-local\"" in schedule_editor
     assert "canonicalTimestamp" in schedule_editor
@@ -77,7 +78,7 @@ def main() -> int:
     assert "includedUpdates" in schedule_editor
     assert "suggestionPatch" in schedule_editor
     assert "includeSuggestedEffects" in schedule_editor
-    assert "updates: includedUpdates" in schedule_editor
+    assert "requestPreview(includedUpdates)" in schedule_editor
     assert "updates: applyUpdates" in schedule_editor
     assert "preview.suggested_changes.length > 0" in schedule_editor
     assert "planning-replan-suggestions" in schedule_editor
