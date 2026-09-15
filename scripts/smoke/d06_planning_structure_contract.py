@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/domain proof for D06 canonical planning structure and projection routes."""
+"""Static/domain proof for D06 canonical planning structure, projection and CPM routes."""
 
 from __future__ import annotations
 
@@ -65,6 +65,7 @@ def main() -> int:
         ("/v1/projects/{project_id}/task-dependencies", "POST"),
         ("/v1/task-dependencies/{dependency_id}", "DELETE"),
         ("/v1/projects/{project_id}/planning/tasks", "GET"),
+        ("/v1/projects/{project_id}/planning/critical-path", "GET"),
     }
     assert expected_routes <= route_contract, route_contract
 
@@ -96,10 +97,22 @@ def main() -> int:
     assert "X-Nevolium-Next-Cursor" in projection
     assert "PlanningTaskRead" in projection
 
+    critical = (
+        ROOT / "services/core/src/nevolium_core/planning_critical_path.py"
+    ).read_text(encoding="utf-8")
+    assert "MAX_CRITICAL_PATH_TASKS = 1000" in critical
+    assert "MAX_CRITICAL_PATH_DEPENDENCIES = 5000" in critical
+    assert "get_owned_project" in critical
+    assert "critical_path(nodes, edges)" in critical
+    assert "network_complete=not excluded_dependency_ids" in critical
+    assert 'basis: Literal["elapsed_seconds"]' in (
+        ROOT / "services/core/src/nevolium_core/planning_critical_path_schemas.py"
+    ).read_text(encoding="utf-8")
+
     print(
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
-        "owner-scoped dependencies, optimistic conflict detection, cycle guards and one paginated "
-        "Task+planning projection are wired"
+        "owner-scoped dependencies, optimistic conflict detection, cycle guards, one paginated "
+        "Task+planning projection and bounded elapsed-time critical path analysis are wired"
     )
     return 0
 
