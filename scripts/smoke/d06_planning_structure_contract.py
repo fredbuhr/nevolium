@@ -138,11 +138,19 @@ def main() -> int:
     assert "MAX_CRITICAL_PATH_TASKS = 1000" in critical
     assert "MAX_CRITICAL_PATH_DEPENDENCIES = 5000" in critical
     assert "get_owned_project" in critical
+    assert "ProjectWorkCalendar" in critical
+    assert "ProjectWorkCalendarRead" in critical
+    assert "build_work_calendar" in critical
+    assert "working_seconds_between" in critical
     assert "critical_path(nodes, edges)" in critical
     assert "network_complete=not excluded_dependency_ids" in critical
-    assert 'basis: Literal["elapsed_seconds"]' in (
+    assert "int((end - start).total_seconds())" not in critical
+    critical_schema = (
         ROOT / "services/core/src/nevolium_core/planning_critical_path_schemas.py"
     ).read_text(encoding="utf-8")
+    assert 'basis: Literal["working_seconds"]' in critical_schema
+    assert "work_calendar_timezone" in critical_schema
+    assert "work_calendar_version" in critical_schema
 
     recurrence = (
         ROOT / "services/core/src/nevolium_core/planning_occurrences.py"
@@ -199,8 +207,8 @@ def main() -> int:
     print(
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
         "owner-scoped dependencies, virtual occurrences and project work calendars, optimistic "
-        "conflicts, cycle guards, one paginated Task projection, deterministic critical path and "
-        "transactional preview/apply replanning are wired"
+        "conflicts, cycle guards, one paginated Task projection, deterministic work-calendar "
+        "critical path and transactional preview/apply replanning are wired"
     )
     return 0
 
