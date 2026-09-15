@@ -4,6 +4,7 @@ import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
 import InstanceModelSettings from './InstanceModelSettings'
 import KnowledgePanel from './KnowledgePanel'
+import MindMapWorkspace from './MindMapWorkspace'
 import MyceliumHome, { type MyceliumDestinationKey } from './MyceliumHome'
 import { MyceliumAtmosphere } from './MyceliumField'
 import NewsWorkspacePanel, {
@@ -37,6 +38,7 @@ import {
   type CockpitSurface,
   useCockpitDeviceClass,
 } from './lib/cockpitDevice'
+import { readMindMapDeepLink } from './lib/mindmapDeepLink'
 import {
   type CapabilityTaskView,
   isTerminalTaskStatus,
@@ -91,6 +93,7 @@ type CommandState = {
 
 export default function App() {
   const { language, locale, newsLanguage, t } = useI18n()
+  const initialMindMapDeepLink = useMemo(() => readMindMapDeepLink(), [])
   const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
   const [online, setOnline] = useState(() => navigator.onLine)
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
@@ -101,9 +104,11 @@ export default function App() {
     getSavedCockpitAmbience(auth.subject),
   )
   const [surface, setSurface] = useState<CockpitSurface>(() =>
-    getSavedCockpitSurface(auth.subject),
+    initialMindMapDeepLink ? 'cockpit' : getSavedCockpitSurface(auth.subject),
   )
-  const [requestedPanelKey, setRequestedPanelKey] = useState<MyceliumDestinationKey>('command')
+  const [requestedPanelKey, setRequestedPanelKey] = useState<string>(
+    () => initialMindMapDeepLink ? 'mindmap' : 'command',
+  )
   const [deviceKey] = useState(() => getPresentationDeviceKey())
   const [windowKey] = useState(() => getPresentationWindowKey())
   const deviceClass = useCockpitDeviceClass()
@@ -564,6 +569,14 @@ export default function App() {
                 title: t('planning.panelTitle'),
                 keywords: ['planification', 'planning', 'liste', 'kanban', 'tasks', 'tâches'],
                 content: <PlanningWorkspace apiUrl={API_URL} />,
+                minimumWidth: 320,
+              },
+              {
+                key: 'mindmap',
+                id: 'mindmap-workspace',
+                title: t('mindmap.panelTitle'),
+                keywords: ['carte', 'mindmap', 'idée', 'decision', 'relation', 'graph'],
+                content: <MindMapWorkspace apiUrl={API_URL} />,
                 minimumWidth: 320,
               },
               {

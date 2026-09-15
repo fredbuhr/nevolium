@@ -37,6 +37,12 @@ jobs:
         run: python scripts/smoke/d07_editable_knowledge_contract.py
       - name: Prove D07 Lexical editor, universal search and FR/EN web contract
         run: python scripts/smoke/d07_knowledge_editor_contract.py
+      - name: Prove D08 bounded canonical mindmap projection and mutations
+        run: python scripts/smoke/d08_mindmap_contract.py
+      - name: Prove D08 deterministic radial graph fallback
+        run: python scripts/smoke/d08_mindmap_graph_contract.py
+      - name: Prove D08 persisted XYFlow web contract
+        run: python scripts/smoke/d08_mindmap_web_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
@@ -57,6 +63,8 @@ jobs:
           services/core/src/nevolium_core/editable_knowledge.py
           services/core/src/nevolium_core/knowledge.py
           services/core/src/nevolium_core/knowledge_exchange.py
+          services/core/src/nevolium_core/mindmap.py
+          services/core/src/nevolium_core/mindmap_schemas.py
           services/core/src/nevolium_core/planning.py
           services/core/src/nevolium_core/planning_critical_path.py
           services/core/src/nevolium_core/planning_critical_path_schemas.py
@@ -108,6 +116,31 @@ jobs:
       - name: Prove D06 explicit downstream replan effects on PostgreSQL
         run: uv run --locked --project services/core python scripts/smoke/d06_replan_effects_db_contract.py
 
+  mindmap-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
+        env:
+          POSTGRES_USER: nevolium
+          POSTGRES_PASSWORD: nevolium-test-only
+          POSTGRES_DB: nevolium_d08_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nevolium -d nevolium_d08_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://nevolium:nevolium-test-only@localhost:5432/nevolium_d08_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Apply canonical migrations through D08 base
+        working-directory: services/core
+        run: uv run --locked alembic upgrade head
+      - name: Prove D08 bounded project mindmap and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d08_mindmap_db_contract.py
+
   cockpit-browser-qualification:
     runs-on: ubuntu-latest
     steps:
@@ -148,6 +181,10 @@ jobs:
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d07_knowledge_browser_qualification.mjs
+      - name: Qualify D08 editable mindmap, persistence, provenance and touch
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d08_mindmap_browser_qualification.mjs
       - name: Preserve D05 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -168,4 +205,11 @@ jobs:
         with:
           name: d07-knowledge-browser-qualification
           path: artifacts/d07-knowledge-browser
+          if-no-files-found: error
+      - name: Preserve D08 mindmap browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d08-mindmap-browser-qualification
+          path: artifacts/d08-mindmap-browser
           if-no-files-found: error

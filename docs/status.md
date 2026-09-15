@@ -7,12 +7,15 @@ exécute toujours le runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` avec
 `0015_model_configurations` et OpenAI `openai/gpt-4.1` qualifié/activé. D06 est intégré par #90,
 commit `20720774552418a6c9e7acbfbf069945ff0f57df`, mais n'est pas encore déployé sur le pilote.
 
-D07 est désormais **intégré par la PR #91**, merge GitHub vérifié
-`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. La tête finale qualifiée
-`0db6df6326b553136ab8a375b30fddbe5f6b27aa` passe **9/9 workflows PR**. Le merge a pour parents
-l'ancien `main` `958f440183c5d0051d869474784251eb20bd8fb4` et cette tête D07 ; son arbre
-`ecd1947a1cf7f2adf2f6583b54748fdd62289e98` est identique à l'arbre qualifié. D07 n'est pas encore
+D07 est intégré par la PR #91, merge GitHub vérifié
+`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. Sa tête finale
+`0db6df6326b553136ab8a375b30fddbe5f6b27aa` passe **9/9 workflows PR**. D07 n'est pas encore
 déployé sur le pilote.
+
+D08 est **candidat à l'intégration** dans la PR #92. Le head fonctionnel
+`1576e8f73bc48b058ec0c7981853b80d40e7e93a` passe **9/9 workflows PR** et couvre le scénario de
+sortie du lot. Le présent état documentaire est descendant de ce head et doit lui-même être qualifié
+avant merge. D08 n'est ni fusionné ni déployé à ce stade.
 
 ## Acquis canoniques
 
@@ -27,8 +30,9 @@ déployé sur le pilote.
 | Secrets / reprise | OpenBao persistant, snapshots et matériel LiteLLM chiffré restaurés | Préserver snapshots et réservations historiques |
 | Cockpit D05 | Mycelium 2D, Dockview, recherche rapide, inspecteur, layouts privés, PWA, responsive et popout bureau | Revue humaine continue sur appareils physiques |
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
-| Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12, mindmap D08, Mycelium 3D D09 |
-| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06/D07 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
+| Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
+| Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | PR #92 candidate ; pas encore intégrée/déployée ; 3D en D09 |
+| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D08 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
 
@@ -79,25 +83,60 @@ utilisation téléphone tactile. Artefact navigateur : `10405706103`, digest
 Le détail des preuves et du rollback est dans le
 [checkpoint D07](archive/d07-editable-knowledge-progress-2026-09-15.md).
 
+## D08 — mindmap 2D candidate
+
+D08 ne crée aucun modèle de nœud parallèle. Le snapshot d'un projet regroupe les mêmes identités
+`project`, `task` et `document`; `RelationshipRecord` reste le canon des liens. Les idées, décisions
+et notes restent des Documents D07. Le snapshot est owner-scoped, borné et n'inclut une relation que
+si ses deux extrémités appartiennent au périmètre visible autorisé.
+
+Les liens D08 utilisent un vocabulaire explicite et les relations historiques restent lisibles. Une
+provenance `converted_to` créée par la conversion idée→Task n'est pas supprimable depuis la carte.
+La conversion crée une vraie Task D06 dans la même transaction que sa provenance, avec audit/outbox
+corrélés ; une seconde conversion silencieuse de la même idée est refusée.
+
+`@xyflow/react` reste un renderer/input non canonique. Le placement radial de secours est calculé par
+`@nevolium/graph`; positions, viewport et groupes appartiennent uniquement à `WorkspaceLayout`.
+Le Web couvre recherche, filtres, multi-sélection, groupes, liens explicites utilisables au tactile,
+undo/redo, export JSON, deep links et FR/EN.
+
+La persistance du layout sérialise les PUT par client/workspace, n'annonce `saved` qu'après
+acquittement, conserve localement un snapshot non sauvé après erreur et fournit un retry explicite.
+Un changement de session annule les écritures en attente de l'ancienne identité. Cela ne prétend pas
+résoudre coédition/inter-onglets/offline durable, qui restent D12.
+
+Le head fonctionnel `1576e8f73bc48b058ec0c7981853b80d40e7e93a` passe 9/9 workflows PR.
+Le job PostgreSQL D08 couvre isolation, caps, mutations, provenance et raccord Planning. Le scénario
+Chromium D08 couvre déplacement individuel et conjoint, historique après bascule de langue,
+panne/retry/sérialisation du layout, export/reload, téléphone tactile, deep link dans un contexte neuf
+et le scénario de sortie final : **deux idées liées → deux Tasks → replanification D06 `preview/apply`
+→ deux tâches visibles dans le Gantt**.
+
+Artefact navigateur final : `10413396962`, digest
+`sha256:ca8364bd22bd05ba0aaf8b98e40632a8445b9ffff902675216a5771919f092ec`.
+Le détail des preuves, limites et rollback est dans le
+[checkpoint D08](archive/d08-editable-mindmap-progress-2026-09-15.md).
+
 ## Produit présent et fonctions futures
 
 | Domaine | Présent | Suite planifiée |
 |---|---|---|
 | Cockpit | D05 intégré : Mycelium 2D, espaces réels, Dockview, clavier, PWA, responsive et popout bureau | Raffinement continu et fonctions spécialisées |
 | Planification | D06 intégré : Liste/Kanban/Gantt/Calendrier, hiérarchie/jalons/dépendances, récurrences, work calendar, CPM et replanification | Déploiement distinct ; calendriers externes D11 ; offline D12 |
-| Connaissances/graphes | D07 intégré : Documents authored, versions, provenance, recherche universelle, Lexical, import/export | **D08 mindmap 2D** ; D09 Mycelium 3D |
+| Connaissances/graphes | D07 intégré + D08 candidat : Documents authored/versionnés et mindmap 2D sur identités/relations canoniques | Après intégration D08 : D09 Mycelium 3D sur les mêmes identités |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
 | Finance/Crypto/Home/Dev | Profils optionnels déclarés | Adaptateurs, policy, workspaces et parcours réels |
-| Langues | Fondation FR/EN extensible, D06/D07 raccordés | D13 : complétude produit FR/EN puis langues supplémentaires |
+| Langues | Fondation FR/EN extensible, D06–D08 raccordés | D13 : complétude produit FR/EN puis langues supplémentaires |
 
 ## Limites de lecture
 
 Une dépendance installée ou un mock vert ne vaut pas une fonction livrée. D07 possède des preuves
-PostgreSQL et Chromium, mais `0018` n'a pas été appliquée au pilote. La CI tactile ne remplace pas une
-revue ergonomique sur appareils physiques. La coédition reste D12 ; le whiteboard dédié n'est pas
-livré par le simple rôle de lien Asset. Le downgrade `0018` refuse de remettre `documents.asset_id`
-à `NOT NULL` tant que des Documents authored sans Asset existent : préserver/migrer ces données avant
-un rollback réel.
+PostgreSQL et Chromium, mais `0018` n'a pas été appliquée au pilote. D08 combine lui aussi un job
+PostgreSQL réel et un scénario Chromium à API simulée : cela ne constitue pas une session
+Web→Core→PostgreSQL unique. La CI tactile ne remplace pas une revue ergonomique sur appareils physiques.
+La coédition/offline reste D12 ; le Mycelium 3D reste D09. Le downgrade `0018` refuse de remettre
+`documents.asset_id` à `NOT NULL` tant que des Documents authored sans Asset existent : préserver ou
+migrer ces données avant un rollback réel.
 
 [PROJECT_STATE](../PROJECT_STATE.md) reste le point de reprise opérationnel ; le
 [plan exécutable](implementation-plan.md) définit l'ordre D01–D22.

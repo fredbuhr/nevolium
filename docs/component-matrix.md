@@ -6,8 +6,10 @@ The maturity column describes the Nevolium integration, not the upstream project
 
 D04 supplies bounded real-engine evidence for Docling/Mem0/Graphiti and the API-first pilot. D05
 validates the workspace shell. D06 is integrated by PR #90, merge commit
-`20720774552418a6c9e7acbfbf069945ff0f57df`; its final PR head
-`b09a62cd207371c2610d16198bbbaa0b46561c1c` passed 9/9 workflows. Deployment remains separate.
+`20720774552418a6c9e7acbfbf069945ff0f57df`. D07 is integrated by PR #91, merge
+`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. D08 is the current candidate in PR #92; functional
+head `1576e8f73bc48b058ec0c7981853b80d40e7e93a` passed 9/9 workflows before the final documentation
+head. Deployment remains separate.
 
 ## Maturity legend
 
@@ -52,13 +54,13 @@ validates the workspace shell. D06 is integrated by PR #90, merge commit
 | Workspace shell | Dockview | web library | Nevolium UX/layout surface | **Validated** |
 | Data views | TanStack Table/Query | web libraries | Nevolium UX/data access | **Integrated** |
 | Drag/drop | dnd-kit | web library | Kanban interaction only; Task remains canonical | **Validated in D06** |
-| Rich text | Lexical | web library | future canonical document/editor surface | **Configured** |
+| Rich text | Lexical | web library / D07 | renderer/editor over canonical DocumentVersion content | **Validated in D07** |
 | Whiteboard | Excalidraw | web library target | assets/doc objects linked to domain | **Declared** |
 | Planning calendar | Nevolium Web | web / D06 | view/editor over canonical Tasks and virtual occurrences | **Validated in D06** |
 | Calendar library target | Schedule-X | web library | optional renderer only; never canonical truth | **Configured; not used by qualified D06 calendar** |
 | Dashboards | Apache ECharts | web library | view only | **Configured** |
 | Maps | MapLibre GL JS | web library | view over place/location state | **Configured** |
-| 2D graph | React Flow | web library | view over Nevolium graph | **Configured** |
+| 2D graph | React Flow (`@xyflow/react`) | web library / D08 | renderer/input over canonical Documents/Tasks/Relationships; layout in WorkspaceLayout | **Validated in D08 candidate** |
 | 3D graph | React Three Fiber + react-force-graph-3d | web libraries | view over Nevolium graph | **Configured** |
 | Gantt | SVAR React Gantt 2.7.3 | web library / D06 | renderer/input only; Core/PostgreSQL own plan state | **Validated in D06** |
 | Crypto accounting | rotki | service / `finance` | portfolio source/adapter, private network only | **Configured** |
@@ -83,12 +85,17 @@ The qualified D06 calendar is a Nevolium surface over canonical Tasks and Core-p
 occurrences. Schedule-X remains installed/configured and may be reused later, but its mere presence
 is not validation evidence.
 
-## Other capability notes
+## D07 / D08 notes
 
-The graph packages remain interfaces/rendering targets; React Flow and the 3D libraries do not make
-D08/D09 complete. Hocuspocus/Yjs, Tauri and voice dependencies remain future boundaries. Finance,
-crypto, Home Assistant and OpenHands profiles may exist without stabilized Nevolium adapters,
-policy flows and UX.
+Lexical is qualified as the D07 editor, but `Document`/`DocumentVersion` remain canonical. D08
+qualifies React Flow as a 2D renderer/input only: node identities and relationships remain in Core,
+while positions/viewport/groups live in `WorkspaceLayout`. Its browser proof includes multi-node
+layout persistence, save failure/retry, a fresh owner-scoped deep link and an idea branch converted
+and planned through D06 until both Tasks render in Gantt.
+
+The 3D libraries remain future D09 targets. Hocuspocus/Yjs, Tauri and voice dependencies remain
+future boundaries. Finance, crypto, Home Assistant and OpenHands profiles may exist without
+stabilized Nevolium adapters, policy flows and UX.
 
 Open WebUI is not a frontend foundation. n8n is not the central automation dependency; Activepieces
 is selected. FalkorDB and Kuzu are not selected for the recorded licensing/project-status reasons.

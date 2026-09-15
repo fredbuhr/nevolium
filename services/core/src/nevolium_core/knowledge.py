@@ -26,9 +26,11 @@ from .editable_knowledge import (
     update_authored_metadata,
 )
 from .knowledge_exchange import KnowledgeExchangeRead, export_knowledge, import_knowledge
+from .mindmap import router as mindmap_router
 from .project_access import get_owned_project
 
 router = APIRouter()
+router.include_router(mindmap_router)
 
 MAX_KNOWLEDGE_SEARCH_RESULTS = 50
 MAX_KNOWLEDGE_SEARCH_OFFSET = 10_000
