@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 
 import { useI18n } from './i18n'
+import PlanningCalendar from './PlanningCalendar'
 import PlanningGantt from './PlanningGantt'
 import PlanningScheduleEditor from './PlanningScheduleEditor'
 import { nevoliumFetch } from './lib/apiClient'
@@ -53,7 +54,7 @@ type Props = {
   apiUrl: string
 }
 
-type ViewMode = 'list' | 'kanban' | 'gantt'
+type ViewMode = 'list' | 'kanban' | 'gantt' | 'calendar'
 type KanbanColumnKey = 'todo' | 'execution' | 'done'
 
 const COLUMN_ORDER: KanbanColumnKey[] = ['todo', 'execution', 'done']
@@ -373,6 +374,14 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
         >
           {t('planning.gantt')}
         </button>
+        <button
+          type="button"
+          className={viewMode === 'calendar' ? 'is-active' : ''}
+          aria-pressed={viewMode === 'calendar'}
+          onClick={() => setViewMode('calendar')}
+        >
+          {t('planning.calendar')}
+        </button>
         {viewMode === 'kanban' ? <small>{t('planning.dragHint')}</small> : null}
       </div>
 
@@ -464,6 +473,10 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           dependencies={dependencyPage.items}
           criticalTaskIds={criticalPath.data?.critical_task_ids || []}
         />
+      ) : null}
+
+      {viewMode === 'calendar' && page.items.length > 0 ? (
+        <PlanningCalendar tasks={page.items} onEditSchedule={setEditingTaskId} />
       ) : null}
 
       {canLoadMore ? (
