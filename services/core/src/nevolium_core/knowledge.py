@@ -15,7 +15,6 @@ from .db import get_session
 from .document_models import Document, DocumentChunk, DocumentVersion
 from .editable_knowledge import (
     AuthoredKnowledgeCreate,
-    AuthoredKnowledgeMetadataRead,
     AuthoredKnowledgeRead,
     AuthoredKnowledgeRestore,
     AuthoredKnowledgeVersionCreate,
@@ -294,7 +293,8 @@ router.add_api_route(
     "/v1/knowledge/items/{document_id}/metadata",
     update_authored_metadata,
     methods=["PATCH"],
-    response_model=AuthoredKnowledgeMetadataRead,
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
 )
 router.add_api_route(
     "/v1/knowledge/versions/{version_id}/citations",
