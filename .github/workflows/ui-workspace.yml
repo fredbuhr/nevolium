@@ -21,6 +21,8 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/workspace_layout_contract.py
       - name: Prove D05 cockpit, keyboard, PWA and no-WebGL baseline
         run: python scripts/smoke/d05_cockpit_contract.py
+      - name: Prove D06 FR/EN locale foundation
+        run: python scripts/smoke/d06_locale_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
