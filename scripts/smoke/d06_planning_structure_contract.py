@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""Static/domain proof for D06 canonical planning, recurrence, work calendars and replanning."""
+
+from __future__ import annotations
+
+from pathlib import Path
+import uuid
+
+from pydantic import ValidationError
+
+from nevolium_core.planning import router
+from nevolium_core.planning_models import ProjectWorkCalendar, TaskDependency, TaskPlanningProfile
+from nevolium_core.planning_structure_schemas import (
+    TaskDependencyCreate,
+    TaskPlanningStructureUpdate,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def main() -> int:
+    profile_columns = set(TaskPlanningProfile.__table__.columns.keys())
+    assert {
+        "task_id",
+        "parent_task_id",
+        "kind",
+        "progress_percent",
+        "planning_version",
+        "recurrence_rule",
+        "recurrence_timezone",
+    } <= profile_columns
+    profile_constraints = {constraint.name for constraint in TaskPlanningProfile.__table__.constraints}
+    assert "ck_task_planning_parent_not_self" in profile_constraints
+    assert "ck_task_planning_kind" in profile_constraints
+    assert "ck_task_planning_progress" in profile_constraints
+    assert "ck_task_planning_version_positive" in profile_constraints
+
+    dependency_columns = set(TaskDependency.__table__.columns.keys())
+    assert {
+        "id",
+        "predecessor_task_id",
+        "successor_task_id",
+        "dependency_type",
+        "lag_seconds",
+    } <= dependency_columns
+    dependency_constraints = {constraint.name for constraint in TaskDependency.__table__.constraints}
+    assert "ck_task_dependencies_not_self" in dependency_constraints
+    assert "ck_task_dependencies_type" in dependency_constraints
+    assert "uq_task_dependencies_pair" in dependency_constraints
+
+    work_calendar_columns = set(ProjectWorkCalendar.__table__.columns.keys())
+    assert {
+        "project_id",
+        "timezone",
+        "weekly_intervals",
+        "exceptions",
+        "calendar_version",
+    } <= work_calendar_columns
+    work_calendar_constraints = {
+        constraint.name for constraint in ProjectWorkCalendar.__table__.constraints
+    }
+    assert "ck_project_work_calendar_version_positive" in work_calendar_constraints
+
+    task_id = uuid.uuid4()
+    try:
+        TaskDependencyCreate(predecessor_task_id=task_id, successor_task_id=task_id)
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("self-dependency passed public schema validation")
+
+    try:
+        TaskPlanningStructureUpdate(expected_version=1, recurrence_rule="FREQ=YEARLY")
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("unsupported recurrence rule passed public schema validation")
+
+    route_contract = {
+        (route.path, method)
+        for route in router.routes
+        for method in getattr(route, "methods", set())
+    }
+    expected_routes = {
+        ("/v1/tasks/{task_id}/planning-structure", "GET"),
+        ("/v1/tasks/{task_id}/planning-structure", "PATCH"),
+        ("/v1/projects/{project_id}/task-dependencies", "GET"),
+        ("/v1/projects/{project_id}/task-dependencies", "POST"),
+        ("/v1/task-dependencies/{dependency_id}", "DELETE"),
+        ("/v1/projects/{project_id}/planning/tasks", "GET"),
+        ("/v1/projects/{project_id}/planning/critical-path", "GET"),
+        ("/v1/projects/{project_id}/planning/occurrences", "GET"),
+        ("/v1/projects/{project_id}/planning/work-calendar", "GET"),
+        ("/v1/projects/{project_id}/planning/work-calendar", "PATCH"),
+        ("/v1/projects/{project_id}/planning/replan/preview", "POST"),
+        ("/v1/projects/{project_id}/planning/replan/apply", "POST"),
+    }
+    assert expected_routes <= route_contract, route_contract
+
+    migration = (
+        ROOT / "services/core/migrations/versions/0016_planning_structure.py"
+    ).read_text(encoding="utf-8")
+    assert 'revision = "0016_planning_structure"' in migration
+    assert 'down_revision = "0015_model_configurations"' in migration
+    assert '"task_planning_profiles"' in migration
+    assert '"task_dependencies"' in migration
+
+    work_calendar_migration = (
+        ROOT / "services/core/migrations/versions/0017_project_work_calendar.py"
+    ).read_text(encoding="utf-8")
+    assert 'revision = "0017_project_work_calendar"' in work_calendar_migration
+    assert 'down_revision = "0016_planning_structure"' in work_calendar_migration
+    assert '"project_work_calendars"' in work_calendar_migration
+
+    implementation = (
+        ROOT / "services/core/src/nevolium_core/planning_structure.py"
+    ).read_text(encoding="utf-8")
+    assert "pg_advisory_xact_lock" in implementation
+    assert implementation.count("WITH RECURSIVE") >= 2
+    assert "get_owned_project" in implementation
+    assert "get_owned_task" in implementation
+    assert "planning_version != body.expected_version" in implementation
+    assert "page_rows(" in implementation
+    assert "Workflow-managed Task progress cannot be changed manually" in implementation
+
+    projection = (
+        ROOT / "services/core/src/nevolium_core/planning_projection.py"
+    ).read_text(encoding="utf-8")
+    assert "outerjoin(TaskPlanningProfile" in projection
+    assert "get_owned_project" in projection
+    assert "Task.created_at.desc()" in projection
+    assert "X-Nevolium-Next-Cursor" in projection
+    assert "PlanningTaskRead" in projection
+
+    critical = (
+        ROOT / "services/core/src/nevolium_core/planning_critical_path.py"
+    ).read_text(encoding="utf-8")
+    assert "MAX_CRITICAL_PATH_TASKS = 1000" in critical
+    assert "MAX_CRITICAL_PATH_DEPENDENCIES = 5000" in critical
+    assert "get_owned_project" in critical
+    assert "ProjectWorkCalendar" in critical
+    assert "ProjectWorkCalendarRead" in critical
+    assert "build_work_calendar" in critical
+    assert "working_seconds_between" in critical
+    assert "critical_path(nodes, edges)" in critical
+    assert "network_complete=not excluded_dependency_ids" in critical
+    assert "int((end - start).total_seconds())" not in critical
+    critical_schema = (
+        ROOT / "services/core/src/nevolium_core/planning_critical_path_schemas.py"
+    ).read_text(encoding="utf-8")
+    assert 'basis: Literal["working_seconds"]' in critical_schema
+    assert "work_calendar_timezone" in critical_schema
+    assert "work_calendar_version" in critical_schema
+
+    recurrence = (
+        ROOT / "services/core/src/nevolium_core/planning_occurrences.py"
+    ).read_text(encoding="utf-8")
+    assert "MAX_RECURRENCE_TASKS = 500" in recurrence
+    assert "MAX_RECURRENCE_WINDOW = timedelta(days=366)" in recurrence
+    assert "MAX_RECURRENCE_OCCURRENCES = 10_000" in recurrence
+    assert "uuid.uuid5" in recurrence
+    assert "get_owned_project" in recurrence
+    assert "X-Nevolium-Next-Cursor" in recurrence
+    assert "virtual" in (
+        ROOT / "services/core/src/nevolium_core/planning_occurrence_schemas.py"
+    ).read_text(encoding="utf-8")
+
+    work_calendar = (
+        ROOT / "services/core/src/nevolium_core/planning_work_calendars.py"
+    ).read_text(encoding="utf-8")
+    assert "get_owned_project" in work_calendar
+    assert "_serialize_project_planning(session, project.id)" in work_calendar
+    assert "calendar.calendar_version != body.expected_version" in work_calendar
+    assert "calendar.calendar_version += 1" in work_calendar
+    assert 'event_type="project.work_calendar.updated"' in work_calendar
+    assert "default_weekly_intervals" in work_calendar
+    work_calendar_engine = (
+        ROOT / "services/core/src/nevolium_core/planning_work_calendar.py"
+    ).read_text(encoding="utf-8")
+    assert "working_seconds_between" in work_calendar_engine
+    assert "add_working_seconds" in work_calendar_engine
+    assert "MAX_WORK_CALENDAR_SCAN_DAYS = 3660" in work_calendar_engine
+    assert "fold=0" in work_calendar_engine and "fold=1" in work_calendar_engine
+
+    replan = (
+        ROOT / "services/core/src/nevolium_core/planning_replan.py"
+    ).read_text(encoding="utf-8")
+    assert "hashlib.sha256" in replan
+    assert '"context_windows"' in replan
+    assert "_serialize_project_planning(session, project.id)" in replan
+    assert "with_for_update()" in replan
+    assert "profile.planning_version += 1" in replan
+    assert 'event_type="task.replanned"' in replan
+    assert "Replanning preview is stale" in replan
+    assert "Replanning would violate one or more task dependencies" in replan
+    assert "_ensure_atomic_replan_capacity(" in replan
+    assert '"max_task_count": MAX_REPLAN_UPDATES' in replan
+    replan_schemas = (
+        ROOT / "services/core/src/nevolium_core/planning_replan_schemas.py"
+    ).read_text(encoding="utf-8")
+    assert "MAX_REPLAN_UPDATES = 100" in replan_schemas
+    assert "max_length=MAX_REPLAN_UPDATES" in replan_schemas
+    assert 'pattern=r"^[0-9a-f]{64}$"' in replan_schemas
+    assert "replanning request contains duplicate task IDs" in replan_schemas
+
+    planning = (ROOT / "services/core/src/nevolium_core/planning.py").read_text(encoding="utf-8")
+    assert "planning_profile.planning_version += 1" in planning
+    assert '"planning_version"' in planning
+
+    print(
+        "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
+        "owner-scoped dependencies, virtual occurrences and project work calendars, optimistic "
+        "conflicts, cycle guards, one paginated Task projection, deterministic work-calendar "
+        "critical path and bounded transactional preview/apply replanning are wired"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

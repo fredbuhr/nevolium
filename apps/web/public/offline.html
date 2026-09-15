@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1712" />
-    <title>Nevolium · hors connexion</title>
+    <title>Nevolium · offline</title>
     <style>
       :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #07100d; color: #e8f3ed; }
       body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; }
@@ -15,10 +15,32 @@
   </head>
   <body>
     <main>
-      <small>NEVOLIUM · HORS CONNEXION</small>
-      <h1>Le cockpit attend le serveur</h1>
-      <p>Les données métier ne sont pas mises en cache dans ce lot. Reconnectez-vous pour reprendre les espaces et actions.</p>
-      <button type="button" onclick="location.reload()">Réessayer</button>
+      <small id="offline-kicker">NEVOLIUM · HORS CONNEXION</small>
+      <h1 id="offline-title">Le cockpit attend le serveur</h1>
+      <p id="offline-copy">Les données métier ne sont pas mises en cache dans ce lot. Reconnectez-vous pour reprendre les espaces et actions.</p>
+      <button id="offline-retry" type="button" onclick="location.reload()">Réessayer</button>
     </main>
+    <script>
+      (() => {
+        let language = 'fr'
+        try {
+          const saved = localStorage.getItem('nevolium.language.v1')
+          language = saved === 'en' || saved === 'fr'
+            ? saved
+            : ((navigator.languages && navigator.languages[0]) || navigator.language || 'fr').toLowerCase().startsWith('en')
+              ? 'en'
+              : 'fr'
+        } catch {
+          language = (navigator.language || 'fr').toLowerCase().startsWith('en') ? 'en' : 'fr'
+        }
+        if (language !== 'en') return
+        document.documentElement.lang = 'en'
+        document.title = 'Nevolium · offline'
+        document.getElementById('offline-kicker').textContent = 'NEVOLIUM · OFFLINE'
+        document.getElementById('offline-title').textContent = 'The cockpit is waiting for the server'
+        document.getElementById('offline-copy').textContent = 'Business data is not cached in this lot. Reconnect to resume your spaces and actions.'
+        document.getElementById('offline-retry').textContent = 'Retry'
+      })()
+    </script>
   </body>
 </html>

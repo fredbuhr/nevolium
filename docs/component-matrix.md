@@ -1,26 +1,20 @@
 # Component matrix
 
-The component registry is intentionally broader than the currently implemented product. Presence in `config/components.yaml`, `compose.yaml` or a package manifest does **not** mean the capability is complete.
+The component registry is intentionally broader than the currently implemented product. Presence in
+`config/components.yaml`, Compose or a package manifest does **not** mean a capability is complete.
+The maturity column describes the Nevolium integration, not the upstream project's maturity.
 
-D02 (#85/#86) adds validated shared admission, bounded SQL/Web pages, recoverable memory batches
-and finite transport retention. PostgreSQL and JetStream behavior and controlled child lifecycles
-are covered by the exact-head CI recorded in PROJECT_STATE. The D04 campaign subsequently validated
-real Docling/Mem0/Graphiti execution in bounded qualification scenarios. That evidence does not
-promote future graphical workspaces to delivered product capabilities.
+D04 supplies bounded real-engine evidence for Docling/Mem0/Graphiti and the API-first pilot. D05
+validates the workspace shell. D06 PR #90 adds a qualified planning candidate on exact head
+`9730e9c10aabf1a8725173dddbf26c66abe8f9ef`; it is not yet integrated/deployed at this checkpoint.
 
 ## Maturity legend
 
-- **Validated** — Nevolium integration is exercised by the current canonical CI/product path.
-- **Integrated** — Nevolium code/adapters use the component, but the end-user capability or production hardening is not complete.
-- **Configured** — dependency/service is wired into manifests or Compose, but no stable Nevolium product workflow is complete.
+- **Validated** — Nevolium integration is exercised by the current qualified product/CI path.
+- **Integrated** — Nevolium code/adapters use the component, but the end-user capability or hardening is incomplete.
+- **Configured** — dependency/service is wired but no stable Nevolium product workflow is complete.
 - **Scaffold** — placeholder contracts/package/application skeleton exists.
-- **Declared** — architectural target only on canonical `main`.
-
-The maturity column describes the **Nevolium integration**, not the upstream project's own maturity.
-
-Validation is scenario-specific: controlled text fallback and memory stubs did not prove real
-Docling/Mem0/Graphiti execution; D04 supplies bounded real-engine evidence. Future delivery lots are
-mapped in [implementation-plan](implementation-plan.md); present progress lives in [PROJECT_STATE](../PROJECT_STATE.md).
+- **Declared** — architectural target only.
 
 | Capability | Component | Mode/profile | Nevolium ownership rule | Current maturity |
 |---|---|---|---|---|
@@ -29,25 +23,25 @@ mapped in [implementation-plan](implementation-plan.md); present progress lives 
 | Cache/locks | Valkey | service / core | ephemeral only | **Configured** |
 | Event bus | NATS JetStream | service / core | events from transactional outbox | **Validated** |
 | Object storage | SeaweedFS | service / core | authoritative binary objects | **Validated** |
-| Durable workflows | Temporal | service + SDK / core | in-flight execution authority correlated to Nevolium records | **Validated** |
+| Durable workflows | Temporal | service + SDK / core | in-flight authority correlated to Nevolium records | **Validated** |
 | Agent framework | PydanticAI | worker library / core | agents act under Nevolium policy | **Validated** |
 | Model gateway | LiteLLM | service / core | provider abstraction/routing boundary | **Validated** |
 | Local model simple | Ollama | service / core | model provider only | **Configured** |
 | Local model edge | llama.cpp | sidecar/host / desktop | model provider only | **Declared** |
 | Local model GPU | vLLM | service / `gpu` | model provider only | **Configured** |
 | Long-term memory | Mem0 | worker library / core | derived memory projection | **Integrated; real execution validated in D04** |
-| Document parsing | Docling | worker library / core | produces canonical document/chunk provenance | **Integrated; fallback and bounded real execution validated** |
+| Document parsing | Docling | worker library / core | canonical document/chunk provenance | **Integrated; bounded real execution validated** |
 | External automation | Activepieces | service / `automation` | delegated engine; Nevolium owns intent/policy/run link | **Configured** |
 | Tool protocol | MCP | protocol / core | preferred AI tool boundary | **Validated** |
-| Deterministic browser | Playwright | future browser boundary | side effects policy-gated | **Declared; unused direct Worker dependency retired in D03** |
-| AI browser | Browser Use | future browser boundary | side effects policy-gated | **Declared; unused direct Worker dependency retired in D03** |
+| Deterministic browser | Playwright | future browser boundary | side effects policy-gated | **Declared; direct Worker dependency retired in D03** |
+| AI browser | Browser Use | future browser boundary | side effects policy-gated | **Declared; direct Worker dependency retired in D03** |
 | Dev agent | OpenHands | service / `dev-agent` | Nevolium owns task/approval/diff references | **Configured** |
 | Search | SearXNG | service / `search` | sourced search adapter, never canonical truth | **Integrated** |
 | Secrets | OpenBao | service / core | secret values never stored in domain DB | **Validated** |
-| Identity | Keycloak | service / core | authentication provider; Nevolium owns domain permissions | **Validated** |
-| AI observability | Langfuse + ClickHouse | services / `observability` + overlay | tracing/eval projection; not security audit source | **Configured** |
+| Identity | Keycloak | service / core | authentication provider; Nevolium owns permissions | **Validated** |
+| AI observability | Langfuse + ClickHouse | services / `observability` | tracing/eval projection, not audit source | **Configured** |
 | Notifications | ntfy | service / `notifications` | delivery adapter | **Configured** |
-| Realtime docs | Hocuspocus + Yjs | `collaboration-experimental` | realtime state must materialize to canonical state | **Scaffold / configured** |
+| Realtime docs | Hocuspocus + Yjs | `collaboration-experimental` | realtime must materialize to canonical state | **Scaffold / configured** |
 | Voice realtime | LiveKit | `voice-experimental` | transport only | **Configured** |
 | Speech synthesis | Kokoro-FastAPI | service / `voice` | speech synthesis adapter | **Configured** |
 | Speech-to-text | whisper.cpp | sidecar/worker / desktop | local transcription engine | **Declared** |
@@ -56,15 +50,16 @@ mapped in [implementation-plan](implementation-plan.md); present progress lives 
 | Desktop runtime | Tauri | app / desktop | Nevolium-owned local trust boundary | **Scaffold** |
 | Workspace shell | Dockview | web library | Nevolium UX/layout surface | **Validated** |
 | Data views | TanStack Table/Query | web libraries | Nevolium UX/data access | **Integrated** |
-| Drag/drop | dnd-kit | web library | Nevolium UX | **Integrated** |
+| Drag/drop | dnd-kit | web library | Kanban interaction only; Task remains canonical | **Validated in D06 candidate** |
 | Rich text | Lexical | web library | future canonical document/editor surface | **Configured** |
 | Whiteboard | Excalidraw | web library target | assets/doc objects linked to domain | **Declared** |
-| Calendar UI | Schedule-X | web library | view over normalized calendar state | **Configured** |
+| Planning calendar | Nevolium Web | web / D06 | view/editor over canonical Tasks and virtual occurrences | **Validated in D06 candidate** |
+| Calendar library target | Schedule-X | web library | optional renderer only; never canonical truth | **Configured; not used by qualified D06 calendar** |
 | Dashboards | Apache ECharts | web library | view only | **Configured** |
 | Maps | MapLibre GL JS | web library | view over place/location state | **Configured** |
 | 2D graph | React Flow | web library | view over Nevolium graph | **Configured** |
 | 3D graph | React Three Fiber + react-force-graph-3d | web libraries | view over Nevolium graph | **Configured** |
-| Gantt | SVAR React Gantt | web library | renderer/editor over canonical Task/Plan data | **Scaffold / configured** |
+| Gantt | SVAR React Gantt 2.7.3 | web library / D06 | renderer/input only; Core/PostgreSQL own plan state | **Validated in D06 candidate** |
 | Crypto accounting | rotki | service / `finance` | portfolio source/adapter, private network only | **Configured** |
 | Exchange APIs | CCXT | integration library / finance | no raw secret exposure to models | **Declared** |
 | EVM | viem | web/worker library / finance | prepare/read; signing isolated | **Declared** |
@@ -74,41 +69,27 @@ mapped in [implementation-plan](implementation-plan.md); present progress lives 
 | Sandbox | gVisor | host runtime / ops | hardened execution boundary | **Declared** |
 | Backup | restic | host job / ops | encrypted recovery layer | **Validated** |
 | Private access | Headscale | service / `remote` | private network overlay | **Configured** |
-| Deployment UI | Coolify (optional) | host platform | deployment convenience, not Nevolium dependency | **Declared / optional** |
+| Deployment UI | Coolify (optional) | host platform | deployment convenience, not dependency | **Declared / optional** |
 
-## Important capability notes
+## Planning notes
 
-### Gantt and Calendar
+D06 keeps PostgreSQL/Core authoritative. SVAR's internal task grid is disabled in the qualified
+Gantt because Nevolium already owns the List view; the Gantt is chart-only and mutations are
+intercepted back into Nevolium preview/apply or versioned planning-structure contracts. A regression
+contract also forbids opening leaf rows in SVAR's `DataTree`, whose leaves carry `data=null`.
 
-The current `packages/gantt` package contains only `ScheduledTask` / `PlanVersion` interfaces. SVAR React Gantt and Schedule-X being installed does not make Gantt/Calendar complete. G51 intentionally established canonical Task planning fields first.
+The qualified D06 calendar is intentionally implemented as a Nevolium surface over canonical Tasks
+and Core-produced virtual occurrences. Schedule-X remains installed/configured and may be reused
+later, but its mere presence is not promoted to validation evidence.
 
-### Brain / graph
+## Other capability notes
 
-The current `packages/graph` package contains only canonical graph snapshot interfaces. React Flow, React Three Fiber and react-force-graph-3d are installed but the 2D/3D mycelium Brain is not implemented on canonical `main`.
+The graph packages remain interfaces/rendering targets; React Flow and the 3D libraries do not make
+D08/D09 complete. Hocuspocus/Yjs, Tauri and voice dependencies remain future boundaries. Finance,
+crypto, Home Assistant and OpenHands profiles may exist without stabilized Nevolium adapters,
+policy flows and UX.
 
-### Realtime and desktop
-
-Hocuspocus/Yjs, Tauri and voice dependencies represent intended architecture boundaries and scaffolding. They are not yet mature end-user capabilities.
-
-### Specialist engines
-
-Finance, crypto, Home Assistant and OpenHands services can be present in optional profiles while still lacking stabilized Nevolium adapters, ownership rules, policy flows and UX. Optional Compose presence is not considered integration completion.
-
-## Deliberately not foundational
-
-- Open WebUI: useful for model/admin testing, not the Nevolium frontend foundation.
-- n8n: avoided as the central automation dependency; Activepieces is the selected automation engine.
-- FalkorDB: not selected due licensing concerns; Neo4j Community is the Graphiti backend.
-- Kuzu: not selected because the project is archived/deprecated for this use.
-- OpenClaw: the V0 proof runtime is removed from the target architecture; its durable-execution lessons are carried forward into Temporal and Nevolium policy contracts.
-
-D03 profiles and refused prototype activations are documented in [deployment](deployment.md).
-Validation of deployment controls does not promote the optional engines to real integration evidence.
-
-## D04 qualification acquired
-
-PR #88 is integrated and tag `H5` targets its merge commit. CPU Docling/Mem0/Graphiti execution,
-two cited Research runs via OpenAI, bounded read and mixed loads, Worker rollback, persistent
-OpenBao and encrypted B2 restoration are acquired within the limits recorded in the
-[final report](archive/d04-pilot-qualification-2026-09-14.md). The evidence is scenario-specific,
-not a blanket claim of provider, hardware or workload compatibility.
+Open WebUI is not a frontend foundation. n8n is not the central automation dependency; Activepieces
+is selected. FalkorDB and Kuzu are not selected for the recorded licensing/project-status reasons.
+OpenClaw is not part of the target runtime. See [deployment](deployment.md),
+[implementation-plan](implementation-plan.md) and [PROJECT_STATE](../PROJECT_STATE.md).

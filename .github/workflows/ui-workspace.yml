@@ -21,6 +21,18 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/workspace_layout_contract.py
       - name: Prove D05 cockpit, keyboard, PWA and no-WebGL baseline
         run: python scripts/smoke/d05_cockpit_contract.py
+      - name: Prove D06 FR/EN locale foundation
+        run: python scripts/smoke/d06_locale_contract.py
+      - name: Prove D06 canonical planning structure, projection and replanning
+        run: uv run --locked --project services/core python scripts/smoke/d06_planning_structure_contract.py
+      - name: Prove D06 deterministic critical path engine
+        run: uv run --locked --project services/core python scripts/smoke/d06_critical_path_contract.py
+      - name: Prove D06 bounded recurrence and DST semantics
+        run: uv run --locked --project services/core python scripts/smoke/d06_recurrence_contract.py
+      - name: Prove D06 work calendar and DST semantics
+        run: uv run --locked --project services/core python scripts/smoke/d06_work_calendar_contract.py
+      - name: Prove D06 list, Kanban and Gantt planning workspace
+        run: python scripts/smoke/d06_planning_workspace_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
@@ -38,8 +50,55 @@ jobs:
           services/core/src/nevolium_core/ui_models.py
           services/core/src/nevolium_core/project_access.py
           services/core/src/nevolium_core/planning.py
+          services/core/src/nevolium_core/planning_critical_path.py
+          services/core/src/nevolium_core/planning_critical_path_schemas.py
+          services/core/src/nevolium_core/planning_engine.py
+          services/core/src/nevolium_core/planning_models.py
+          services/core/src/nevolium_core/planning_occurrences.py
+          services/core/src/nevolium_core/planning_occurrence_schemas.py
+          services/core/src/nevolium_core/planning_projection.py
+          services/core/src/nevolium_core/planning_projection_schemas.py
+          services/core/src/nevolium_core/planning_recurrence.py
+          services/core/src/nevolium_core/planning_replan.py
+          services/core/src/nevolium_core/planning_replan_schemas.py
           services/core/src/nevolium_core/planning_schemas.py
+          services/core/src/nevolium_core/planning_structure.py
+          services/core/src/nevolium_core/planning_structure_schemas.py
+          services/core/src/nevolium_core/planning_work_calendar.py
+          services/core/src/nevolium_core/planning_work_calendar_schemas.py
+          services/core/src/nevolium_core/planning_work_calendars.py
           services/core/src/nevolium_core/workflows.py
+
+  planning-structure-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
+        env:
+          POSTGRES_USER: nevolium
+          POSTGRES_PASSWORD: nevolium-test-only
+          POSTGRES_DB: nevolium_d06_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nevolium -d nevolium_d06_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://nevolium:nevolium-test-only@localhost:5432/nevolium_d06_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Apply canonical migrations through D06
+        working-directory: services/core
+        run: uv run --locked alembic upgrade head
+      - name: Prove D06 projection, CPM, replanning, cycles, conflicts and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_planning_structure_db_contract.py
+      - name: Prove D06 virtual recurrence pagination and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_recurrence_db_contract.py
+      - name: Prove D06 work calendar versioning and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_work_calendar_db_contract.py
+      - name: Prove D06 explicit downstream replan effects on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_replan_effects_db_contract.py
 
   cockpit-browser-qualification:
     runs-on: ubuntu-latest
@@ -73,10 +132,21 @@ jobs:
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d05_browser_qualification.mjs
+      - name: Qualify D06 planning on touch tablet and phone
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d06_planning_browser_qualification.mjs
       - name: Preserve D05 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: d05-browser-qualification
           path: artifacts/d05-browser
+          if-no-files-found: error
+      - name: Preserve D06 planning browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d06-planning-browser-qualification
+          path: artifacts/d06-planning-browser
           if-no-files-found: error

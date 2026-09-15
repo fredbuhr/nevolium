@@ -15,7 +15,27 @@ from .pagination import PageCursor, decode_cursor, encode_cursor
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
+from .planning_critical_path import read_project_critical_path
+from .planning_critical_path_schemas import CriticalPathRead
+from .planning_occurrence_schemas import PlanningOccurrenceRead
+from .planning_occurrences import list_project_planning_occurrences
+from .planning_projection import list_project_planning_tasks
+from .planning_projection_schemas import PlanningTaskRead
+from .planning_replan import apply_project_replan, preview_project_replan
+from .planning_replan_schemas import ReplanApplyRead, ReplanPreviewRead
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
+from .planning_structure import (
+    _ensure_profile_locked,
+    _serialize_project_planning,
+    create_task_dependency,
+    delete_task_dependency,
+    list_task_dependencies,
+    read_task_planning_structure,
+    update_task_planning_structure,
+)
+from .planning_structure_schemas import TaskDependencyRead, TaskPlanningProfileRead
+from .planning_work_calendar_schemas import ProjectWorkCalendarRead
+from .planning_work_calendars import read_project_work_calendar, update_project_work_calendar
 from .project_access import get_owned_task, owned_project_clause
 
 router = APIRouter()
@@ -90,6 +110,28 @@ async def update_planned_task(
     if planned_start is not None and planned_end is not None and planned_end < planned_start:
         raise HTTPException(status_code=422, detail="planned_end_at must be on or after planned_start_at")
 
+    planning_fields = {"planned_start_at", "planned_end_at", "due_at"}
+    planning_changed = any(
+        field in changes and getattr(task, field) != changes[field] for field in planning_fields
+    )
+    planning_profile = None
+    if planning_changed:
+        # Legacy Today/task edits participate in the same planning version stream. New multi-view
+        # Gantt/calendar edits use preview/apply, but this prevents older writes from leaving a valid
+        # optimistic snapshot behind them.
+        await _serialize_project_planning(session, task.project_id)
+        planning_profile = await _ensure_profile_locked(session, task.id)
+        if (
+            planning_profile.kind == "milestone"
+            and planned_start is not None
+            and planned_end is not None
+            and planned_start != planned_end
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="A milestone cannot have a non-zero planned duration",
+            )
+
     correlation_id = uuid.uuid4()
     previous_status = task.status
     for field in (
@@ -111,6 +153,9 @@ async def update_planned_task(
             task.completed_at = None
             task.started_at = None
 
+    if planning_profile is not None:
+        planning_profile.planning_version += 1
+
     await session.flush()
     event_payload = {
         "task_id": str(task.id),
@@ -120,6 +165,8 @@ async def update_planned_task(
         "previous_status": previous_status,
         "priority": task.priority,
     }
+    if planning_profile is not None:
+        event_payload["planning_version"] = planning_profile.planning_version
     await enqueue_domain_event(
         session,
         event_type="task.updated",
@@ -203,3 +250,80 @@ async def today(
         buckets[name] = [_item(name, task, project) for task, project in rows[:limit]]
     return TodayRead(day=local_day, timezone=timezone_name, day_start=local_start, day_end=local_end,
                      next_cursors=next_cursors, **buckets)
+
+
+# Register D06 endpoints explicitly on the already-mounted planning router. Keeping the structural
+# implementation in its own module avoids a second task model while making route exposure obvious.
+router.add_api_route(
+    "/v1/tasks/{task_id}/planning-structure",
+    read_task_planning_structure,
+    methods=["GET"],
+    response_model=TaskPlanningProfileRead,
+)
+router.add_api_route(
+    "/v1/tasks/{task_id}/planning-structure",
+    update_task_planning_structure,
+    methods=["PATCH"],
+    response_model=TaskPlanningProfileRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/task-dependencies",
+    list_task_dependencies,
+    methods=["GET"],
+    response_model=list[TaskDependencyRead],
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/task-dependencies",
+    create_task_dependency,
+    methods=["POST"],
+    response_model=TaskDependencyRead,
+    status_code=201,
+)
+router.add_api_route(
+    "/v1/task-dependencies/{dependency_id}",
+    delete_task_dependency,
+    methods=["DELETE"],
+    status_code=204,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/tasks",
+    list_project_planning_tasks,
+    methods=["GET"],
+    response_model=list[PlanningTaskRead],
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/critical-path",
+    read_project_critical_path,
+    methods=["GET"],
+    response_model=CriticalPathRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/occurrences",
+    list_project_planning_occurrences,
+    methods=["GET"],
+    response_model=list[PlanningOccurrenceRead],
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/work-calendar",
+    read_project_work_calendar,
+    methods=["GET"],
+    response_model=ProjectWorkCalendarRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/work-calendar",
+    update_project_work_calendar,
+    methods=["PATCH"],
+    response_model=ProjectWorkCalendarRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/replan/preview",
+    preview_project_replan,
+    methods=["POST"],
+    response_model=ReplanPreviewRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/replan/apply",
+    apply_project_replan,
+    methods=["POST"],
+    response_model=ReplanApplyRead,
+)
