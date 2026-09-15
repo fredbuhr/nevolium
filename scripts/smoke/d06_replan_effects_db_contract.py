@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
 from sqlalchemy import delete
@@ -14,6 +15,7 @@ from nevolium_core.db import SessionFactory, engine
 from nevolium_core.models import Project, Task
 from nevolium_core.planning_replan import apply_project_replan, preview_project_replan
 from nevolium_core.planning_replan_schemas import (
+    MAX_REPLAN_UPDATES,
     ReplanApplyRequest,
     ReplanRequest,
     ReplanTaskPatch,
@@ -110,6 +112,23 @@ async def main() -> None:
             planned_end_at=datetime(2026, 9, 18, 15, 0, tzinfo=UTC),
         )
         first_request = ReplanRequest(updates=[predecessor_patch])
+
+        # The real preview endpoint must reject a downstream proposal that cannot fit in the same
+        # atomic request contract used by the second preview/apply step. No suggestion is truncated.
+        with patch(
+            "nevolium_core.planning_replan._suggest_downstream_changes",
+            new=AsyncMock(return_value=[object()] * MAX_REPLAN_UPDATES),
+        ):
+            capacity = await expect_status(
+                422,
+                preview_project_replan(project_id, first_request, owner, session),
+            )
+        assert isinstance(capacity.detail, dict)
+        assert capacity.detail["explicit_task_count"] == 1
+        assert capacity.detail["suggested_task_count"] == MAX_REPLAN_UPDATES
+        assert capacity.detail["max_task_count"] == MAX_REPLAN_UPDATES
+        assert "atomic replanning task limit" in capacity.detail["message"].lower()
+
         first_preview = await preview_project_replan(project_id, first_request, owner, session)
         assert first_preview.can_apply is False
         assert first_preview.changed_task_count == 1
@@ -176,9 +195,10 @@ async def main() -> None:
 
     await engine.dispose()
     print(
-        "D06 REPLAN EFFECTS DB PASS: a predecessor shift exposes downstream effects without mutation; "
-        "including the proposed successor shift produces a second valid preview and one explicit apply "
-        "updates both canonical tasks with optimistic planning versions"
+        "D06 REPLAN EFFECTS DB PASS: atomic capacity rejects unresubmittable downstream batches; "
+        "a predecessor shift exposes bounded downstream effects without mutation; including the "
+        "proposed successor shift produces a second valid preview and one explicit apply updates both "
+        "canonical tasks with optimistic planning versions"
     )
 
 
