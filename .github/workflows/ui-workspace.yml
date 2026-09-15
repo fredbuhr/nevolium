@@ -152,6 +152,8 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Prove D09 deterministic spatial graph projection
+        run: node --experimental-strip-types scripts/smoke/d09_spatial_graph_contract.mjs
       - name: Install the locked Web workspace
         run: pnpm install --frozen-lockfile
       - name: Build the isolated D05 preview
