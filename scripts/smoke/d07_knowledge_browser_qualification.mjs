@@ -172,7 +172,7 @@ async function installApiMock(context, state) {
     }
     const restoreMatch = p.match(/^\/v1\/knowledge\/items\/([^/]+)\/versions\/([^/]+)\/restore$/)
     if (restoreMatch && request.method() === 'POST') {
-      const [,, id, versionId] = restoreMatch; const body = request.postDataJSON(); const current = latest(state, id)
+      const [, id, versionId] = restoreMatch; const body = request.postDataJSON(); const current = latest(state, id)
       assert.equal(body.expected_generation, current.generation)
       const source = (state.versions.get(id) || []).find(item => item.id === versionId); assert(source)
       const version = versionRow(id, current.generation + 1, source.content_text || '', source.content_json || {})
