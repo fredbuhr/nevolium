@@ -132,10 +132,21 @@ jobs:
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d05_browser_qualification.mjs
+      - name: Qualify D06 planning on touch tablet and phone
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d06_planning_browser_qualification.mjs
       - name: Preserve D05 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: d05-browser-qualification
           path: artifacts/d05-browser
+          if-no-files-found: error
+      - name: Preserve D06 planning browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d06-planning-browser-qualification
+          path: artifacts/d06-planning-browser
           if-no-files-found: error
