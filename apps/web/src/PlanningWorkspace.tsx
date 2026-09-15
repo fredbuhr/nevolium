@@ -50,6 +50,12 @@ type TaskDependency = {
   created_at: string
 }
 
+type GanttScheduleProposal = {
+  taskId: string
+  plannedStartAt: string
+  plannedEndAt: string
+}
+
 type Props = {
   apiUrl: string
 }
@@ -155,6 +161,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [ganttProposal, setGanttProposal] = useState<GanttScheduleProposal | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor))
 
@@ -173,9 +180,18 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     () => new Set(criticalPath.data?.critical_task_ids || []),
     [criticalPath.data],
   )
-  const editingTask = editingTaskId
+  const editingBaseTask = editingTaskId
     ? page.items.find((item) => item.id === editingTaskId) || null
     : null
+  const editingTask = editingBaseTask && ganttProposal?.taskId === editingBaseTask.id
+    ? {
+        ...editingBaseTask,
+        planned_start_at: ganttProposal.plannedStartAt,
+        planned_end_at: editingBaseTask.kind === 'milestone'
+          ? ganttProposal.plannedStartAt
+          : ganttProposal.plannedEndAt,
+      }
+    : editingBaseTask
 
   const grouped = useMemo(() => {
     const result: Record<KanbanColumnKey, PlanningTask[]> = {
@@ -209,6 +225,21 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     if (start && end) return `${t('planning.planned')} · ${start} → ${end}`
     if (start) return `${t('planning.planned')} · ${start}`
     return t('planning.noDate')
+  }
+
+  function openScheduleEditor(taskId: string) {
+    setGanttProposal(null)
+    setEditingTaskId(taskId)
+  }
+
+  function openGanttProposal(taskId: string, plannedStartAt: string, plannedEndAt: string) {
+    setGanttProposal({ taskId, plannedStartAt, plannedEndAt })
+    setEditingTaskId(taskId)
+  }
+
+  function closeScheduleEditor() {
+    setEditingTaskId(null)
+    setGanttProposal(null)
   }
 
   async function updateManualStatus(task: PlanningTask, status: 'todo' | 'completed') {
@@ -273,7 +304,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           : item,
       ),
     )
-    setEditingTaskId(null)
+    closeScheduleEditor()
     setMutationError(null)
     criticalPath.refresh()
   }
@@ -304,7 +335,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation()
-            setEditingTaskId(task.id)
+            openScheduleEditor(task.id)
           }}
         >
           {t('planning.editSchedule')}
@@ -390,7 +421,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           apiUrl={apiUrl}
           projectId={selectedProjectId}
           task={editingTask}
-          onCancel={() => setEditingTaskId(null)}
+          onCancel={closeScheduleEditor}
           onApplied={(updated) => applyScheduleLocally(updated)}
         />
       ) : null}
@@ -429,7 +460,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
                   <td>{task.progress_percent}%</td>
                   <td>{timingLabel(task)}</td>
                   <td>
-                    <button type="button" onClick={() => setEditingTaskId(task.id)}>
+                    <button type="button" onClick={() => openScheduleEditor(task.id)}>
                       {t('planning.editSchedule')}
                     </button>
                   </td>
@@ -472,6 +503,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           tasks={page.items}
           dependencies={dependencyPage.items}
           criticalTaskIds={criticalPath.data?.critical_task_ids || []}
+          onScheduleProposal={openGanttProposal}
         />
       ) : null}
 
@@ -480,7 +512,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           apiUrl={apiUrl}
           projectId={selectedProjectId}
           tasks={page.items}
-          onEditSchedule={setEditingTaskId}
+          onEditSchedule={openScheduleEditor}
         />
       ) : null}
 
