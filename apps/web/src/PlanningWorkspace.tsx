@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   DndContext,
   KeyboardSensor,
@@ -69,7 +69,7 @@ function DraggableTaskCard({
 }: {
   task: PlanningTask
   disabled: boolean
-  children: React.ReactNode
+  children: ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
@@ -104,7 +104,7 @@ function KanbanColumn({
   id: KanbanColumnKey
   title: string
   tasks: PlanningTask[]
-  renderTask: (task: PlanningTask) => React.ReactNode
+  renderTask: (task: PlanningTask) => ReactNode
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `planning-column:${id}` })
   return (
