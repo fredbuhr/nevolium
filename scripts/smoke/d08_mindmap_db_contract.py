@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real PostgreSQL proof for the D08 bounded project mindmap projection."""
+"""Real PostgreSQL proof for the D08 bounded project mindmap projection and mutations."""
 from __future__ import annotations
 
 import asyncio
@@ -9,7 +9,12 @@ from fastapi import HTTPException
 from nevolium_core.auth import Principal
 from nevolium_core.db import SessionFactory, engine
 from nevolium_core.document_models import Document
-from nevolium_core.mindmap import get_project_mindmap
+from nevolium_core.mindmap import (
+    create_mindmap_relationship,
+    delete_mindmap_relationship,
+    get_project_mindmap,
+)
+from nevolium_core.mindmap_schemas import MindMapRelationshipCreate
 from nevolium_core.models import Project, RelationshipRecord, Task
 
 
@@ -172,6 +177,7 @@ async def main() -> None:
             session=session,
         )
         node_keys = {node.key for node in snapshot.nodes}
+        assert snapshot.layout_workspace_key == f"mindmap.project.{project_id}"
         assert f"project:{project_id}" in node_keys
         assert f"task:{task_a_id}" in node_keys and f"task:{task_b_id}" in node_keys
         assert f"document:{idea_id}" in node_keys and f"document:{note_id}" in node_keys
@@ -187,12 +193,115 @@ async def main() -> None:
         assert cross_project_id not in edge_ids
         assert stale_wrong_owner_id not in edge_ids
         assert foreign_relation_id not in edge_ids
+        assert all(edge.directed for edge in snapshot.edges)
         assert snapshot.task_count == 2
         assert snapshot.document_count == 2
         assert snapshot.relationship_count == 2
         assert not snapshot.tasks_truncated
         assert not snapshot.documents_truncated
         assert not snapshot.relationships_truncated
+
+        created = await create_mindmap_relationship(
+            project_id=project_id,
+            body=MindMapRelationshipCreate(
+                source_type="task",
+                source_id=task_a_id,
+                relation_type="depends_on",
+                target_type="task",
+                target_id=task_b_id,
+            ),
+            principal=owner,
+            session=session,
+        )
+        assert created.source_key == f"task:{task_a_id}"
+        assert created.target_key == f"task:{task_b_id}"
+        assert created.relation_type == "depends_on"
+        assert created.directed
+        assert created.metadata_json["surface"] == "mindmap"
+        assert created.metadata_json["project_id"] == str(project_id)
+
+        related = await create_mindmap_relationship(
+            project_id=project_id,
+            body=MindMapRelationshipCreate(
+                source_type="document",
+                source_id=idea_id,
+                relation_type="related_to",
+                target_type="document",
+                target_id=note_id,
+            ),
+            principal=owner,
+            session=session,
+        )
+        assert not related.directed
+
+        await rejected(
+            409,
+            create_mindmap_relationship(
+                project_id=project_id,
+                body=MindMapRelationshipCreate(
+                    source_type="task",
+                    source_id=task_a_id,
+                    relation_type="depends_on",
+                    target_type="task",
+                    target_id=task_b_id,
+                ),
+                principal=owner,
+                session=session,
+            ),
+        )
+        await rejected(
+            404,
+            create_mindmap_relationship(
+                project_id=project_id,
+                body=MindMapRelationshipCreate(
+                    source_type="task",
+                    source_id=task_a_id,
+                    relation_type="related_to",
+                    target_type="task",
+                    target_id=other_task_id,
+                ),
+                principal=owner,
+                session=session,
+            ),
+        )
+        await rejected(
+            409,
+            delete_mindmap_relationship(
+                project_id=project_id,
+                relationship_id=project_to_note_id,
+                principal=owner,
+                session=session,
+            ),
+        )
+
+        response = await delete_mindmap_relationship(
+            project_id=project_id,
+            relationship_id=created.id,
+            principal=owner,
+            session=session,
+        )
+        assert response.status_code == 204
+        assert await session.get(RelationshipRecord, created.id) is None
+
+        response = await delete_mindmap_relationship(
+            project_id=project_id,
+            relationship_id=related.id,
+            principal=owner,
+            session=session,
+        )
+        assert response.status_code == 204
+        assert await session.get(RelationshipRecord, related.id) is None
+
+        after_delete = await get_project_mindmap(
+            project_id=project_id,
+            task_limit=10,
+            document_limit=10,
+            relationship_limit=10,
+            principal=owner,
+            session=session,
+        )
+        assert created.id not in {edge.id for edge in after_delete.edges}
+        assert related.id not in {edge.id for edge in after_delete.edges}
 
         small = await get_project_mindmap(
             project_id=project_id,
@@ -228,11 +337,20 @@ async def main() -> None:
                 session=session,
             ),
         )
+        await rejected(
+            404,
+            delete_mindmap_relationship(
+                project_id=project_id,
+                relationship_id=idea_to_task_id,
+                principal=foreign,
+                session=session,
+            ),
+        )
 
     await engine.dispose()
     print(
-        "D08 POSTGRES PASS: project snapshot is bounded, owner-scoped, identity-stable and "
-        "excludes cross-project/foreign/stale relationship endpoints"
+        "D08 POSTGRES PASS: project snapshot is bounded and owner-scoped; typed mindmap links "
+        "are serialized, duplicate-safe, same-project and deletable only when mindmap-owned"
     )
 
 
