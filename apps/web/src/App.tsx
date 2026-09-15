@@ -14,6 +14,7 @@ import NewsWorkspacePanel, {
 import ProjectsWorkspace from './ProjectsWorkspace'
 import ResearchWorkspace from './ResearchWorkspace'
 import TodayWorkspace from './TodayWorkspace'
+import { useI18n } from './i18n'
 import { nevoliumFetch } from './lib/apiClient'
 import {
   getAuthSnapshot,
@@ -88,6 +89,7 @@ type CommandState = {
 }
 
 export default function App() {
+  const { language, locale, newsLanguage } = useI18n()
   const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
   const [online, setOnline] = useState(() => navigator.onLine)
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
@@ -114,12 +116,20 @@ export default function App() {
   )
   const isAdmin = !auth.enabled || auth.roles.includes('nevolium-admin')
 
-  const [command, setCommand] = useState('Quelles sont les nouvelles du jour sur la ville de Paris ?')
+  const [command, setCommand] = useState(() =>
+    language === 'en'
+      ? 'What is today’s news about the city of Paris?'
+      : 'Quelles sont les nouvelles du jour sur la ville de Paris ?',
+  )
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [pendingCommandId, setPendingCommandId] = useState<string | null>(null)
   const [lastRoute, setLastRoute] = useState<AssistantRun | null>(null)
 
-  const [query, setQuery] = useState('Quelles sont les nouvelles du jour sur la ville de Paris ?')
+  const [query, setQuery] = useState(() =>
+    language === 'en'
+      ? 'What is today’s news about the city of Paris?'
+      : 'Quelles sont les nouvelles du jour sur la ville de Paris ?',
+  )
   const [mode, setMode] = useState<NewsMode>('local')
   const [location, setLocation] = useState('Paris')
   const [output, setOutput] = useState<NewsOutput>('both')
@@ -292,7 +302,7 @@ export default function App() {
         body: JSON.stringify({
           text: command,
           conversation_id: conversationId,
-          locale: 'fr-FR',
+          locale,
           output: 'auto',
         }),
       })
@@ -343,7 +353,7 @@ export default function App() {
           query,
           mode,
           location: mode === 'local' ? location || null : null,
-          language: 'fr',
+          language: newsLanguage,
           time_range: 'day',
           max_sources: 10,
           output,
