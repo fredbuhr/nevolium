@@ -481,6 +481,7 @@ export default function App() {
               <label>
                 Profil
                 <select
+                  aria-label="Profil"
                   value={profile}
                   onChange={(event) => updateProfile(event.target.value as CockpitProfile)}
                 >
@@ -492,6 +493,7 @@ export default function App() {
               <label>
                 Ambiance
                 <select
+                  aria-label="Ambiance"
                   value={ambience}
                   onChange={(event) => updateAmbience(event.target.value as CockpitAmbience)}
                 >

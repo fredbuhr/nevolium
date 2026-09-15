@@ -1,6 +1,6 @@
 # Nevolium : checkpoint de reprise
 
-Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live.
+Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live.
 
 ## H5 clôturé ; D05 : correction de navigation en qualification
 
@@ -14,7 +14,7 @@ Dernière revue : 2026-09-14. Lire `AGENTS.md`, puis vérifier GitHub live.
 | Données | Migration `0015_model_configurations` ; cinq réservations historiques `uncertain` conservées. Table de configuration vide au déploiement ; l’utilisateur a depuis saisi une clé, résultat non revérifié |
 | Récupération | Sel LiteLLM stable provisionné sans affichage ; snapshot de récupération `cb0696461e1bc6a3cad54260dccd7b564e2d6d5c684c9f7174a0fd091a623bc5` et snapshot quiescent pré-D05 `71f19a4691a6a45891aa0d59dfcd8237b58eaf2aaa738608e3f8e21facf5a524`, tous deux chiffrés sur B2 et relus |
 | Correction en cours | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites |
-| Validation de la correction | `36a153a797c1a350dda43cbd56935bf8a6ba8b31` : UI responsive/connectée et isolation multi-utilisateur réussies en CI ; captures téléchargées, empreinte vérifiée et relues. Dernier ajustement : préférences compactes et captures mobiles repositionnées ; vérifier sa propre CI |
+| Validation de la correction | `36a153a…` : UI responsive/connectée et isolation réussies ; Foundation seul échoue au téléchargement Keycloak (HTTP 502). `ced7b9e…` : captures mobiles produites, scénarios métier exécutés ; dernier contrôle de personnalisation bloqué sur le nom exact du champ Ambiance. Noms accessibles explicités, nouvelle CI requise |
 | Prochaine action | Vérifier la CI de la tête après ajustement mobile et relire ses captures ; présenter le rendu à l’utilisateur, sans déployer ni fusionner avant cette revue. Lire séparément le badge du fournisseur déjà saisi, sans renvoyer la clé |
 
 ## Livraison D05 et limite de clôture
