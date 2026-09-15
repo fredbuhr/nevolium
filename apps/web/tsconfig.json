@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nevolium/graph": ["../../packages/graph/src/index.ts"]
+    }
   },
   "include": ["src"]
 }
