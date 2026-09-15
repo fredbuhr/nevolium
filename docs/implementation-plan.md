@@ -122,15 +122,15 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 
 ### D05 — cockpit cohérent et langage visuel Mycelium
 
-- **État : en revue** dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur
-  `feat/d05-coherent-cockpit` depuis le main
-  `1896468513f92ee5c0d6a811301a1b898cc6abd2` ; voir le
+- **État : intégré** par la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), commit de fusion
+  `66f1e6991fb6df09bcb12678b8aadc007934f01a` ; voir le
   [checkpoint daté](archive/d05-coherent-cockpit-progress-2026-09-14.md) et le
   [contrat visuel Mycelium](design-mycelium.md). Le checkpoint de code fonctionnel, visuel et authentifié
-  `73b07f5204fa5446ecd663ce90d68c5175a73e3e` passe 10/10 workflows. L'Accueil Mycelium et le
+  `e66a22d01ce644f779c6eaf3c04d11ce25a47ac3` passe 10/10 workflows. L'Accueil Mycelium et le
   Cockpit sont qualifiés dans cinq formats Chromium ;
-  le popout, le vrai parcours OIDC/PKCE et la séparation administrateur/utilisateur sont qualifiés ;
-  restent la revue utilisateur manuelle, le test réel du fournisseur choisi et l'intégration.
+  le popout, le vrai parcours OIDC/PKCE et la séparation administrateur/utilisateur sont qualifiés.
+  OpenAI `openai/gpt-4.1` est réellement testé puis activé, avec usage canonique et sauvegarde
+  chiffrée relue. La revue utilisateur sur appareils physiques reste un suivi continu.
 
 - **Prérequis :** D04.
 - **Livraison :** design partagé issu des références utilisateur disponibles : réseau organique,

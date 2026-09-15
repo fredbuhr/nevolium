@@ -2,9 +2,9 @@
 
 Révision : 2026-09-15. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
 ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
-D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
-unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Core et Web exécutent le correctif qualifié
-`e275b7bb…` sur le pilote ; le lot n’est pas intégré. Les textes visibles sont alignés avec la
+D05 est intégré par la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), au commit de fusion
+`66f1e6991fb6df09bcb12678b8aadc007934f01a`. Core et Web exécutent le correctif qualifié
+`e275b7bb…` sur le pilote ; la fusion n’est pas présentée comme un nouveau déploiement. Les textes visibles sont alignés avec la
 [charte d'identité](identite-nevolium.md) sur cette même PR.
 La [reprise organique](archive/d05-organic-material-2026-09-14.md) remplace les orbites trop
 géométriques par une matière fibreuse bioluminescente et un paysage nocturne ; sa qualification
@@ -33,7 +33,7 @@ Les mesures cible proviennent des sorties opérateur conservées dans le
 Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
 D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
 droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
-D05 n’est pas intégré ; Core et Web du pilote exécutent `e275b7bb…`, la correction est en revue.
+D05 est intégré ; Core et Web du pilote exécutent `e275b7bb…`. D06 n’est pas commencé.
 
 | Domaine | Preuve disponible | Limite |
 |---|---|---|
@@ -63,7 +63,7 @@ Les cinq réservations uncertain et les anciens essais sont conservés sans reje
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web/OIDC ; Accueil Mycelium SVG 2D fonctionnel ouvrant six espaces réels ; panneaux Dockview persistés ; repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents ; identité cyan/émeraude/bleu/violet, accès rapide, inspecteur, profils/ambiances, tablette et téléphone à activité visible unique par défaut, layouts par fenêtre, détachement multi-écran sur bureau, clavier et PWA ; dix captures Chromium qualifiées sur cinq formats ; OpenAI réellement vérifié et activé | Revue humaine sur appareils physiques puis intégration du candidat D05 |
+| Cockpit | Web/OIDC ; Accueil Mycelium SVG 2D fonctionnel ouvrant six espaces réels ; panneaux Dockview persistés ; repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents ; identité cyan/émeraude/bleu/violet, accès rapide, inspecteur, profils/ambiances, tablette et téléphone à activité visible unique par défaut, layouts par fenêtre, détachement multi-écran sur bureau, clavier et PWA ; dix captures Chromium qualifiées sur cinq formats ; OpenAI réellement vérifié et activé | Revue humaine continue sur appareils physiques ; fonctions de planification en D06 |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
