@@ -15,7 +15,7 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Lifecycle | Scène démontée hors viewport/panneau/document visible, mouvement réduit, qualité adaptative et économique, fallback 2D/retry WebGL ; téléphone 2D par défaut |
 | Cohérence | Actualisation manuelle/retour panneau/focus/online, lectures coalescées ; conversion et actions D08 réutilisées |
 | Compatibilité | React/DOM 19.2.8 fixés dans la plage supportée par R3F 9.7.0 ; types Three 0.180.0 ajoutés |
-| Validation | Contrats purs D09 et contrats Web D08/locale passent localement ; build final passé (React 19.2.8). CI de cette livraison en cours : ne pas attribuer les 8/8 du head d'entrée au nouveau code |
+| Validation | Contrats purs D09 et contrats Web D08/locale passent localement ; build final passé (React 19.2.8). Premier head `db346a8` : build, navigateur D05–D07 et PostgreSQL D06/D08 verts ; correctifs du contrat D05 et de la hauteur du canvas D08 à requalifier |
 | Incertitudes | Chromium D09 à exécuter ; fluidité/mémoire physique sur GPU intégré/tablette non mesurées ; API navigateur simulée distincte des contrats PostgreSQL |
 | Production | Inchangée : runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations`; D06–D09 non déployés |
 | Prochaine action | Pousser/qualifier cette livraison sur #93, corriger les échecs réels, conserver captures/mesures et enregistrer les résultats exacts ; maintenir draft tant que les gates matériels D09 restent ouverts |

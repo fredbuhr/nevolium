@@ -36,6 +36,19 @@ Le scénario utilise une **API simulée** et Chromium **SwiftShader logiciel**. 
 D06/D08 sont exécutés séparément. Ni ces fixtures ni l'émulation tactile ne prouvent une expérience
 physique tablette/GPU intégré ou une chaîne navigateur→Core→PostgreSQL complète.
 
+## Première exécution CI
+
+Head `db346a826f00ba45d86816ce0d2741611573072a`, workflow UI `35022007030` :
+build, parcours navigateur D05–D07 et contrats PostgreSQL D06/D08 verts. Deux corrections observées :
+le contrôle statique D05 interdisait toute source 3D au lieu du seul graphe d'import initial ;
+le wrapper spatial privait React Flow d'une hauteur définie et empêchait la sélection D08.
+Le contrôle suit désormais les imports statiques du point d'entrée (scène différée exclue), et le
+canvas 2D conserve une hauteur explicite. Aucun clic forcé ni scénario D08 supprimé.
+
+Les jeux 51/201/501 sont des charges synthétiques du renderer. Le Web réel charge par défaut au plus
+100 Tasks + 100 Documents + 1 Project / 300 relations ; le Core autorise explicitement jusqu'à
+200 + 200 + 1 / 1 000 relations. Le jeu 501 ne constitue donc pas une capacité produit servie par l'API.
+
 ## Gate restant
 
 1. Qualifier le head de cette livraison en CI, examiner captures et mesures, corriger les échecs.
