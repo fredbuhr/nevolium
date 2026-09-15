@@ -16,9 +16,11 @@ from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
+from .planning_structure import router as planning_structure_router
 from .project_access import get_owned_task, owned_project_clause
 
 router = APIRouter()
+router.include_router(planning_structure_router)
 
 
 MANUAL_STATUSES = {"todo", "completed"}
