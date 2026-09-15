@@ -13,6 +13,7 @@ type CalendarTask = {
   planned_end_at?: string | null
   due_at?: string | null
   recurrence_rule?: string | null
+  planning_version?: number
 }
 
 type VirtualOccurrence = {
@@ -120,7 +121,12 @@ export default function PlanningCalendar({ apiUrl, projectId, tasks, onEditSched
     start: startOfLocalDay(gridDays[0]),
     end: addDays(startOfLocalDay(gridDays[gridDays.length - 1]), 1),
   }), [gridDays])
-  const hasRecurringTasks = tasks.some((task) => Boolean(task.recurrence_rule))
+  const recurringTasks = tasks.filter((task) => Boolean(task.recurrence_rule))
+  const hasRecurringTasks = recurringTasks.length > 0
+  const recurrenceRevision = recurringTasks
+    .map((task) => `${task.id}:${task.planning_version || 1}:${task.recurrence_rule}`)
+    .sort()
+    .join('|')
 
   useEffect(() => {
     setOccurrences([])
@@ -162,7 +168,7 @@ export default function PlanningCalendar({ apiUrl, projectId, tasks, onEditSched
     })()
 
     return () => controller.abort()
-  }, [apiUrl, hasRecurringTasks, projectId, windowBounds])
+  }, [apiUrl, hasRecurringTasks, projectId, recurrenceRevision, windowBounds])
 
   const calendarTasks = useMemo<CalendarTask[]>(() => [
     ...tasks,
@@ -176,6 +182,7 @@ export default function PlanningCalendar({ apiUrl, projectId, tasks, onEditSched
       planned_end_at: occurrence.end_at,
       due_at: occurrence.due_at,
       recurrence_rule: 'virtual',
+      planning_version: occurrence.planning_version,
     })),
   ], [occurrences, tasks])
 
