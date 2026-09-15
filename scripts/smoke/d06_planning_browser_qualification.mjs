@@ -230,6 +230,7 @@ async function openPlanning(page, state) {
   await planning.getByRole('heading', {
     name: 'Organisez les mêmes tâches en liste, Kanban, Gantt ou calendrier.',
   }).waitFor()
+  await planning.getByText(state.task.title, { exact: true }).first().waitFor({ state: 'visible' })
   return planning
 }
 
