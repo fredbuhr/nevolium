@@ -1,3 +1,4 @@
+import { qualifySpatial } from './d09_spatial_browser.mjs'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
@@ -359,12 +360,13 @@ try {
     if (preview.exitCode !== null) throw new Error(`Vite preview stopped.\n${previewOutput}`)
     try { return (await fetch(previewOrigin)).ok } catch { return false }
   }, 'Vite preview did not become ready', 30_000)
-  browser = await chromium.launch({ headless: true,
+  browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     ...(process.env.NEVOLIUM_CHROMIUM_EXECUTABLE ? { executablePath: process.env.NEVOLIUM_CHROMIUM_EXECUTABLE } : {}) })
   await qualifyDesktop(browser, state); await qualifyReload(browser, state); await qualifyPhone(browser)
   const stability = await qualifyMindMapStability({ browser, makeState, casePage, openMindMap, dragNode,
     selectOnlyNode, eventually, ids, output, setStage: value => { stage = value } })
-  const result = { status: 'passed', scope: 'Chromium Web with mocked API; PostgreSQL integration is a separate job',
+  const spatial = await qualifySpatial({ browser, makeState, casePage, openMindMap, eventually, ids, node, edge, output, setStage: value => { stage = value } })
+  const result = { spatial, status: 'passed', scope: 'Chromium Web with mocked API; PostgreSQL integration is a separate job',
     mindmap_reads: state.mindmapReads, layout_writes: state.layoutWrites,
     link_creates: state.linkCreates, link_deletes: state.linkDeletes, conversions: state.conversions, planning_reads: state.planningReads,
     exported_payloads: ['export-fr.json', 'export-en.json', 'export-reload.json'], stability }

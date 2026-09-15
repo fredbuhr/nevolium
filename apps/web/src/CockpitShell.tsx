@@ -17,6 +17,7 @@ import {
 import 'dockview-react/dist/styles/dockview.css'
 
 import { nevoliumFetch } from './lib/apiClient'
+import { PanelNavigationContext, PanelVisibilityContext } from './lib/panelVisibility'
 import ContextNavigator from './ContextNavigator'
 
 export type CockpitSlots = {
@@ -147,18 +148,26 @@ function ResearchPanel(_props: IDockviewPanelProps) {
 }
 
 function ExtraPanel(props: IDockviewPanelProps) {
+  const [visible, setVisible] = useState(props.api.isVisible)
+  useEffect(() => {
+    setVisible(props.api.isVisible)
+    const subscription = props.api.onDidVisibilityChange(event => setVisible(event.isVisible))
+    return () => subscription.dispose()
+  }, [props.api])
   const { extras } = useCockpitContent()
   const rawParams = props.params as { panelKey?: unknown } | undefined
   const panelKey = typeof rawParams?.panelKey === 'string' ? rawParams.panelKey : ''
   const content = panelKey ? extras[panelKey] : undefined
   return (
     <div style={dockPanelStyle}>
+      <PanelVisibilityContext.Provider value={visible}>
       {content ?? (
         <div className="state-panel state-panel-empty">
           <strong>Panneau indisponible</strong>
           <span>Cette disposition référence un module absent de la version courante.</span>
         </div>
       )}
+      </PanelVisibilityContext.Provider>
     </div>
   )
 }
@@ -653,6 +662,7 @@ export default function CockpitShell({
 
   return (
     <CockpitContentContext.Provider value={cockpitContent}>
+      <PanelNavigationContext.Provider value={navigate}>
       <section className={`cockpit-shell ${linksVisible ? 'with-thread' : ''}`} aria-label="Cockpit Nevolium">
         <nav className="cockpit-toolbar" aria-label="Navigation du cockpit">
           <button className="cockpit-home-button" type="button" onClick={onOpenHome}>
@@ -816,6 +826,7 @@ export default function CockpitShell({
           </section>
         </div>
       ) : null}
+      </PanelNavigationContext.Provider>
     </CockpitContentContext.Provider>
   )
 }

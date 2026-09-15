@@ -17,6 +17,10 @@ import {
 } from '@nevolium/graph'
 
 import { useI18n } from '../i18n'
+import SpatialWorkspace from '../Mycelium3D'
+import { useSpatialMessages } from '../Mycelium3D/messages'
+import { usePanelNavigation, usePanelVisibility } from '../lib/panelVisibility'
+import { getAuthSnapshot, subscribeAuthSession } from '../lib/authSession'
 import { nevoliumFetch } from '../lib/apiClient'
 import { useProjectSelection } from '../lib/projectSelection'
 import { layoutSaveCopy, useLayoutPersistence } from './useLayoutPersistence'
@@ -173,6 +177,23 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
 
 function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProjectId: string }) {
   const { language, lower, t } = useI18n()
+  const spatialMessages = useSpatialMessages()
+  const navigate = usePanelNavigation()
+  const { setSelectedDocumentId } = useProjectSelection()
+  const panelVisible = usePanelVisibility()
+  const [refreshing, setRefreshing] = useState(false)
+  const sessionAbort = useRef(new AbortController())
+  useEffect(() => {
+    const controller = new AbortController()
+    sessionAbort.current = controller
+    const origin = getAuthSnapshot()
+    const unsubscribe = subscribeAuthSession(() => {
+      const current = getAuthSnapshot()
+      if (current.enabled !== origin.enabled || current.subject !== origin.subject
+        || (origin.enabled && !current.authenticated)) controller.abort()
+    })
+    return () => { controller.abort(); unsubscribe() }
+  }, [])
   const tRef = useRef(t)
   tRef.current = t
   const [snapshot, setSnapshot] = useState<MindMapSnapshot | null>(null)
@@ -332,10 +353,12 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
     if (!snapshot) return
     const response = await nevoliumFetch(
       `${apiUrl}/v1/projects/${encodeURIComponent(snapshot.project_id)}/mindmap`,
+      { signal: sessionAbort.current.signal },
     )
     const nextSnapshot = await readJson<MindMapSnapshot>(response)
+    if (sessionAbort.current.signal.aborted) return
     setSnapshot(nextSnapshot)
-    setSelectedNodeIds(selectKey ? [selectKey] : [])
+    setSelectedNodeIds(current => selectKey ? [selectKey] : current.filter(id => nextSnapshot.nodes.some(node => node.key === id)))
     setRenderRevision((value) => value + 1)
   }
 
@@ -706,6 +729,40 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
       }))
   }, [relationLabel, selectedEdgeId, snapshot, visibleCanonicalIds])
 
+  const spatialGraph = useMemo(() => snapshot ? graphSnapshot(snapshot) : { nodes: [], edges: [] }, [snapshot])
+  const spatialNodes = useMemo(() => (snapshot?.nodes || [])
+    .filter(node => visibleCanonicalIds.has(node.key))
+    .map(node => ({ id: node.key, entityType: node.entity_type, projectId: node.project_id,
+      label: node.label, kind: node.kind, status: node.status })), [snapshot, visibleCanonicalIds])
+  const spatialGroups = useMemo(() => Object.entries(layout.groups || {}).map(([id, group]) => ({
+    id, label: group.label, nodeIds: group.node_ids,
+  })), [layout.groups])
+  const selectSpatialNode = useCallback((id: string, additive: boolean) => {
+    setSelectedNodeIds(current => !id ? [] : additive
+      ? current.includes(id) ? current.filter(key => key !== id) : [...current, id]
+      : [id])
+    updateDeepLink(id || null)
+    setRenderRevision(current => current + 1)
+  }, [])
+
+  const refreshBusy = useRef(false)
+  const refreshRef = useRef<() => Promise<void>>(async () => {})
+  refreshRef.current = async () => {
+    if (!snapshot || mutating || refreshBusy.current) return
+    refreshBusy.current = true; setRefreshing(true); setMutating(true)
+    try { await refreshSnapshot(); setError(null) }
+    catch { setError(spatialMessages.failedRefresh) }
+    finally { refreshBusy.current = false; setRefreshing(false); setMutating(false) }
+  }
+  useEffect(() => {
+    if (!panelVisible) return
+    const refresh = () => { if (!document.hidden) void refreshRef.current() }
+    window.addEventListener('online', refresh)
+    window.addEventListener('focus', refresh)
+    refresh()
+    return () => { window.removeEventListener('online', refresh); window.removeEventListener('focus', refresh) }
+  }, [panelVisible])
+
   const flowKey = `${snapshot?.project_id || 'empty'}:${renderRevision}:${language}:${filter}:${query}`
   if (loading || !snapshot) {
     return (
@@ -728,6 +785,7 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
           <button type="button" onClick={() => void undo()} disabled={past.length === 0 || mutating}>{t('mindmap.undo')}</button>
           <button type="button" onClick={() => void redo()} disabled={future.length === 0 || mutating}>{t('mindmap.redo')}</button>
           <button type="button" onClick={exportMindMap}>{t('mindmap.export')}</button>
+          <button type="button" disabled={refreshing || mutating} onClick={() => void refreshRef.current()}>{refreshing ? spatialMessages.pending : spatialMessages.refresh}</button>
           <span className="mindmap-save-state" data-save-state={persistence.status} aria-live="polite">{saveCopy[persistence.status]}</span>
           {persistence.status === 'error' ? <button type="button" onClick={persistence.retry}>{saveCopy.retry}</button> : null}
         </div>
@@ -801,6 +859,15 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
       {persistence.status === 'error' ? <div className="mindmap-error" role="alert">{t('mindmap.saveError')} {persistence.error}</div> : null}
       {error ? <div className="mindmap-error" role="alert">{error}</div> : null}
 
+      <SpatialWorkspace apiUrl={apiUrl} projectId={snapshot.project_id} graph={spatialGraph}
+        nodes={spatialNodes} groups={spatialGroups} selected={selectedNodeIds}
+        onSelect={selectSpatialNode} onOpen={() => {
+          updateDeepLink(selectedNodeIds[0] || null)
+          const item = apiNodeByKey.get(selectedNodeIds[0])
+          if (!item) return
+          if (item.entity_type === 'document') setSelectedDocumentId(item.entity_id)
+          navigate(item.entity_type === 'document' ? 'knowledge' : item.entity_type === 'task' ? 'planning' : 'projects')
+        }}>
       <div className="mindmap-canvas">
         <ReactFlow
           key={flowKey}
@@ -838,6 +905,7 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>
+      </SpatialWorkspace>
     </section>
   )
 }

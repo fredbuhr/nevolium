@@ -14,10 +14,11 @@ listed capability is delivered.
 ## Current delivery line — September 2026
 
 Repository Reset R0–R7 is complete; G51 planning foundations, H1–H3 and the H4 Task-dispatch
-isolation repair are integrated. D01–D04 (#84–#88) and H5 are complete; D05 is in review in
-[PR #89](https://github.com/fredbuhr/nevolium/pull/89).
-The current Web cockpit exists; the complete Mycelium 3D, editable mindmaps and Gantt are planned,
-not delivered merely by installing their rendering libraries.
+isolation repair are integrated. D01–D08 (#84–#92) and H5 are integrated. The cockpit, planning
+workspace, editable knowledge and 2D mindmap are implemented. D09 Mycelium 3D is being qualified in
+[draft PR #93](https://github.com/fredbuhr/nevolium/pull/93); physical GPU/tablet validation remains open.
+The last verified production runtime is D05 with database revision `0015_model_configurations`.
+D06–D09 have not been deployed to that pilot.
 
 Start with [PROJECT_STATE.md](PROJECT_STATE.md) for live recovery, the
 [detailed D01–D22 plan](docs/implementation-plan.md) for delivery scope, and the
