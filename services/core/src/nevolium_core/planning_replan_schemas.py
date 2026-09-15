@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 PlanningField = Literal["planned_start_at", "planned_end_at", "due_at"]
+MAX_REPLAN_UPDATES = 100
 
 
 class PlanningWindowRead(BaseModel):
@@ -47,7 +48,7 @@ class ReplanTaskPatch(BaseModel):
 
 
 class ReplanRequest(BaseModel):
-    updates: list[ReplanTaskPatch] = Field(min_length=1, max_length=100)
+    updates: list[ReplanTaskPatch] = Field(min_length=1, max_length=MAX_REPLAN_UPDATES)
 
     @model_validator(mode="after")
     def unique_task_ids(self) -> "ReplanRequest":
