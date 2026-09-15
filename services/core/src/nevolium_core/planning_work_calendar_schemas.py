@@ -124,6 +124,10 @@ class ProjectWorkCalendarUpdate(BaseModel):
 
     @model_validator(mode="after")
     def require_change(self) -> "ProjectWorkCalendarUpdate":
-        if not (self.model_fields_set - {"expected_version"}):
+        supplied = self.model_fields_set - {"expected_version"}
+        if not supplied:
             raise ValueError("work calendar update must include at least one field")
+        for field in ("timezone", "weekly_intervals", "exceptions"):
+            if field in supplied and getattr(self, field) is None:
+                raise ValueError(f"{field} cannot be null")
         return self
