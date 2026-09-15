@@ -77,14 +77,8 @@ function makeState() {
       node(`document:${ids.note}`, 'document', ids.note, 'Note navigateur D08', 'note'),
     ],
     edges: [edge('d08-canonical-edge', `document:${ids.idea}`, `task:${ids.task}`, 'supports', {}, true)],
-    layouts: new Map(),
-    linkCreates: 0,
-    linkDeletes: 0,
-    conversions: 0,
-    layoutWrites: 0,
-    mindmapReads: 0,
-    planningReads: 0,
-    nextEdge: 1,
+    layouts: new Map(), linkCreates: 0, linkDeletes: 0, conversions: 0, layoutWrites: 0,
+    mindmapReads: 0, planningReads: 0, nextEdge: 1, requests: [],
   }
 }
 
@@ -103,6 +97,7 @@ function snapshot(state) {
 async function installApiMock(context, state) {
   await context.route(`${apiOrigin}/v1/**`, async route => {
     const request = route.request(); const url = new URL(request.url()); const p = url.pathname
+    state.requests.push(`${request.method()} ${p}${url.search}`)
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: {
       'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,PUT,POST,PATCH,DELETE,OPTIONS',
       'access-control-allow-headers': 'content-type',
@@ -170,24 +165,40 @@ async function installApiMock(context, state) {
   })
 }
 
-async function openMindMap(page) {
+async function openMindMap(page, state, errors, label) {
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
   await page.locator('.mycelium-space-node[data-space="projects"]').click()
   await page.getByRole('heading', { name: 'Donnez une forme concrète aux idées que vous choisissez de construire.' }).waitFor()
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Carte mentale', exact: true }).click()
   const map = page.locator('.mindmap-workspace:visible')
-  await map.getByRole('heading', { name: 'Carte mentale', exact: true }).waitFor()
-  await map.locator('.react-flow__node').first().waitFor()
+  try {
+    await map.waitFor({ state: 'visible', timeout: 5_000 })
+    await eventually(async () => await map.locator('.react-flow__node').count() > 0, 'D08 mindmap nodes did not render', 8_000)
+  } catch (error) {
+    const diagnostic = {
+      label,
+      url: page.url(),
+      workspace_count: await page.locator('.mindmap-workspace').count(),
+      visible_workspace_count: await page.locator('.mindmap-workspace:visible').count(),
+      workspace_text: await page.locator('.mindmap-workspace:visible').allTextContents().catch(() => []),
+      page_errors: errors,
+      mindmap_reads: state.mindmapReads,
+      recent_requests: state.requests.slice(-30),
+      error: error instanceof Error ? error.message : String(error),
+    }
+    await fs.writeFile(path.join(output, `diagnostic-${label}.json`), `${JSON.stringify(diagnostic, null, 2)}\n`)
+    await page.screenshot({ path: path.join(output, `diagnostic-${label}.png`), fullPage: true })
+    throw new Error(`D08 openMindMap failed: ${JSON.stringify(diagnostic)}`)
+  }
+  await map.getByRole('heading', { name: /Carte mentale|Mind map/, exact: true }).waitFor()
   return map
 }
 
 async function dragNode(page, locator, dx, dy) {
   const box = await locator.boundingBox(); assert(box)
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-  await page.mouse.down()
-  await page.mouse.move(box.x + box.width / 2 + dx, box.y + box.height / 2 + dy, { steps: 8 })
-  await page.mouse.up()
+  await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + dx, box.y + box.height / 2 + dy, { steps: 8 }); await page.mouse.up()
 }
 
 async function qualifyDesktop(browser, state) {
@@ -195,72 +206,53 @@ async function qualifyDesktop(browser, state) {
     colorScheme: 'dark', reducedMotion: 'reduce', serviceWorkers: 'block', acceptDownloads: true })
   await installApiMock(context, state)
   const page = await context.newPage(); const errors = []
-  page.on('pageerror', error => errors.push(error.message))
-  let map = await openMindMap(page)
+  page.on('pageerror', error => errors.push(error.stack || error.message))
+  let map = await openMindMap(page, state, errors, 'desktop-open')
   assert.equal(await map.locator('.react-flow__node').count(), 4)
 
   const idea = map.locator('.react-flow__node').filter({ hasText: 'Idée navigateur D08' }).first()
-  await idea.click()
-  assert.equal(new URL(page.url()).searchParams.get('mindmap'), `document:${ids.idea}`)
-
+  await idea.click(); assert.equal(new URL(page.url()).searchParams.get('mindmap'), `document:${ids.idea}`)
   await dragNode(page, idea, 95, 55)
   await eventually(() => state.layoutWrites > 0, 'D08: drag did not persist WorkspaceLayout')
-  const mindmapLayout = state.layouts.get(`mindmap.project.${ids.project}`)
-  assert(mindmapLayout?.layout?.positions?.[`document:${ids.idea}`], 'D08: persisted idea position missing')
+  assert(state.layouts.get(`mindmap.project.${ids.project}`)?.layout?.positions?.[`document:${ids.idea}`])
 
-  const editor = map.locator('.mindmap-editor-card').first()
-  const selects = editor.locator('select')
-  await selects.nth(0).selectOption(`document:${ids.note}`)
-  await selects.nth(1).selectOption('references')
-  await selects.nth(2).selectOption(`document:${ids.idea}`)
+  const editor = map.locator('.mindmap-editor-card').first(); const selects = editor.locator('select')
+  await selects.nth(0).selectOption(`document:${ids.note}`); await selects.nth(1).selectOption('references'); await selects.nth(2).selectOption(`document:${ids.idea}`)
   await editor.getByRole('button', { name: 'Créer le lien', exact: true }).click()
   await eventually(() => state.linkCreates === 1, 'D08: link mutation was not sent')
-  await map.getByRole('button', { name: 'Annuler', exact: true }).click()
-  await eventually(() => state.linkDeletes === 1, 'D08: link undo did not delete canonical relation')
-  await map.getByRole('button', { name: 'Rétablir', exact: true }).click()
-  await eventually(() => state.linkCreates === 2, 'D08: link redo did not recreate canonical relation')
+  await map.getByRole('button', { name: 'Annuler', exact: true }).click(); await eventually(() => state.linkDeletes === 1, 'D08: link undo failed')
+  await map.getByRole('button', { name: 'Rétablir', exact: true }).click(); await eventually(() => state.linkCreates === 2, 'D08: link redo failed')
 
   const taskNode = map.locator('.react-flow__node').filter({ hasText: 'Tâche initiale D08' }).first()
   await taskNode.click(); await page.keyboard.down('Shift'); await idea.click(); await page.keyboard.up('Shift')
   const groupCard = map.locator('.mindmap-editor-card').nth(1)
-  await groupCard.getByLabel('Nom du groupe').fill('Branche test')
-  await groupCard.getByRole('button', { name: 'Créer le groupe', exact: true }).click()
+  await groupCard.getByLabel('Nom du groupe').fill('Branche test'); await groupCard.getByRole('button', { name: 'Créer le groupe', exact: true }).click()
   await eventually(() => Boolean(state.layouts.get(`mindmap.project.${ids.project}`)?.layout?.groups), 'D08: group layout was not persisted')
 
-  const downloadPromise = page.waitForEvent('download')
-  await map.locator('.mindmap-toolbar-actions button').nth(2).click()
-  const download = await downloadPromise
+  const downloadPromise = page.waitForEvent('download'); await map.locator('.mindmap-toolbar-actions button').nth(2).click(); const download = await downloadPromise
   assert.equal(download.suggestedFilename(), `nevolium-mindmap-${ids.project}.json`)
 
-  await idea.click()
-  await map.locator('.mindmap-conversion-bar').getByRole('button').click()
+  await idea.click(); await map.locator('.mindmap-conversion-bar').getByRole('button').click()
   await eventually(() => state.conversions === 1, 'D08: idea conversion was not sent')
   await map.locator('.react-flow__node').filter({ hasText: 'Idée navigateur D08' }).nth(1).waitFor()
   assert.equal(new URL(page.url()).searchParams.get('mindmap'), `task:${ids.convertedTask}`)
 
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Planification', exact: true }).click()
-  const planning = page.locator('.planning-workspace:visible')
-  await planning.getByText('Idée navigateur D08', { exact: true }).waitFor()
-  assert(state.planningReads > 0, 'D08: converted task was not read through Planning projection')
-
-  await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Carte mentale', exact: true }).click()
-  map = page.locator('.mindmap-workspace:visible')
-  await page.getByRole('button', { name: 'English', exact: true }).click()
-  await map.getByRole('heading', { name: 'Mind map', exact: true }).waitFor()
-
-  await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true })
-  assert.deepEqual(errors, [])
+  const planning = page.locator('.planning-workspace:visible'); await planning.getByText('Idée navigateur D08', { exact: true }).waitFor(); assert(state.planningReads > 0)
+  await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Carte mentale', exact: true }).click(); map = page.locator('.mindmap-workspace:visible')
+  await page.getByRole('button', { name: 'English', exact: true }).click(); await map.getByRole('heading', { name: 'Mind map', exact: true }).waitFor()
+  await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true }); assert.deepEqual(errors, [])
   await context.close()
 }
 
 async function qualifyReload(browser, state) {
   const beforeReads = state.mindmapReads
   const context = await browser.newContext({ viewport: { width: 1200, height: 820 }, locale: 'fr-FR', timezoneId: 'Europe/Paris', serviceWorkers: 'block' })
-  await installApiMock(context, state)
-  const page = await context.newPage(); const map = await openMindMap(page)
+  await installApiMock(context, state); const page = await context.newPage(); const errors = []; page.on('pageerror', error => errors.push(error.stack || error.message))
+  const map = await openMindMap(page, state, errors, 'reload-open')
   await eventually(() => state.mindmapReads > beforeReads, 'D08: map was not reloaded')
   assert(await map.locator('.react-flow__node').filter({ hasText: 'Idée navigateur D08' }).count() >= 2)
-  assert(state.layouts.get(`mindmap.project.${ids.project}`)?.layout?.positions?.[`document:${ids.idea}`])
+  assert(state.layouts.get(`mindmap.project.${ids.project}`)?.layout?.positions?.[`document:${ids.idea}`]); assert.deepEqual(errors, [])
   await context.close()
 }
 
@@ -268,21 +260,14 @@ async function qualifyPhone(browser) {
   const state = makeState()
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
     locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: 'dark', reducedMotion: 'reduce', serviceWorkers: 'block' })
-  await installApiMock(context, state)
-  const page = await context.newPage(); const errors = []
-  page.on('pageerror', error => errors.push(error.message))
-  const map = await openMindMap(page)
+  await installApiMock(context, state); const page = await context.newPage(); const errors = []; page.on('pageerror', error => errors.push(error.stack || error.message))
+  const map = await openMindMap(page, state, errors, 'phone-open')
   const editor = map.locator('.mindmap-editor-card').first(); const selects = editor.locator('select')
-  await selects.nth(0).selectOption(`document:${ids.note}`)
-  await selects.nth(2).selectOption(`document:${ids.idea}`)
-  await editor.getByRole('button', { name: 'Créer le lien', exact: true }).tap()
-  await eventually(() => state.linkCreates === 1, 'D08 phone: touch link creation failed')
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
-  assert(overflow <= 2, `D08 phone: horizontal overflow ${overflow}px`)
-  const buttonBox = await editor.getByRole('button', { name: 'Créer le lien', exact: true }).boundingBox(); assert(buttonBox)
-  assert(buttonBox.height >= 36, `D08 phone: link button too small (${buttonBox.height})`)
-  await page.screenshot({ path: path.join(output, 'phone.png'), fullPage: true })
-  assert.deepEqual(errors, [])
+  await selects.nth(0).selectOption(`document:${ids.note}`); await selects.nth(2).selectOption(`document:${ids.idea}`)
+  await editor.getByRole('button', { name: 'Créer le lien', exact: true }).tap(); await eventually(() => state.linkCreates === 1, 'D08 phone: touch link creation failed')
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth); assert(overflow <= 2, `D08 phone overflow ${overflow}px`)
+  const buttonBox = await editor.getByRole('button', { name: 'Créer le lien', exact: true }).boundingBox(); assert(buttonBox); assert(buttonBox.height >= 36)
+  await page.screenshot({ path: path.join(output, 'phone.png'), fullPage: true }); assert.deepEqual(errors, [])
   await context.close()
 }
 
@@ -290,21 +275,11 @@ await waitForPreview()
 const browser = await chromium.launch({ headless: true })
 const state = makeState()
 try {
-  await qualifyDesktop(browser, state)
-  await qualifyReload(browser, state)
-  await qualifyPhone(browser)
-  const result = {
-    status: 'passed',
-    mindmap_reads: state.mindmapReads,
-    layout_writes: state.layoutWrites,
-    link_creates: state.linkCreates,
-    link_deletes: state.linkDeletes,
-    conversions: state.conversions,
-    planning_reads: state.planningReads,
-  }
+  await qualifyDesktop(browser, state); await qualifyReload(browser, state); await qualifyPhone(browser)
+  const result = { status: 'passed', mindmap_reads: state.mindmapReads, layout_writes: state.layoutWrites,
+    link_creates: state.linkCreates, link_deletes: state.linkDeletes, conversions: state.conversions, planning_reads: state.planningReads }
   await fs.writeFile(path.join(output, 'result.json'), `${JSON.stringify(result, null, 2)}\n`)
   console.log('D08 BROWSER PASS', result)
 } finally {
-  await browser.close()
-  preview.kill('SIGTERM')
+  await browser.close(); preview.kill('SIGTERM')
 }
