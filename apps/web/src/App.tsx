@@ -38,6 +38,7 @@ import {
   type CockpitSurface,
   useCockpitDeviceClass,
 } from './lib/cockpitDevice'
+import { readMindMapDeepLink } from './lib/mindmapDeepLink'
 import {
   type CapabilityTaskView,
   isTerminalTaskStatus,
@@ -92,6 +93,7 @@ type CommandState = {
 
 export default function App() {
   const { language, locale, newsLanguage, t } = useI18n()
+  const initialMindMapDeepLink = useMemo(() => readMindMapDeepLink(), [])
   const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
   const [online, setOnline] = useState(() => navigator.onLine)
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
@@ -102,9 +104,11 @@ export default function App() {
     getSavedCockpitAmbience(auth.subject),
   )
   const [surface, setSurface] = useState<CockpitSurface>(() =>
-    getSavedCockpitSurface(auth.subject),
+    initialMindMapDeepLink ? 'cockpit' : getSavedCockpitSurface(auth.subject),
   )
-  const [requestedPanelKey, setRequestedPanelKey] = useState<MyceliumDestinationKey>('command')
+  const [requestedPanelKey, setRequestedPanelKey] = useState<string>(
+    () => initialMindMapDeepLink ? 'mindmap' : 'command',
+  )
   const [deviceKey] = useState(() => getPresentationDeviceKey())
   const [windowKey] = useState(() => getPresentationWindowKey())
   const deviceClass = useCockpitDeviceClass()
