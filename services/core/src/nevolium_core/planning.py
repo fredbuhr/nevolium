@@ -16,6 +16,14 @@ from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
+from .planning_structure import (
+    create_task_dependency,
+    delete_task_dependency,
+    list_task_dependencies,
+    read_task_planning_structure,
+    update_task_planning_structure,
+)
+from .planning_structure_schemas import TaskDependencyRead, TaskPlanningProfileRead
 from .project_access import get_owned_task, owned_project_clause
 
 router = APIRouter()
@@ -203,3 +211,38 @@ async def today(
         buckets[name] = [_item(name, task, project) for task, project in rows[:limit]]
     return TodayRead(day=local_day, timezone=timezone_name, day_start=local_start, day_end=local_end,
                      next_cursors=next_cursors, **buckets)
+
+
+# Register D06 endpoints explicitly on the already-mounted planning router. Keeping the structural
+# implementation in its own module avoids a second task model while making route exposure obvious.
+router.add_api_route(
+    "/v1/tasks/{task_id}/planning-structure",
+    read_task_planning_structure,
+    methods=["GET"],
+    response_model=TaskPlanningProfileRead,
+)
+router.add_api_route(
+    "/v1/tasks/{task_id}/planning-structure",
+    update_task_planning_structure,
+    methods=["PATCH"],
+    response_model=TaskPlanningProfileRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/task-dependencies",
+    list_task_dependencies,
+    methods=["GET"],
+    response_model=list[TaskDependencyRead],
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/task-dependencies",
+    create_task_dependency,
+    methods=["POST"],
+    response_model=TaskDependencyRead,
+    status_code=201,
+)
+router.add_api_route(
+    "/v1/task-dependencies/{dependency_id}",
+    delete_task_dependency,
+    methods=["DELETE"],
+    status_code=204,
+)
