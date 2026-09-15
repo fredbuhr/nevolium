@@ -81,6 +81,7 @@ export type KnowledgeExchangeRead = {
 }
 
 export type KnowledgeInspectionTarget = {
+  projectId: string
   documentId: string
   documentVersionId: string
   chunkId: string
