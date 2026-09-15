@@ -30,6 +30,8 @@ def validate_model_routes(services: dict) -> list[str]:
     worker = services.get('nevolium-worker', {}).get('environment', {})
     selected_aliases = {
         core.get('NEVOLIUM_RESEARCH_MODEL', 'smart'),
+        core.get('NEVOLIUM_NEWS_MODEL', 'smart'),
+        core.get('NEVOLIUM_SEMANTIC_ROUTER_MODEL', 'smart'),
         worker.get('NEVOLIUM_NEWS_MODEL', 'smart'),
         worker.get('NEVOLIUM_SEMANTIC_ROUTER_MODEL', 'smart'),
     }
@@ -40,6 +42,21 @@ def validate_model_routes(services: dict) -> list[str]:
     if 'litellm' not in services:
         return errors  # Foundation-only deployments do not activate paid model routing.
     litellm = services['litellm'].get('environment', {})
+    master_key = litellm.get('LITELLM_MASTER_KEY')
+    salt_key = litellm.get('LITELLM_SALT_KEY')
+    if _provider_secret_is_missing(master_key):
+        errors.append('LiteLLM management requires LITELLM_MASTER_KEY')
+    if _provider_secret_is_missing(salt_key) or salt_key == master_key:
+        errors.append('LiteLLM stored provider credentials require a distinct LITELLM_SALT_KEY')
+    if core:
+        if core.get('LITELLM_URL') != 'http://litellm:4000':
+            errors.append('Core model management must use the internal LiteLLM endpoint')
+        if core.get('LITELLM_MASTER_KEY') != master_key:
+            errors.append('Core and LiteLLM management identities must match')
+        if core.get('NEVOLIUM_API_MODEL') != litellm.get('NEVOLIUM_API_MODEL'):
+            errors.append('Core bootstrap model must match the LiteLLM smart route')
+    if worker and worker.get('LITELLM_MASTER_KEY') != master_key:
+        errors.append('Worker and LiteLLM execution identities must match')
     if 'smart' in selected_aliases:
         if _provider_secret_is_missing(litellm.get('NEVOLIUM_API_KEY')):
             errors.append('LiteLLM smart alias requires NEVOLIUM_API_KEY')
@@ -94,8 +111,14 @@ def validate(config: dict) -> list[str]:
         if str(core.get('NEVOLIUM_AUTH_ENABLED')).lower() != 'true': errors.append('Core authentication required')
         db = urlsplit(core.get('DATABASE_URL',''))
         if db.username != 'nevolium_app': errors.append('Core SQL runtime identity must be nevolium_app')
-        values = [core.get(k) for k in ('NEVOLIUM_INTERNAL_TOKEN','NEVOLIUM_POLICY_SIGNING_KEY','OPENBAO_TOKEN','NEVOLIUM_OPERATIONS_TOKEN')]
-        if len(set(values)) != 4: errors.append('Core workload secrets must be distinct')
+        values = [core.get(k) for k in ('NEVOLIUM_INTERNAL_TOKEN','NEVOLIUM_POLICY_SIGNING_KEY','OPENBAO_TOKEN','NEVOLIUM_OPERATIONS_TOKEN','LITELLM_MASTER_KEY')]
+        if len(set(values)) != 5: errors.append('Core workload secrets must be distinct')
+        core_networks = set(services.get('nevolium-core', {}).get('networks', {}))
+        litellm_networks = set(services.get('litellm', {}).get('networks', {}))
+        if 'litellm' in services and ('models' not in core_networks or 'models' not in litellm_networks):
+            errors.append('Core and LiteLLM require the dedicated internal models network')
+        if 'egress' in core_networks:
+            errors.append('Core must not have provider egress')
     for name, key in [('nevolium-core','KEYCLOAK_ISSUER'), ('keycloak','KC_HOSTNAME')]:
         value = services.get(name,{}).get('environment',{}).get(key)
         if value and (urlsplit(value).scheme != 'https' or '*' in value): errors.append(f'{name}: explicit HTTPS origin required')

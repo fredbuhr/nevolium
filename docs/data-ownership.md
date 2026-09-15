@@ -13,7 +13,8 @@ This document prevents the platform from becoming a collection of mutually incon
 | Collaborative edit session | Yjs while active | durable snapshots/domain records |
 | External automation execution | Activepieces for engine-internal runtime | Nevolium automation/run correlation |
 | LLM traces | Nevolium usage/audit summaries + provider records | Langfuse detailed traces |
-| Model/provider configuration | Nevolium config + OpenBao secret refs | LiteLLM runtime config |
+| Model/provider binding and verification | Nevolium PostgreSQL (non-secret metadata) | Task/Temporal history and usage records |
+| Managed instance model credential | LiteLLM encrypted registry + protected stable salt | Re-entry by an administrator if registry or salt is lost; see ADR-032 |
 | Crypto signing material | isolated wallet/hardware signer | never copied into Nevolium AI stores |
 | Home device state | Home Assistant | normalized Nevolium entity references/events |
 | Budget ledger | Actual Budget/source institutions | normalized Nevolium summaries/links |

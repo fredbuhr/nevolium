@@ -23,10 +23,12 @@ from .capabilities import (
     synchronize_capabilities,
 )
 from .command_models import CommandRecord, Conversation, ConversationMessage
+from .config import settings
 from .pagination import PageCursor, PageLimit, page_rows
 from fastapi import Response
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
+from .model_configurations import selected_model_binding
 from .models import Project, Task
 from .news import start_news_brief
 from .research import ResearchRunCreate, start_research_run
@@ -362,6 +364,19 @@ async def _start_semantic_route(
     routing_task_id = uuid.uuid5(uuid.NAMESPACE_URL, f"nevolium:semantic-route:{command.id}:v1")
     task = await session.get(Task, routing_task_id)
     if task is None:
+        model_alias, model_configuration_id = await selected_model_binding(
+            session, fallback_alias=settings.nevolium_semantic_router_model
+        )
+        task_input = {
+            "capability": "assistant.route.semantic",
+            **route_input.model_dump(mode="json"),
+            "model_alias": model_alias,
+            "estimated_model_cost_usd": str(
+                settings.nevolium_semantic_router_estimated_cost_usd
+            ),
+        }
+        if model_configuration_id is not None:
+            task_input["model_configuration_id"] = model_configuration_id
         task = Task(
             id=routing_task_id,
             project_id=project.id,
@@ -372,10 +387,7 @@ async def _start_semantic_route(
             owner_ref="command-kernel",
             authority_ceiling=1,
             budget_usd=SEMANTIC_ROUTE_BUDGET_USD,
-            input={
-                "capability": "assistant.route.semantic",
-                **route_input.model_dump(mode="json"),
-            },
+            input=task_input,
         )
         session.add(task)
         await session.flush()
@@ -403,6 +415,12 @@ async def _start_semantic_route(
             request_json={
                 "routing_task_id": str(task.id),
                 "budget_usd": str(SEMANTIC_ROUTE_BUDGET_USD),
+                "model_alias": model_alias,
+                **(
+                    {"model_configuration_id": model_configuration_id}
+                    if model_configuration_id is not None
+                    else {}
+                ),
             },
         )
     command.status = "routing"

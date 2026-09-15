@@ -57,7 +57,7 @@ const BUCKETS: Array<{
   hint: string
 }> = [
   { key: 'overdue', title: 'En retard', hint: 'Échéance antérieure à aujourd’hui' },
-  { key: 'in_progress', title: 'En cours', hint: 'Travail déjà confié à Nevolium / Temporal' },
+  { key: 'in_progress', title: 'En cours', hint: 'Travail déjà confié à Nevolium' },
   { key: 'due_today', title: 'À rendre aujourd’hui', hint: 'Échéance dans la journée' },
   { key: 'planned', title: 'Planifié aujourd’hui', hint: 'Créneau de travail qui recouvre la journée' },
   { key: 'completed_today', title: 'Terminé aujourd’hui', hint: 'Actions clôturées pendant la journée' },
@@ -71,7 +71,7 @@ async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const detail = body?.detail
     const message = typeof detail === 'string' ? detail : detail?.message
-    throw new Error(message || `Nevolium Core répond ${response.status}`)
+    throw new Error(message || `Le service Nevolium répond ${response.status}`)
   }
   return body as T
 }
@@ -142,7 +142,7 @@ export default function TodayWorkspace({ apiUrl }: Props) {
       const result = await readJson<TodayView>(response)
       if (version === generation.current && currentDay.current === day) setView(result)
     } catch (loadError) {
-      if (!controller.signal.aborted && version === generation.current) setError(loadError instanceof Error ? loadError.message : 'Impossible de charger Today.')
+      if (!controller.signal.aborted && version === generation.current) setError(loadError instanceof Error ? loadError.message : 'Impossible de charger votre journée.')
     } finally {
       requests.current.delete(controller)
       if (version === generation.current) setLoading(false)
@@ -222,8 +222,8 @@ export default function TodayWorkspace({ apiUrl }: Props) {
     <section className="news-workspace" aria-labelledby="today-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">TODAY</span>
-          <h2 id="today-heading">Votre journée sur le même modèle Task que Projects et le futur Gantt.</h2>
+          <span className="eyebrow">AUJOURD’HUI</span>
+          <h2 id="today-heading">Retrouvez ce que vous souhaitez faire aujourd’hui.</h2>
         </div>
         <span className="run-state">{total} tâche(s) affichée(s)</span>
       </div>
@@ -246,14 +246,14 @@ export default function TodayWorkspace({ apiUrl }: Props) {
       {loading && !view && !error && (
         <div className="progress-panel">
           <strong>Composition de votre journée.</strong>
-          <span>Nevolium agrège uniquement les Tasks du propriétaire authentifié.</span>
+          <span>Nevolium rassemble les tâches de vos projets pour la date choisie.</span>
         </div>
       )}
 
       {!loading && view && total === 0 && !error && (
         <div className="progress-panel">
           <strong>Aucune tâche pour cette journée.</strong>
-          <span>Ajoutez une tâche dans Projects ou choisissez une autre date.</span>
+          <span>Ajoutez une tâche dans Projets ou choisissez une autre date.</span>
         </div>
       )}
 
@@ -329,7 +329,7 @@ export default function TodayWorkspace({ apiUrl }: Props) {
                               </button>
                             )}
                             {workflowManaged && (
-                              <small>Statut piloté par Temporal</small>
+                              <small>Cette tâche est déjà en cours d’exécution.</small>
                             )}
                           </div>
                         </div>

@@ -1,13 +1,21 @@
 # Nevolium
 
-Nevolium is a self-hosted **Personal AI Operating System**: one coherent interface and domain model for projects, knowledge, tasks, communication, agents, automation, finance, crypto, devices, voice, research, development and personal operations.
+Nevolium is a space for thinking and taking action. It aims to connect your ideas, knowledge
+and projects so you can keep their context, explore different directions and give them form.
+AI helps you deepen a question or carry out work you choose to delegate; you decide what matters
+and which direction to take.
 
-Nevolium is not a chatbot wrapper and it is not a fork of another assistant. Nevolium owns the user experience, system-of-record, policy model and integration contracts; specialized open-source engines remain replaceable behind those boundaries.
+This is the product vision, with room for both individual and collective work and for ideas that
+remain open. Read the [identity, philosophy and language guide](docs/identite-nevolium.md) in French,
+the [product vision](docs/vision.md), and the [verified status](docs/status.md) for what is available.
+The technical reference below describes the wider project; it is not a promise that every
+listed capability is delivered.
 
 ## Current delivery line — September 2026
 
 Repository Reset R0–R7 is complete; G51 planning foundations, H1–H3 and the H4 Task-dispatch
-isolation repair are integrated. D01–D03 (#84–#87) complete the assigned H4 controls; D04/H5 real-engine and operations evidence precedes new product features.
+isolation repair are integrated. D01–D04 (#84–#88) and H5 are complete; D05 is in review in
+[PR #89](https://github.com/fredbuhr/nevolium/pull/89).
 The current Web cockpit exists; the complete Mycelium 3D, editable mindmaps and Gantt are planned,
 not delivered merely by installing their rendering libraries.
 

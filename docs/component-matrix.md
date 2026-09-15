@@ -4,8 +4,9 @@ The component registry is intentionally broader than the currently implemented p
 
 D02 (#85/#86) adds validated shared admission, bounded SQL/Web pages, recoverable memory batches
 and finite transport retention. PostgreSQL and JetStream behavior and controlled child lifecycles
-are covered by the exact-head CI recorded in PROJECT_STATE. This does not promote the real
-Docling/Mem0/Graphiti engines or the future graphical workspaces to validated product capabilities.
+are covered by the exact-head CI recorded in PROJECT_STATE. The D04 campaign subsequently validated
+real Docling/Mem0/Graphiti execution in bounded qualification scenarios. That evidence does not
+promote future graphical workspaces to delivered product capabilities.
 
 ## Maturity legend
 
@@ -17,14 +18,14 @@ Docling/Mem0/Graphiti engines or the future graphical workspaces to validated pr
 
 The maturity column describes the **Nevolium integration**, not the upstream project's own maturity.
 
-Validation is scenario-specific: controlled text fallback and memory stubs do not prove real
-Docling/Mem0/Graphiti execution. D04 supplies that missing evidence. Future delivery lots are
+Validation is scenario-specific: controlled text fallback and memory stubs did not prove real
+Docling/Mem0/Graphiti execution; D04 supplies bounded real-engine evidence. Future delivery lots are
 mapped in [implementation-plan](implementation-plan.md); present progress lives in [PROJECT_STATE](../PROJECT_STATE.md).
 
 | Capability | Component | Mode/profile | Nevolium ownership rule | Current maturity |
 |---|---|---|---|---|
 | Canonical database | PostgreSQL + pgvector | service / core | authoritative domain state; vectors rebuildable | **Validated** |
-| Temporal context graph | Graphiti + Neo4j | worker library + service / core | derived projection only | **Integrated** |
+| Temporal context graph | Graphiti + Neo4j | worker library + service / core | derived projection only | **Integrated; real execution validated in D04** |
 | Cache/locks | Valkey | service / core | ephemeral only | **Configured** |
 | Event bus | NATS JetStream | service / core | events from transactional outbox | **Validated** |
 | Object storage | SeaweedFS | service / core | authoritative binary objects | **Validated** |
@@ -34,8 +35,8 @@ mapped in [implementation-plan](implementation-plan.md); present progress lives 
 | Local model simple | Ollama | service / core | model provider only | **Configured** |
 | Local model edge | llama.cpp | sidecar/host / desktop | model provider only | **Declared** |
 | Local model GPU | vLLM | service / `gpu` | model provider only | **Configured** |
-| Long-term memory | Mem0 | worker library / core | derived memory projection | **Integrated** |
-| Document parsing | Docling | worker library / core | produces canonical document/chunk provenance | **Integrated; deterministic text fallback validated, real engine pending D04** |
+| Long-term memory | Mem0 | worker library / core | derived memory projection | **Integrated; real execution validated in D04** |
+| Document parsing | Docling | worker library / core | produces canonical document/chunk provenance | **Integrated; fallback and bounded real execution validated** |
 | External automation | Activepieces | service / `automation` | delegated engine; Nevolium owns intent/policy/run link | **Configured** |
 | Tool protocol | MCP | protocol / core | preferred AI tool boundary | **Validated** |
 | Deterministic browser | Playwright | future browser boundary | side effects policy-gated | **Declared; unused direct Worker dependency retired in D03** |
@@ -104,14 +105,10 @@ Finance, crypto, Home Assistant and OpenHands services can be present in optiona
 D03 profiles and refused prototype activations are documented in [deployment](deployment.md).
 Validation of deployment controls does not promote the optional engines to real integration evidence.
 
-## D04 branch qualification
+## D04 qualification acquired
 
-PR #88 adds actual CPU Docling/Mem0/Graphiti execution on offline read-only assets, local model
-accounting/restart and live SearXNG search; persistent OpenBao and two-host recovery are in the same
-campaign. These are branch proofs pending integration, not a blanket promotion of the canonical
-maturity table above. See [qualification](qualification-d04.md) and the exact-head checkpoint.
-All five campaign jobs passed again on the Nevolium head `d9478de…`, including actual
-object/message/secret readback on a distinct CI host. [Dated measurements and preserved evidence](archive/qualification-d04-2026-09-11.md)
-and [identity-transition evidence](archive/nevolium-identity-transition-2026-09-11.md) record the
-campaign chronology.
-The private target, mixed load, ingress and upgrade/recovery scenario remain H5 acceptance conditions.
+PR #88 is integrated and tag `H5` targets its merge commit. CPU Docling/Mem0/Graphiti execution,
+two cited Research runs via OpenAI, bounded read and mixed loads, Worker rollback, persistent
+OpenBao and encrypted B2 restoration are acquired within the limits recorded in the
+[final report](archive/d04-pilot-qualification-2026-09-14.md). The evidence is scenario-specific,
+not a blanket claim of provider, hardware or workload compatibility.

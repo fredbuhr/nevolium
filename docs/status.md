@@ -1,8 +1,30 @@
 # Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-14. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88)
-et ses quatre preuves de sortie sont acquises. Le tag H5 et le retrait de branche restent suivis
-dans [PROJECT_STATE](../PROJECT_STATE.md).
+Révision : 2026-09-15. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
+ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
+D05 est en revue dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur la branche
+unique suivie dans [PROJECT_STATE](../PROJECT_STATE.md). Core et Web exécutent le correctif qualifié
+`e275b7bb…` sur le pilote ; le lot n’est pas intégré. Les textes visibles sont alignés avec la
+[charte d'identité](identite-nevolium.md) sur cette même PR.
+La [reprise organique](archive/d05-organic-material-2026-09-14.md) remplace les orbites trop
+géométriques par une matière fibreuse bioluminescente et un paysage nocturne ; sa qualification
+exact-head et ses nouvelles captures sont suivies dans la PR. L'acceptation visuelle utilisateur
+reste nécessaire, indépendamment des tests fonctionnels. Le retour suivant rouvre la navigation :
+la correction [fil connecté](archive/d05-connected-navigation-2026-09-14.md) ajoute l’inspection
+du parent, du voisinage et des relations canoniques, un fond neutre et l’état du test IA explicite.
+La tête `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` passe la suite UI responsive/connectée et
+l’isolation entre comptes avec le vrai Keycloak/OIDC. Ses captures sont relues ; les états fournisseur
+des scénarios UI restent simulés. La correction ultérieure `e275b7bb…` est déployée. L’acceptation
+visuelle n’est pas déduite de la CI.
+
+Le premier essai de clé sur le pilote a exposé un défaut d’ordre d’insertion : la configuration
+référençait sa Task avant que PostgreSQL ne l’ait créée. La transaction a été annulée avec un `500`,
+sans candidat ni appel à LiteLLM/OpenAI ; la configuration serveur reste active. La même PR persiste
+désormais la Task avant la configuration et étend le contrat PostgreSQL au véritable endpoint HTTP.
+Le correctif `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` réussit ses dix workflows ;
+le test PostgreSQL appelle le véritable endpoint, obtient `202` et retrouve la Task et sa
+configuration. Sur le pilote corrigé, le nouvel essai réel OpenAI a réussi et l’utilisateur a activé
+la configuration : modèle retourné conforme, usage canonique unique et coût `0.000090 USD`.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
@@ -11,22 +33,22 @@ Les mesures cible proviennent des sorties opérateur conservées dans le
 Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
 D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
 droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
-D05 n'est pas encore implémenté.
+D05 n’est pas intégré ; Core et Web du pilote exécutent `e275b7bb…`, la correction est en revue.
 
 | Domaine | Preuve disponible | Limite |
 |---|---|---|
-| Serveur et état durable | Debian 13 durci, PostgreSQL `0014_capacity_and_data`, Temporal, JetStream, SeaweedFS ; charge mixte et restauration B2 acquises | Premier serveur Linux x86_64 |
+| Serveur et état durable | Debian 13 durci, PostgreSQL `0014_capacity_and_data` qualifié D04 puis `0015_model_configurations` déployé D05 ; Temporal, JetStream, SeaweedFS ; charge mixte et restauration B2 acquises | Premier serveur Linux x86_64 |
 | Identité | TLS, OIDC/PKCE, comptes nominatifs et TOTP ; bootstrap retiré, refus anonyme/faux jeton/routes internes vérifiés | Ergonomie et nouveaux parcours |
 | Worker | Confinement, bundle hors ligne, Temporal réel ; mixte et rollback acquis | Capacité commerciale non qualifiée |
 | Documents | Docling 2.126.0, PDF propriétaire, version/chunks/source ; 39,499 s en mixte | Scans complexes, tableaux et gros documents hors essai |
 | Mémoire | Mem0/Graphiti réels et scope propriétaire ; rejeu sans doublon ; 21,451 s en mixte après 43,378 s d'admission | Qualité quotidienne à mesurer ; projections dérivées |
 | News | Sources propriétaire et briefing avec fallback déterministe | Synthèse quotidienne API non qualifiée ; anomalie financière historique conservée |
-| Modèle/comptabilité | OpenAI `openai/gpt-4.1` via `smart`, limite 4096 ; tokens/coûts et réservations réglés sur cible | Un fournisseur qualifié ; estimation ne garantit pas un plafond fournisseur |
+| Modèle/comptabilité | OpenAI `openai/gpt-4.1` via configuration gérée active, limite 4096 ; identité fournisseur réelle conforme, test D05 comptabilisé `0.000090 USD` et réservations réglées sur cible | Un fournisseur qualifié ; estimation ne garantit pas un plafond fournisseur |
 | Routage | Command Center, propositions, garde Core et veto sans Task métier ; routes API | Pertinence quotidienne à améliorer |
 | Research | Deux recherches citées terminées en 23,591 s et 9,524 s ; Search puis Fetch ; résultat et usages canoniques | Une question de qualification ; classement lexical des sources, pas preuve générale de pertinence |
 | Unicité Research | Binding atomique déployé, concurrence Core/PostgreSQL et crash/replay CI verts | Préserver les identités historiques |
 | Secrets/exploitation | OpenBao persistant, policy minimale, root révoqué, renouvellement ; ancien Worker réactivé puis candidat ; récupération chiffrée réussie | Ne pas confondre exercice manuel et sauvegarde planifiée |
-| Restauration | Deux snapshots B2, packs relus, quatre magasins vérifiés sur volumes isolés neufs ; production inchangée | Restauration utilisateur isolée sur même serveur ; restauration entre VM prouvée séparément en CI |
+| Restauration | Snapshots D04/pré-D05 conservés ; snapshot post-activation `e374714c…`, matériel LiteLLM chiffré `a3f6720d…` restauré à l’identique et 12 packs relus ; quatre magasins déjà vérifiés sur volumes isolés neufs | Restauration utilisateur isolée sur même serveur ; restauration entre VM prouvée séparément en CI |
 
 Cible : 12 CPU logiques, environ 32 Gio de RAM. Lecture : 3 333 requêtes, concurrence 20,
 p95 maximal 0,524 s, zéro erreur. Un compte réel alimente les clients virtuels depuis le Core
@@ -41,7 +63,7 @@ Les cinq réservations uncertain et les anciens essais sont conservés sans reje
 
 | Domaine | Présent | À livrer |
 |---|---|---|
-| Cockpit | Web/OIDC, panneaux persistés, Command Center, Projects, Today, Research, News, Knowledge | D05 : cohérence Mycelium, navigation, états, clavier/mobile/PWA et réglages API administrateur |
+| Cockpit | Web/OIDC ; Accueil Mycelium SVG 2D fonctionnel ouvrant six espaces réels ; panneaux Dockview persistés ; repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents ; identité cyan/émeraude/bleu/violet, accès rapide, inspecteur, profils/ambiances, tablette et téléphone à activité visible unique par défaut, layouts par fenêtre, détachement multi-écran sur bureau, clavier et PWA ; dix captures Chromium qualifiées sur cinq formats ; OpenAI réellement vérifié et activé | Revue humaine sur appareils physiques puis intégration du candidat D05 |
 | Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
 | Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
@@ -57,10 +79,11 @@ Le code qualifié `61d7687…` passe 10/10 workflows CI, dont Research, Foundati
 avec restauration sur deux VM. Le job LLM local optionnel est skipped conformément à
 [ADR-031](decisions/ADR-031-api-first-pilot.md). La tête finale `2946df59664c01d77abc3b5720fff1dbbf96cb4c` passe aussi
 10/10 workflows avant fusion de #88. Le commit de fusion est `db07f7a90cc406ddc80683521bbf1744e3a2b668`.
-La présente mise à jour après fusion modifie uniquement la documentation.
+Ces preuves D04 restent acquises ; elles ne valident pas à elles seules les modifications D05.
 
 API uniquement pour le pilote : autres fournisseurs, capacité commerciale et autres OS ne
-conditionnent pas H5. Les clés restent côté serveur. D05 apporte les réglages fournisseur/modèle ;
+conditionnent pas H5. Les clés restent côté serveur. Le candidat D05 ajoute les réglages
+fournisseur/modèle d'instance avec test réel borné et activation après drainage ;
 le BYOK par compte, les usages avancés et l'éventuel retour local gardent leurs lots du
 [plan D01–D22](implementation-plan.md).
 

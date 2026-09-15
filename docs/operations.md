@@ -130,9 +130,12 @@ with `Retry-After: 1`. No lock or DB connection is retained during a provider re
 | `NEVOLIUM_MODEL_GLOBAL_DAILY_BUDGET_USD` | 50 | UTC-day known spend plus all outstanding estimates |
 | `NEVOLIUM_MODEL_OWNER_DAILY_BUDGET_USD` | 10 | Same exposure per project owner |
 | `NEVOLIUM_MODEL_MAX_OUTPUT_TOKENS` | 4096 | Non-streaming completion output bound passed to LiteLLM |
+| `NEVOLIUM_MODEL_TEST_ESTIMATED_COST_USD` | 0.01 | Canonical reservation and Task budget for one eight-token provider connection test |
 | `NEVOLIUM_NEWS_MODEL_ESTIMATED_COST_USD` | 0.01 | Explicit News estimate when its task has no override |
+| `NEVOLIUM_NEWS_MODEL` | `smart` | Bootstrap alias frozen into each new News Task when no managed configuration is active |
 | `NEVOLIUM_RESEARCH_MODEL` | `smart` | New Research Tasks use the selected API alias; Core persists this choice for the Worker |
 | `NEVOLIUM_RESEARCH_MODEL_ESTIMATED_COST_USD` | 0.01 | Total reservation estimate split between Research planning and synthesis; production template uses 0.10 |
+| `NEVOLIUM_SEMANTIC_ROUTER_MODEL` | `smart` | Bootstrap alias frozen into each new semantic-routing Task when no managed configuration is active |
 | `DATABASE_POOL_SIZE` / `DATABASE_MAX_OVERFLOW` | 5 / 5 | Maximum ten connections per Core process by default |
 | `DATABASE_POOL_TIMEOUT` | 10 seconds | Pool checkout timeout |
 
@@ -177,6 +180,13 @@ Research SIGKILL tests remain required. The shared-capacity section above covers
 admission, pagination, rebuild and technical retention. Real capacity measurement remains D04.
 Memory SDKs/embeddings are covered by heavy-work slots, separately from model money reservations. One short global lock is a simple
 correctness boundary; measure contention before replacing it with a more complex design.
+
+D05 also requires a provisioned `LITELLM_SALT_KEY`, distinct from `LITELLM_MASTER_KEY`. It has no
+safe default and must be preserved with the protected recovery material: the LiteLLM database stores
+managed provider keys encrypted with this stable salt. Never print either value. Rotating or losing
+the salt is not a normal configuration edit; follow a reviewed LiteLLM credential migration or
+re-enter the affected keys. See
+[ADR-032](decisions/ADR-032-managed-instance-model-credentials.md).
 
 References: [PostgreSQL advisory locks](https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS),
 [LiteLLM configuration](https://docs.litellm.ai/docs/proxy/configs).

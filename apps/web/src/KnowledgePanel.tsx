@@ -3,13 +3,14 @@ import { useState } from 'react'
 import KnowledgeSearchPanel from './KnowledgeSearchPanel'
 import KnowledgeWorkspace from './KnowledgeWorkspace'
 import type { KnowledgeInspectionTarget } from './knowledgeTypes'
+import { useProjectSelection } from './lib/projectSelection'
 
 type Props = {
   apiUrl: string
 }
 
 export default function KnowledgePanel({ apiUrl }: Props) {
-  const [selectedDocumentId, setSelectedDocumentId] = useState('')
+  const { selectedDocumentId, setSelectedDocumentId } = useProjectSelection()
   const [inspectionTarget, setInspectionTarget] = useState<KnowledgeInspectionTarget | null>(null)
 
   return (

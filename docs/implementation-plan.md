@@ -122,11 +122,24 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 
 ### D05 — cockpit cohérent et langage visuel Mycelium
 
+- **État : en revue** dans la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), sur
+  `feat/d05-coherent-cockpit` depuis le main
+  `1896468513f92ee5c0d6a811301a1b898cc6abd2` ; voir le
+  [checkpoint daté](archive/d05-coherent-cockpit-progress-2026-09-14.md) et le
+  [contrat visuel Mycelium](design-mycelium.md). Le checkpoint de code fonctionnel, visuel et authentifié
+  `73b07f5204fa5446ecd663ce90d68c5175a73e3e` passe 10/10 workflows. L'Accueil Mycelium et le
+  Cockpit sont qualifiés dans cinq formats Chromium ;
+  le popout, le vrai parcours OIDC/PKCE et la séparation administrateur/utilisateur sont qualifiés ;
+  restent la revue utilisateur manuelle, le test réel du fournisseur choisi et l'intégration.
+
 - **Prérequis :** D04.
 - **Livraison :** design partagé issu des références utilisateur disponibles : réseau organique,
   labels sobres, centre lisible, panneaux adaptés ; navigation, recherche d'accès rapide,
   inspecteur, états vides/chargement/erreur, clavier et réduction des animations. Conserver Dockview,
-  layouts par propriétaire et profils manuels réversibles, sans permission implicite.
+  layouts par propriétaire, appareil, fenêtre et profils manuels réversibles, sans permission
+  implicite. Sur bureau, un panneau actif peut être détaché dans une fenêtre Dockview déplaçable
+  vers un autre écran ; le placement automatique sur un moniteur précis reste un enrichissement
+  optionnel dépendant des capacités et permissions du navigateur.
 - **Réglages API :** sélecteur de fournisseur/modèle pour l'instance (OpenAI, Claude/Anthropic,
   Grok/xAI, Kimi/Moonshot), état de connexion, test borné et erreur actionnable. Clés côté serveur,
   modification réservée à l'administrateur, aucune exposition dans les réponses ou le stockage Web.
@@ -139,8 +152,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
   téléphone et navigateur sans WebGL utilisables. Changer l'API sélectionnée sans modifier les workflows,
   conserver la configuration valide si le test échoue, afficher les coûts canoniques sans révéler de clé.
   Pas de graphe 3D décoratif permanent dans ce lot.
-- **Références :** les images de conversations ne sont pas automatiquement dans Git. Consigner
-  les références réellement disponibles ; ne pas revendiquer une fidélité visuelle sans les voir.
+- **Références :** les deux vues de cockpit et l'identité sphérique fournies pendant D05 ont été
+  inspectées comme inspirations, sans les attribuer au dépôt ni prétendre livrer leur copie exacte.
 
 ### D06 — listes, Kanban, Gantt et calendrier
 

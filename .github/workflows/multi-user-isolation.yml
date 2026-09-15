@@ -26,10 +26,32 @@ jobs:
         run: |
           docker compose up -d --build \
             postgres nats seaweedfs temporal-admin-tools temporal temporal-create-namespace \
-            keycloak nevolium-core nevolium-worker
+            keycloak nevolium-core nevolium-worker nevolium-web
 
       - name: Prove authenticated user-world isolation
         run: python scripts/smoke/multi_user_isolation.py
+
+      - name: Install the ephemeral authenticated browser runner
+        run: |
+          npm install \
+            --prefix "$RUNNER_TEMP/nevolium-auth-browser" \
+            --package-lock=false \
+            --no-save \
+            playwright@1.55.0
+          "$RUNNER_TEMP/nevolium-auth-browser/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: Prove real OIDC cockpit roles in Chromium
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-auth-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d05_authenticated_browser_qualification.mjs
+
+      - name: Preserve authenticated cockpit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d05-authenticated-browser-qualification
+          path: artifacts/d05-authenticated-browser
+          if-no-files-found: error
 
       - name: Dump isolation state on failure
         if: failure()
@@ -37,7 +59,7 @@ jobs:
           docker compose ps -a
           docker compose logs --no-color --tail=650 \
             postgres nats seaweedfs temporal-admin-tools temporal temporal-create-namespace \
-            keycloak nevolium-core nevolium-worker
+            keycloak nevolium-core nevolium-worker nevolium-web
 
       - name: Tear down isolation stack
         if: always()

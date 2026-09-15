@@ -276,6 +276,20 @@ def main() -> int:
     token_a = access_token(*USER_A)
     token_b = access_token(*USER_B)
 
+    # D05 instance settings inherit the same authenticated application role boundary.
+    json_request("GET", "/v1/admin/model-configurations", expected={401})
+    _, model_inventory = json_request(
+        "GET", "/v1/admin/model-configurations", token=token_a, expected={200}
+    )
+    assert model_inventory["active"]["source"] == "environment", model_inventory
+    assert model_inventory["active"]["model_alias"] == "smart", model_inventory
+    assert model_inventory["allowed_providers"] == [
+        "openai", "anthropic", "xai", "moonshot"
+    ], model_inventory
+    json_request(
+        "GET", "/v1/admin/model-configurations", token=token_b, expected={403}
+    )
+
     # Detailed deployment diagnostics are admin-only; liveness/readiness remain public.
     json_request("GET", "/v1/system/architecture", token=token_a, expected={200})
     json_request("GET", "/v1/system/architecture", token=token_b, expected={403})
@@ -388,6 +402,16 @@ def main() -> int:
         expected={201},
     )
     assert relationship["source_id"] == project_a["id"]
+    for entity_type, entity_id in (("project", project_a["id"]), ("task", task_a["id"])):
+        path = f"/v1/relationships?entity_type={entity_type}&entity_id={entity_id}&limit=1"
+        _, links = json_request("GET", path, token=token_a)
+        assert [link["id"] for link in links] == [relationship["id"]], links
+        json_request("GET", path, token=token_b, expected={404})
+        json_request("GET", path, expected={401})
+        json_request("GET", path.replace("limit=1", "limit=201"), token=token_a, expected={422})
+        json_request("GET", path + "&cursor=invalid", token=token_a, expected={422})
+    _, empty_links = json_request("GET", f"/v1/relationships?entity_type=project&entity_id={project_b['id']}", token=token_b)
+    assert empty_links == [], empty_links
     json_request(
         "POST",
         "/v1/relationships",

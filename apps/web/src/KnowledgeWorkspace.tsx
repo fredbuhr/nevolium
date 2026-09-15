@@ -149,8 +149,8 @@ export default function KnowledgeWorkspace({
     <section className="news-workspace" aria-labelledby="knowledge-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">KNOWLEDGE</span>
-          <h2 id="knowledge-heading">Documents canoniques du projet actif.</h2>
+          <span className="eyebrow">DOCUMENTS</span>
+          <h2 id="knowledge-heading">Sources et versions du projet sélectionné.</h2>
         </div>
         <span className="run-state">{projectDocuments.length} document(s) affiché(s)</span>
       </div>

@@ -15,15 +15,15 @@ export default function KnowledgeWorkspaceStateView({
 
       {loading && !error && (
         <div className="progress-panel">
-          <strong>Chargement de votre base documentaire Nevolium.</strong>
-          <span>Les Documents sont fournis par le Core selon le propriétaire authentifié.</span>
+          <strong>Chargement de vos documents.</strong>
+          <span>Seuls les documents du projet sélectionné sont affichés.</span>
         </div>
       )}
 
       {!loading && !error && !selectedProjectId && (
         <div className="progress-panel">
           <strong>Aucun projet sélectionné.</strong>
-          <span>Sélectionnez un projet dans Projects ou Research pour afficher ses Documents.</span>
+          <span>Sélectionnez un projet dans Projets ou Recherche pour afficher ses documents.</span>
         </div>
       )}
     </>

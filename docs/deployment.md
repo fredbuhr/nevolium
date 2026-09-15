@@ -58,6 +58,12 @@ Le modèle initial est `openai/gpt-4.1`. Les autres préfixes préparés sont `a
 `moonshot/` ; renseigner un modèle réellement accessible et la clé de ce fournisseur ensemble.
 La présence d'un préfixe ne prouve ni l'accès du compte ni la compatibilité de chaque modèle.
 
+Avant le premier déploiement D05, provisionner aussi un `LITELLM_SALT_KEY` long, stable et distinct
+de `LITELLM_MASTER_KEY`, puis conserver les deux dans le matériel de récupération protégé. La base
+LiteLLM contient les clés gérées chiffrées ; une restauration sans le même sel impose leur ressaisie.
+Ne jamais afficher ces valeurs. Voir
+[ADR-032](decisions/ADR-032-managed-instance-model-credentials.md).
+
 Sur l'installation existante, éditer `/etc/nevolium/production.env` avec `sudoedit`. Si une ancienne
 clé était dans `OPENAI_API_KEY`, la transférer dans `NEVOLIUM_API_KEY` à l'intérieur de cet éditeur,
 puis retirer `OPENAI_API_KEY`, `OPENAI_MODEL` et `OLLAMA_MODEL`. Ne pas afficher ce fichier.
@@ -66,12 +72,13 @@ Définir `NEVOLIUM_RESEARCH_MODEL=smart`, `NEVOLIUM_SEMANTIC_ROUTER_MODEL=smart`
 L'alias explicite `alternative` conserve sa configuration Anthropic existante ; aucun fallback
 automatique ne lui envoie une requête ou une clé d'un autre fournisseur.
 
-Avant de changer l'API, attendre la fin des travaux et appels modèle, sauvegarder la configuration
-protégée et les images, puis suivre l'[activation D04](qualification-d04.md#activation-cohérente-une-seule-fois).
-Recréer LiteLLM est nécessaire pour appliquer son nouvel environnement ; le premier passage requiert
-aussi Core/Worker/Web. Arrêter l'ancien Ollama après inactivité et conserver ses volumes.
-Le contrôleur refuse les profils locaux et les clés absentes/placeholder sans contacter le fournisseur.
-Le sélecteur dans l'interface est prévu en D05, pas déjà livré par ces variables.
+Modifier le bootstrap par variables exige encore une recréation LiteLLM et le protocole d'activation
+D04. Le sélecteur D05 utilise au contraire le registre dynamique : l'administrateur saisit un couple,
+lance un appel réel borné, contrôle le modèle attribué et active explicitement le candidat après
+drainage. Cette bascule ne demande pas de recréer les conteneurs et ne modifie pas les workflows ;
+les nouvelles Tasks reçoivent l'alias actif, les anciennes gardent le leur. Un choix affiché sans test
+réussi ne prouve aucune compatibilité. Le contrôleur de déploiement reste une validation statique et
+ne contacte aucun fournisseur.
 
 ## SQL : installation initiale et transition depuis le développement
 

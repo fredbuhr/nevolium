@@ -95,6 +95,7 @@ services:
     - secrets
     - execution
     - ingress
+    - models
     security_opt:
     - no-new-privileges:true
     cap_drop:

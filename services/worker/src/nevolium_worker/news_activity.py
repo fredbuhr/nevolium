@@ -37,6 +37,7 @@ async def _summarize_accounted(
     mode: str,
     language: str,
     sources: list[dict[str, Any]],
+    model_alias: str,
 ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     compact_sources = [
         {
@@ -71,7 +72,7 @@ async def _summarize_accounted(
         task_id=task_id,
         workflow_execution_id=workflow_execution_id,
         correlation_id=correlation_id,
-        model_alias=settings.nevolium_news_model,
+        model_alias=model_alias,
         idempotency_key=model_call_key,
         resume_checkpoint=resume_model_checkpoint,
         estimated_cost_usd=estimated_cost_usd,
@@ -89,7 +90,7 @@ async def _summarize_accounted(
     )
     parsed = news._parse_json_object(result.content)
     metadata = {
-        "model_alias": settings.nevolium_news_model,
+        "model_alias": model_alias,
         "provider_model": result.usage.provider_model,
         "prompt_tokens": result.usage.prompt_tokens,
         "completion_tokens": result.usage.completion_tokens,
@@ -118,6 +119,7 @@ async def perform_news_brief(payload: dict[str, Any]) -> dict[str, Any]:
     resume_model_checkpoint = read_activity_model_checkpoint()
 
     task_input = payload.get("task_input") or {}
+    model_alias = str(task_input.get("model_alias") or settings.nevolium_news_model)
     query = news._clean_text(task_input.get("query"), 500)
     if not query:
         raise ValueError("news.brief requires a non-empty query")
@@ -169,6 +171,7 @@ async def perform_news_brief(payload: dict[str, Any]) -> dict[str, Any]:
                 mode=mode,
                 language=language,
                 sources=analysis_sources,
+                model_alias=model_alias,
             )
             if model_brief:
                 brief.update({key: value for key, value in model_brief.items() if value is not None})

@@ -56,7 +56,7 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
       setError(
         searchError instanceof Error
           ? searchError.message
-          : 'Impossible de rechercher dans Knowledge.',
+          : 'Impossible de rechercher dans vos documents.',
       )
     } finally {
       setSearching(false)
@@ -82,8 +82,8 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
     <section className="news-workspace" aria-labelledby="knowledge-search-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">KNOWLEDGE SEARCH</span>
-          <h2 id="knowledge-search-heading">Recherche texte dans les chunks canoniques du projet.</h2>
+          <span className="eyebrow">RECHERCHE DOCUMENTAIRE</span>
+          <h2 id="knowledge-search-heading">Retrouvez un passage dans les documents du projet.</h2>
         </div>
         {searched && (
           <span className="run-state">
@@ -100,7 +100,7 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
             onChange={(event) => setQuery(event.target.value)}
             minLength={2}
             maxLength={400}
-            placeholder="Ex. architecture ownership document"
+            placeholder="Ex. décision sur l’architecture"
           />
         </label>
         <div className="news-controls">
@@ -116,20 +116,20 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
       {!selectedProjectId && (
         <div className="progress-panel">
           <strong>Aucun projet sélectionné.</strong>
-          <span>Choisissez un projet dans Projects ou Research avant de lancer la recherche.</span>
+          <span>Choisissez un projet dans Projets ou Recherche avant de lancer la recherche.</span>
         </div>
       )}
 
       {error && <div className="error-panel">{error}</div>}
 
       {searched && !error && (
-        <section className="sources" aria-label="Résultats Knowledge">
+        <section className="sources" aria-label="Résultats dans les documents">
           <div className="sources-title">
-            <strong>Résultats canoniques</strong>
+            <strong>Passages trouvés</strong>
             <span>20 par page · dernière version complétée</span>
           </div>
 
-          <div className="news-controls" aria-label="Pagination des résultats Knowledge">
+          <div className="news-controls" aria-label="Pages de résultats">
             <button
               type="button"
               onClick={() =>
@@ -164,8 +164,8 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
               <div className="source-card">
                 <span className="source-id">0</span>
                 <div>
-                  <strong>Aucun chunk correspondant.</strong>
-                  <small>La recherche reste limitée aux Documents prêts du projet sélectionné.</small>
+                  <strong>Aucun passage correspondant.</strong>
+                  <small>La recherche porte sur les documents prêts du projet sélectionné.</small>
                 </div>
               </div>
             )}
@@ -190,7 +190,7 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
                       })
                     }
                   >
-                    Inspecter ce chunk
+                    Inspecter ce passage
                   </button>
                 </div>
               </div>

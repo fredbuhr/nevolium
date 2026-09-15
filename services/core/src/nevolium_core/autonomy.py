@@ -350,14 +350,26 @@ async def authorize_activity(
     session: AsyncSession = Depends(get_session),
 ) -> PolicyAuthorizeResponse:
     is_model = body.action == "model.invoke"
-    if is_model:
-        if not body.idempotency_key or body.resource_type != "model_alias" or body.resource_id not in {"smart", "alternative", "local-fast"}:
-            raise HTTPException(422, "Model authorization requires a stable call key and canonical alias")
-        await lock_admission(session)
-        await expire_reservations(session)
     task = await session.get(Task, body.task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    if is_model:
+        from .model_configurations import task_model_alias_is_authorized
+
+        if (
+            not body.idempotency_key
+            or body.resource_type != "model_alias"
+            or not body.resource_id
+            or not await task_model_alias_is_authorized(
+                session, task=task, model_alias=body.resource_id
+            )
+        ):
+            raise HTTPException(
+                422,
+                "Model authorization requires a stable call key and a Task-bound canonical alias",
+            )
+        await lock_admission(session)
+        await expire_reservations(session)
     if body.workflow_execution_id:
         execution = await session.get(WorkflowExecution, body.workflow_execution_id)
         if not execution or execution.task_id != task.id:

@@ -13,6 +13,7 @@ from .auth import Principal, require_nevolium_user
 from .config import settings
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
+from .model_configurations import selected_model_binding
 from .models import Project, Task, WorkflowExecution
 from .project_access import get_owned_project
 from .research_context import router as research_context_router
@@ -135,9 +136,14 @@ async def start_research_run(
                 "query": body.query,
                 "max_tool_calls": body.max_tool_calls,
                 "allowed_tool_keys": body.allowed_tool_keys,
-                "model_alias": body.model_alias,
-                "estimated_model_cost_usd": str(body.estimated_model_cost_usd),
             }
+            if not existing_input.get("model_configuration_id"):
+                expected.update(
+                    {
+                        "model_alias": body.model_alias,
+                        "estimated_model_cost_usd": str(body.estimated_model_cost_usd),
+                    }
+                )
             actual = {key: existing_input.get(key) for key in expected}
             if actual != expected:
                 raise HTTPException(
@@ -153,19 +159,24 @@ async def start_research_run(
             return await run_task(existing.id, session)
 
     correlation_id = correlation_id or uuid.uuid4()
+    model_alias, model_configuration_id = await selected_model_binding(
+        session, fallback_alias=body.model_alias
+    )
     task_input: dict[str, Any] = {
         "capability": "research.autonomous",
         "query": body.query,
         "requester_subject": requester_subject,
         "max_tool_calls": body.max_tool_calls,
         "allowed_tool_keys": body.allowed_tool_keys,
-        "model_alias": body.model_alias,
+        "model_alias": model_alias,
         "estimated_model_cost_usd": str(body.estimated_model_cost_usd),
         "authority_level": 1,
         "estimated_cost_usd": str(body.estimated_model_cost_usd),
         "policy_scope": {"capability": "research.autonomous", "tool_risk_ceiling": "read"},
         "approval_reason": "Nevolium requests a bounded read-only autonomous research run",
     }
+    if model_configuration_id is not None:
+        task_input["model_configuration_id"] = model_configuration_id
     if command_id is not None:
         task_input["command_id"] = str(command_id)
 
@@ -211,6 +222,12 @@ async def start_research_run(
         correlation_id=correlation_id,
         request_json={
             **body.model_dump(mode="json"),
+            "model_alias": model_alias,
+            **(
+                {"model_configuration_id": model_configuration_id}
+                if model_configuration_id is not None
+                else {}
+            ),
             **({"command_id": str(command_id)} if command_id is not None else {}),
         },
     )

@@ -1,11 +1,39 @@
-# Nevolium vision
+# Nevolium — vision du produit
+
+## Sens du projet
+
+Nevolium est un espace de pensée et d'action qui aide les personnes à relier ce qu'elles pensent,
+ce qu'elles savent et ce qu'elles veulent construire. Sa promesse centrale est la continuité :
+retrouver le contexte d'une information, comprendre le chemin parcouru et poursuivre une réflexion
+sans devoir en rassembler chaque fois les morceaux.
+
+Une idée doit pouvoir commencer librement, rencontrer des sources et d'autres points de vue,
+puis prendre une forme plus précise lorsque cela devient utile. Elle peut aussi rester ouverte.
+L'organisation se met au service de la réflexion ; toute pensée n'a pas à devenir une tâche.
+
+L'IA peut explorer, reformuler, confronter des arguments ou exécuter un travail délégué. La personne
+garde la maîtrise de l'intention et du jugement. Une demande simple mérite une aide directe ;
+soutenir la réflexion ne signifie pas imposer des questions ou une méthode à chaque échange.
+
+Le nom associe les connexions, l'évolution des idées et l'image d'un réseau vivant. Le mycélium
+est une métaphore de ces liens, sans prétention à reproduire le cerveau. La technologie reste
+en arrière-plan dans la présentation du produit.
+
+La [charte d'identité et de langage](identite-nevolium.md) développe la raison d'être, le
+fonctionnement vu par l'utilisateur, les définitions, les signatures proposées et le manifeste.
+Elle est la référence pour expliquer le produit ; ses promesses restent à confronter aux
+[fonctions disponibles](status.md). Les espaces et principes internes ci-dessous restent des
+objectifs de produit, pas une liste de fonctions déjà livrées.
 
 ## Product definition
 
 This is the target product, not a completion checklist. The executable sequence and coverage of
 these spaces are in [implementation-plan](implementation-plan.md); current capabilities are in [status](status.md).
 
-Nevolium is a self-hosted Personal AI Operating System that gives one user a persistent, inspectable and increasingly autonomous intelligence layer across their work and personal systems.
+Nevolium is a space for thinking and taking action, designed to connect people's ideas,
+knowledge and projects while preserving their context. It supports individual and collective
+work, with AI helping people explore, understand and carry out work they choose to delegate.
+Self-hosting and automation describe capabilities of the product, not its reason for existing.
 
 The product should feel like one coherent application even though it delegates specialized capabilities to multiple open-source engines.
 

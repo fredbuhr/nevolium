@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import unittest
 import uuid
+from decimal import Decimal
 
 from fastapi import HTTPException
 from pydantic import ValidationError
@@ -11,6 +12,8 @@ from pydantic import ValidationError
 from nevolium_core.command_models import CommandRecord
 from nevolium_core.document_models import DocumentVersion
 from nevolium_core.memory import MEMORY_PROJECT_ID, _task_id
+from nevolium_core.model_configuration_models import ModelConfiguration
+from nevolium_core.model_configurations import MODEL_CONFIGURATION_PROJECT_ID
 from nevolium_core.models import Project, Task
 from nevolium_core.schemas import TaskCreate
 from nevolium_core.tool_models import ToolInvocation
@@ -18,7 +21,8 @@ from nevolium_core.workflows import _require_execution_binding
 
 RESERVED = (
     "tool.invoke", "document.ingest", "assistant.route.semantic", "memory.project",
-    "news.brief", "research.autonomous", "unknown.future-capability",
+    "model.configuration.test", "news.brief", "research.autonomous",
+    "unknown.future-capability",
 )
 
 
@@ -97,6 +101,46 @@ class ExecutionBindingContract(unittest.IsolatedAsyncioTestCase):
             for subject in ("owner-b", "", None):
                 task.input = {"capability": capability, "requester_subject": subject}
                 await self.rejected(task, Session(project))
+
+    async def test_model_test_requires_its_exact_server_owned_configuration(self) -> None:
+        task_id = uuid.uuid4()
+        configuration = ModelConfiguration(
+            id=uuid.uuid4(),
+            provider="openai",
+            model_name="openai/gpt-fixture",
+            model_alias="instance-fixture",
+            litellm_model_id="litellm-fixture",
+            status="testing",
+            created_by_subject="admin-fixture",
+            test_task_id=task_id,
+            test_estimated_cost_usd=Decimal("0.01"),
+        )
+        task = Task(
+            id=task_id,
+            project_id=MODEL_CONFIGURATION_PROJECT_ID,
+            owner_type="system",
+            input={
+                "capability": "model.configuration.test",
+                "model_configuration_id": str(configuration.id),
+                "model_alias": configuration.model_alias,
+                "litellm_model_id": configuration.litellm_model_id,
+            },
+        )
+        await _require_execution_binding(task, Session(configuration))
+        for field, invalid in (
+            ("id", uuid.uuid4()),
+            ("project_id", uuid.uuid4()),
+            ("owner_type", "user"),
+        ):
+            original = getattr(task, field)
+            setattr(task, field, invalid)
+            await self.rejected(task, Session(configuration))
+            setattr(task, field, original)
+        for field in ("model_configuration_id", "model_alias", "litellm_model_id"):
+            original = task.input[field]
+            task.input = {**task.input, field: "mismatch"}
+            await self.rejected(task, Session(configuration))
+            task.input = {**task.input, field: original}
 
     async def test_unknown_capability_fails_closed_but_foundation_needs_no_resource(self) -> None:
         await self.rejected(Task(input={"capability": "unknown.future-capability"}), Session())

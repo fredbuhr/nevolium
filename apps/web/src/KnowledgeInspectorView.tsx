@@ -68,8 +68,8 @@ export function KnowledgeDocumentsView({
             <div className="source-card">
               <span className="source-id">0</span>
               <div>
-                <strong>Aucun Document canonique pour ce projet.</strong>
-                <small>Importez un fichier pour créer le premier Document canonique.</small>
+                <strong>Aucun document pour ce projet.</strong>
+                <small>Importez un fichier pour ajouter une première source.</small>
               </div>
             </div>
           )}
@@ -130,7 +130,7 @@ export function KnowledgeDocumentsView({
                 ['pending', 'processing'].includes(selectedDocument.status)
               }
             >
-              {reingesting ? 'Reingest…' : 'Reingérer le Document'}
+              {reingesting ? 'Nouvelle lecture…' : 'Relire le document'}
             </button>
           </div>
 
@@ -186,15 +186,15 @@ export function KnowledgeVersionsView({
 
       {loadingVersions && !versionError && (
         <div className="progress-panel">
-          <strong>Chargement des versions canoniques.</strong>
-          <span>Le contenu des chunks n’est pas chargé automatiquement.</span>
+          <strong>Chargement des versions.</strong>
+          <span>Le contenu des passages est chargé uniquement à votre demande.</span>
         </div>
       )}
 
       {!loadingVersions && !versionError && selectedDocument && (
         <section className="sources" aria-label="Versions du Document sélectionné">
           <div className="sources-title">
-            <strong>Versions canoniques</strong>
+            <strong>Versions du document</strong>
             <span>{versions.length} version(s)</span>
           </div>
           <div className="source-list">
@@ -203,7 +203,7 @@ export function KnowledgeVersionsView({
                 <span className="source-id">0</span>
                 <div>
                   <strong>Aucune version disponible.</strong>
-                  <small>Le Document ne possède pas encore de projection canonique.</small>
+                  <small>Le document ne possède pas encore de version prête.</small>
                 </div>
               </div>
             )}
@@ -218,7 +218,7 @@ export function KnowledgeVersionsView({
                     {' · '}
                     {statusLabel(version.status)}
                   </strong>
-                  <small>{version.chunk_count} chunk(s) canonique(s)</small>
+                  <small>{version.chunk_count} passage(s)</small>
                   <small>
                     {formatDate(version.created_at)
                       ? `Créée le ${formatDate(version.created_at)}`
@@ -258,7 +258,7 @@ export function KnowledgeVersionsView({
             onClick={() => onLoadChunks()}
             disabled={loadingChunks || !selectedVersion}
           >
-            {loadingChunks ? 'Chargement…' : 'Charger l’aperçu des chunks'}
+            {loadingChunks ? 'Chargement…' : 'Charger l’aperçu des passages'}
           </button>
         </div>
       )}
@@ -301,14 +301,14 @@ export function KnowledgeChunksView({
 
       {selectedVersion && !chunksLoaded && !loadingChunks && !chunkError && (
         <div className="progress-panel">
-          <strong>Chunks non chargés.</strong>
-          <span>Sélectionnez la version puis chargez explicitement un aperçu read-only.</span>
+          <strong>Passages non chargés.</strong>
+          <span>Sélectionnez une version, puis demandez son aperçu.</span>
         </div>
       )}
 
       {chunksLoaded && !chunkError && selectedVersion && (
         <>
-          <div className="news-controls" aria-label="Pagination des chunks">
+          <div className="news-controls" aria-label="Pages des passages">
             <button
               type="button"
               onClick={() => onLoadPage(chunkOffset - MAX_CHUNK_PREVIEW_ITEMS)}
@@ -318,8 +318,8 @@ export function KnowledgeChunksView({
             </button>
             <span className="route-chip">
               {chunkPageStart === 0
-                ? `0 chunk sur ${selectedVersion.chunk_count}`
-                : `Chunks ${chunkPageStart}–${chunkPageEnd} sur ${selectedVersion.chunk_count}`}
+                ? `0 passage sur ${selectedVersion.chunk_count}`
+                : `Passages ${chunkPageStart}–${chunkPageEnd} sur ${selectedVersion.chunk_count}`}
             </span>
             <button
               type="button"
@@ -330,18 +330,18 @@ export function KnowledgeChunksView({
             </button>
           </div>
 
-          <section className="sources" aria-label="Aperçu des chunks de la version sélectionnée">
+          <section className="sources" aria-label="Aperçu des passages de la version sélectionnée">
             <div className="sources-title">
-              <strong>Aperçu des chunks · v{selectedVersion.generation}</strong>
-              <span>{chunks.length} chunk(s) sur cette page</span>
+              <strong>Aperçu des passages · v{selectedVersion.generation}</strong>
+              <span>{chunks.length} passage(s) sur cette page</span>
             </div>
             <div className="source-list">
               {chunks.length === 0 && (
                 <div className="source-card">
                   <span className="source-id">0</span>
                   <div>
-                    <strong>Aucun chunk disponible.</strong>
-                    <small>Cette version ne contient aucun contenu canonique inspectable.</small>
+                    <strong>Aucun passage disponible.</strong>
+                    <small>Cette version ne contient aucun contenu à inspecter.</small>
                   </div>
                 </div>
               )}
@@ -356,8 +356,8 @@ export function KnowledgeChunksView({
                   <div>
                     <strong>
                       {chunk.id === focusedChunkId
-                        ? `Chunk canonique ${chunk.ordinal} · résultat sélectionné`
-                        : `Chunk canonique ${chunk.ordinal}`}
+                        ? `Passage ${chunk.ordinal} · résultat sélectionné`
+                        : `Passage ${chunk.ordinal}`}
                     </strong>
                     <small>{chunkExcerpt(chunk.text)}</small>
                     <small>

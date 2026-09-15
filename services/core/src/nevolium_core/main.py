@@ -4,8 +4,13 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import func, select
+from fastapi.responses import JSONResponse
+from sqlalchemy import and_, func, or_, select
+from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import __version__
@@ -25,12 +30,14 @@ from .knowledge import router as knowledge_router
 from .memory import router as memory_router
 from .models import OutboxEvent, Project, RelationshipRecord, Task
 from .model_admission import router as model_admission_router
+from .model_configurations import router as model_configurations_router
 from .work_capacity import router as work_capacity_router
 from .news import router as news_router
 from .openbao import openbao_client
 from .outbox import OutboxRelay
 from .planning import router as planning_router
 from .project_access import (
+    entity_belongs_to_principal,
     get_owned_project,
     owned_project_clause,
     require_same_owner_entities,
@@ -72,7 +79,28 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Nevolium Core", version=__version__, lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_without_provider_key(
+    request: Request, exc: RequestValidationError
+):
+    if request.url.path != "/v1/admin/model-configurations/tests":
+        return await request_validation_exception_handler(request, exc)
+    # Pydantic includes the complete request input for model-level errors. On this one credential
+    # endpoint that would reflect the provider key into the response body, so omit every input.
+    errors = [
+        {key: value for key, value in error.items() if key != "input"}
+        for error in exc.errors()
+    ]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": jsonable_encoder(errors)},
+    )
+
+
 app.include_router(model_admission_router)
+app.include_router(model_configurations_router)
 app.include_router(work_capacity_router)
 app.add_middleware(
     CORSMiddleware,
@@ -363,6 +391,36 @@ async def get_task(
     if not task or not await get_owned_project(session, task.project_id, principal):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
+
+
+@app.get("/v1/relationships", response_model=list[RelationshipRead])
+async def list_relationships(
+    entity_type: Literal["project", "task", "document"],
+    entity_id: uuid.UUID,
+    response: Response,
+    principal: Principal = Depends(require_nevolium_user),
+    session: AsyncSession = Depends(get_session),
+    limit: PageLimit = 30,
+    cursor: PageCursor = None,
+) -> list[RelationshipRecord]:
+    """One bounded neighbourhood, never a global graph or an ownership oracle."""
+    if not await entity_belongs_to_principal(session, entity_type, entity_id, principal):
+        raise HTTPException(404, "Relationship endpoint not found")
+    statement = select(RelationshipRecord).where(
+        RelationshipRecord.owner_subject == principal.subject,
+        or_(
+            and_(RelationshipRecord.source_type == entity_type, RelationshipRecord.source_id == entity_id),
+            and_(RelationshipRecord.target_type == entity_type, RelationshipRecord.target_id == entity_id),
+        ),
+    )
+    rows = await page_rows(session, statement, RelationshipRecord, limit=limit, cursor=cursor,
+                           response=response, descending=True)
+    visible = []
+    for row in rows:
+        # Ownership may have changed since creation; stale endpoints must not leak metadata.
+        if await entity_belongs_to_principal(session, row.source_type, row.source_id, principal) and await entity_belongs_to_principal(session, row.target_type, row.target_id, principal):
+            visible.append(row)
+    return visible
 
 
 @app.post("/v1/relationships", response_model=RelationshipRead, status_code=status.HTTP_201_CREATED)

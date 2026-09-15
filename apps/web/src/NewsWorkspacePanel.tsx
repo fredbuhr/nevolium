@@ -83,6 +83,17 @@ function impactLabel(level?: string) {
   return labels[level || ''] || level || 'Non évalué'
 }
 
+function runStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    pending: 'En attente',
+    queued: 'En attente',
+    running: 'En cours',
+    completed: 'Terminé',
+    failed: 'Échec',
+  }
+  return labels[status] || status
+}
+
 function AuthenticatedNewsAudio({ apiUrl, taskId, voice }: AuthenticatedNewsAudioProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [loadingAudio, setLoadingAudio] = useState(false)
@@ -162,10 +173,10 @@ export default function NewsWorkspacePanel({
     <section className="news-workspace" aria-labelledby="news-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">NEWS INTELLIGENCE</span>
-          <h2 id="news-heading">Briefing sourcé, lisible ou oral.</h2>
+          <span className="eyebrow">ACTUALITÉS</span>
+          <h2 id="news-heading">Comprenez ce qui se passe à partir de sources conservées.</h2>
         </div>
-        {brief && <span className={`run-state run-state-${brief.status}`}>{brief.status}</span>}
+        {brief && <span className={`run-state run-state-${brief.status}`}>{runStatusLabel(brief.status)}</span>}
       </div>
 
       <form className="news-form" onSubmit={onSubmit}>
@@ -199,7 +210,7 @@ export default function NewsWorkspacePanel({
           )}
 
           <label>
-            <span>Sortie</span>
+            <span>Format</span>
             <select value={output} onChange={(event) => onOutputChange(event.target.value as NewsOutput)}>
               <option value="text">Texte</option>
               <option value="audio">Audio</option>
@@ -218,7 +229,7 @@ export default function NewsWorkspacePanel({
       {running && !brief?.artifact && !error && (
         <div className="progress-panel">
           <strong>Nevolium recherche et recoupe les sources.</strong>
-          <span>La tâche est durable : elle peut reprendre après un redémarrage du Worker.</span>
+          <span>Vous pouvez quitter cet espace : le travail reprendra si le service redémarre.</span>
         </div>
       )}
 
@@ -252,7 +263,7 @@ export default function NewsWorkspacePanel({
             <div className="audio-panel">
               <div>
                 <strong>Lecture Nevolium</strong>
-                <small>Voix locale Kokoro · français</small>
+                <small>Voix française générée localement</small>
               </div>
               <AuthenticatedNewsAudio
                 key={`${brief.task_id}:${brief.voice}`}

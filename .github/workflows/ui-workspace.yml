@@ -19,6 +19,8 @@ jobs:
         run: uv lock --check
       - name: Prove canonical owner-scoped workspace layout contract
         run: uv run --locked --project services/core python scripts/smoke/workspace_layout_contract.py
+      - name: Prove D05 cockpit, keyboard, PWA and no-WebGL baseline
+        run: python scripts/smoke/d05_cockpit_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
@@ -38,3 +40,43 @@ jobs:
           services/core/src/nevolium_core/planning.py
           services/core/src/nevolium_core/planning_schemas.py
           services/core/src/nevolium_core/workflows.py
+
+  cockpit-browser-qualification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install the locked Web workspace
+        run: pnpm install --frozen-lockfile
+      - name: Build the isolated D05 preview
+        env:
+          VITE_NEVOLIUM_API_URL: http://127.0.0.1:8999
+          VITE_NEVOLIUM_AUTH_ENABLED: "false"
+        run: pnpm --filter @nevolium/web build
+      - name: Prove deterministic organic geometry and touch targets
+        run: node scripts/smoke/d05_mycelium_geometry.mjs
+      - name: Install the ephemeral browser runner
+        run: |
+          npm install \
+            --prefix "$RUNNER_TEMP/nevolium-browser" \
+            --package-lock=false \
+            --no-save \
+            playwright@1.55.0
+          "$RUNNER_TEMP/nevolium-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Qualify desktop, tablet, phone and panel popout
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d05_browser_qualification.mjs
+      - name: Preserve D05 browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d05-browser-qualification
+          path: artifacts/d05-browser
+          if-no-files-found: error

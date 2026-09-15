@@ -27,9 +27,20 @@ class Settings(BaseSettings):
     nevolium_model_owner_concurrency: int = Field(default=2, ge=1, le=64)
     nevolium_model_global_daily_budget_usd: Decimal = Field(default=Decimal("50"), ge=0)
     nevolium_model_owner_daily_budget_usd: Decimal = Field(default=Decimal("10"), ge=0)
+    nevolium_model_test_estimated_cost_usd: Decimal = Field(
+        default=Decimal("0.01"), gt=0, le=Decimal("1")
+    )
     nevolium_research_model: Literal["smart", "alternative", "local-fast"] = "smart"
     nevolium_research_model_estimated_cost_usd: Decimal = Field(
         default=Decimal("0.01"), gt=0, le=Decimal("1")
+    )
+    nevolium_news_model: Literal["smart", "alternative", "local-fast"] = "smart"
+    nevolium_news_model_estimated_cost_usd: Decimal = Field(
+        default=Decimal("0.01"), gt=0, le=Decimal("1")
+    )
+    nevolium_semantic_router_model: Literal["smart", "alternative", "local-fast"] = "smart"
+    nevolium_semantic_router_estimated_cost_usd: Decimal = Field(
+        default=Decimal("0.002"), gt=0, le=Decimal("1")
     )
     nevolium_work_global_concurrency: int = Field(default=4, ge=1, le=128)
     nevolium_work_owner_concurrency: int = Field(default=1, ge=1, le=16)
@@ -64,6 +75,10 @@ class Settings(BaseSettings):
     kokoro_tts_url: str = "http://kokoro-tts:8880"
     kokoro_default_voice: str = "ff_siwis"
 
+    litellm_url: str = "http://litellm:4000"
+    litellm_master_key: str = ""
+    nevolium_api_model: str = "openai/gpt-4.1"
+
     @model_validator(mode="after")
     def production_boundary(self) -> "Settings":
         if self.nevolium_env != "production":
@@ -71,8 +86,13 @@ class Settings(BaseSettings):
         if not self.nevolium_auth_enabled:
             raise ValueError("Production requires authentication")
         db = urlsplit(self.database_url)
-        secrets = (self.nevolium_internal_token, self.nevolium_policy_signing_key,
-                   self.nevolium_operations_token, unquote(db.password or ""))
+        secrets = (
+            self.nevolium_internal_token,
+            self.nevolium_policy_signing_key,
+            self.nevolium_operations_token,
+            self.litellm_master_key,
+            unquote(db.password or ""),
+        )
         for value in secrets:
             if len(value) < 32 or any(marker in value.lower() for marker in ("change_me", "change-me", "development", "nevolium-dev")):
                 raise ValueError("Production requires distinct provisioned secrets of at least 32 characters")
@@ -90,6 +110,13 @@ class Settings(BaseSettings):
                 raise ValueError("Production issuer and CORS origins must be explicit HTTPS URLs")
         if not self.keycloak_audience or not self.keycloak_client_id:
             raise ValueError("Production requires JWT audience and authorized party")
+        litellm = urlsplit(self.litellm_url)
+        if litellm.scheme != "http" or litellm.hostname != "litellm" or litellm.port != 4000:
+            raise ValueError("Production Core requires the internal LiteLLM management endpoint")
+        if not re.fullmatch(
+            r"(openai|anthropic|xai|moonshot)/[^\s/][^\s]*", self.nevolium_api_model
+        ):
+            raise ValueError("Production requires a remote bootstrap provider/model")
         return self
 
 

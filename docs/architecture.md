@@ -173,10 +173,13 @@ Every significant autonomous workflow carries:
 
 All general model traffic uses LiteLLM as the provider boundary. The worker asks Nevolium routing policy for a task class/quality/risk budget, then calls a logical model alias rather than provider-specific names.
 
-The current pilot uses remote APIs only, starting with OpenAI. The logical alias `smart` maps to
-one selected provider/model and its matching credential in LiteLLM. Core persists the alias and
-budget for each new Research Task; provider keys never enter task inputs or the Web client.
-D05 adds an administrator-controlled provider/model selector using this existing boundary.
+The current pilot uses remote APIs only, starting with OpenAI. The bootstrap alias `smart` maps to
+one selected provider/model and its matching credential in LiteLLM. D05 adds immutable managed
+aliases: Core persists their non-secret binding and freezes the active alias in every new Research,
+News and semantic-routing Task. An administrator may enter a key in the authenticated Web form, but
+it is cleared after submission and is never persisted or returned by Web/Core. LiteLLM alone stores
+the encrypted value and owns provider egress; see
+[ADR-032](decisions/ADR-032-managed-instance-model-credentials.md).
 
 Local LLM serving (Ollama, llama.cpp or vLLM) is deferred until a new decision and suitable hardware,
 not a D04/D05/D13 prerequisite. Existing PDF and embedding adapters retain their qualified technical

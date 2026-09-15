@@ -50,6 +50,7 @@ def checkpoint(stage: str, *, key: str = CALL_KEY) -> dict[str, Any]:
                 "cost_usd": "0.012345",
                 "cost_reported": True,
                 "litellm_call_id": key,
+                "litellm_model_id": "fixture-deployment-id",
             },
         }
     return payload
@@ -118,6 +119,7 @@ async def main() -> None:
                     "x-litellm-response-cost": "0.012345",
                     "x-litellm-call-id": CALL_KEY,
                     "x-litellm-model-name": "openai/gpt-fixture",
+                    "x-litellm-model-id": "fixture-deployment-id",
                 },
                 json={
                     "model": "smart",
@@ -160,6 +162,7 @@ async def main() -> None:
         assert result.usage.cost_usd == Decimal("0.012345"), result.usage
         assert result.usage.cost_reported is True, result.usage
         assert result.usage.litellm_call_id == CALL_KEY, result.usage
+        assert result.usage.litellm_model_id == "fixture-deployment-id", result.usage
         assert len(provider_posts) == 1, provider_posts
         assert len(authorized) == 1, authorized
         assert len(accounting_attempts) == 1, accounting_attempts
@@ -311,10 +314,14 @@ async def main() -> None:
             "model": "smart",
             "usage": {"prompt_tokens": 3, "completion_tokens": 2},
         },
-        httpx.Headers({"x-litellm-model-name": "openai/gpt-4.1"}),
+        httpx.Headers({
+            "x-litellm-model-name": "openai/gpt-4.1",
+            "x-litellm-model-id": "fixture-deployment-id",
+        }),
         model_alias="smart",
     )
     assert attributed.provider_model == "openai/gpt-4.1", attributed
+    assert attributed.litellm_model_id == "fixture-deployment-id", attributed
     local_zero_cost = model_gateway.parse_usage(
         {
             "model": "local-fast",

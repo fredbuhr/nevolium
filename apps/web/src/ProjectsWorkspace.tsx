@@ -42,7 +42,7 @@ async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const detail = body?.detail
     const message = typeof detail === 'string' ? detail : detail?.message
-    throw new Error(message || `Nevolium Core répond ${response.status}`)
+    throw new Error(message || `Le service Nevolium répond ${response.status}`)
   }
   return body as T
 }
@@ -169,8 +169,8 @@ export default function ProjectsWorkspace({ apiUrl }: Props) {
     <section className="news-workspace" aria-labelledby="projects-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">PROJECTS</span>
-          <h2 id="projects-heading">Projets et tâches canoniques Nevolium.</h2>
+          <span className="eyebrow">PROJETS</span>
+          <h2 id="projects-heading">Donnez une forme concrète aux idées que vous choisissez de construire.</h2>
         </div>
         <span className="run-state">{projects.length} projet(s) affiché(s)</span>
       </div>
@@ -196,15 +196,15 @@ export default function ProjectsWorkspace({ apiUrl }: Props) {
       {projectPage.hasMore && <button type="button" disabled={loading} onClick={() => void projectPage.loadMore()}>Charger les projets suivants</button>}
       {loading && !error && (
         <div className="progress-panel">
-          <strong>Chargement de vos projets Nevolium.</strong>
-          <span>La liste est filtrée côté Core selon le propriétaire authentifié.</span>
+          <strong>Chargement de vos projets.</strong>
+          <span>Seuls les projets de votre espace sont affichés.</span>
         </div>
       )}
 
       {!loading && projects.length === 0 && !error && (
         <div className="progress-panel">
-          <strong>Aucun projet personnel.</strong>
-          <span>Créez le premier projet pour commencer à organiser les tâches Nevolium.</span>
+          <strong>Aucun projet pour le moment.</strong>
+          <span>Créez un projet lorsqu’une idée est prête à prendre forme.</span>
         </div>
       )}
 
