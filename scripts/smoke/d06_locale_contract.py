@@ -29,7 +29,7 @@ def main() -> None:
 
     assert "<LocaleProvider>" in entrypoint
     assert "<LanguageSwitcher />" in entrypoint
-    assert "const { language, locale, newsLanguage } = useI18n()" in app
+    assert "const { language, locale, newsLanguage, t } = useI18n()" in app
     assert "locale," in app
     assert "language: newsLanguage" in app
     assert "locale: 'fr-FR'" not in app
