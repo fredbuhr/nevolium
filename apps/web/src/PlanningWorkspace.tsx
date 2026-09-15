@@ -12,6 +12,7 @@ import {
 
 import { useI18n } from './i18n'
 import PlanningGantt from './PlanningGantt'
+import PlanningScheduleEditor from './PlanningScheduleEditor'
 import { nevoliumFetch } from './lib/apiClient'
 import { usePagedCollection } from './lib/usePagedCollection'
 import { usePlanningCriticalPath } from './lib/usePlanningCriticalPath'
@@ -152,6 +153,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
   const { t, formatDateTime } = useI18n()
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor))
 
@@ -170,6 +172,9 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     () => new Set(criticalPath.data?.critical_task_ids || []),
     [criticalPath.data],
   )
+  const editingTask = editingTaskId
+    ? page.items.find((item) => item.id === editingTaskId) || null
+    : null
 
   const grouped = useMemo(() => {
     const result: Record<KanbanColumnKey, PlanningTask[]> = {
@@ -247,6 +252,31 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     void updateManualStatus(task, nextStatus)
   }
 
+  function applyScheduleLocally(updated: {
+    id: string
+    planning_version: number
+    planned_start_at?: string | null
+    planned_end_at?: string | null
+    due_at?: string | null
+  }) {
+    page.setItems((current) =>
+      current.map((item) =>
+        item.id === updated.id
+          ? {
+              ...item,
+              planning_version: updated.planning_version,
+              planned_start_at: updated.planned_start_at,
+              planned_end_at: updated.planned_end_at,
+              due_at: updated.due_at,
+            }
+          : item,
+      ),
+    )
+    setEditingTaskId(null)
+    setMutationError(null)
+    criticalPath.refresh()
+  }
+
   function renderTaskCard(task: PlanningTask) {
     const workflowManaged = ['queued', 'running'].includes(task.status)
     const disabled = workflowManaged || task.status === 'failed' || savingTaskId === task.id
@@ -267,6 +297,17 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           {task.recurrence_rule ? <span>{t('planning.recurring')}</span> : null}
           {workflowManaged ? <span>{t('planning.executionLocked')}</span> : null}
         </div>
+        <button
+          type="button"
+          className="planning-edit-schedule"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation()
+            setEditingTaskId(task.id)
+          }}
+        >
+          {t('planning.editSchedule')}
+        </button>
       </DraggableTaskCard>
     )
   }
@@ -335,6 +376,16 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
         {viewMode === 'kanban' ? <small>{t('planning.dragHint')}</small> : null}
       </div>
 
+      {editingTask ? (
+        <PlanningScheduleEditor
+          apiUrl={apiUrl}
+          projectId={selectedProjectId}
+          task={editingTask}
+          onCancel={() => setEditingTaskId(null)}
+          onApplied={(updated) => applyScheduleLocally(updated)}
+        />
+      ) : null}
+
       {visibleError ? <div className="error-panel">{visibleError}</div> : null}
       {page.loading && page.items.length === 0 ? (
         <div className="progress-panel"><strong>{t('planning.loading')}</strong></div>
@@ -352,6 +403,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
                 <th>{t('planning.priority')}</th>
                 <th>{t('planning.progress')}</th>
                 <th>{t('planning.planned')}</th>
+                <th><span className="sr-only">{t('planning.editSchedule')}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -367,6 +419,11 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
                   <td>P{task.priority}</td>
                   <td>{task.progress_percent}%</td>
                   <td>{timingLabel(task)}</td>
+                  <td>
+                    <button type="button" onClick={() => setEditingTaskId(task.id)}>
+                      {t('planning.editSchedule')}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
