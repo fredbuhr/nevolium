@@ -14,14 +14,9 @@ from .auth import Principal, require_nevolium_user
 from .db import get_session
 from .document_models import Document, DocumentChunk, DocumentVersion
 from .editable_knowledge import (
-    AuthoredKnowledgeCreate,
     AuthoredKnowledgeRead,
-    AuthoredKnowledgeRestore,
-    AuthoredKnowledgeVersionCreate,
-    DocumentAssetLinkCreate,
     DocumentAssetLinkRead,
     DocumentCitationRead,
-    DocumentMetadataUpdate,
     create_authored_knowledge,
     create_authored_version,
     create_document_asset_link,
