@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 
 import { useI18n } from './i18n'
+import PlanningGantt from './PlanningGantt'
 import { nevoliumFetch } from './lib/apiClient'
 import { usePagedCollection } from './lib/usePagedCollection'
 import { useProjectSelection } from './lib/projectSelection'
@@ -37,11 +38,20 @@ type PlanningTask = {
   recurrence_timezone?: string | null
 }
 
+type TaskDependency = {
+  id: string
+  predecessor_task_id: string
+  successor_task_id: string
+  dependency_type: 'FS' | 'SS' | 'FF' | 'SF'
+  lag_seconds: number
+  created_at: string
+}
+
 type Props = {
   apiUrl: string
 }
 
-type ViewMode = 'list' | 'kanban'
+type ViewMode = 'list' | 'kanban' | 'gantt'
 type KanbanColumnKey = 'todo' | 'execution' | 'done'
 
 const COLUMN_ORDER: KanbanColumnKey[] = ['todo', 'execution', 'done']
@@ -133,6 +143,11 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
   const page = usePagedCollection<PlanningTask>(
     selectedProjectId
       ? `${apiUrl}/v1/projects/${encodeURIComponent(selectedProjectId)}/planning/tasks`
+      : null,
+  )
+  const dependencyPage = usePagedCollection<TaskDependency>(
+    selectedProjectId
+      ? `${apiUrl}/v1/projects/${encodeURIComponent(selectedProjectId)}/task-dependencies?limit=100`
       : null,
   )
 
@@ -234,6 +249,13 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     )
   }
 
+  async function loadMore() {
+    const work: Promise<unknown>[] = []
+    if (page.hasMore) work.push(page.loadMore())
+    if (viewMode === 'gantt' && dependencyPage.hasMore) work.push(dependencyPage.loadMore())
+    await Promise.all(work)
+  }
+
   if (!selectedProjectId) {
     return (
       <section className="news-workspace planning-workspace" aria-labelledby="planning-heading">
@@ -247,6 +269,9 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
       </section>
     )
   }
+
+  const visibleError = mutationError || page.error || (viewMode === 'gantt' ? dependencyPage.error : null)
+  const canLoadMore = page.hasMore || (viewMode === 'gantt' && dependencyPage.hasMore)
 
   return (
     <section className="news-workspace planning-workspace" aria-labelledby="planning-heading">
@@ -275,10 +300,18 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
         >
           {t('planning.kanban')}
         </button>
+        <button
+          type="button"
+          className={viewMode === 'gantt' ? 'is-active' : ''}
+          aria-pressed={viewMode === 'gantt'}
+          onClick={() => setViewMode('gantt')}
+        >
+          {t('planning.gantt')}
+        </button>
         {viewMode === 'kanban' ? <small>{t('planning.dragHint')}</small> : null}
       </div>
 
-      {(mutationError || page.error) ? <div className="error-panel">{mutationError || page.error}</div> : null}
+      {visibleError ? <div className="error-panel">{visibleError}</div> : null}
       {page.loading && page.items.length === 0 ? (
         <div className="progress-panel"><strong>{t('planning.loading')}</strong></div>
       ) : null}
@@ -330,8 +363,16 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
         </DndContext>
       ) : null}
 
-      {page.hasMore ? (
-        <button type="button" disabled={page.loading} onClick={() => void page.loadMore()}>
+      {viewMode === 'gantt' && page.items.length > 0 ? (
+        <PlanningGantt tasks={page.items} dependencies={dependencyPage.items} />
+      ) : null}
+
+      {canLoadMore ? (
+        <button
+          type="button"
+          disabled={page.loading || dependencyPage.loading}
+          onClick={() => void loadMore()}
+        >
           {t('planning.loadMore')}
         </button>
       ) : null}
