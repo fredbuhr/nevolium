@@ -248,22 +248,43 @@ async function qualifyTablet(browser) {
   const planning = await openPlanning(page, state)
 
   assert(await page.evaluate(() => navigator.maxTouchPoints > 0), 'tablet: touch input missing')
-  const ganttButton = planning.getByRole('button', { name: 'Gantt', exact: true })
-  await ganttButton.click()
-  assert.equal(await ganttButton.getAttribute('aria-pressed'), 'true', 'tablet: Gantt view did not activate')
-  await page.waitForTimeout(1_000)
-  if (await planning.locator('.planning-gantt-canvas').count() === 0) {
-    const empty = await planning.locator('.planning-gantt-empty').allTextContents()
-    const diagnostic = { empty, pageErrors, consoleErrors, planningText: (await planning.innerText()).slice(0, 2000) }
-    await fs.writeFile(path.join(output, 'tablet-gantt-diagnostic.json'), `${JSON.stringify(diagnostic, null, 2)}\n`)
-    throw new Error(`tablet: Gantt canvas absent: ${JSON.stringify(diagnostic)}`)
+  await planning.getByRole('button', { name: 'Gantt', exact: true }).click()
+  await page.waitForTimeout(750)
+
+  const allWorkspaces = page.locator('.planning-workspace')
+  const visibleWorkspaces = page.locator('.planning-workspace:visible')
+  const visibleWorkspaceCount = await visibleWorkspaces.count()
+  const allWorkspaceCount = await allWorkspaces.count()
+  const visibleCanvasCount = await page.locator('.planning-gantt-canvas:visible').count()
+  const allCanvasCount = await page.locator('.planning-gantt-canvas').count()
+  const empty = await page.locator('.planning-gantt-empty').allTextContents()
+  let pressed = null
+  if (visibleWorkspaceCount) {
+    pressed = await visibleWorkspaces.first().getByRole('button', { name: 'Gantt', exact: true })
+      .getAttribute('aria-pressed').catch(() => null)
   }
-  await planning.locator('.planning-gantt-canvas').waitFor({ state: 'visible' })
-  const canvas = await planning.locator('.planning-gantt-canvas').boundingBox()
+  if (pressed !== 'true' || visibleCanvasCount !== 1) {
+    const diagnostic = {
+      pressed,
+      allWorkspaceCount,
+      visibleWorkspaceCount,
+      allCanvasCount,
+      visibleCanvasCount,
+      empty,
+      pageErrors,
+      consoleErrors,
+      bodyText: (await page.locator('body').innerText()).slice(0, 3000),
+    }
+    await fs.writeFile(path.join(output, 'tablet-gantt-diagnostic.json'), `${JSON.stringify(diagnostic, null, 2)}\n`)
+    throw new Error(`tablet: Gantt render diagnostic: ${JSON.stringify(diagnostic)}`)
+  }
+
+  const canvas = await page.locator('.planning-gantt-canvas:visible').boundingBox()
   assert(canvas && canvas.width >= 300 && canvas.height >= 240, 'tablet: Gantt canvas is not usable')
 
-  await planning.getByRole('button', { name: 'Liste', exact: true }).click()
-  const edit = planning.getByRole('button', { name: 'Modifier le créneau', exact: true }).first()
+  const activePlanning = visibleWorkspaces.first()
+  await activePlanning.getByRole('button', { name: 'Liste', exact: true }).click()
+  const edit = activePlanning.getByRole('button', { name: 'Modifier le créneau', exact: true }).first()
   await edit.waitFor({ state: 'visible' })
   const editBox = await edit.boundingBox()
   assert(editBox && editBox.height >= 34, 'tablet: non-drag schedule editor control is unusable')
