@@ -23,6 +23,14 @@ import { useProjectSelection } from './lib/projectSelection'
 
 type MindMapEntityType = 'project' | 'task' | 'document'
 type MindMapKind = 'project' | 'task' | 'source' | 'note' | 'idea' | 'decision' | string
+type MindMapRelationType =
+  | 'related_to'
+  | 'supports'
+  | 'contradicts'
+  | 'depends_on'
+  | 'references'
+  | 'derived_from'
+  | 'converted_to'
 
 type MindMapApiNode = {
   key: string
@@ -64,10 +72,11 @@ type MindMapSnapshot = {
 }
 
 type SavedPosition = { x: number; y: number }
+type MindMapGroup = { label: string; node_ids: string[]; collapsed?: boolean }
 type MindMapLayout = {
   positions: Record<string, SavedPosition>
   viewport?: Viewport
-  groups?: Record<string, { label: string; node_ids: string[]; collapsed?: boolean }>
+  groups?: Record<string, MindMapGroup>
 }
 
 type WorkspaceLayoutRead = {
@@ -76,11 +85,30 @@ type WorkspaceLayoutRead = {
   layout: MindMapLayout
 }
 
-type FilterMode = 'all' | 'task' | 'document' | 'idea' | 'decision' | 'note' | 'source'
+type IdeaConversionRead = {
+  document_id: string
+  task_id: string
+  task_title: string
+  relationship: MindMapApiEdge
+}
 
+type HistoryEntry =
+  | { kind: 'layout'; before: MindMapLayout; after: MindMapLayout }
+  | { kind: 'link-created'; edge: MindMapApiEdge }
+  | { kind: 'link-deleted'; edge: MindMapApiEdge }
+
+type FilterMode = 'all' | 'task' | 'document' | 'idea' | 'decision' | 'note' | 'source'
 type Props = { apiUrl: string }
 
 const EMPTY_LAYOUT: MindMapLayout = { positions: {}, groups: {} }
+const RELATION_TYPES: MindMapRelationType[] = [
+  'related_to',
+  'supports',
+  'contradicts',
+  'depends_on',
+  'references',
+  'derived_from',
+]
 
 async function readJson<T>(response: Response): Promise<T> {
   const body = await response.json().catch(() => null)
@@ -130,21 +158,13 @@ function buildFlowNodes(snapshot: MindMapSnapshot, layout: MindMapLayout): Node[
       id: node.key,
       position,
       className: nodeClassName(node),
-      data: {
-        label: (
-          <div className="mindmap-node-content">
-            <span>{node.kind}</span>
-            <strong>{node.label}</strong>
-            <small>{node.epistemic_status || node.status}</small>
-          </div>
-        ),
-      },
+      data: { label: node.label },
     }
   })
 }
 
-function buildFlowEdges(snapshot: MindMapSnapshot): Edge[] {
-  return snapshot.edges.map((edge) => ({
+function buildFlowEdge(edge: MindMapApiEdge): Edge {
+  return {
     id: edge.id,
     source: edge.source_key,
     target: edge.target_key,
@@ -154,13 +174,26 @@ function buildFlowEdges(snapshot: MindMapSnapshot): Edge[] {
       ? 'mindmap-edge is-editable'
       : 'mindmap-edge is-canonical',
     markerEnd: edge.directed ? { type: MarkerType.ArrowClosed } : undefined,
-  }))
+  }
+}
+
+function buildFlowEdges(snapshot: MindMapSnapshot): Edge[] {
+  return snapshot.edges.map(buildFlowEdge)
 }
 
 function positionsFromNodes(nodes: Node[]): Record<string, SavedPosition> {
   return Object.fromEntries(
     nodes.map((node) => [node.id, { x: node.position.x, y: node.position.y }]),
   )
+}
+
+function averageGroupPosition(group: MindMapGroup, nodes: Node[]): SavedPosition {
+  const members = nodes.filter((node) => group.node_ids.includes(node.id))
+  if (members.length === 0) return { x: 0, y: 0 }
+  return {
+    x: members.reduce((sum, node) => sum + node.position.x, 0) / members.length,
+    y: members.reduce((sum, node) => sum + node.position.y, 0) / members.length,
+  }
 }
 
 export default function MindMapWorkspace({ apiUrl }: Props) {
@@ -172,12 +205,61 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
   const [edges, setEdges] = useState<Edge[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [mutating, setMutating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FilterMode>('all')
-  const [selectionCount, setSelectionCount] = useState(0)
-  const [past, setPast] = useState<MindMapLayout[]>([])
-  const [future, setFuture] = useState<MindMapLayout[]>([])
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([])
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
+  const [linkSourceKey, setLinkSourceKey] = useState('')
+  const [linkTargetKey, setLinkTargetKey] = useState('')
+  const [linkRelation, setLinkRelation] = useState<MindMapRelationType>('related_to')
+  const [groupLabel, setGroupLabel] = useState('')
+  const [past, setPast] = useState<HistoryEntry[]>([])
+  const [future, setFuture] = useState<HistoryEntry[]>([])
+
+  function relationLabel(relation: MindMapRelationType) {
+    switch (relation) {
+      case 'supports': return t('mindmap.relation.supports')
+      case 'contradicts': return t('mindmap.relation.contradicts')
+      case 'depends_on': return t('mindmap.relation.depends_on')
+      case 'references': return t('mindmap.relation.references')
+      case 'derived_from': return t('mindmap.relation.derived_from')
+      case 'converted_to': return t('mindmap.relation.converted_to')
+      default: return t('mindmap.relation.related_to')
+    }
+  }
+
+  function kindLabel(kind: string) {
+    switch (kind) {
+      case 'project': return t('mindmap.kind.project')
+      case 'task': return t('mindmap.kind.task')
+      case 'source': return t('mindmap.kind.source')
+      case 'note': return t('mindmap.kind.note')
+      case 'idea': return t('mindmap.kind.idea')
+      case 'decision': return t('mindmap.kind.decision')
+      default: return kind
+    }
+  }
+
+  function stateLabel(node: MindMapApiNode) {
+    const value = node.epistemic_status || node.status
+    switch (value) {
+      case 'active': return t('mindmap.status.active')
+      case 'todo': return t('mindmap.status.todo')
+      case 'queued': return t('mindmap.status.queued')
+      case 'running': return t('mindmap.status.running')
+      case 'completed': return t('mindmap.status.completed')
+      case 'failed': return t('mindmap.status.failed')
+      case 'pending': return t('mindmap.status.pending')
+      case 'ready': return t('mindmap.status.ready')
+      case 'hypothesis': return t('mindmap.status.hypothesis')
+      case 'supported': return t('mindmap.status.supported')
+      case 'contested': return t('mindmap.status.contested')
+      case 'verified': return t('mindmap.status.verified')
+      default: return value
+    }
+  }
 
   const persistLayout = useCallback(async (
     workspaceKey: string,
@@ -201,24 +283,21 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
     }
   }, [apiUrl, t])
 
-  const applyLayout = useCallback((
-    next: MindMapLayout,
-    options: { recordHistory?: boolean; persist?: boolean } = {},
-  ) => {
+  const applyLayout = useCallback((next: MindMapLayout, persist = true) => {
     if (!snapshot) return
-    if (options.recordHistory !== false) {
-      setPast((items) => [...items.slice(-39), layout])
-      setFuture([])
-    }
     setLayout(next)
     setNodes((current) => current.map((node) => ({
       ...node,
       position: next.positions[node.id] || node.position,
     })))
-    if (options.persist !== false) {
-      void persistLayout(snapshot.layout_workspace_key, next)
-    }
-  }, [layout, persistLayout, setNodes, snapshot])
+    if (persist) void persistLayout(snapshot.layout_workspace_key, next)
+  }, [persistLayout, setNodes, snapshot])
+
+  const recordLayout = useCallback((next: MindMapLayout) => {
+    setPast((items) => [...items.slice(-39), { kind: 'layout', before: layout, after: next }])
+    setFuture([])
+    applyLayout(next)
+  }, [applyLayout, layout])
 
   useEffect(() => {
     if (!selectedProjectId) {
@@ -226,6 +305,8 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
       setNodes([])
       setEdges([])
       setLayout(EMPTY_LAYOUT)
+      setSelectedNodeIds([])
+      setSelectedEdgeId(null)
       setPast([])
       setFuture([])
       return
@@ -234,7 +315,8 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
     const controller = new AbortController()
     setLoading(true)
     setError(null)
-    setSelectionCount(0)
+    setSelectedNodeIds([])
+    setSelectedEdgeId(null)
 
     const load = async () => {
       try {
@@ -267,6 +349,7 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
           selected: node.id === linkedNode,
         })))
         setEdges(buildFlowEdges(nextSnapshot))
+        setSelectedNodeIds(linkedNode ? [linkedNode] : [])
         setPast([])
         setFuture([])
       } catch (loadError) {
@@ -285,34 +368,234 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
     () => new Map((snapshot?.nodes || []).map((node) => [node.key, node])),
     [snapshot],
   )
-
-  const visibleNodes = useMemo(() => {
-    const normalized = lower(query.trim())
-    return nodes.filter((node) => {
-      const source = apiNodeByKey.get(node.id)
-      if (!source) return false
-      if (source.entity_type === 'project') return true
-      const matchesFilter = filter === 'all'
-        || (filter === 'document' && source.entity_type === 'document')
-        || source.kind === filter
-      if (!matchesFilter) return false
-      return !normalized || lower(`${source.label} ${source.kind} ${source.status}`).includes(normalized)
-    })
-  }, [apiNodeByKey, filter, lower, nodes, query])
-
-  const visibleNodeIds = useMemo(
-    () => new Set(visibleNodes.map((node) => node.id)),
-    [visibleNodes],
-  )
-  const visibleEdges = useMemo(
-    () => edges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)),
-    [edges, visibleNodeIds],
+  const apiEdgeById = useMemo(
+    () => new Map((snapshot?.edges || []).map((edge) => [edge.id, edge])),
+    [snapshot],
   )
 
-  function commitNodePositions(nextNodes: Node[]) {
+  async function refreshSnapshot(selectKey?: string) {
     if (!snapshot) return
-    const next = { ...layout, positions: positionsFromNodes(nextNodes) }
-    applyLayout(next)
+    const response = await nevoliumFetch(
+      `${apiUrl}/v1/projects/${encodeURIComponent(snapshot.project_id)}/mindmap`,
+    )
+    const nextSnapshot = await readJson<MindMapSnapshot>(response)
+    setSnapshot(nextSnapshot)
+    setNodes((current) => {
+      const positions = new Map(current.map((node) => [node.id, node.position]))
+      return buildFlowNodes(nextSnapshot, layout).map((node) => ({
+        ...node,
+        position: positions.get(node.id) || node.position,
+        selected: node.id === selectKey,
+      }))
+    })
+    setEdges(buildFlowEdges(nextSnapshot))
+    if (selectKey) setSelectedNodeIds([selectKey])
+  }
+
+  function addEdgeLocal(edge: MindMapApiEdge) {
+    setSnapshot((current) => current ? {
+      ...current,
+      edges: [edge, ...current.edges.filter((item) => item.id !== edge.id)],
+      relationship_count: current.relationship_count + 1,
+    } : current)
+    setEdges((current) => [buildFlowEdge(edge), ...current.filter((item) => item.id !== edge.id)])
+  }
+
+  function removeEdgeLocal(edgeId: string) {
+    setSnapshot((current) => current ? {
+      ...current,
+      edges: current.edges.filter((item) => item.id !== edgeId),
+      relationship_count: Math.max(0, current.relationship_count - 1),
+    } : current)
+    setEdges((current) => current.filter((item) => item.id !== edgeId))
+    setSelectedEdgeId((current) => current === edgeId ? null : current)
+  }
+
+  async function postRelationship(
+    source: MindMapApiNode,
+    target: MindMapApiNode,
+    relation: MindMapRelationType,
+  ) {
+    if (!snapshot) throw new Error(t('mindmap.mutationError'))
+    const response = await nevoliumFetch(
+      `${apiUrl}/v1/projects/${encodeURIComponent(snapshot.project_id)}/mindmap/relationships`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_type: source.entity_type,
+          source_id: source.entity_id,
+          relation_type: relation,
+          target_type: target.entity_type,
+          target_id: target.entity_id,
+        }),
+      },
+    )
+    return readJson<MindMapApiEdge>(response)
+  }
+
+  async function recreateRelationship(edge: MindMapApiEdge) {
+    if (!snapshot) throw new Error(t('mindmap.mutationError'))
+    const response = await nevoliumFetch(
+      `${apiUrl}/v1/projects/${encodeURIComponent(snapshot.project_id)}/mindmap/relationships`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_type: edge.source_type,
+          source_id: edge.source_id,
+          relation_type: edge.relation_type,
+          target_type: edge.target_type,
+          target_id: edge.target_id,
+        }),
+      },
+    )
+    return readJson<MindMapApiEdge>(response)
+  }
+
+  async function deleteRelationshipRemote(edge: MindMapApiEdge) {
+    if (!snapshot) throw new Error(t('mindmap.mutationError'))
+    const response = await nevoliumFetch(
+      `${apiUrl}/v1/projects/${encodeURIComponent(snapshot.project_id)}/mindmap/relationships/${encodeURIComponent(edge.id)}`,
+      { method: 'DELETE' },
+    )
+    if (!response.ok) await readJson(response)
+  }
+
+  const selectedEdge = selectedEdgeId ? apiEdgeById.get(selectedEdgeId) || null : null
+  const selectedIdea = selectedNodeIds.length === 1
+    ? apiNodeByKey.get(selectedNodeIds[0]) || null
+    : null
+  const canConvertIdea = selectedIdea?.kind === 'idea'
+  const canDeleteEdge = Boolean(
+    selectedEdge
+      && selectedEdge.metadata_json.surface === 'mindmap'
+      && selectedEdge.relation_type !== 'converted_to'
+      && selectedEdge.metadata_json.conversion !== true,
+  )
+
+  async function createLink() {
+    const source = apiNodeByKey.get(linkSourceKey)
+    const target = apiNodeByKey.get(linkTargetKey)
+    if (!source || !target || source.key === target.key) return
+    setMutating(true)
+    setError(null)
+    try {
+      const edge = await postRelationship(source, target, linkRelation)
+      addEdgeLocal(edge)
+      setSelectedEdgeId(edge.id)
+      setPast((items) => [...items.slice(-39), { kind: 'link-created', edge }])
+      setFuture([])
+    } catch (mutationError) {
+      setError(mutationError instanceof Error ? mutationError.message : t('mindmap.mutationError'))
+    } finally {
+      setMutating(false)
+    }
+  }
+
+  async function deleteSelectedLink() {
+    if (!selectedEdge || !canDeleteEdge) return
+    setMutating(true)
+    setError(null)
+    try {
+      await deleteRelationshipRemote(selectedEdge)
+      removeEdgeLocal(selectedEdge.id)
+      setPast((items) => [...items.slice(-39), { kind: 'link-deleted', edge: selectedEdge }])
+      setFuture([])
+    } catch (mutationError) {
+      setError(mutationError instanceof Error ? mutationError.message : t('mindmap.mutationError'))
+    } finally {
+      setMutating(false)
+    }
+  }
+
+  async function convertSelectedIdea() {
+    if (!snapshot || !selectedIdea || !canConvertIdea) return
+    setMutating(true)
+    setError(null)
+    try {
+      const response = await nevoliumFetch(
+        `${apiUrl}/v1/projects/${encodeURIComponent(snapshot.project_id)}/mindmap/ideas/${encodeURIComponent(selectedIdea.entity_id)}/convert-to-task`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        },
+      )
+      const conversion = await readJson<IdeaConversionRead>(response)
+      const taskKey = `task:${conversion.task_id}`
+      await refreshSnapshot(taskKey)
+      updateDeepLink(taskKey)
+    } catch (mutationError) {
+      setError(mutationError instanceof Error ? mutationError.message : t('mindmap.mutationError'))
+    } finally {
+      setMutating(false)
+    }
+  }
+
+  async function undo() {
+    const entry = past.at(-1)
+    if (!entry || mutating) return
+    if (entry.kind === 'layout') {
+      setPast((items) => items.slice(0, -1))
+      setFuture((items) => [entry, ...items].slice(0, 40))
+      applyLayout(entry.before)
+      return
+    }
+
+    setMutating(true)
+    setError(null)
+    try {
+      if (entry.kind === 'link-created') {
+        await deleteRelationshipRemote(entry.edge)
+        removeEdgeLocal(entry.edge.id)
+        setPast((items) => items.slice(0, -1))
+        setFuture((items) => [entry, ...items].slice(0, 40))
+      } else {
+        const restored = await recreateRelationship(entry.edge)
+        addEdgeLocal(restored)
+        setPast((items) => items.slice(0, -1))
+        setFuture((items) => [
+          { kind: 'link-deleted', edge: restored },
+          ...items,
+        ].slice(0, 40) as HistoryEntry[])
+      }
+    } catch (historyError) {
+      setError(historyError instanceof Error ? historyError.message : t('mindmap.mutationError'))
+    } finally {
+      setMutating(false)
+    }
+  }
+
+  async function redo() {
+    const entry = future[0]
+    if (!entry || mutating) return
+    if (entry.kind === 'layout') {
+      setFuture((items) => items.slice(1))
+      setPast((items) => [...items.slice(-39), entry])
+      applyLayout(entry.after)
+      return
+    }
+
+    setMutating(true)
+    setError(null)
+    try {
+      if (entry.kind === 'link-created') {
+        const restored = await recreateRelationship(entry.edge)
+        addEdgeLocal(restored)
+        setFuture((items) => items.slice(1))
+        setPast((items) => [...items.slice(-39), { kind: 'link-created', edge: restored }])
+      } else {
+        await deleteRelationshipRemote(entry.edge)
+        removeEdgeLocal(entry.edge.id)
+        setFuture((items) => items.slice(1))
+        setPast((items) => [...items.slice(-39), entry])
+      }
+    } catch (historyError) {
+      setError(historyError instanceof Error ? historyError.message : t('mindmap.mutationError'))
+    } finally {
+      setMutating(false)
+    }
   }
 
   function commitDraggedNode(dragged: Node) {
@@ -320,23 +603,71 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
       ? { ...node, position: dragged.position }
       : node)
     setNodes(nextNodes)
-    commitNodePositions(nextNodes)
+    recordLayout({ ...layout, positions: positionsFromNodes(nextNodes) })
   }
 
-  function undo() {
-    const previous = past.at(-1)
-    if (!previous) return
-    setPast((items) => items.slice(0, -1))
-    setFuture((items) => [layout, ...items].slice(0, 40))
-    applyLayout(previous, { recordHistory: false })
+  function useSelectionForLink() {
+    if (selectedNodeIds.length !== 2) return
+    setLinkSourceKey(selectedNodeIds[0])
+    setLinkTargetKey(selectedNodeIds[1])
   }
 
-  function redo() {
-    const next = future[0]
-    if (!next) return
-    setFuture((items) => items.slice(1))
-    setPast((items) => [...items.slice(-39), layout])
-    applyLayout(next, { recordHistory: false })
+  function swapLinkDirection() {
+    setLinkSourceKey(linkTargetKey)
+    setLinkTargetKey(linkSourceKey)
+  }
+
+  function createGroup() {
+    const label = groupLabel.trim()
+    if (!snapshot || !label || selectedNodeIds.length < 2) return
+    const id = crypto.randomUUID()
+    const next: MindMapLayout = {
+      ...layout,
+      groups: {
+        ...(layout.groups || {}),
+        [id]: { label, node_ids: [...selectedNodeIds], collapsed: false },
+      },
+    }
+    setGroupLabel('')
+    recordLayout(next)
+  }
+
+  function toggleGroup(groupId: string) {
+    const group = layout.groups?.[groupId]
+    if (!group) return
+    recordLayout({
+      ...layout,
+      groups: {
+        ...(layout.groups || {}),
+        [groupId]: { ...group, collapsed: !group.collapsed },
+      },
+    })
+  }
+
+  function deleteGroup(groupId: string) {
+    if (!layout.groups?.[groupId]) return
+    const nextGroups = { ...(layout.groups || {}) }
+    delete nextGroups[groupId]
+    recordLayout({ ...layout, groups: nextGroups })
+  }
+
+  function exportMindMap() {
+    if (!snapshot) return
+    const payload = {
+      schema: 'nevolium-mindmap-v1',
+      exported_at: new Date().toISOString(),
+      project_id: snapshot.project_id,
+      nodes: snapshot.nodes,
+      relationships: snapshot.edges,
+      layout,
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `nevolium-mindmap-${snapshot.project_id}.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
   }
 
   function updateDeepLink(nodeId: string | null) {
@@ -345,6 +676,65 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
     else url.searchParams.delete('mindmap')
     window.history.replaceState({}, '', url)
   }
+
+  const collapsedGroups = Object.entries(layout.groups || {}).filter(([, group]) => group.collapsed)
+  const collapsedMemberIds = useMemo(
+    () => new Set(collapsedGroups.flatMap(([, group]) => group.node_ids)),
+    [collapsedGroups],
+  )
+  const groupedMemberIds = useMemo(
+    () => new Set(Object.values(layout.groups || {}).flatMap((group) => group.node_ids)),
+    [layout.groups],
+  )
+
+  const visibleCanonicalNodes = useMemo(() => {
+    const normalized = lower(query.trim())
+    return nodes
+      .filter((node) => !collapsedMemberIds.has(node.id))
+      .filter((node) => {
+        const source = apiNodeByKey.get(node.id)
+        if (!source) return false
+        if (source.entity_type === 'project') return true
+        const matchesFilter = filter === 'all'
+          || (filter === 'document' && source.entity_type === 'document')
+          || source.kind === filter
+        if (!matchesFilter) return false
+        return !normalized || lower(`${source.label} ${source.kind} ${source.status}`).includes(normalized)
+      })
+      .map((node) => groupedMemberIds.has(node.id)
+        ? { ...node, className: `${node.className || ''} is-grouped`.trim() }
+        : node)
+  }, [apiNodeByKey, collapsedMemberIds, filter, groupedMemberIds, lower, nodes, query])
+
+  const groupNodes = useMemo<Node[]>(() => collapsedGroups.map(([groupId, group]) => ({
+    id: `layout-group:${groupId}`,
+    position: averageGroupPosition(group, nodes),
+    draggable: false,
+    selectable: false,
+    className: 'mindmap-node mindmap-node-group',
+    data: {
+      label: (
+        <div className="mindmap-node-content">
+          <span>{t('mindmap.group')}</span>
+          <strong>{group.label}</strong>
+          <small>{group.node_ids.length} {t('mindmap.nodes')}</small>
+        </div>
+      ),
+    },
+  })), [collapsedGroups, nodes, t])
+
+  const visibleNodes = useMemo(
+    () => [...visibleCanonicalNodes, ...groupNodes],
+    [groupNodes, visibleCanonicalNodes],
+  )
+  const visibleNodeIds = useMemo(
+    () => new Set(visibleCanonicalNodes.map((node) => node.id)),
+    [visibleCanonicalNodes],
+  )
+  const visibleEdges = useMemo(
+    () => edges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)),
+    [edges, visibleNodeIds],
+  )
 
   if (!selectedProjectId) {
     return (
@@ -374,12 +764,13 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
           <p>{t('mindmap.heading')}</p>
         </div>
         <div className="mindmap-toolbar-actions">
-          <button type="button" onClick={undo} disabled={past.length === 0}>
+          <button type="button" onClick={() => void undo()} disabled={past.length === 0 || mutating}>
             {t('mindmap.undo')}
           </button>
-          <button type="button" onClick={redo} disabled={future.length === 0}>
+          <button type="button" onClick={() => void redo()} disabled={future.length === 0 || mutating}>
             {t('mindmap.redo')}
           </button>
+          <button type="button" onClick={exportMindMap}>{t('mindmap.export')}</button>
           <span className="mindmap-save-state" aria-live="polite">
             {saving ? t('mindmap.saving') : t('mindmap.saved')}
           </span>
@@ -407,10 +798,129 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
           <option value="note">{t('mindmap.filterNotes')}</option>
           <option value="source">{t('mindmap.filterSources')}</option>
         </select>
-        <span>{visibleNodes.length} {t('mindmap.nodes')}</span>
+        <span>{visibleCanonicalNodes.length} {t('mindmap.nodes')}</span>
         <span>{visibleEdges.length} {t('mindmap.links')}</span>
-        <span>{selectionCount} {t('mindmap.selected')}</span>
+        <span>{selectedNodeIds.length} {t('mindmap.selected')}</span>
       </div>
+
+      <div className="mindmap-editors">
+        <section className="mindmap-editor-card" aria-label={t('mindmap.linkEditor')}>
+          <strong>{t('mindmap.linkEditor')}</strong>
+          <div className="mindmap-editor-grid">
+            <label>
+              {t('mindmap.linkSource')}
+              <select value={linkSourceKey} onChange={(event) => setLinkSourceKey(event.target.value)}>
+                <option value="">—</option>
+                {snapshot.nodes.map((node) => (
+                  <option key={`source-${node.key}`} value={node.key}>
+                    {kindLabel(node.kind)} · {node.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('mindmap.linkRelation')}
+              <select
+                value={linkRelation}
+                onChange={(event) => setLinkRelation(event.target.value as MindMapRelationType)}
+              >
+                {RELATION_TYPES.map((relation) => (
+                  <option key={relation} value={relation}>{relationLabel(relation)}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('mindmap.linkTarget')}
+              <select value={linkTargetKey} onChange={(event) => setLinkTargetKey(event.target.value)}>
+                <option value="">—</option>
+                {snapshot.nodes.map((node) => (
+                  <option key={`target-${node.key}`} value={node.key}>
+                    {kindLabel(node.kind)} · {node.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="mindmap-editor-actions">
+            <button
+              type="button"
+              onClick={useSelectionForLink}
+              disabled={selectedNodeIds.length !== 2 || mutating}
+            >
+              {t('mindmap.useSelection')}
+            </button>
+            <button
+              type="button"
+              onClick={swapLinkDirection}
+              disabled={!linkSourceKey || !linkTargetKey || mutating}
+            >
+              {t('mindmap.swapDirection')}
+            </button>
+            <button
+              type="button"
+              onClick={() => void createLink()}
+              disabled={!linkSourceKey || !linkTargetKey || linkSourceKey === linkTargetKey || mutating}
+            >
+              {t('mindmap.linkCreate')}
+            </button>
+            <button
+              type="button"
+              onClick={() => void deleteSelectedLink()}
+              disabled={!canDeleteEdge || mutating}
+            >
+              {t('mindmap.linkDelete')}
+            </button>
+          </div>
+          {selectedEdge ? (
+            <small>
+              {t('mindmap.selectedLink')} · {selectedEdge.relation_type === 'converted_to'
+                ? relationLabel('converted_to')
+                : selectedEdge.relation_type.replaceAll('_', ' ')}
+            </small>
+          ) : null}
+        </section>
+
+        <section className="mindmap-editor-card" aria-label={t('mindmap.groups')}>
+          <strong>{t('mindmap.groups')}</strong>
+          <div className="mindmap-editor-actions">
+            <input
+              value={groupLabel}
+              onChange={(event) => setGroupLabel(event.target.value)}
+              placeholder={t('mindmap.groupName')}
+              aria-label={t('mindmap.groupName')}
+            />
+            <button
+              type="button"
+              onClick={createGroup}
+              disabled={!groupLabel.trim() || selectedNodeIds.length < 2 || mutating}
+            >
+              {t('mindmap.groupCreate')}
+            </button>
+          </div>
+          <div className="mindmap-group-list">
+            {Object.entries(layout.groups || {}).map(([groupId, group]) => (
+              <div key={groupId} className="mindmap-group-row">
+                <span>{group.label} · {group.node_ids.length}</span>
+                <button type="button" onClick={() => toggleGroup(groupId)}>
+                  {group.collapsed ? t('mindmap.groupExpand') : t('mindmap.groupCollapse')}
+                </button>
+                <button type="button" onClick={() => deleteGroup(groupId)}>
+                  {t('mindmap.groupDelete')}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {canConvertIdea ? (
+        <div className="mindmap-conversion-bar">
+          <span>{t('mindmap.ideaSelected')} · {selectedIdea?.label}</span>
+          <button type="button" onClick={() => void convertSelectedIdea()} disabled={mutating}>
+            {mutating ? t('mindmap.converting') : t('mindmap.convertIdea')}
+          </button>
+        </div>
+      ) : null}
 
       {(snapshot.tasks_truncated || snapshot.documents_truncated || snapshot.relationships_truncated) ? (
         <div className="mindmap-warning" role="status">{t('mindmap.truncated')}</div>
@@ -419,13 +929,43 @@ export default function MindMapWorkspace({ apiUrl }: Props) {
 
       <div className="mindmap-canvas">
         <ReactFlow
-          nodes={visibleNodes}
-          edges={visibleEdges}
+          nodes={visibleNodes.map((node) => {
+            const apiNode = apiNodeByKey.get(node.id)
+            if (!apiNode) return node
+            return {
+              ...node,
+              data: {
+                label: (
+                  <div className="mindmap-node-content">
+                    <span>{kindLabel(apiNode.kind)}</span>
+                    <strong>{apiNode.label}</strong>
+                    <small>{stateLabel(apiNode)}</small>
+                  </div>
+                ),
+              },
+            }
+          })}
+          edges={visibleEdges.map((edge) => {
+            const apiEdge = apiEdgeById.get(edge.id)
+            if (!apiEdge) return edge
+            const relation = RELATION_TYPES.includes(apiEdge.relation_type as MindMapRelationType)
+              ? relationLabel(apiEdge.relation_type as MindMapRelationType)
+              : apiEdge.relation_type.replaceAll('_', ' ')
+            return { ...edge, label: relation, selected: edge.id === selectedEdgeId }
+          })}
           onNodesChange={onNodesChange}
           onNodeDragStop={(_, node) => commitDraggedNode(node)}
-          onNodeClick={(_, node) => updateDeepLink(node.id)}
-          onPaneClick={() => updateDeepLink(null)}
-          onSelectionChange={({ nodes: selected }) => setSelectionCount(selected.length)}
+          onNodeClick={(_, node) => {
+            if (!node.id.startsWith('layout-group:')) updateDeepLink(node.id)
+          }}
+          onEdgeClick={(_, edge) => setSelectedEdgeId(edge.id)}
+          onPaneClick={() => {
+            updateDeepLink(null)
+            setSelectedEdgeId(null)
+          }}
+          onSelectionChange={({ nodes: selected }) => {
+            setSelectedNodeIds(selected.map((node) => node.id).filter((id) => apiNodeByKey.has(id)))
+          }}
           onMoveEnd={(_, viewport) => {
             const next = { ...layout, viewport }
             setLayout(next)
