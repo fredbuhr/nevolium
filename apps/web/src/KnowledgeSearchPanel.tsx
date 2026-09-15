@@ -69,7 +69,6 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
     event.preventDefault()
     const trimmed = query.trim()
     if (trimmed.length < 2 || searching || (projectOnly && !selectedProjectId)) return
-
     setResults([])
     setSearchOffset(0)
     setHasMore(false)
@@ -87,41 +86,21 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
           <span className="eyebrow">{m('searchEyebrow')}</span>
           <h2 id="knowledge-search-heading">{m('searchHeading')}</h2>
         </div>
-        {searched && (
-          <span className="run-state">
-            {pageStart === 0 ? `0 ${m('result')}` : `${m('results')} ${pageStart}–${pageEnd}`}
-          </span>
-        )}
+        {searched && <span className="run-state">{pageStart === 0 ? `0 ${m('result')}` : `${m('results')} ${pageStart}–${pageEnd}`}</span>}
       </div>
 
       <form className="news-form" onSubmit={submitKnowledgeSearch}>
         <label className="query-field">
           <span>{m('searchLabel')}</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            minLength={2}
-            maxLength={400}
-            placeholder={m('searchPlaceholder')}
-          />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} minLength={2} maxLength={400} placeholder={m('searchPlaceholder')} />
         </label>
         <div className="news-controls">
           <label>
             <span>{m('searchProject')}</span>
-            <input
-              type="checkbox"
-              checked={projectOnly}
-              disabled={!selectedProjectId}
-              onChange={(event) => setProjectOnly(event.target.checked)}
-            />
+            <input type="checkbox" checked={projectOnly} disabled={!selectedProjectId} onChange={(event) => setProjectOnly(event.target.checked)} />
           </label>
           <span className="route-chip">{projectOnly ? m('searchProject') : m('searchAll')}</span>
-          <button
-            type="submit"
-            disabled={searching || query.trim().length < 2 || (projectOnly && !selectedProjectId)}
-          >
-            {searching ? m('searching') : m('searchButton')}
-          </button>
+          <button type="submit" disabled={searching || query.trim().length < 2 || (projectOnly && !selectedProjectId)}>{searching ? m('searching') : m('searchButton')}</button>
         </div>
       </form>
 
@@ -133,66 +112,22 @@ export default function KnowledgeSearchPanel({ apiUrl, onInspectResult }: Props)
             <strong>{m('searchResults')}</strong>
             <span>20 · {m('searchLatest')} · {activeProjectOnly ? m('searchProject') : m('searchAll')}</span>
           </div>
-
           <div className="news-controls" aria-label={m('searchResults')}>
-            <button
-              type="button"
-              onClick={() => void loadKnowledgeSearchPage(
-                activeQuery,
-                Math.max(0, searchOffset - KNOWLEDGE_SEARCH_PAGE_SIZE),
-                activeProjectOnly,
-              )}
-              disabled={searching || searchOffset === 0 || !activeQuery}
-            >
-              ← {m('previousPage')}
-            </button>
-            <span className="route-chip">
-              {pageStart === 0 ? m('noResultPage') : `${pageStart}–${pageEnd}`}
-            </span>
-            <button
-              type="button"
-              onClick={() => void loadKnowledgeSearchPage(
-                activeQuery,
-                searchOffset + KNOWLEDGE_SEARCH_PAGE_SIZE,
-                activeProjectOnly,
-              )}
-              disabled={searching || !hasMore || !activeQuery}
-            >
-              {m('nextPage')} →
-            </button>
+            <button type="button" onClick={() => void loadKnowledgeSearchPage(activeQuery, Math.max(0, searchOffset - KNOWLEDGE_SEARCH_PAGE_SIZE), activeProjectOnly)} disabled={searching || searchOffset === 0 || !activeQuery}>← {m('previousPage')}</button>
+            <span className="route-chip">{pageStart === 0 ? m('noResultPage') : `${pageStart}–${pageEnd}`}</span>
+            <button type="button" onClick={() => void loadKnowledgeSearchPage(activeQuery, searchOffset + KNOWLEDGE_SEARCH_PAGE_SIZE, activeProjectOnly)} disabled={searching || !hasMore || !activeQuery}>{m('nextPage')} →</button>
           </div>
 
           <div className="source-list">
-            {results.length === 0 && (
-              <div className="source-card">
-                <span className="source-id">0</span>
-                <div>
-                  <strong>{m('searchEmpty')}</strong>
-                  <small>{m('searchEmptyHint')}</small>
-                </div>
-              </div>
-            )}
+            {results.length === 0 && <div className="source-card"><span className="source-id">0</span><div><strong>{m('searchEmpty')}</strong><small>{m('searchEmptyHint')}</small></div></div>}
             {results.map((result) => (
               <div className="source-card" key={result.chunk_id}>
                 <span className="source-id">#{result.ordinal}</span>
                 <div>
                   <strong>{result.document_title}</strong>
                   <small>{result.excerpt}</small>
-                  <small>
-                    v{result.generation} · score {result.rank.toFixed(3)} · SHA-256{' '}
-                    {result.content_sha256.slice(0, 16)}…
-                  </small>
-                  <button
-                    type="button"
-                    onClick={() => onInspectResult({
-                      documentId: result.document_id,
-                      documentVersionId: result.document_version_id,
-                      chunkId: result.chunk_id,
-                      ordinal: result.ordinal,
-                    })}
-                  >
-                    {m('inspect')}
-                  </button>
+                  <small>v{result.generation} · score {result.rank.toFixed(3)} · SHA-256 {result.content_sha256.slice(0, 16)}…</small>
+                  <button type="button" onClick={() => onInspectResult({ projectId: result.document_project_id, documentId: result.document_id, documentVersionId: result.document_version_id, chunkId: result.chunk_id, ordinal: result.ordinal })}>{m('inspect')}</button>
                 </div>
               </div>
             ))}
