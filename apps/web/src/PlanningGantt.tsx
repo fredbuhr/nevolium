@@ -154,7 +154,7 @@ export default function PlanningGantt({
   return (
     <section className="planning-gantt" aria-label={t('planning.gantt')}>
       <div className="planning-gantt-note">
-        <span>{t('planning.ganttValidatedEdit')}</span>
+        <span>{t('planning.ganttReadonly')}</span>
         {mapped.hiddenCount > 0 ? (
           <small>{mapped.hiddenCount} {t('planning.ganttHidden')}</small>
         ) : null}
