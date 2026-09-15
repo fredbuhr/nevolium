@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EDITOR = ROOT / "apps/web/src/KnowledgeEditor.tsx"
 WORKSPACE = ROOT / "apps/web/src/KnowledgeWorkspace.tsx"
 PANEL = ROOT / "apps/web/src/KnowledgePanel.tsx"
+INSPECTOR = ROOT / "apps/web/src/KnowledgeInspectorView.tsx"
 SEARCH = ROOT / "apps/web/src/KnowledgeSearchPanel.tsx"
 TYPES = ROOT / "apps/web/src/knowledgeTypes.ts"
 MESSAGES = ROOT / "apps/web/src/knowledgeMessages.ts"
@@ -18,6 +19,7 @@ def main() -> int:
     editor = EDITOR.read_text(encoding="utf-8")
     workspace = WORKSPACE.read_text(encoding="utf-8")
     panel = PANEL.read_text(encoding="utf-8")
+    inspector = INSPECTOR.read_text(encoding="utf-8")
     search = SEARCH.read_text(encoding="utf-8")
     types = TYPES.read_text(encoding="utf-8")
     messages = MESSAGES.read_text(encoding="utf-8")
@@ -49,14 +51,16 @@ def main() -> int:
     assert "projectId: string" in types
     assert "!selectedDocument.asset_id" in actions
     assert "selectedDocument.kind !== 'source'" in actions
+    assert "selectedDocument?.kind === 'source' && selectedDocument.asset_id" in inspector
+    assert "disabled={openingSource || !selectedSource}" in inspector
+    assert "!selectedSource ||" in inspector
+    assert "version.search_status" in inspector
 
-    # Search is owner-wide unless the user explicitly scopes it to the selected project.
     assert "const [projectOnly, setProjectOnly] = useState(false)" in search
     assert "if (scoped && selectedProjectId) params.set('project_id', selectedProjectId)" in search
     assert "if (!selectedProjectId || searchQuery.length" not in search
     assert "projectId: result.document_project_id" in search
     assert "searchAll" in search and "searchProject" in search
-    # Inspecting a global result changes both project and document, preserving cross-space navigation.
     assert "setSelectedProjectId(target.projectId)" in panel
     assert "setSelectedDocumentId(target.documentId)" in panel
 
@@ -74,7 +78,7 @@ def main() -> int:
     print(
         "D07 KNOWLEDGE WEB PASS: Lexical serializes into canonical version payloads, optimistic "
         "generations and restore are explicit, universal search is owner-wide and cross-project "
-        "inspection switches context, source actions stay Asset-bound, and new surfaces are bilingual/responsive"
+        "inspection switches context, source controls stay Asset-bound, and new surfaces are bilingual/responsive"
     )
     return 0
 
