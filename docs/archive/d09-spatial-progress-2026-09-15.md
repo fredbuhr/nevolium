@@ -54,6 +54,13 @@ les scénarios navigateur D05–D08. L'entrée du nouveau scénario D09 cherchai
 avec un navigateur par défaut anglais : locale du fixture fixée à `fr-FR`, puis bascule EN explicite
 conservée. Aucun changement de traduction produit nécessaire.
 
+Le head `4dca4ed6910857f6825c8d7ba9546f41be2839ad` a révélé un fallback 2D prématuré :
+R3F monte le contenu de la propriété `fallback` dans le DOM du canvas même lorsque WebGL fonctionne.
+Un effet placé dans ce contenu signalait donc une indisponibilité à chaque ouverture. Cette
+propriété est supprimée ; le test explicite WebGL2, la boundary d'erreur et la gestion de perte de
+contexte restent les seules voies de secours. Les erreurs console du navigateur sont conservées
+pour diagnostiquer les erreurs interceptées par une boundary.
+
 ## Gate restant
 
 1. Qualifier le head de cette livraison en CI, examiner captures et mesures, corriger les échecs.

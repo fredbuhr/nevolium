@@ -281,7 +281,6 @@ export default function Scene(props: SceneProps) {
     dpr={1}
     gl={{ antialias: false, alpha: true, powerPreference: 'low-power' }}
     frameloop={props.reducedMotion ? 'demand' : 'always'}
-    fallback={<Unavailable onFailure={props.onFailure} />}
     onPointerMissed={() => props.onSelect('', false)}
   >
     <CameraAndMetrics {...props} poses={poses} tier={tier} onTier={setAutoTier} />

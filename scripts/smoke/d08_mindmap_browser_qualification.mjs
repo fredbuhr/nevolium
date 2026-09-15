@@ -190,6 +190,7 @@ async function casePage(browser, state, name, options) {
   activeCase = { name, page, state, errors }
   stage = `${name}:open`
   page.on('pageerror', error => errors.push(error.stack || error.message))
+  page.on('console', message => { if (message.type() === 'error') console.log(`${name} browser console: ${message.text()}`) })
   await installApiMock(context, state)
   return { context, page, errors }
 }

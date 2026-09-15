@@ -13,7 +13,7 @@ const Scene = lazy(() => import('./Scene'))
 class SceneBoundary extends Component<{ children: ReactNode; onFailure: () => void }, { failed: boolean }> {
   state = { failed: false }
   static getDerivedStateFromError() { return { failed: true } }
-  componentDidCatch() { this.props.onFailure() }
+  componentDidCatch(error: Error) { console.error('Nevolium 3D scene unavailable', error); this.props.onFailure() }
   render() { return this.state.failed ? null : this.props.children }
 }
 
