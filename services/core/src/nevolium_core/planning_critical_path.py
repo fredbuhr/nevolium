@@ -12,7 +12,9 @@ from .db import get_session
 from .models import Task
 from .planning_critical_path_schemas import CriticalPathRead, CriticalPathTaskRead
 from .planning_engine import PlanningEdge, PlanningNode, critical_path
-from .planning_models import TaskDependency, TaskPlanningProfile
+from .planning_models import ProjectWorkCalendar, TaskDependency, TaskPlanningProfile
+from .planning_work_calendar import build_work_calendar, working_seconds_between
+from .planning_work_calendar_schemas import ProjectWorkCalendarRead
 from .project_access import get_owned_project
 
 MAX_CRITICAL_PATH_TASKS = 1000
@@ -27,6 +29,21 @@ async def read_project_critical_path(
     project = await get_owned_project(session, project_id, principal)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    calendar_row = await session.get(ProjectWorkCalendar, project.id)
+    try:
+        calendar_view = (
+            ProjectWorkCalendarRead.model_validate(calendar_row)
+            if calendar_row is not None
+            else ProjectWorkCalendarRead(project_id=project.id)
+        )
+        work_calendar = build_work_calendar(
+            timezone_name=calendar_view.timezone,
+            weekly_intervals=calendar_view.weekly_intervals,
+            exceptions=calendar_view.exceptions,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail="Stored work calendar is invalid") from exc
 
     task_rows = list(
         (
@@ -83,7 +100,16 @@ async def read_project_critical_path(
             if start is not None and (end is None or end == start):
                 duration_seconds = 0
         elif start is not None and end is not None and end >= start:
-            duration_seconds = int((end - start).total_seconds())
+            try:
+                duration_seconds = working_seconds_between(start, end, work_calendar)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=422,
+                    detail={
+                        "message": "Task planning window exceeds work-calendar bounds",
+                        "task_id": str(task.id),
+                    },
+                ) from exc
 
         if duration_seconds is None:
             excluded_task_ids.append(task.id)
@@ -100,6 +126,8 @@ async def read_project_critical_path(
         ):
             excluded_dependency_ids.append(dependency.id)
             continue
+        # The CPM engine is intentionally scalar. Once a project work calendar is active, task
+        # durations and dependency lags share the same working-second basis.
         edges.append(
             PlanningEdge(
                 dependency_id=dependency.id,
@@ -117,6 +145,9 @@ async def read_project_critical_path(
 
     return CriticalPathRead(
         project_id=project.id,
+        basis="working_seconds",
+        work_calendar_timezone=calendar_view.timezone,
+        work_calendar_version=calendar_view.calendar_version,
         network_complete=not excluded_dependency_ids,
         project_duration_seconds=result.project_duration_seconds,
         project_task_count=len(task_rows),
