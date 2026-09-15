@@ -25,6 +25,7 @@ from .editable_knowledge import (
     restore_authored_version,
     update_authored_metadata,
 )
+from .knowledge_exchange import KnowledgeExchangeRead, export_knowledge, import_knowledge
 from .project_access import get_owned_project
 
 router = APIRouter()
@@ -310,4 +311,17 @@ router.add_api_route(
     list_document_asset_links,
     methods=["GET"],
     response_model=list[DocumentAssetLinkRead],
+)
+router.add_api_route(
+    "/v1/knowledge/import",
+    import_knowledge,
+    methods=["POST"],
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/export",
+    export_knowledge,
+    methods=["GET"],
+    response_model=KnowledgeExchangeRead,
 )
