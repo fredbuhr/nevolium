@@ -5,8 +5,9 @@ The component registry is intentionally broader than the currently implemented p
 The maturity column describes the Nevolium integration, not the upstream project's maturity.
 
 D04 supplies bounded real-engine evidence for Docling/Mem0/Graphiti and the API-first pilot. D05
-validates the workspace shell. D06 PR #90 adds a qualified planning candidate on exact head
-`9730e9c10aabf1a8725173dddbf26c66abe8f9ef`; it is not yet integrated/deployed at this checkpoint.
+validates the workspace shell. D06 is integrated by PR #90, merge commit
+`20720774552418a6c9e7acbfbf069945ff0f57df`; its final PR head
+`b09a62cd207371c2610d16198bbbaa0b46561c1c` passed 9/9 workflows. Deployment remains separate.
 
 ## Maturity legend
 
@@ -50,16 +51,16 @@ validates the workspace shell. D06 PR #90 adds a qualified planning candidate on
 | Desktop runtime | Tauri | app / desktop | Nevolium-owned local trust boundary | **Scaffold** |
 | Workspace shell | Dockview | web library | Nevolium UX/layout surface | **Validated** |
 | Data views | TanStack Table/Query | web libraries | Nevolium UX/data access | **Integrated** |
-| Drag/drop | dnd-kit | web library | Kanban interaction only; Task remains canonical | **Validated in D06 candidate** |
+| Drag/drop | dnd-kit | web library | Kanban interaction only; Task remains canonical | **Validated in D06** |
 | Rich text | Lexical | web library | future canonical document/editor surface | **Configured** |
 | Whiteboard | Excalidraw | web library target | assets/doc objects linked to domain | **Declared** |
-| Planning calendar | Nevolium Web | web / D06 | view/editor over canonical Tasks and virtual occurrences | **Validated in D06 candidate** |
+| Planning calendar | Nevolium Web | web / D06 | view/editor over canonical Tasks and virtual occurrences | **Validated in D06** |
 | Calendar library target | Schedule-X | web library | optional renderer only; never canonical truth | **Configured; not used by qualified D06 calendar** |
 | Dashboards | Apache ECharts | web library | view only | **Configured** |
 | Maps | MapLibre GL JS | web library | view over place/location state | **Configured** |
 | 2D graph | React Flow | web library | view over Nevolium graph | **Configured** |
 | 3D graph | React Three Fiber + react-force-graph-3d | web libraries | view over Nevolium graph | **Configured** |
-| Gantt | SVAR React Gantt 2.7.3 | web library / D06 | renderer/input only; Core/PostgreSQL own plan state | **Validated in D06 candidate** |
+| Gantt | SVAR React Gantt 2.7.3 | web library / D06 | renderer/input only; Core/PostgreSQL own plan state | **Validated in D06** |
 | Crypto accounting | rotki | service / `finance` | portfolio source/adapter, private network only | **Configured** |
 | Exchange APIs | CCXT | integration library / finance | no raw secret exposure to models | **Declared** |
 | EVM | viem | web/worker library / finance | prepare/read; signing isolated | **Declared** |
@@ -78,9 +79,9 @@ Gantt because Nevolium already owns the List view; the Gantt is chart-only and m
 intercepted back into Nevolium preview/apply or versioned planning-structure contracts. A regression
 contract also forbids opening leaf rows in SVAR's `DataTree`, whose leaves carry `data=null`.
 
-The qualified D06 calendar is intentionally implemented as a Nevolium surface over canonical Tasks
-and Core-produced virtual occurrences. Schedule-X remains installed/configured and may be reused
-later, but its mere presence is not promoted to validation evidence.
+The qualified D06 calendar is a Nevolium surface over canonical Tasks and Core-produced virtual
+occurrences. Schedule-X remains installed/configured and may be reused later, but its mere presence
+is not validation evidence.
 
 ## Other capability notes
 

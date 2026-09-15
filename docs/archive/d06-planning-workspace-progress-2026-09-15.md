@@ -1,88 +1,71 @@
 # D06 — planification cohérente et fondation multilingue — checkpoint du 15 septembre 2026
 
-## Point de départ et statut
+## Intégration
 
-D06 a été ouvert depuis le `main` live `03a1fcf348361f870556e0c8808cae5d70970394` sur
-`feat/d06-planning-workspace`, PR #90. La tête fonctionnelle qualifiée est
-`9730e9c10aabf1a8725173dddbf26c66abe8f9ef` : les 9 workflows PR sont réussis.
-La PR reste volontairement en brouillon pendant la clôture documentaire ; D06 n'est donc pas encore
-intégré ni déployé au moment de ce checkpoint.
+D06 a été ouvert depuis `main` `03a1fcf348361f870556e0c8808cae5d70970394` sur
+`feat/d06-planning-workspace`. La tête finale de la PR #90 est
+`b09a62cd207371c2610d16198bbbaa0b46561c1c` et passe **9/9 workflows PR**. La PR est intégrée par le
+commit signé `20720774552418a6c9e7acbfbf069945ff0f57df` ; ses parents sont la base D06 et cette tête
+finale, et l'arbre de fusion `5d29dfaee0b0c0d4857956efeb4da8f4254151d0` est identique à l'arbre
+qualifié de la branche.
 
 Le serveur pilote reste sur le runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` et le schéma
 `0015_model_configurations`. Les migrations D06 `0016_planning_structure` et
-`0017_project_work_calendar` n'ont été appliquées qu'en CI sur des bases de qualification. Aucun
-conteneur, snapshot B2, secret, Task historique ou donnée de production n'a été modifié par D06.
+`0017_project_work_calendar` sont intégrées au dépôt mais n'ont été appliquées qu'en CI. La fusion
+D06 n'a modifié aucun conteneur, snapshot B2, secret, Task historique ou donnée de production.
 
-## Résultat livré dans la branche
+## Résultat D06
 
 | Zone | Comportement qualifié |
 |---|---|
-| Modèle canonique | Profils de planification versionnés, sous-tâches, tâches/jalons, dépendances FS/SS/FF/SF et calendrier de travail par projet, sans second modèle propre au Gantt |
-| Projection | Lecture owner-scoped et paginée des mêmes Tasks canoniques ; les anciennes Tasks sans profil reçoivent des valeurs de projection par défaut sans duplication de vérité |
-| Cycles et conflits | Refus des cycles hiérarchiques et de dépendances, verrou projet pour les mutations structurelles, contrôle `expected_version` et isolation entre propriétaires |
-| Chemin critique | Calcul déterministe côté Core, d'abord en temps écoulé puis raccordé au calendrier de travail ; réseau incomplet signalé explicitement et tâches non planifiées exclues sans inventer de dates |
-| Calendrier de travail | Fuseau IANA, semaine ouvrée et exceptions datées versionnées ; calculs bornés et scénarios DST qualifiés |
-| Récurrences | Occurrences virtuelles bornées/paginées, générées par Core depuis la Task canonique ; aucune copie persistée par occurrence et aucune interprétation RRULE dans le Web |
-| Replanification | `preview` puis `apply` atomique ; digest déterministe, versions revalidées sous verrou, violations de dépendances bloquantes et effets aval proposés mais jamais inclus implicitement |
-| Liste/Kanban | Une même projection alimente liste et Kanban ; les statuts `queued/running` restent pilotés par workflow, les transitions manuelles restent limitées à `todo/completed` |
-| Gantt | SVAR React Gantt utilisé comme renderer/surface d'entrée seulement ; mode chart-only, dépendances visibles, chemin critique signalé, drag/resize/progression renvoyés vers les contrats Nevolium canoniques |
-| Calendrier UI | Surface Nevolium dédiée sur les Tasks/occurrences canoniques, agenda compact et édition non-glisser ; Schedule-X reste une dépendance installée mais n'est pas la preuve de cette livraison |
+| Modèle canonique | Profils versionnés, sous-tâches, tâches/jalons, dépendances FS/SS/FF/SF et calendrier de travail par projet, sans modèle parallèle propre au Gantt |
+| Projection | Lecture owner-scoped/paginée des mêmes Tasks ; les anciennes Tasks sans profil reçoivent des valeurs de projection par défaut |
+| Cycles et conflits | Refus cycles hiérarchiques/dépendances, verrou projet, `expected_version` et isolation propriétaires |
+| Chemin critique | Calcul déterministe Core, raccordé au calendrier de travail ; réseau incomplet signalé et tâches non planifiées exclues sans dates inventées |
+| Calendrier de travail | Fuseau IANA, semaine ouvrée et exceptions versionnées ; DST et calculs bornés qualifiés |
+| Récurrences | Occurrences virtuelles bornées/paginées générées par Core ; aucune Task copiée par occurrence ni RRULE interprétée dans le Web |
+| Replanification | `preview` puis `apply` atomique ; digest/versions revalidés, violations bloquantes, effets aval proposés mais jamais inclus implicitement |
+| Liste/Kanban | Même projection ; `queued/running` restent pilotés par workflow, transitions manuelles limitées à `todo/completed` |
+| Gantt | SVAR 2.7.3 renderer/input seulement ; chart-only, dépendances/critique visibles, gestes date/progression renvoyés aux contrats Nevolium |
+| Calendrier UI | Surface Nevolium dédiée Tasks/occurrences, agenda compact et édition non-glisser ; Schedule-X installé mais non utilisé comme preuve |
 | Today | Après `apply`, Planning recharge l'état canonique et Today retrouve la même Task mise à jour |
-| FR/EN | Provider central extensible, choix persistant, `document.lang`, formatage central, langue transmise à Assistant/News et catalogue D06 FR/EN ; D13 reste le gate de complétude linguistique du produit entier |
+| FR/EN | Provider central extensible, choix persistant, `document.lang`, formatage central et propagation Assistant/News ; D13 reste la complétude globale |
 
-## Incident Gantt tactile et correction
+## Incident Gantt tactile fermé
 
-La qualification Chromium a découvert un défaut réel au passage Liste → Gantt sur tablette : React
-était démonté par `Cannot read properties of null (reading 'forEach')`. Le test a d'abord éliminé
-une course de chargement, puis la grille interne SVAR a été retirée du parcours compact au profit
-d'un rendu chart-only, sans résoudre à elle seule le crash.
+Chromium a révélé un crash Liste → Gantt sur tablette : `Cannot read properties of null (reading
+'forEach')`. L'inspection du code amont SVAR a montré que `DataTree.parse()` garde `data=null` sur
+les feuilles tandis que `DataTree.toArray()` descend toute ligne `open === true`. Nevolium marquait
+toutes les lignes ouvertes. Le mapping ne marque désormais `open: true` que les tâches ayant au
+moins un enfant effectivement rendu. Un contrat statique verrouille cette règle. Le mode chart-only
+évite en plus la grille SVAR redondante sur les écrans compacts.
 
-L'inspection du code amont SVAR 2.7.3 a isolé la cause : `DataTree.parse()` laisse `data = null` sur
-les feuilles, tandis que `DataTree.toArray()` descend récursivement dans toute ligne ayant
-`open === true`. Nevolium marquait auparavant toutes les lignes `open: true`, donc une feuille
-provoquait `toArray(null)`. Le mapping D06 ne marque désormais `open: true` que les tâches ayant au
-moins un enfant effectivement rendu. Un contrat statique verrouille cette règle. La qualification
-tactile réussit ensuite sans affaiblir le scénario.
+## Validation
 
-## Validation exacte de la tête fonctionnelle
-
-Sur `9730e9c10aabf1a8725173dddbf26c66abe8f9ef` :
+Sur la tête finale `b09a62cd207371c2610d16198bbbaa0b46561c1c` :
 
 - **9/9 workflows PR réussis** : Code quality, UI workspace, MCP registry, Document ingestion,
   Baseline reproducibility, Foundation, Multi-user isolation, Autonomous research et D04 real engine ;
-- UI workspace : contrats D06 locale/structure/replan/CPM/récurrence/calendrier de travail/workspace,
-  compilation Web/Core et intégration PostgreSQL réelles réussis ;
-- PostgreSQL : migrations jusqu'à D06, projection/CPM/replan/cycles/conflits/isolation, occurrences,
-  calendrier de travail et effets aval de replanification réussis ;
-- TypeScript + Vite : réussite, 190 modules transformés ; avertissement non bloquant de bundle
-  principal supérieur à 500 kB ;
-- Chromium D06 :
-  `tablet={touch:true,gantt:true,alternativeEditor:true}` et
-  `phone={touch:true,calendar:true,previewReads:1,applyReads:1,planningReads:2,todayReads:1}` ;
-- artefact `d06-planning-browser-qualification` : ID `10401197268`, digest
-  `sha256:bcb91b747f8274649f83f810fbcce504062780d67f889f7f5f2fa9ef64ecd297` ;
-- le garde-fou D04 a requalifié les adaptateurs document/mémoire réels et la restauration sur
-  destination distincte ; le job LLM local reste skipped conformément à ADR-031.
+- migrations PostgreSQL jusqu'à D06, projection/CPM/replan/cycles/conflits/isolation, occurrences,
+  calendrier de travail et effets aval réussis ;
+- TypeScript/Vite et contrats statiques réussis ;
+- Chromium : tablette tactile avec Gantt + alternative d'édition et téléphone avec calendrier,
+  preview/apply, reload Planning puis Today ;
+- les gardes D04, isolation, Research et documents restent vertes sur la même tête finale.
 
-## Limites conservées
+La preuve navigateur fonctionnelle est conservée par le workflow UI ; le run qui a fermé le crash
+Gantt a produit l'artefact D06 ID `10401197268`, digest
+`sha256:bcb91b747f8274649f83f810fbcce504062780d67f889f7f5f2fa9ef64ecd297`.
 
-- D13 reste responsable de la traduction complète des surfaces historiques. D06 pose la fondation
-  extensible et traduit ses surfaces ; il ne permet pas de déclarer tout Nevolium bilingue.
-- Aucune voix TTS anglaise n'est qualifiée : la voix existante n'est pas renommée ni supposée
-  compatible par déduction.
-- Pas de solveur universel : le moteur traite le réseau borné et les contraintes définies par D06.
-- Les calendriers externes restent D11 ; le hors-ligne préparé et sa synchronisation restent D12.
-- Schedule-X est installé mais la surface calendrier D06 qualifiée est l'implémentation Nevolium.
-- La CI tactile est une preuve Chromium déterministe ; la revue ergonomique sur appareils physiques
-  reste un suivi produit et non un prérequis caché au gate automatisé.
+## Limites et rollback
 
-## Reprise et rollback
+D13 reste responsable de la traduction complète des surfaces historiques. Aucune voix TTS anglaise
+n'est qualifiée. Il n'y a pas de solveur universel ; calendriers externes en D11 et offline/synchro
+en D12. La CI tactile ne remplace pas une revue ergonomique sur appareils physiques.
 
-Aucun rollback de production n'est nécessaire puisque D06 n'y est pas déployé. Si les migrations
-étaient appliquées plus tard puis devaient être retirées, revenir dans l'ordre `0017` puis `0016`
-vers `0015`, après arrêt/drainage normal et examen des données de planification créées ; ne jamais
-supprimer ces données pour masquer un incident.
+Aucun rollback de production n'est requis puisque D06 n'y est pas déployé. Si les migrations sont
+appliquées plus tard puis doivent être retirées, examiner les données et revenir dans l'ordre
+`0017` puis `0016` vers `0015`, après arrêt/drainage normal.
 
-Prochaine action de la branche : qualifier le commit documentaire de clôture sur sa tête exacte,
-mettre la PR #90 à jour, puis fusionner seulement si les checks requis restent verts. Après fusion,
-revérifier le `main` live, mettre `PROJECT_STATE.md` au statut intégré et retirer la branche D06.
+D06 est intégré. La prochaine tranche produit est D07 ; elle doit démarrer depuis le `main` live sur
+une nouvelle branche après annonce explicite du lot, sans démarrer D08/D09 en parallèle.
