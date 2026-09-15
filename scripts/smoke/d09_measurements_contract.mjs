@@ -13,7 +13,7 @@ for (const id of Object.keys(CASES)) {
 }
 const sample = (at_ms, segment = 1, heap_bytes = null) => ({
   at_ms, segment, heap_bytes, frames: 90, fps: 60, geometries: 3, textures: 0, calls: 3, triangles: 100,
-  tier: 'eco', viewport: { width: 1280, height: 600, dpr: 1 },
+  tier: 'eco', viewport: { width: 1280, height: 600, device_dpr: 2, buffer_width: 1280, buffer_height: 600 },
 })
 let recording = { started_at: '2026-09-15T00:00:00Z', target_ms: 600_000, active_ms: 0, samples: [], gaps: [] }
 assert.equal(recordSample(recording, { ...sample(1), frames: 1, fps: 0 }), recording)

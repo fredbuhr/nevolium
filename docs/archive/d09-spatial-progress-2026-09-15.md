@@ -136,5 +136,11 @@ export d'une campagne incomplète, tactile émulé et absence WebGL. Sa CI reste
 courte sous SwiftShader. Les checks du head live et le corps de #93 portent les résultats exacts.
 La validation de dix minutes physiques n'est pas déclarée acquise.
 
+Première CI du kit (`ccfe70d`, UI `35026113729`) : tous les parcours D05–D09 et les contrats
+PostgreSQL passent ; le nouveau runner s'arrête sur le nom accessible du sélecteur GPU. Les
+sélecteurs du banc reçoivent un `aria-label` explicite correspondant au libellé visible, sans
+relâcher les actions navigateur. La révision distingue aussi DPR d'appareil et dimensions du
+buffer WebGL pour comparer la résolution effectivement rendue.
+
 [Mode d'emploi et portée du banc](../qualification-d09-hardware.md). Le kit ne remplace pas les essais
 du cockpit complet/2D/persistance serveur. Aucun déploiement, aucune clôture D09 et aucun D10 engagé.

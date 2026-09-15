@@ -48,7 +48,9 @@ mesure peut ne pas avancer sans interaction. Le rapport conserve ce réglage et 
 
 Le rapport contient les SHA source et checkout, le statut de sources modifiées, les conditions
 saisies au départ, le GPU annoncé par le navigateur pour chaque remontage, les fenêtres FPS,
-les échantillons de heap JS disponibles, le viewport/DPR et les incidents. L’outil conserve au plus
+les échantillons de heap JS disponibles, le viewport CSS, le DPR de l’appareil, la taille effective
+du buffer WebGL et les incidents. Le profil peut réduire la résolution de rendu sous le DPR de
+l’appareil ; utiliser la taille du buffer pour comparer les charges. L’outil conserve au plus
 1 000 échantillons et 200 événements ; sa propre mémoire est incluse dans le heap observé.
 
 Les minimums et percentiles portent sur des **fenêtres FPS d’environ 1,5 seconde**, pas sur les temps

@@ -38,7 +38,7 @@ export function fixture(id: CaseId) {
 
 export type Sample = SceneMetrics & {
   at_ms: number; segment: number; heap_bytes: number | null
-  viewport: { width: number; height: number; dpr: number }
+  viewport: { width: number; height: number; device_dpr: number; buffer_width: number | null; buffer_height: number | null }
 }
 export type Recording = {
   started_at: string; target_ms: number; active_ms: number

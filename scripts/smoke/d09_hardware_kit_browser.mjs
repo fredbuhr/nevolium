@@ -76,6 +76,7 @@ try {
   assert(report.events.some(event => event.kind === 'scene-unmounted'))
   assert(report.events.some(event => event.kind === 'camera-changed'))
   assert(report.samples.every(sample => Number.isFinite(sample.fps)))
+  assert(report.samples.every(sample => sample.viewport.buffer_width > 0 && sample.viewport.buffer_height > 0))
   assert(/^[a-f0-9]{40}$/.test(report.build.source_commit))
   await desktop.context.close()
 

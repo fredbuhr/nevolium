@@ -107,7 +107,8 @@ function App() {
     const rect = viewport.current!.getBoundingClientRect()
     const updated = { ...current, ...recordSample(current, { ...value, at_ms: performance.now() - started.current,
       segment: segment.current, heap_bytes: (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ?? null,
-      viewport: { width: Math.round(rect.width), height: Math.round(rect.height), dpr: devicePixelRatio } }) }
+      viewport: { width: Math.round(rect.width), height: Math.round(rect.height), device_dpr: devicePixelRatio,
+        buffer_width: gl?.drawingBufferWidth ?? null, buffer_height: gl?.drawingBufferHeight ?? null } }) }
     recording.current = updated; setRun(updated)
     if (updated.active_ms >= updated.target_ms) { event('duration-reached'); stop() }
     else if (updated.active_ms >= (cycle.current + 1) * 120_000) { cycle.current++; pause() }
@@ -165,15 +166,15 @@ function App() {
     </ol><p>Un temps de mesure atteint ne valide pas automatiquement D09. Joindre la mémoire du processus relevée avec l’outil système au début et à la fin ; la mémoire JavaScript seule ne couvre pas le GPU.</p></details>
     <fieldset disabled={running}><legend>Conditions de l’essai</legend><div className="hardware-grid">
       <label>Appareil et système<input value={device.model} placeholder="Modèle · OS · version" onChange={e => setDevice({ ...device, model: e.target.value })} /></label>
-      <label>GPU vérifié<select value={device.gpu_class} onChange={e => setDevice({ ...device, gpu_class: e.target.value })}>
+      <label>GPU vérifié<select aria-label="GPU vérifié" value={device.gpu_class} onChange={e => setDevice({ ...device, gpu_class: e.target.value })}>
         <option value="unknown">À identifier</option><option value="integrated">GPU intégré</option><option value="tablet">GPU de tablette</option><option value="discrete">GPU dédié</option><option value="software">Rendu logiciel</option></select></label>
-      <label>Alimentation<select value={device.power} onChange={e => setDevice({ ...device, power: e.target.value })}>
+      <label>Alimentation<select aria-label="Alimentation" value={device.power} onChange={e => setDevice({ ...device, power: e.target.value })}>
         <option value="unknown">À renseigner</option><option value="plugged">Secteur</option><option value="battery">Batterie</option></select></label>
-      <label>Jeu synthétique<select value={caseId} onChange={e => { setCaseId(e.target.value as CaseId); setCamera(null); setSelected([]); setEnabled(false) }}>
+      <label>Jeu synthétique<select aria-label="Jeu synthétique" value={caseId} onChange={e => { setCaseId(e.target.value as CaseId); setCamera(null); setSelected([]); setEnabled(false) }}>
         {Object.entries(CASES).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>
-      <label>Qualité<select value={quality} onChange={e => setQuality(e.target.value as Quality)}>
+      <label>Qualité<select aria-label="Qualité" value={quality} onChange={e => setQuality(e.target.value as Quality)}>
         <option value="eco">Économique</option><option value="auto">Automatique</option><option value="balanced">Équilibrée</option><option value="high">Élevée</option></select></label>
-      <label>Durée mesurée<select value={duration} onChange={e => setDuration(Number(e.target.value))}>
+      <label>Durée mesurée<select aria-label="Durée mesurée" value={duration} onChange={e => setDuration(Number(e.target.value))}>
         <option value={600}>10 minutes — campagne</option><option value={60}>1 minute — prise en main</option></select></label>
     </div></fieldset>
     <div className="spatial-toolbar"><button onClick={start} disabled={running}>Démarrer la mesure</button>
@@ -182,7 +183,7 @@ function App() {
         {run ? `${Math.floor(run.active_ms / 1000)} / ${run.target_ms / 1000} s mesurées${summary?.duration_complete ? ' · durée atteinte, résultats à examiner' : ''}` : 'Prêt · 3D désactivée au démarrage'}</output></div>
     {failed ? <p role="alert">WebGL indisponible ou interrompu. La mesure est arrêtée. <button onClick={() => { setFailed(false); setEnabled(true) }}>Réessayer la scène</button></p> : null}
     <div className="hardware-stage">
-      <div className="spatial-navigation"><label>Sélectionner un objet<select value={selected[0] || ''} onChange={e => select(e.target.value, false)}>
+      <div className="spatial-navigation"><label>Sélectionner un objet<select aria-label="Sélectionner un objet" value={selected[0] || ''} onChange={e => select(e.target.value, false)}>
         <option value="">Aucun</option>{data.nodes.map(node => <option key={node.id} value={node.id}>{node.label}</option>)}</select></label>
         <button disabled={!active || !selected.length} onClick={() => issue('focus')}>Centrer</button>
         <button disabled={!active} onClick={() => issue('reset')}>Vue d’ensemble</button>
@@ -198,12 +199,12 @@ function App() {
           ref={element => { if (element) labels.current.set(node.id, element); else labels.current.delete(node.id) }}
           aria-pressed={selected.includes(node.id)} onClick={() => select(node.id, false)}>{node.label}</button>) : null}</div>
       </div>
-      <p className="hardware-live" aria-live="off">{metrics ? `${metrics.fps} FPS · profil ${metrics.tier} · ${metrics.calls} appels de rendu · ${metrics.geometries} géométries` : 'Les mesures apparaîtront après les premières images.'}
+      <p className="hardware-live" aria-live="off">{metrics ? `Dernière fenêtre : ${metrics.fps} FPS · profil ${metrics.tier} · ${metrics.calls} appels de rendu · ${metrics.geometries} géométries` : 'Les mesures apparaîtront après les premières images.'}
         {running ? ` · ${Math.floor((run?.active_ms || 0) / 1000)} s mesurées` : ''}{reducedMotion ? ' · mouvement réduit actif : rendu à la demande' : ''}</p>
     </div>
     <details open={Boolean(run && !running)}><summary>Observations à joindre au rapport</summary><div className="hardware-grid">
       {['Orbite et zoom', 'Sélection et centrage', 'Gestes tactiles', 'Retour après masquage'].map(label => <label key={label}>{label}
-        <select value={observations[label] || 'not-tested'} onChange={e => setObservations({ ...observations, [label]: e.target.value })}>
+        <select aria-label={label} value={observations[label] || 'not-tested'} onChange={e => setObservations({ ...observations, [label]: e.target.value })}>
           <option value="not-tested">Non testé</option><option value="ok">Satisfaisant</option><option value="issue">Problème observé</option><option value="not-applicable">Non applicable</option></select></label>)}
     </div><label>Ressenti, incidents, GPU exact, mémoire système au début et à la fin (outil et unité)<textarea rows={4} value={notes} onChange={e => setNotes(e.target.value)} /></label>
       <p>Le fichier exporté contient les conditions, le GPU annoncé par le navigateur, les fenêtres FPS, la mémoire JS disponible et les interruptions. Il ne déclare jamais seul le matériel « validé ».</p>
