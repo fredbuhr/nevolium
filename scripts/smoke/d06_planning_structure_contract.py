@@ -193,10 +193,13 @@ def main() -> int:
     assert 'event_type="task.replanned"' in replan
     assert "Replanning preview is stale" in replan
     assert "Replanning would violate one or more task dependencies" in replan
+    assert "_ensure_atomic_replan_capacity(" in replan
+    assert '"max_task_count": MAX_REPLAN_UPDATES' in replan
     replan_schemas = (
         ROOT / "services/core/src/nevolium_core/planning_replan_schemas.py"
     ).read_text(encoding="utf-8")
-    assert "max_length=100" in replan_schemas
+    assert "MAX_REPLAN_UPDATES = 100" in replan_schemas
+    assert "max_length=MAX_REPLAN_UPDATES" in replan_schemas
     assert 'pattern=r"^[0-9a-f]{64}$"' in replan_schemas
     assert "replanning request contains duplicate task IDs" in replan_schemas
 
@@ -208,7 +211,7 @@ def main() -> int:
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
         "owner-scoped dependencies, virtual occurrences and project work calendars, optimistic "
         "conflicts, cycle guards, one paginated Task projection, deterministic work-calendar "
-        "critical path and transactional preview/apply replanning are wired"
+        "critical path and bounded transactional preview/apply replanning are wired"
     )
     return 0
 
