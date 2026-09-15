@@ -1,91 +1,77 @@
 # Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-15. D04 est intégré par [#88](https://github.com/fredbuhr/nevolium/pull/88),
-ses quatre preuves sont acquises, le tag H5 vise son commit de fusion et la branche D04 est retirée.
-D05 est intégré par la [PR #89](https://github.com/fredbuhr/nevolium/pull/89), au commit de fusion
-`66f1e6991fb6df09bcb12678b8aadc007934f01a`. Core et Web exécutent le correctif qualifié
-`e275b7bb…` sur le pilote ; la fusion n’est pas présentée comme un nouveau déploiement. Les textes visibles sont alignés avec la
-[charte d'identité](identite-nevolium.md) sur cette même PR.
-La [reprise organique](archive/d05-organic-material-2026-09-14.md) remplace les orbites trop
-géométriques par une matière fibreuse bioluminescente et un paysage nocturne ; sa qualification
-exact-head et ses nouvelles captures sont suivies dans la PR. L'acceptation visuelle utilisateur
-reste nécessaire, indépendamment des tests fonctionnels. Le retour suivant rouvre la navigation :
-la correction [fil connecté](archive/d05-connected-navigation-2026-09-14.md) ajoute l’inspection
-du parent, du voisinage et des relations canoniques, un fond neutre et l’état du test IA explicite.
-La tête `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` passe la suite UI responsive/connectée et
-l’isolation entre comptes avec le vrai Keycloak/OIDC. Ses captures sont relues ; les états fournisseur
-des scénarios UI restent simulés. La correction ultérieure `e275b7bb…` est déployée. L’acceptation
-visuelle n’est pas déduite de la CI.
+Révision : 2026-09-15.
 
-Le premier essai de clé sur le pilote a exposé un défaut d’ordre d’insertion : la configuration
-référençait sa Task avant que PostgreSQL ne l’ait créée. La transaction a été annulée avec un `500`,
-sans candidat ni appel à LiteLLM/OpenAI ; la configuration serveur reste active. La même PR persiste
-désormais la Task avant la configuration et étend le contrat PostgreSQL au véritable endpoint HTTP.
-Le correctif `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` réussit ses dix workflows ;
-le test PostgreSQL appelle le véritable endpoint, obtient `202` et retrouve la Task et sa
-configuration. Sur le pilote corrigé, le nouvel essai réel OpenAI a réussi et l’utilisateur a activé
-la configuration : modèle retourné conforme, usage canonique unique et coût `0.000090 USD`.
-Les mesures cible proviennent des sorties opérateur conservées dans le
-[rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
+D04 est intégré par #88 et ses quatre preuves H5 restent acquises. D05 est intégré par #89 ; le
+pilote exécute toujours le correctif D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` avec le schéma
+`0015_model_configurations`, OpenAI `openai/gpt-4.1` qualifié et activé. D06 est actuellement un
+**candidat qualifié mais non encore intégré ni déployé** sur la PR #90. Sa tête fonctionnelle
+`9730e9c10aabf1a8725173dddbf26c66abe8f9ef` passe 9/9 workflows PR.
 
-## Acquis canoniques et qualification
+## Acquis canoniques
 
-Reset R0–R7, H1–H4 et D01–D04 intégrés ; dernier jalon produit G51 Daily Spine.
-D01 borne Worker/parsing, D02 apporte admission/budgets/pagination/rétention et D03 durcit
-droits/déploiement/reproductibilité. D04 qualifie les vrais moteurs et l'exploitation du pilote API.
-D05 est intégré ; Core et Web du pilote exécutent `e275b7bb…`. D06 n’est pas commencé.
-
-| Domaine | Preuve disponible | Limite |
+| Domaine | État vérifié | Limite actuelle |
 |---|---|---|
-| Serveur et état durable | Debian 13 durci, PostgreSQL `0014_capacity_and_data` qualifié D04 puis `0015_model_configurations` déployé D05 ; Temporal, JetStream, SeaweedFS ; charge mixte et restauration B2 acquises | Premier serveur Linux x86_64 |
-| Identité | TLS, OIDC/PKCE, comptes nominatifs et TOTP ; bootstrap retiré, refus anonyme/faux jeton/routes internes vérifiés | Ergonomie et nouveaux parcours |
-| Worker | Confinement, bundle hors ligne, Temporal réel ; mixte et rollback acquis | Capacité commerciale non qualifiée |
-| Documents | Docling 2.126.0, PDF propriétaire, version/chunks/source ; 39,499 s en mixte | Scans complexes, tableaux et gros documents hors essai |
-| Mémoire | Mem0/Graphiti réels et scope propriétaire ; rejeu sans doublon ; 21,451 s en mixte après 43,378 s d'admission | Qualité quotidienne à mesurer ; projections dérivées |
-| News | Sources propriétaire et briefing avec fallback déterministe | Synthèse quotidienne API non qualifiée ; anomalie financière historique conservée |
-| Modèle/comptabilité | OpenAI `openai/gpt-4.1` via configuration gérée active, limite 4096 ; identité fournisseur réelle conforme, test D05 comptabilisé `0.000090 USD` et réservations réglées sur cible | Un fournisseur qualifié ; estimation ne garantit pas un plafond fournisseur |
-| Routage | Command Center, propositions, garde Core et veto sans Task métier ; routes API | Pertinence quotidienne à améliorer |
-| Research | Deux recherches citées terminées en 23,591 s et 9,524 s ; Search puis Fetch ; résultat et usages canoniques | Une question de qualification ; classement lexical des sources, pas preuve générale de pertinence |
-| Unicité Research | Binding atomique déployé, concurrence Core/PostgreSQL et crash/replay CI verts | Préserver les identités historiques |
-| Secrets/exploitation | OpenBao persistant, policy minimale, root révoqué, renouvellement ; ancien Worker réactivé puis candidat ; récupération chiffrée réussie | Ne pas confondre exercice manuel et sauvegarde planifiée |
-| Restauration | Snapshots D04/pré-D05 conservés ; snapshot post-activation `e374714c…`, matériel LiteLLM chiffré `a3f6720d…` restauré à l’identique et 12 packs relus ; quatre magasins déjà vérifiés sur volumes isolés neufs | Restauration utilisateur isolée sur même serveur ; restauration entre VM prouvée séparément en CI |
+| Serveur et données | PostgreSQL/pgvector, Temporal, JetStream, SeaweedFS ; migrations production jusqu'à `0015` ; restauration B2 acquise | Premier serveur Linux x86_64 ; migrations D06 non déployées |
+| Identité | TLS, OIDC/PKCE, comptes nominatifs/TOTP et isolation owner-scoped vérifiée | Nouveaux parcours à requalifier à chaque lot |
+| Worker / documents | Confinement, Temporal réel, Docling 2.126.0 et parsing borné ; garde D04 réel toujours vert | Scans complexes/gros documents hors campagne |
+| Mémoire / graphe | Mem0/Graphiti réels et scope propriétaire, rejeu sans doublon | Qualité quotidienne à mesurer ; projections dérivées |
+| Modèle / coûts | LiteLLM, OpenAI `openai/gpt-4.1`, usages/budgets canoniques ; test pilote comptabilisé | Un fournisseur qualifié ; pas de garantie de plafond fournisseur |
+| Research | Recherche sourcée, crash/replay et ownership requalifiés | Pertinence générale non déduite des scénarios de qualification |
+| Secrets / reprise | OpenBao persistant, snapshots et matériel LiteLLM chiffré restaurés | Préserver les snapshots et réservations historiques |
+| Cockpit D05 | Accueil Mycelium 2D, Dockview, recherche rapide, inspecteur, layouts privés, PWA, tablette/téléphone, popout bureau et réglages modèle | Revue humaine continue sur appareils physiques |
+| Planification D06 candidate | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | PR #90 non fusionnée ; production reste D05 |
+| Langues D06 candidate | Provider central FR/EN extensible, choix persistant, locale/ARIA/surfaces D06 et propagation Assistant/News | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
-Cible : 12 CPU logiques, environ 32 Gio de RAM. Lecture : 3 333 requêtes, concurrence 20,
-p95 maximal 0,524 s, zéro erreur. Un compte réel alimente les clients virtuels depuis le Core
-de la cible ; ces mesures ne prouvent pas 1 000 utilisateurs distincts ni générations simultanées.
+## Planification D06 qualifiée
 
-La récupération réussie au code `61d7687088dcbb002febd4c5f1a97f33edcb1269` a pris 86,979 s
-pour le backup et 44,686 s pour la restauration. Deux snapshots contiennent 21 129 842 octets
-de données Restic. Comptes finaux inchangés `52|52|25|30|16|39|5`, travaux/outbox `0|0|0|0`.
-Les cinq réservations uncertain et les anciens essais sont conservés sans rejeu.
+D06 conserve `Task` comme objet canonique et ajoute, via `0016_planning_structure` et
+`0017_project_work_calendar`, les informations nécessaires sans créer une vérité propre à chaque
+vue. Les lectures sont owner-scoped et bornées ; les cycles hiérarchiques/de dépendances sont
+refusés et les mutations de structure utilisent un verrou projet et des versions optimistes.
+
+Le chemin critique est calculé côté Core et raccordé au calendrier de travail. Les récurrences sont
+générées comme occurrences virtuelles paginées : le Web ne parse pas les RRULE et ne persiste pas
+une Task par occurrence. La replanification sépare `preview` et `apply`; le digest et les versions
+sont revérifiés sous verrou. Les contraintes invalides bloquent l'application et les effets aval
+restent des suggestions tant que l'utilisateur ne les inclut pas explicitement dans un nouvel aperçu.
+
+La même projection alimente Liste et Kanban. SVAR React Gantt reste un renderer/input : Nevolium
+intercepte les gestes de date/progression et conserve Core comme autorité. Le Gantt est chart-only,
+ce qui évite une seconde grille concurrente. Seules les tâches ayant des enfants rendus sont
+`open`, après qu'un test tactile a découvert le comportement récursif de `DataTree` sur les feuilles.
+Le calendrier qualifié est une surface Nevolium dédiée ; Schedule-X est installé mais non utilisé
+comme preuve de cette capacité.
+
+La qualification Chromium de la tête `9730e9c…` réussit avec :
+
+- tablette 820 × 1180, tactile : Gantt visible et alternative non-glisser pour modifier un créneau ;
+- téléphone 390 × 844, tactile : calendrier/agenda, édition, exactement un preview et un apply,
+  rechargement Planning puis lecture de la Task canonique mise à jour dans Today ;
+- artefact `d06-planning-browser-qualification` ID `10401197268`, digest
+  `sha256:bcb91b747f8274649f83f810fbcce504062780d67f889f7f5f2fa9ef64ecd297`.
+
+Le détail des contrats, de l'incident Gantt et du rollback est conservé dans le
+[checkpoint D06](archive/d06-planning-workspace-progress-2026-09-15.md).
 
 ## Produit présent et fonctions futures
 
-| Domaine | Présent | À livrer |
+| Domaine | Présent / candidat qualifié | Suite planifiée |
 |---|---|---|
-| Cockpit | Web/OIDC ; Accueil Mycelium SVG 2D fonctionnel ouvrant six espaces réels ; panneaux Dockview persistés ; repères Assistant, Actualités, Recherche, Aujourd'hui, Projets et Documents ; identité cyan/émeraude/bleu/violet, accès rapide, inspecteur, profils/ambiances, tablette et téléphone à activité visible unique par défaut, layouts par fenêtre, détachement multi-écran sur bureau, clavier et PWA ; dix captures Chromium qualifiées sur cinq formats ; OpenAI réellement vérifié et activé | Revue humaine continue sur appareils physiques ; fonctions de planification en D06 |
-| Planification | Priorité, dates, échéances, PATCH propriétaire, Today/fuseaux | D06 : Gantt, calendrier, dépendances/jalons, Kanban et récurrences |
-| Connaissances/graphes | Documents/chunks inspectables, relations canoniques et interfaces de graphe | D07 : édition ; D08 : mindmap 2D ; D09 : Mycelium 3D |
+| Cockpit | D05 intégré : Mycelium 2D, espaces réels, Dockview, clavier, PWA, responsive et popout bureau | Raffinement continu et fonctions spécialisées |
+| Planification | D06 candidate : Liste/Kanban/Gantt/Calendrier, hiérarchie/jalons/dépendances, récurrences, work calendar, CPM et replanification | Fusion/déploiement D06 ; calendriers externes D11 ; offline D12 |
+| Connaissances/graphes | Documents/chunks inspectables et relations canoniques | D07 édition ; D08 mindmap 2D ; D09 Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
 | Finance/Crypto/Home/Dev | Profils optionnels déclarés | Adaptateurs, policy, workspaces et parcours réels |
+| Langues | Fondation FR/EN extensible dans D06 | D13 : complétude produit FR/EN puis langues supplémentaires |
 
-La présence de Three, Tauri, Yjs ou d'un moteur optionnel ne vaut pas une fonctionnalité livrée.
-[ADR-029](decisions/ADR-029-server-personal-and-offline-clients.md) conserve serveur prioritaire
-et clients PC/téléphone/tablette ; offline, synchronisation et packaging suivent le plan.
+## Limites de lecture
 
-## Validation et décisions
+Une dépendance installée ou un mock vert ne vaut pas une fonction livrée. Les preuves D06 de
+planification comprennent PostgreSQL réel et Chromium déterministe, mais aucune migration D06 n'a
+été appliquée au pilote. La CI tactile ne remplace pas une revue ergonomique sur appareils physiques.
+Schedule-X, Three, Tauri, Yjs et les moteurs optionnels conservent leur maturité propre tant qu'un
+parcours Nevolium ne les qualifie pas explicitement.
 
-Le code qualifié `61d7687…` passe 10/10 workflows CI, dont Research, Foundation et D04,
-avec restauration sur deux VM. Le job LLM local optionnel est skipped conformément à
-[ADR-031](decisions/ADR-031-api-first-pilot.md). La tête finale `2946df59664c01d77abc3b5720fff1dbbf96cb4c` passe aussi
-10/10 workflows avant fusion de #88. Le commit de fusion est `db07f7a90cc406ddc80683521bbf1744e3a2b668`.
-Ces preuves D04 restent acquises ; elles ne valident pas à elles seules les modifications D05.
-
-API uniquement pour le pilote : autres fournisseurs, capacité commerciale et autres OS ne
-conditionnent pas H5. Les clés restent côté serveur. Le candidat D05 ajoute les réglages
-fournisseur/modèle d'instance avec test réel borné et activation après drainage ;
-le BYOK par compte, les usages avancés et l'éventuel retour local gardent leurs lots du
-[plan D01–D22](implementation-plan.md).
-
-Les [archives opérateur](archive/d04-operator-history-2026-09-14.md) conservent les incidents ;
-leurs anciennes prochaines actions ne doivent pas être exécutées.
+[PROJECT_STATE](../PROJECT_STATE.md) reste le point de reprise opérationnel ; le
+[plan exécutable](implementation-plan.md) définit l'ordre D01–D22.
