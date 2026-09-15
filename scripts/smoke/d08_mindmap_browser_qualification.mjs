@@ -12,6 +12,10 @@ const playwrightModule = process.env.NEVOLIUM_PLAYWRIGHT_MODULE
 assert(playwrightModule, 'NEVOLIUM_PLAYWRIGHT_MODULE is required')
 const { chromium } = await import(pathToFileURL(playwrightModule).href)
 await fs.mkdir(output, { recursive: true })
+// Keep the exact isolated preview (mock API, auth disabled by the CI build) and
+// its runner for reproducible browser diagnostics, without production credentials.
+await fs.cp(path.join(root, 'apps/web/dist'), path.join(output, 'preview'), { recursive: true })
+await fs.copyFile(fileURLToPath(import.meta.url), path.join(output, 'qualification.mjs'))
 
 const preview = spawn(
   path.join(root, 'apps/web/node_modules/.bin/vite'),
@@ -104,6 +108,14 @@ async function installApiMock(context, state) {
     if (p === '/v1/projects') return json(route, [project])
     if (p === `/v1/projects/${ids.project}`) return json(route, project)
     if (p === '/v1/tasks') return json(route, state.tasks)
+    if (p === '/v1/documents' && request.method() === 'GET') {
+      return json(route, state.nodes.filter(item => item.entity_type === 'document').map(item => ({
+        id: item.entity_id, project_id: item.project_id, title: item.label, kind: item.kind,
+        status: item.status, epistemic_status: item.epistemic_status, asset_id: null,
+        media_type: 'application/vnd.nevolium.knowledge+json', source_sha256: null,
+        metadata_json: { owner_subject: 'development-user', authored: true }, created_at: now, updated_at: now,
+      })))
+    }
     if (p === '/v1/relationships') return json(route, [])
     if (p === '/v1/today') return json(route, { day: url.searchParams.get('day'), timezone: url.searchParams.get('timezone'), overdue: [], in_progress: [], due_today: [], planned: [], completed_today: [], backlog: [], next_cursors: {} })
     if (p === '/v1/admin/model-configurations') return json(route, { active_calls: 0, allowed_providers: ['openai'], active: {
@@ -180,6 +192,17 @@ async function dragNode(page, locator, dx, dy) {
   await page.mouse.move(box.x + box.width / 2 + dx, box.y + box.height / 2 + dy, { steps: 8 }); await page.mouse.up()
 }
 
+async function selectOnlyNode(map, key) {
+  // Clicking an already-selected member preserves XYFlow's multi-selection.
+  // Clear it through the visible canvas before requesting an individual action.
+  await map.locator('.react-flow__pane').click({ position: { x: 8, y: 8 } })
+  await eventually(async () => await map.locator('.react-flow__node.selected').count() === 0,
+    'D08: canvas click did not clear the previous selection')
+  await map.locator(`.react-flow__node[data-id="${key}"]`).click()
+  await eventually(async () => await map.locator('.react-flow__node.selected').count() === 1,
+    'D08: individual node selection did not settle')
+}
+
 async function qualifyExport(page, map, state, label, filename) {
   const button = map.getByRole('button', { name: label, exact: true })
   // Detect a wrong accessible name before starting the download waiter. Both promises
@@ -251,7 +274,7 @@ async function qualifyDesktop(browser, state) {
   await qualifyExport(page, map, state, 'Exporter JSON', 'export-fr.json')
 
   stage = 'desktop:conversion'
-  idea = map.locator(`.react-flow__node[data-id="document:${ids.idea}"]`); await idea.click()
+  await selectOnlyNode(map, `document:${ids.idea}`)
   await map.locator('.mindmap-conversion-bar').getByRole('button').click()
   // The request counter changes before refreshSnapshot and the URL update finish.
   await eventually(() => state.conversions === 1
