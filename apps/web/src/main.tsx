@@ -2,6 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 
 import App from './App'
+import LanguageSwitcher from './LanguageSwitcher'
+import { LocaleProvider } from './i18n'
 import { initializeAuth } from './lib/authSession'
 import { ProjectSelectionProvider } from './lib/projectSelection'
 import './styles.css'
@@ -13,9 +15,12 @@ const root = ReactDOM.createRoot(document.getElementById('root')!)
 function renderApp() {
   root.render(
     <React.StrictMode>
-      <ProjectSelectionProvider>
-        <App />
-      </ProjectSelectionProvider>
+      <LocaleProvider>
+        <ProjectSelectionProvider>
+          <App />
+          <LanguageSwitcher />
+        </ProjectSelectionProvider>
+      </LocaleProvider>
     </React.StrictMode>,
   )
 }
