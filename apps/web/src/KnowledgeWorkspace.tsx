@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import KnowledgeEditor from './KnowledgeEditor'
 import { useKnowledgeChunkInspection } from './knowledgeChunkInspection'
 import { useKnowledgeDocumentActions } from './knowledgeDocumentActions'
 import { useKnowledgeDocumentDataLoading } from './knowledgeDocumentDataLoading'
@@ -11,9 +12,7 @@ import {
   KnowledgeVersionsView,
 } from './KnowledgeInspectorView'
 import KnowledgeWorkspaceStateView from './KnowledgeWorkspaceStateView'
-import type {
-  KnowledgeInspectionTarget,
-} from './knowledgeTypes'
+import type { KnowledgeInspectionTarget } from './knowledgeTypes'
 import { useProjectSelection } from './lib/projectSelection'
 
 type Props = {
@@ -40,10 +39,9 @@ export default function KnowledgeWorkspace({
   const versionError = versionPage.error || trackingVersionError
 
   const projectDocuments = useMemo(
-    () =>
-      selectedProjectId
-        ? documents.filter((document) => document.project_id === selectedProjectId)
-        : [],
+    () => selectedProjectId
+      ? documents.filter((document) => document.project_id === selectedProjectId)
+      : [],
     [documents, selectedProjectId],
   )
 
@@ -136,14 +134,16 @@ export default function KnowledgeWorkspace({
 
   useEffect(() => {
     if (loading) return
-    if (
-      selectedDocumentId &&
-      projectDocuments.some((document) => document.id === selectedDocumentId)
-    ) {
-      return
-    }
+    if (selectedDocumentId && projectDocuments.some((document) => document.id === selectedDocumentId)) return
     onSelectedDocumentIdChange(projectDocuments[0]?.id || '')
   }, [loading, onSelectedDocumentIdChange, projectDocuments, selectedDocumentId])
+
+  function refreshAuthoredKnowledge(documentId: string) {
+    resetChunks()
+    onSelectedDocumentIdChange(documentId)
+    void documentPage.reload()
+    if (documentId === selectedDocumentId) void versionPage.reload()
+  }
 
   return (
     <section className="news-workspace" aria-labelledby="knowledge-heading">
@@ -155,14 +155,19 @@ export default function KnowledgeWorkspace({
         <span className="run-state">{projectDocuments.length} document(s) affiché(s)</span>
       </div>
 
-      <KnowledgeWorkspaceStateView
-        loading={loading}
-        error={error}
-        selectedProjectId={selectedProjectId}
-      />
+      <KnowledgeWorkspaceStateView loading={loading} error={error} selectedProjectId={selectedProjectId} />
 
       {!loading && !error && selectedProjectId && (
         <>
+          <KnowledgeEditor
+            apiUrl={apiUrl}
+            projectId={selectedProjectId}
+            selectedDocument={selectedDocument}
+            versions={versions}
+            selectedVersion={selectedVersion}
+            onChanged={refreshAuthoredKnowledge}
+          />
+
           <KnowledgeIngestionView
             selectedFile={selectedFile}
             importing={importing}
