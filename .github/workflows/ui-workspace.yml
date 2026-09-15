@@ -52,6 +52,8 @@ jobs:
           services/core/src/nevolium_core/planning_critical_path_schemas.py
           services/core/src/nevolium_core/planning_engine.py
           services/core/src/nevolium_core/planning_models.py
+          services/core/src/nevolium_core/planning_occurrences.py
+          services/core/src/nevolium_core/planning_occurrence_schemas.py
           services/core/src/nevolium_core/planning_projection.py
           services/core/src/nevolium_core/planning_projection_schemas.py
           services/core/src/nevolium_core/planning_recurrence.py
@@ -86,6 +88,8 @@ jobs:
         run: uv run --locked alembic upgrade head
       - name: Prove D06 projection, CPM, replanning, cycles, conflicts and isolation on PostgreSQL
         run: uv run --locked --project services/core python scripts/smoke/d06_planning_structure_db_contract.py
+      - name: Prove D06 virtual recurrence pagination and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d06_recurrence_db_contract.py
 
   cockpit-browser-qualification:
     runs-on: ubuntu-latest
