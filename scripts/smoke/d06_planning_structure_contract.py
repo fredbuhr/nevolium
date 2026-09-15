@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/domain proof for D06 canonical planning, recurrence and replanning."""
+"""Static/domain proof for D06 canonical planning, recurrence, work calendars and replanning."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import uuid
 from pydantic import ValidationError
 
 from nevolium_core.planning import router
-from nevolium_core.planning_models import TaskDependency, TaskPlanningProfile
+from nevolium_core.planning_models import ProjectWorkCalendar, TaskDependency, TaskPlanningProfile
 from nevolium_core.planning_structure_schemas import (
     TaskDependencyCreate,
     TaskPlanningStructureUpdate,
@@ -48,6 +48,19 @@ def main() -> int:
     assert "ck_task_dependencies_type" in dependency_constraints
     assert "uq_task_dependencies_pair" in dependency_constraints
 
+    work_calendar_columns = set(ProjectWorkCalendar.__table__.columns.keys())
+    assert {
+        "project_id",
+        "timezone",
+        "weekly_intervals",
+        "exceptions",
+        "calendar_version",
+    } <= work_calendar_columns
+    work_calendar_constraints = {
+        constraint.name for constraint in ProjectWorkCalendar.__table__.constraints
+    }
+    assert "ck_project_work_calendar_version_positive" in work_calendar_constraints
+
     task_id = uuid.uuid4()
     try:
         TaskDependencyCreate(predecessor_task_id=task_id, successor_task_id=task_id)
@@ -77,6 +90,8 @@ def main() -> int:
         ("/v1/projects/{project_id}/planning/tasks", "GET"),
         ("/v1/projects/{project_id}/planning/critical-path", "GET"),
         ("/v1/projects/{project_id}/planning/occurrences", "GET"),
+        ("/v1/projects/{project_id}/planning/work-calendar", "GET"),
+        ("/v1/projects/{project_id}/planning/work-calendar", "PATCH"),
         ("/v1/projects/{project_id}/planning/replan/preview", "POST"),
         ("/v1/projects/{project_id}/planning/replan/apply", "POST"),
     }
@@ -89,6 +104,13 @@ def main() -> int:
     assert 'down_revision = "0015_model_configurations"' in migration
     assert '"task_planning_profiles"' in migration
     assert '"task_dependencies"' in migration
+
+    work_calendar_migration = (
+        ROOT / "services/core/migrations/versions/0017_project_work_calendar.py"
+    ).read_text(encoding="utf-8")
+    assert 'revision = "0017_project_work_calendar"' in work_calendar_migration
+    assert 'down_revision = "0016_planning_structure"' in work_calendar_migration
+    assert '"project_work_calendars"' in work_calendar_migration
 
     implementation = (
         ROOT / "services/core/src/nevolium_core/planning_structure.py"
@@ -135,6 +157,23 @@ def main() -> int:
         ROOT / "services/core/src/nevolium_core/planning_occurrence_schemas.py"
     ).read_text(encoding="utf-8")
 
+    work_calendar = (
+        ROOT / "services/core/src/nevolium_core/planning_work_calendars.py"
+    ).read_text(encoding="utf-8")
+    assert "get_owned_project" in work_calendar
+    assert "_serialize_project_planning(session, project.id)" in work_calendar
+    assert "calendar.calendar_version != body.expected_version" in work_calendar
+    assert "calendar.calendar_version += 1" in work_calendar
+    assert 'event_type="project.work_calendar.updated"' in work_calendar
+    assert "default_weekly_intervals" in work_calendar
+    work_calendar_engine = (
+        ROOT / "services/core/src/nevolium_core/planning_work_calendar.py"
+    ).read_text(encoding="utf-8")
+    assert "working_seconds_between" in work_calendar_engine
+    assert "add_working_seconds" in work_calendar_engine
+    assert "MAX_WORK_CALENDAR_SCAN_DAYS = 3660" in work_calendar_engine
+    assert "fold=0" in work_calendar_engine and "fold=1" in work_calendar_engine
+
     replan = (
         ROOT / "services/core/src/nevolium_core/planning_replan.py"
     ).read_text(encoding="utf-8")
@@ -159,8 +198,8 @@ def main() -> int:
 
     print(
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
-        "owner-scoped dependencies and virtual recurrence occurrences, optimistic conflicts, cycle "
-        "guards, one paginated Task+planning projection, bounded elapsed-time critical path and "
+        "owner-scoped dependencies, virtual occurrences and project work calendars, optimistic "
+        "conflicts, cycle guards, one paginated Task projection, deterministic critical path and "
         "transactional preview/apply replanning are wired"
     )
     return 0
