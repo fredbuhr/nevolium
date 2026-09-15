@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from nevolium_core.config import settings
 from nevolium_core.db import Base
-from nevolium_core import autonomy_models, command_models, document_models, memory_models, model_configuration_models, models, tool_models, ui_models  # noqa: F401
+from nevolium_core import autonomy_models, command_models, document_models, memory_models, model_configuration_models, models, planning_models, tool_models, ui_models  # noqa: F401
 from nevolium_core import work_capacity  # noqa: F401
 
 migration_url = os.environ.get("NEVOLIUM_MIGRATION_DATABASE_URL") or settings.database_url
