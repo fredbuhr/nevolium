@@ -12,6 +12,7 @@ WEB = ROOT / "apps/web"
 def main() -> int:
     workspace = (WEB / "src/PlanningWorkspace.tsx").read_text(encoding="utf-8")
     gantt = (WEB / "src/PlanningGantt.tsx").read_text(encoding="utf-8")
+    critical_hook = (WEB / "src/lib/usePlanningCriticalPath.ts").read_text(encoding="utf-8")
     app = (WEB / "src/App.tsx").read_text(encoding="utf-8")
     i18n = (WEB / "src/i18n.tsx").read_text(encoding="utf-8")
     styles = (WEB / "src/planning.css").read_text(encoding="utf-8")
@@ -22,13 +23,21 @@ def main() -> int:
     assert "usePagedCollection<TaskDependency>" in workspace
     assert "/task-dependencies?limit=100" in workspace
     assert "useProjectSelection" in workspace
+    assert "usePlanningCriticalPath" in workspace
+    assert "criticalTaskIds" in workspace
+    assert "planning-critical-summary" in workspace
+    assert "planning-critical-badge" in workspace
     assert "DndContext" in workspace
     assert "useDraggable" in workspace and "useDroppable" in workspace
     assert "['todo', 'completed'].includes(task.status)" in workspace
     assert "queued', 'running" in workspace
     assert "planning-column:execution" not in workspace or "nextStatus" in workspace
     assert "method: 'PATCH'" in workspace
-    assert "<PlanningGantt tasks={page.items} dependencies={dependencyPage.items} />" in workspace
+    assert "criticalTaskIds={criticalPath.data?.critical_task_ids || []}" in workspace
+
+    assert "/planning/critical-path" in critical_hook
+    assert "critical_task_ids" in critical_hook
+    assert "AbortController" in critical_hook
 
     assert "import { Gantt, Willow } from '@svar-ui/react-gantt'" in gantt
     assert "@svar-ui/react-gantt/all.css" in gantt
@@ -40,6 +49,8 @@ def main() -> int:
     assert "SF: 's2e'" in gantt
     assert "if (!plannedEnd || plannedEnd < start) continue" in gantt
     assert "source.kind === 'milestone'" in gantt
+    assert "criticalTaskIds" in gantt
+    assert "`◆ ${source.title}`" in gantt
 
     assert "import PlanningWorkspace from './PlanningWorkspace'" in app
     assert "key: 'planning'" in app
@@ -55,11 +66,17 @@ def main() -> int:
         "'planning.column.execution'",
         "'planning.column.done'",
         "'planning.ganttReadonly'",
+        "'planning.critical'",
+        "'planning.criticalPath'",
+        "'planning.networkIncomplete'",
     ):
         assert i18n.count(token) >= 2, token
 
     assert "grid-template-columns: repeat(3" in styles
     assert ".planning-gantt-canvas" in styles
+    assert ".planning-card.is-critical" in styles
+    assert ".planning-list tr.is-critical" in styles
+    assert ".planning-critical-summary" in styles
     assert "@media (max-width: 820px)" in styles
     assert "grid-template-columns: 1fr" in styles
     assert "@media (prefers-reduced-motion: reduce)" in styles
@@ -68,7 +85,8 @@ def main() -> int:
     print(
         "D06 PLANNING WORKSPACE PASS: one paginated canonical projection feeds bilingual "
         "List/Kanban/read-only Gantt, workflow-managed statuses stay locked, manual todo/completed "
-        "moves reuse canonical PATCH, and renderer links/dates do not create parallel business truth"
+        "moves reuse canonical PATCH, and Core critical-path results are surfaced without creating "
+        "parallel renderer truth"
     )
     return 0
 
