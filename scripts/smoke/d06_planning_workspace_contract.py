@@ -97,6 +97,11 @@ def main() -> int:
     assert "const NO_GRID_COLUMNS: GanttColumns = []" in gantt
     assert "columns={NO_GRID_COLUMNS}" in gantt
     assert 'displayMode="chart"' in gantt
+    # SVAR DataTree recursively descends any row with open=true; leaves have data=null. Open only
+    # parents that actually have a rendered child, never every leaf unconditionally.
+    assert "const renderedParentIds = new Set(" in gantt
+    assert ".map(({ source }) => source.parent_task_id)" in gantt
+    assert "...(renderedParentIds.has(source.id) ? { open: true } : {})," in gantt
     assert "readonly" not in gantt
     assert "api.intercept('update-task'" in gantt
     assert "if (inProgress) return undefined" in gantt
