@@ -91,6 +91,12 @@ def main() -> int:
     assert "import { Gantt, Willow } from '@svar-ui/react-gantt'" in gantt
     assert "@svar-ui/react-gantt/all.css" in gantt
     assert "ComponentProps<typeof Gantt>" in gantt
+    # Nevolium owns the List view. SVAR stays chart-only so compact/touch mode cannot replace the
+    # chart with SVAR's redundant internal grid or its separate editing surface.
+    assert "type GanttColumns = NonNullable<ComponentProps<typeof Gantt>['columns']>" in gantt
+    assert "const NO_GRID_COLUMNS: GanttColumns = []" in gantt
+    assert "columns={NO_GRID_COLUMNS}" in gantt
+    assert 'displayMode="chart"' in gantt
     assert "readonly" not in gantt
     assert "api.intercept('update-task'" in gantt
     assert "if (inProgress) return undefined" in gantt
@@ -195,12 +201,12 @@ def main() -> int:
 
     print(
         "D06 PLANNING WORKSPACE PASS: one canonical projection feeds bilingual List/Kanban/"
-        "editable Gantt/calendar; Gantt drag/resize proposals are reset to canonical state and routed "
-        "through cancellable preview/validate/apply, downstream dependency effects stay advisory until "
-        "explicitly included in a second preview, successful batches reload canonical planning, Gantt "
-        "progress uses versioned planning-structure updates, structural Gantt mutations stay blocked, "
-        "Core critical-path and virtual recurrence results remain authoritative, and dates never write "
-        "directly through the legacy Task PATCH"
+        "editable chart-only Gantt/calendar; Gantt drag/resize proposals are reset to canonical state "
+        "and routed through cancellable preview/validate/apply, downstream dependency effects stay "
+        "advisory until explicitly included in a second preview, successful batches reload canonical "
+        "planning, Gantt progress uses versioned planning-structure updates, structural Gantt mutations "
+        "stay blocked, Core critical-path and virtual recurrence results remain authoritative, and dates "
+        "never write directly through the legacy Task PATCH"
     )
     return 0
 
