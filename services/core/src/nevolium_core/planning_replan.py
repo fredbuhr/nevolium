@@ -4,7 +4,7 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import or_, select
@@ -14,7 +14,7 @@ from .auth import Principal, require_nevolium_user
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Task
-from .planning_models import TaskDependency, TaskPlanningProfile
+from .planning_models import ProjectWorkCalendar, TaskDependency, TaskPlanningProfile
 from .planning_replan_schemas import (
     PlanningWindowRead,
     ReplanAppliedTaskRead,
@@ -27,6 +27,8 @@ from .planning_replan_schemas import (
     ReplanTaskPreview,
 )
 from .planning_structure import _ensure_profile_locked, _serialize_project_planning
+from .planning_work_calendar import WorkCalendarDefinition, add_working_seconds, build_work_calendar
+from .planning_work_calendar_schemas import ProjectWorkCalendarRead
 from .project_access import get_owned_project
 
 
@@ -99,37 +101,48 @@ def _dependency_finding(
     dependency: TaskDependency,
     predecessor: PlanningWindowRead,
     successor: PlanningWindowRead,
+    work_calendar: WorkCalendarDefinition,
 ) -> ReplanDependencyFinding:
-    lag = timedelta(seconds=dependency.lag_seconds)
     kind = dependency.dependency_type
     if kind == "FS":
         left = predecessor.planned_end_at
         right = successor.planned_start_at
-        label = "predecessor finish + lag <= successor start"
+        label = "predecessor finish + working lag <= successor start"
     elif kind == "SS":
         left = predecessor.planned_start_at
         right = successor.planned_start_at
-        label = "predecessor start + lag <= successor start"
+        label = "predecessor start + working lag <= successor start"
     elif kind == "FF":
         left = predecessor.planned_end_at
         right = successor.planned_end_at
-        label = "predecessor finish + lag <= successor finish"
+        label = "predecessor finish + working lag <= successor finish"
     elif kind == "SF":
         left = predecessor.planned_start_at
         right = successor.planned_end_at
-        label = "predecessor start + lag <= successor finish"
+        label = "predecessor start + working lag <= successor finish"
     else:  # The database constraint should make this unreachable.
         raise RuntimeError(f"Unsupported dependency type: {kind}")
 
     if left is None or right is None:
         status = "incomplete"
         detail = f"{kind} incomplete: {label} cannot be evaluated without both timestamps"
-    elif left + lag <= right:
-        status = "satisfied"
-        detail = f"{kind} satisfied: {label}"
     else:
-        status = "violated"
-        detail = f"{kind} violated: {label}"
+        try:
+            required = add_working_seconds(left, dependency.lag_seconds, work_calendar)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Dependency lag exceeds work-calendar capacity bound",
+                    "dependency_id": str(dependency.id),
+                },
+            ) from exc
+        if required <= right:
+            status = "satisfied"
+            detail = f"{kind} satisfied: {label}"
+        else:
+            status = "violated"
+            detail = f"{kind} violated: {label}"
 
     return ReplanDependencyFinding(
         dependency_id=dependency.id,
@@ -148,9 +161,15 @@ def _preview_digest(
     changes: list[ReplanTaskPreview],
     findings: list[ReplanDependencyFinding],
     context_windows: dict[uuid.UUID, PlanningWindowRead],
+    work_calendar_timezone: str,
+    work_calendar_version: int,
 ) -> str:
     payload = {
         "project_id": str(project_id),
+        "work_calendar": {
+            "timezone": work_calendar_timezone,
+            "version": work_calendar_version,
+        },
         "changes": [
             {
                 "task_id": str(change.task_id),
@@ -208,6 +227,21 @@ async def _build_preview(
     project = await get_owned_project(session, project_id, principal)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    calendar_row = await session.get(ProjectWorkCalendar, project.id)
+    try:
+        calendar_view = (
+            ProjectWorkCalendarRead.model_validate(calendar_row)
+            if calendar_row is not None
+            else ProjectWorkCalendarRead(project_id=project.id)
+        )
+        work_calendar = build_work_calendar(
+            timezone_name=calendar_view.timezone,
+            weekly_intervals=calendar_view.weekly_intervals,
+            exceptions=calendar_view.exceptions,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail="Stored work calendar is invalid") from exc
 
     update_ids = [item.task_id for item in body.updates]
     statement = select(Task).where(Task.project_id == project.id, Task.id.in_(update_ids))
@@ -305,6 +339,7 @@ async def _build_preview(
             dependency,
             context_windows[dependency.predecessor_task_id],
             context_windows[dependency.successor_task_id],
+            work_calendar,
         )
         for dependency in dependencies
     ]
@@ -313,6 +348,8 @@ async def _build_preview(
         changes=changes,
         findings=findings,
         context_windows=context_windows,
+        work_calendar_timezone=calendar_view.timezone,
+        work_calendar_version=calendar_view.calendar_version,
     )
     preview = ReplanPreviewRead(
         project_id=project.id,
