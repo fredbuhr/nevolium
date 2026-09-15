@@ -33,6 +33,7 @@ type Props = {
 type GanttTasks = NonNullable<ComponentProps<typeof Gantt>['tasks']>
 type GanttLinks = NonNullable<ComponentProps<typeof Gantt>['links']>
 type GanttScales = NonNullable<ComponentProps<typeof Gantt>['scales']>
+type GanttColumns = NonNullable<ComponentProps<typeof Gantt>['columns']>
 type GanttInit = NonNullable<ComponentProps<typeof Gantt>['init']>
 
 const LINK_TYPES: Record<PlanningDependency['dependency_type'], 'e2s' | 's2s' | 'e2e' | 's2e'> = {
@@ -46,6 +47,11 @@ const SCALES: GanttScales = [
   { unit: 'month', step: 1, format: '%M %Y' },
   { unit: 'week', step: 1, format: 'W%w' },
 ]
+
+// Nevolium already owns its canonical List view. Keeping SVAR chart-only avoids a second task grid
+// and, critically, prevents SVAR compact mode from replacing the chart with its internal grid on
+// narrow/touch panels. A stable empty array also avoids reinitializing columns on each React render.
+const NO_GRID_COLUMNS: GanttColumns = []
 
 function validDate(value?: string | null): Date | null {
   if (!value) return null
@@ -192,6 +198,8 @@ export default function PlanningGantt({
             tasks={mapped.tasks}
             links={mapped.links}
             scales={SCALES}
+            columns={NO_GRID_COLUMNS}
+            displayMode="chart"
             init={init}
             autoScale
           />
