@@ -50,9 +50,15 @@ function entriesForDay(tasks: CalendarTask[], day: Date): CalendarEntry[] {
   const result: CalendarEntry[] = []
   for (const task of tasks) {
     const plannedStart = validDate(task.planned_start_at)
-    const plannedEnd = validDate(task.planned_end_at) || plannedStart
-    if (plannedStart && plannedEnd && plannedStart < end && plannedEnd >= start) {
-      result.push({ task, kind: 'planned' })
+    const plannedEnd = validDate(task.planned_end_at)
+    if (plannedStart) {
+      const pointInDay = !plannedEnd || plannedEnd.getTime() === plannedStart.getTime()
+        ? plannedStart >= start && plannedStart < end
+        : false
+      const rangeOverlapsDay = plannedEnd && plannedEnd > plannedStart
+        ? plannedStart < end && plannedEnd > start
+        : false
+      if (pointInDay || rangeOverlapsDay) result.push({ task, kind: 'planned' })
     }
     const due = validDate(task.due_at)
     if (due && due >= start && due < end) result.push({ task, kind: 'due' })
@@ -124,50 +130,52 @@ export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
         </div>
       </div>
 
-      <div className="planning-calendar-weekdays" aria-hidden="true">
-        {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
-      </div>
-      <div className="planning-calendar-grid">
-        {gridDays.map((day) => {
-          const entries = entriesForDay(tasks, day)
-          const key = dayKey(day)
-          const currentMonth = day.getMonth() === visibleMonth.getMonth()
-          const selected = key === dayKey(selectedDay)
-          const current = key === dayKey(today)
-          return (
-            <div
-              key={key}
-              className={`planning-calendar-day${currentMonth ? '' : ' is-outside'}${selected ? ' is-selected' : ''}`}
-            >
-              <button
-                type="button"
-                className="planning-calendar-date"
-                aria-current={current ? 'date' : undefined}
-                aria-pressed={selected}
-                onClick={() => setSelectedDay(day)}
+      <div className="planning-calendar-scroll">
+        <div className="planning-calendar-weekdays" aria-hidden="true">
+          {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
+        </div>
+        <div className="planning-calendar-grid">
+          {gridDays.map((day) => {
+            const entries = entriesForDay(tasks, day)
+            const key = dayKey(day)
+            const currentMonth = day.getMonth() === visibleMonth.getMonth()
+            const selected = key === dayKey(selectedDay)
+            const current = key === dayKey(today)
+            return (
+              <div
+                key={key}
+                className={`planning-calendar-day${currentMonth ? '' : ' is-outside'}${selected ? ' is-selected' : ''}`}
               >
-                {day.getDate()}
-              </button>
-              <div className="planning-calendar-events">
-                {entries.slice(0, 3).map((entry, index) => (
-                  <button
-                    key={`${entry.task.id}:${entry.kind}:${index}`}
-                    type="button"
-                    className={`planning-calendar-event is-${entry.kind}`}
-                    onClick={() => {
-                      setSelectedDay(day)
-                      onEditSchedule(entry.task.id)
-                    }}
-                    title={entry.task.title}
-                  >
-                    {entry.kind === 'due' ? '◇ ' : ''}{entry.task.title}
-                  </button>
-                ))}
-                {entries.length > 3 ? <small>+{entries.length - 3}</small> : null}
+                <button
+                  type="button"
+                  className="planning-calendar-date"
+                  aria-current={current ? 'date' : undefined}
+                  aria-pressed={selected}
+                  onClick={() => setSelectedDay(day)}
+                >
+                  {day.getDate()}
+                </button>
+                <div className="planning-calendar-events">
+                  {entries.slice(0, 3).map((entry, index) => (
+                    <button
+                      key={`${entry.task.id}:${entry.kind}:${index}`}
+                      type="button"
+                      className={`planning-calendar-event is-${entry.kind}`}
+                      onClick={() => {
+                        setSelectedDay(day)
+                        onEditSchedule(entry.task.id)
+                      }}
+                      title={entry.task.title}
+                    >
+                      {entry.kind === 'due' ? '◇ ' : ''}{entry.task.title}
+                    </button>
+                  ))}
+                  {entries.length > 3 ? <small>+{entries.length - 3}</small> : null}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
       <div className="planning-calendar-agenda">
