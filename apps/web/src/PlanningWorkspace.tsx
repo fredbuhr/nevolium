@@ -476,7 +476,12 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
       ) : null}
 
       {viewMode === 'calendar' && page.items.length > 0 ? (
-        <PlanningCalendar tasks={page.items} onEditSchedule={setEditingTaskId} />
+        <PlanningCalendar
+          apiUrl={apiUrl}
+          projectId={selectedProjectId}
+          tasks={page.items}
+          onEditSchedule={setEditingTaskId}
+        />
       ) : null}
 
       {canLoadMore ? (
