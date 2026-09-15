@@ -121,3 +121,30 @@ Les images Core/Web précédentes ont été étiquetées pour retour avant recon
 Le résultat atteste les nouvelles images Core 6e1c2dee et Web 40df2609.
 Ingress répond 200, 200, 200, 401, 401 et 404 ; les compteurs finaux restent inchangés.
 Les snapshots B2 et images historiques sont conservés. Aucun test fournisseur ni migration.
+
+## Qualification réelle et sauvegarde post-activation — 15 septembre 2026
+
+Après rechargement du Web corrigé, l’utilisateur a soumis une nouvelle fois la clé OpenAI. Le test
+borné a réussi : le modèle demandé et le modèle retourné valent tous deux `openai/gpt-4.1`, et
+l’usage canonique enregistré coûte `0.000090 USD`. L’utilisateur a ensuite activé explicitement la
+configuration. Le contrôle direct de PostgreSQL atteste `0015_model_configurations`, une seule
+configuration créée et active, Task et workflow terminés, un seul usage correspondant, aucune
+Task, exécution, réservation courante ou sortie en attente, et cinq réservations historiques
+`uncertain`. Cette preuve réelle remplace l’incertitude du premier essai ; elle ne qualifie aucun
+autre fournisseur affiché.
+
+Une sauvegarde quiescente a ensuite arrêté puis repris uniquement les écrivains durables déjà
+actifs. Restic a créé le snapshot de données
+`e374714cb3bc55b01b55ad6dc69411faec9a55d32602d9652285353f8d267cbc`, avec PostgreSQL — donc
+la base LiteLLM et sa clé fournisseur chiffrée — JetStream, SeaweedFS et OpenBao. Le matériel de
+récupération LiteLLM, limité à sa master key et à son sel stable sans clé fournisseur en clair, est
+conservé dans le snapshot chiffré séparé
+`a3f6720d818ae659be2148ab301a9da156b67d23674fa015f87f697eea4b600e` puis restauré et comparé
+à l’identique. Les fichiers temporaires ont été supprimés.
+
+`restic check --read-data` a relu les 12 packs sans erreur, pour 33 515 561 octets bruts. Les
+snapshots `cb069646…` et `71f19a46…`, les images de retour et les cinq réservations historiques sont
+conservés. OpenBao a été redéscellé depuis son précédent matériel chiffré, tous les services
+initialement actifs ont repris, l’état final vaut `0015_model_configurations|1|0|0|0|0|5` et
+l’ingress `200|200|401|404`. Cette opération n’a lancé ni nouvelle Task, ni campagne D04, ni Ollama,
+ni appel fournisseur supplémentaire.
