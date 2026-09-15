@@ -127,6 +127,12 @@ export default function PlanningScheduleEditor({
     setError(null)
   }
 
+  function dependencyStatusLabel(status: DependencyFinding['status']) {
+    if (status === 'satisfied') return t('planning.scheduleDependencySatisfied')
+    if (status === 'incomplete') return t('planning.scheduleDependencyIncomplete')
+    return t('planning.scheduleDependencyViolated')
+  }
+
   async function requestPreview() {
     setPreviewing(true)
     setError(null)
@@ -238,7 +244,8 @@ export default function PlanningScheduleEditor({
             <ul>
               {preview.dependency_findings.map((finding) => (
                 <li key={finding.dependency_id} data-status={finding.status}>
-                  <strong>{finding.dependency_type}</strong> · {finding.status} · {finding.detail}
+                  <strong>{finding.dependency_type}</strong> · {dependencyStatusLabel(finding.status)}
+                  {finding.lag_seconds > 0 ? ` · +${finding.lag_seconds}s` : ''}
                 </li>
               ))}
             </ul>
