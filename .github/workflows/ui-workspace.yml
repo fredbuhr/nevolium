@@ -35,6 +35,8 @@ jobs:
         run: python scripts/smoke/d06_planning_workspace_contract.py
       - name: Prove D07 canonical editable-knowledge foundation
         run: python scripts/smoke/d07_editable_knowledge_contract.py
+      - name: Prove D07 Lexical editor, universal search and FR/EN web contract
+        run: python scripts/smoke/d07_knowledge_editor_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
@@ -52,6 +54,9 @@ jobs:
           services/core/src/nevolium_core/ui_models.py
           services/core/src/nevolium_core/project_access.py
           services/core/src/nevolium_core/document_models.py
+          services/core/src/nevolium_core/editable_knowledge.py
+          services/core/src/nevolium_core/knowledge.py
+          services/core/src/nevolium_core/knowledge_exchange.py
           services/core/src/nevolium_core/planning.py
           services/core/src/nevolium_core/planning_critical_path.py
           services/core/src/nevolium_core/planning_critical_path_schemas.py
@@ -139,6 +144,10 @@ jobs:
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d06_planning_browser_qualification.mjs
+      - name: Qualify D07 editable knowledge, cross-space search and FR/EN
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d07_knowledge_browser_qualification.mjs
       - name: Preserve D05 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -152,4 +161,11 @@ jobs:
         with:
           name: d06-planning-browser-qualification
           path: artifacts/d06-planning-browser
+          if-no-files-found: error
+      - name: Preserve D07 knowledge browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d07-knowledge-browser-qualification
+          path: artifacts/d07-knowledge-browser
           if-no-files-found: error
