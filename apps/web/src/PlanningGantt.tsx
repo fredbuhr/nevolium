@@ -25,6 +25,7 @@ type PlanningDependency = {
 type Props = {
   tasks: PlanningGanttTask[]
   dependencies: PlanningDependency[]
+  criticalTaskIds?: string[]
 }
 
 type GanttTasks = NonNullable<ComponentProps<typeof Gantt>['tasks']>
@@ -49,10 +50,11 @@ function validDate(value?: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-export default function PlanningGantt({ tasks, dependencies }: Props) {
+export default function PlanningGantt({ tasks, dependencies, criticalTaskIds = [] }: Props) {
   const { t } = useI18n()
 
   const mapped = useMemo(() => {
+    const critical = new Set(criticalTaskIds)
     const renderable: Array<{ source: PlanningGanttTask; start: Date; end: Date }> = []
     for (const task of tasks) {
       const start = validDate(task.planned_start_at)
@@ -69,7 +71,7 @@ export default function PlanningGantt({ tasks, dependencies }: Props) {
     const ids = new Set(renderable.map(({ source }) => source.id))
     const ganttTasks: GanttTasks = renderable.map(({ source, start, end }) => ({
       id: source.id,
-      text: source.title,
+      text: critical.has(source.id) ? `◆ ${source.title}` : source.title,
       start,
       end,
       progress: source.progress_percent,
@@ -94,7 +96,7 @@ export default function PlanningGantt({ tasks, dependencies }: Props) {
       links: ganttLinks,
       hiddenCount: Math.max(0, tasks.length - ganttTasks.length),
     }
-  }, [dependencies, tasks])
+  }, [criticalTaskIds, dependencies, tasks])
 
   if (mapped.tasks.length === 0) {
     return (
