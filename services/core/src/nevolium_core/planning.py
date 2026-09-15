@@ -17,6 +17,8 @@ from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
 from .planning_critical_path import read_project_critical_path
 from .planning_critical_path_schemas import CriticalPathRead
+from .planning_occurrence_schemas import PlanningOccurrenceRead
+from .planning_occurrences import list_project_planning_occurrences
 from .planning_projection import list_project_planning_tasks
 from .planning_projection_schemas import PlanningTaskRead
 from .planning_replan import apply_project_replan, preview_project_replan
@@ -292,6 +294,12 @@ router.add_api_route(
     read_project_critical_path,
     methods=["GET"],
     response_model=CriticalPathRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/occurrences",
+    list_project_planning_occurrences,
+    methods=["GET"],
+    response_model=list[PlanningOccurrenceRead],
 )
 router.add_api_route(
     "/v1/projects/{project_id}/planning/replan/preview",
