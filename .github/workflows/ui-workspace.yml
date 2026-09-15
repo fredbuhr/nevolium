@@ -37,8 +37,12 @@ jobs:
         run: python scripts/smoke/d07_editable_knowledge_contract.py
       - name: Prove D07 Lexical editor, universal search and FR/EN web contract
         run: python scripts/smoke/d07_knowledge_editor_contract.py
-      - name: Prove D08 bounded canonical mindmap projection
+      - name: Prove D08 bounded canonical mindmap projection and mutations
         run: python scripts/smoke/d08_mindmap_contract.py
+      - name: Prove D08 deterministic radial graph fallback
+        run: python scripts/smoke/d08_mindmap_graph_contract.py
+      - name: Prove D08 persisted XYFlow web contract
+        run: python scripts/smoke/d08_mindmap_web_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
