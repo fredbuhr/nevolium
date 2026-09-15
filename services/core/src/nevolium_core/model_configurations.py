@@ -587,7 +587,13 @@ async def create_model_configuration_test(
             "prompt_version": MODEL_TEST_PROMPT_VERSION,
         },
     )
-    session.add_all([configuration, task])
+    # ``test_task_id`` is assigned as a scalar UUID, so the ORM has no object relationship from
+    # which to infer the required INSERT order. Persist the canonical Task first: PostgreSQL must
+    # never see a model configuration whose required Task does not exist yet. Both writes remain
+    # in this transaction and are rolled back together if registration or event persistence fails.
+    session.add(task)
+    await session.flush()
+    session.add(configuration)
     await session.flush()
 
     try:

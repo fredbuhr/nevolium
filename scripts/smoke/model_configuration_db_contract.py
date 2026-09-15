@@ -15,7 +15,9 @@ import uuid
 import httpx
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from nevolium_core import model_configurations as model_configuration_api
 from nevolium_core.auth import Principal, require_nevolium_admin
 from nevolium_core.autonomy_models import ModelReservation
 from nevolium_core.config import settings
@@ -138,10 +140,73 @@ async def prove_single_active_index(extra_task_id: uuid.UUID) -> None:
             raise AssertionError("The database accepted two active model configurations")
 
 
+async def prove_http_candidate_persists_task_before_configuration() -> None:
+    """Exercise the real route and FK that rejected the first pilot submission."""
+
+    original_register = model_configuration_api._register_litellm_model
+    original_dispatch = model_configuration_api._dispatch_model_configuration_test
+
+    async def accept_registration(**_kwargs: object) -> None:
+        return None
+
+    async def accept_dispatch(
+        session: AsyncSession,
+        *,
+        configuration_id: uuid.UUID,
+        task_id: uuid.UUID,
+        **_kwargs: object,
+    ) -> model_configuration_api.ModelConfigurationTestAccepted:
+        stored_task = await session.get(Task, task_id)
+        stored_configuration = await session.get(ModelConfiguration, configuration_id)
+        assert stored_task is not None
+        assert stored_configuration is not None
+        return model_configuration_api.ModelConfigurationTestAccepted(
+            configuration=await model_configuration_api._read_configuration(
+                session, stored_configuration
+            ),
+            workflow_execution_id=uuid.uuid4(),
+            workflow_id=f"model-configuration-test-{task_id}",
+            status="pending_start",
+        )
+
+    app.dependency_overrides[require_nevolium_admin] = lambda: Principal(
+        subject=ADMIN_SUBJECT,
+        username="d05-admin",
+        email=None,
+        roles=frozenset({"nevolium-admin"}),
+        claims={},
+    )
+    model_configuration_api._register_litellm_model = accept_registration
+    model_configuration_api._dispatch_model_configuration_test = accept_dispatch
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://core"
+        ) as client:
+            response = await client.post(
+                "/v1/admin/model-configurations/tests",
+                json={
+                    "provider": "openai",
+                    "model": "openai/gpt-4.1",
+                    "api_key": "provider-fixture-key",
+                },
+            )
+        assert response.status_code == 202, response.text
+        candidate = response.json()["configuration"]
+        async with SessionFactory() as session:
+            assert await session.get(Task, uuid.UUID(candidate["test_task_id"])) is not None
+            assert await session.get(ModelConfiguration, uuid.UUID(candidate["id"])) is not None
+    finally:
+        model_configuration_api._register_litellm_model = original_register
+        model_configuration_api._dispatch_model_configuration_test = original_dispatch
+        app.dependency_overrides.clear()
+
+
 async def main() -> None:
     assert settings.database_url.endswith(
         "/nevolium_admission_test"
     ), "Requires the disposable model admission database"
+    await reset()
+    await prove_http_candidate_persists_task_before_configuration()
     await reset()
     active, failed, verified, extra_task_id = await seed()
     await prove_single_active_index(extra_task_id)
@@ -232,8 +297,9 @@ async def main() -> None:
         await engine.dispose()
 
     print(
-        "MODEL CONFIGURATION POSTGRESQL CONTRACT PASS: failed tests retain the valid model, "
-        "activation drains calls and exactly one verified configuration becomes active"
+        "MODEL CONFIGURATION POSTGRESQL CONTRACT PASS: the HTTP candidate persists its Task "
+        "before the required FK, failed tests retain the valid model, activation drains calls "
+        "and exactly one verified configuration becomes active"
     )
 
 

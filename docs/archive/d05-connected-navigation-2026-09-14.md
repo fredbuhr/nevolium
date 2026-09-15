@@ -90,3 +90,17 @@ Les captures UI utilisent des exemples et des réponses fournisseur simulés : a
 d’acceptation de la clé du pilote, aucun appel payant ni test fournisseur relancé. Le retour
 sur l’intuitivité, la revue sur appareils physiques et la lecture du badge réel restent nécessaires.
 La correction est publiée dans la PR #89, sans fusion ni déploiement ; le serveur n’a pas été modifié.
+
+## Incident du premier essai fournisseur — 15 septembre 2026
+
+L’utilisateur a soumis OpenAI `openai/gpt-4.1` depuis le pilote. Core a répondu `500` et l’ancienne
+interface a effacé rapidement le message. La lecture directe a montré zéro ligne dans
+`model_configurations`; la trace Core établit une violation de la clé étrangère
+`model_configurations_test_task_id_fkey` pendant le premier `flush`. La configuration était insérée
+avant la Task désignée par `test_task_id`. Le registre LiteLLM et OpenAI n’ont donc pas reçu la clé,
+et la configuration serveur précédente est restée active.
+
+Le correctif persiste explicitement la Task, vérifie son insertion, puis ajoute la configuration dans
+la même transaction. Le contrat PostgreSQL appelle maintenant le véritable endpoint HTTP avec les
+transports LiteLLM/Temporal neutralisés, et exige la réponse `202` ainsi que la présence des deux lignes.
+Aucune migration, donnée de production ou relance fournisseur n’est incluse dans ce changement.

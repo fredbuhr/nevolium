@@ -11,11 +11,11 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live.
 | Branche / PR unique | `feat/d05-coherent-cockpit` · [PR #89](https://github.com/fredbuhr/nevolium/pull/89) |
 | Dernière tête qualifiée avant correction | `639b48f369cd5317aa98d0679ddf51fdf9766068` : 10/10 workflows réussis ; runtime `c17c7e24…` identique hors checkpoint |
 | Production | `c17c7e24cee60432275bb021c389bad481e3f4ff` réellement déployé sur le serveur pilote ; Core, Worker, Web, Web MCP et LiteLLM en exécution sans redémarrage après contrôle |
-| Données | Migration `0015_model_configurations` ; cinq réservations historiques `uncertain` conservées. Table de configuration vide au déploiement ; l’utilisateur a depuis saisi une clé, résultat non revérifié |
+| Données | Migration `0015_model_configurations` ; cinq réservations historiques `uncertain` conservées. Le premier essai utilisateur a échoué avant LiteLLM/OpenAI sur l’ordre d’insertion Task/configuration ; table toujours vide, configuration serveur conservée |
 | Récupération | Sel LiteLLM stable provisionné sans affichage ; snapshot de récupération `cb0696461e1bc6a3cad54260dccd7b564e2d6d5c684c9f7174a0fd091a623bc5` et snapshot quiescent pré-D05 `71f19a4691a6a45891aa0d59dfcd8237b58eaf2aaa738608e3f8e21facf5a524`, tous deux chiffrés sur B2 et relus |
-| Correction implémentée | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites |
+| Correction implémentée | Fil contextuel parent / voisinage / relations transversales canoniques ; activité centrée réversible ; fond neutre issu de la nouvelle référence ; logo vectoriel ; reçu/test/activation IA explicites ; Task du test persistée avant sa configuration liée |
 | Tête de code vérifiée | `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` : 10/10 workflows réussis. UI responsive/connectée et isolation/OIDC réussies ; captures UI téléchargées, empreinte vérifiée et rendu relu. Le compte rendu suivant ne change que la documentation et ne remplace pas cette preuve exact-head |
-| Prochaine action | Présenter la correction et recueillir le retour utilisateur ; vérifier les contrôles de la tête live avant toute intégration. Aucun déploiement ni fusion effectué. Lire séparément le badge du fournisseur déjà saisi, sans renvoyer la clé |
+| Prochaine action | Qualifier le correctif de clé sur PostgreSQL réel avec la CI, puis préparer une mise à jour pilote contrôlée avant un unique nouvel essai utilisateur. Aucun déploiement ni fusion effectué |
 
 ## Livraison D05 et limite de clôture
 
@@ -34,9 +34,11 @@ Web/PWA/Auth/API : `200|200|200|401|404`. Les images de rollback antérieures re
 redéscellé depuis son matériel de récupération chiffré. Aucune ancienne Task, campagne D04 ou
 instance Ollama n'a été relancée.
 
-Le déploiement lui-même n’a effectué aucun test fournisseur. L’utilisateur a ensuite signalé la
-saisie d’une clé sans savoir si elle a été acceptée ; son résultat et la configuration désormais
-active sont inconnus ici. Ne pas relancer le test avant lecture de son état. Afficher OpenAI, Anthropic, xAI ou Moonshot ne prouve
+Le déploiement lui-même n’a effectué aucun test fournisseur. Le premier essai utilisateur a produit
+un `500` : PostgreSQL a refusé la configuration parce que sa Task référencée n’avait pas encore été
+insérée. La transaction a été annulée, la table reste vide et l’ancienne configuration serveur reste
+active ; la clé n’a atteint ni LiteLLM ni OpenAI. Ne pas relancer le test avant qualification et
+déploiement du correctif. Afficher OpenAI, Anthropic, xAI ou Moonshot ne prouve
 pas leur compatibilité. La clôture D05 exige le test réel borné du fournisseur choisi, la
 vérification de l'identité retournée et l'activation explicite ; tout échec doit conserver la
 configuration serveur actuelle. La revue sur appareils physiques reste distincte des captures CI.

@@ -16,6 +16,12 @@ La tête `d431a7427e0efc4cfe0b8734a3ce10926bbee4bc` passe la suite UI responsive
 l’isolation entre comptes avec le vrai Keycloak/OIDC. Ses captures sont relues ; les états fournisseur
 des scénarios UI restent simulés. Cette correction n’est pas déployée. L’état des autres contrôles
 et la prochaine action sont consignés dans le checkpoint ; l’acceptation visuelle n’est pas déduite de la CI.
+
+Le premier essai de clé sur le pilote a exposé un défaut d’ordre d’insertion : la configuration
+référençait sa Task avant que PostgreSQL ne l’ait créée. La transaction a été annulée avec un `500`,
+sans candidat ni appel à LiteLLM/OpenAI ; la configuration serveur reste active. La même PR persiste
+désormais la Task avant la configuration et étend le contrat PostgreSQL au véritable endpoint HTTP.
+Ce correctif doit réussir sa propre CI puis être déployé avant un nouvel essai.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
