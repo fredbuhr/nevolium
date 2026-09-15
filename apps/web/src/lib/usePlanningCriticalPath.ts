@@ -4,7 +4,9 @@ import { nevoliumFetch } from './apiClient'
 
 export type CriticalPathView = {
   project_id: string
-  basis: 'elapsed_seconds'
+  basis: 'working_seconds'
+  work_calendar_timezone: string
+  work_calendar_version: number
   network_complete: boolean
   project_duration_seconds: number
   project_task_count: number
@@ -30,7 +32,8 @@ export function usePlanningCriticalPath(apiUrl: string, projectId: string | null
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  const refresh = useCallback(() => setRevision((current) => current + 1), [])
+
+  const refresh = useCallback(() => setRevision((value) => value + 1), [])
 
   useEffect(() => {
     setData(null)
