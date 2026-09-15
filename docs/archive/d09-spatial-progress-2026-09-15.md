@@ -49,6 +49,11 @@ Les jeux 51/201/501 sont des charges synthétiques du renderer. Le Web réel cha
 100 Tasks + 100 Documents + 1 Project / 300 relations ; le Core autorise explicitement jusqu'à
 200 + 200 + 1 / 1 000 relations. Le jeu 501 ne constitue donc pas une capacité produit servie par l'API.
 
+Le head `78d506bde7627cf234935e626b0744e45d2de8ff` passe les contrats UI/PostgreSQL et tous
+les scénarios navigateur D05–D08. L'entrée du nouveau scénario D09 cherchait le bouton français
+avec un navigateur par défaut anglais : locale du fixture fixée à `fr-FR`, puis bascule EN explicite
+conservée. Aucun changement de traduction produit nécessaire.
+
 ## Gate restant
 
 1. Qualifier le head de cette livraison en CI, examiner captures et mesures, corriger les échecs.

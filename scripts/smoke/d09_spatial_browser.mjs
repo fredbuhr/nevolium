@@ -3,11 +3,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 /** Real Chromium/WebGL UI over the existing D08 mock API. No provider or production calls. */
-export async function qualifySpatial({ browser, makeState, casePage, openMindMap, eventually, ids, node, edge, output, setStage }) {
+export async function qualifySpatial({ browser, makeState, casePage, openMindMap, eventually, ids, node, edge, output, setStage: reportStage }) {
+  const setStage = value => { reportStage(value); console.log('D09 STAGE', value) }
   const target = path.resolve(output, '../d09-spatial-browser')
   await fs.mkdir(target, { recursive: true })
   const state = makeState()
-  const { context, page, errors } = await casePage(browser, state, 'd09-desktop', { viewport: { width: 1440, height: 1050 } })
+  const { context, page, errors } = await casePage(browser, state, 'd09-desktop', { locale: 'fr-FR', viewport: { width: 1440, height: 1050 } })
   const key = `mycelium3d.project.${ids.project}`
   let failSave = false, gate = null, inFlight = 0, maxInFlight = 0, attempts = 0
   await context.route(`**/v1/ui/workspaces/${key}/layout`, async route => {
@@ -138,7 +139,7 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
       data.nodes.push(node(`document:measurement-${i}`, 'document', `measurement-${i}`, `Idea ${i}`, 'idea'))
       data.edges.push(edge(`measure-${i}`, data.nodes[Math.floor((i - 1) / 3)].key, data.nodes[i].key, 'related_to'))
     }
-    const fixture = await casePage(browser, data, `d09-measure-${count}`, { viewport: { width: 1280, height: 900 } })
+    const fixture = await casePage(browser, data, `d09-measure-${count}`, { locale: 'fr-FR', viewport: { width: 1280, height: 900 } })
     const view = await openMindMap(fixture.page)
     await view.getByRole('button', { name: 'Vue 3D', exact: true }).click()
     await view.getByLabel('Qualité 3D').selectOption('eco')
@@ -159,7 +160,7 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
     assert.equal(fixture.errors.length, 0, fixture.errors.join('\n'))
   }
   setStage('d09:phone-optional-3d')
-  const phone = await casePage(browser, makeState(), 'd09-phone', { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 })
+  const phone = await casePage(browser, makeState(), 'd09-phone', { locale: 'fr-FR', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 })
   const phoneMap = await openMindMap(phone.page)
   assert.equal(await phoneMap.locator('canvas').count(), 0, 'Phone must start in 2D')
   await phoneMap.getByRole('button', { name: 'Vue 3D', exact: true }).tap()
@@ -174,7 +175,7 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
   assert.equal(phone.errors.length, 0, phone.errors.join('\n'))
 
   setStage('d09:webgl-unavailable-at-entry')
-  const unavailable = await casePage(browser, makeState(), 'd09-unavailable', { viewport: { width: 1280, height: 900 } })
+  const unavailable = await casePage(browser, makeState(), 'd09-unavailable', { locale: 'fr-FR', viewport: { width: 1280, height: 900 } })
   await unavailable.context.addInitScript(() => {
     const getContext = HTMLCanvasElement.prototype.getContext
     HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
