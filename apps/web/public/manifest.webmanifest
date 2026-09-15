@@ -1,13 +1,12 @@
 {
   "name": "Nevolium",
   "short_name": "Nevolium",
-  "description": "Cockpit Mycelium personnel Nevolium",
+  "description": "Nevolium · Mycelium workspace",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#020b13",
   "theme_color": "#061725",
-  "lang": "fr",
   "icons": [
     {
       "src": "/icons/nevolium-192.png",
