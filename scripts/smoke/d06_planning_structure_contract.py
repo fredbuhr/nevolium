@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/domain proof for D06 canonical planning structure, projection, CPM and replanning."""
+"""Static/domain proof for D06 canonical planning, recurrence and replanning."""
 
 from __future__ import annotations
 
@@ -10,7 +10,10 @@ from pydantic import ValidationError
 
 from nevolium_core.planning import router
 from nevolium_core.planning_models import TaskDependency, TaskPlanningProfile
-from nevolium_core.planning_structure_schemas import TaskDependencyCreate
+from nevolium_core.planning_structure_schemas import (
+    TaskDependencyCreate,
+    TaskPlanningStructureUpdate,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -53,6 +56,13 @@ def main() -> int:
     else:
         raise AssertionError("self-dependency passed public schema validation")
 
+    try:
+        TaskPlanningStructureUpdate(expected_version=1, recurrence_rule="FREQ=YEARLY")
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("unsupported recurrence rule passed public schema validation")
+
     route_contract = {
         (route.path, method)
         for route in router.routes
@@ -66,6 +76,7 @@ def main() -> int:
         ("/v1/task-dependencies/{dependency_id}", "DELETE"),
         ("/v1/projects/{project_id}/planning/tasks", "GET"),
         ("/v1/projects/{project_id}/planning/critical-path", "GET"),
+        ("/v1/projects/{project_id}/planning/occurrences", "GET"),
         ("/v1/projects/{project_id}/planning/replan/preview", "POST"),
         ("/v1/projects/{project_id}/planning/replan/apply", "POST"),
     }
@@ -111,6 +122,19 @@ def main() -> int:
         ROOT / "services/core/src/nevolium_core/planning_critical_path_schemas.py"
     ).read_text(encoding="utf-8")
 
+    recurrence = (
+        ROOT / "services/core/src/nevolium_core/planning_occurrences.py"
+    ).read_text(encoding="utf-8")
+    assert "MAX_RECURRENCE_TASKS = 500" in recurrence
+    assert "MAX_RECURRENCE_WINDOW = timedelta(days=366)" in recurrence
+    assert "MAX_RECURRENCE_OCCURRENCES = 10_000" in recurrence
+    assert "uuid.uuid5" in recurrence
+    assert "get_owned_project" in recurrence
+    assert "X-Nevolium-Next-Cursor" in recurrence
+    assert "virtual" in (
+        ROOT / "services/core/src/nevolium_core/planning_occurrence_schemas.py"
+    ).read_text(encoding="utf-8")
+
     replan = (
         ROOT / "services/core/src/nevolium_core/planning_replan.py"
     ).read_text(encoding="utf-8")
@@ -135,9 +159,9 @@ def main() -> int:
 
     print(
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
-        "owner-scoped dependencies, optimistic conflict detection, cycle guards, one paginated "
-        "Task+planning projection, bounded elapsed-time critical path and transactional preview/apply "
-        "replanning are wired"
+        "owner-scoped dependencies and virtual recurrence occurrences, optimistic conflicts, cycle "
+        "guards, one paginated Task+planning projection, bounded elapsed-time critical path and "
+        "transactional preview/apply replanning are wired"
     )
     return 0
 
