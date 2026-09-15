@@ -14,6 +14,10 @@ from nevolium_core.db import SessionFactory, engine
 from nevolium_core.models import Project, Task
 from nevolium_core.planning_critical_path import read_project_critical_path
 from nevolium_core.planning_models import ProjectWorkCalendar
+from nevolium_core.planning_replan import preview_project_replan
+from nevolium_core.planning_replan_schemas import ReplanRequest, ReplanTaskPatch
+from nevolium_core.planning_structure import create_task_dependency
+from nevolium_core.planning_structure_schemas import TaskDependencyCreate
 from nevolium_core.planning_work_calendar_schemas import (
     ProjectWorkCalendarUpdate,
     WorkCalendarException,
@@ -119,6 +123,60 @@ async def main() -> None:
         assert critical_task.earliest_finish_seconds == 7200
         assert critical_task.slack_seconds == 0
 
+        # An FS lag of one working hour from Friday 17:00 Paris reaches Monday 10:00, not Friday
+        # 18:00. This distinguishes calendar-aware lag validation from elapsed-time timedelta math.
+        lag_predecessor = Task(
+            project_id=project_id,
+            title="Friday predecessor",
+            planned_start_at=datetime(2026, 9, 18, 14, 0, tzinfo=UTC),
+            planned_end_at=datetime(2026, 9, 18, 15, 0, tzinfo=UTC),
+        )
+        lag_successor = Task(
+            project_id=project_id,
+            title="Friday successor",
+            planned_start_at=datetime(2026, 9, 18, 16, 0, tzinfo=UTC),
+            planned_end_at=datetime(2026, 9, 18, 17, 0, tzinfo=UTC),
+        )
+        session.add_all([lag_predecessor, lag_successor])
+        await session.flush()
+        lag_predecessor_id = lag_predecessor.id
+        lag_successor_id = lag_successor.id
+        await session.commit()
+
+        lag_dependency = await create_task_dependency(
+            project_id,
+            TaskDependencyCreate(
+                predecessor_task_id=lag_predecessor_id,
+                successor_task_id=lag_successor_id,
+                dependency_type="FS",
+                lag_seconds=3600,
+            ),
+            owner,
+            session,
+        )
+        lag_preview = await preview_project_replan(
+            project_id,
+            ReplanRequest(
+                updates=[
+                    ReplanTaskPatch(
+                        task_id=lag_predecessor_id,
+                        expected_version=1,
+                        due_at=datetime(2026, 9, 18, 18, 0, tzinfo=UTC),
+                    )
+                ]
+            ),
+            owner,
+            session,
+        )
+        assert lag_preview.can_apply is False
+        lag_finding = next(
+            item
+            for item in lag_preview.dependency_findings
+            if item.dependency_id == lag_dependency.id
+        )
+        assert lag_finding.status == "violated"
+        assert "working lag" in lag_finding.detail
+
         unchanged = await update_project_work_calendar(
             project_id,
             ProjectWorkCalendarUpdate(expected_version=2, timezone="Europe/Paris"),
@@ -164,8 +222,8 @@ async def main() -> None:
     await engine.dispose()
     print(
         "D06 WORK CALENDAR DB PASS: non-persistent 24/7 default, owner-scoped versioned project "
-        "configuration, normalized exceptions, working-second critical path, no-op stability and "
-        "stale-write rejection hold"
+        "configuration, normalized exceptions, working-second critical path and dependency lags, "
+        "no-op stability and stale-write rejection hold"
     )
 
 
