@@ -4,7 +4,9 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from .planning_recurrence import parse_recurrence_rule
 
 
 TaskPlanningKind = Literal["task", "milestone"]
@@ -32,6 +34,13 @@ class TaskPlanningStructureUpdate(BaseModel):
     progress_percent: int | None = Field(default=None, ge=0, le=100)
     recurrence_rule: str | None = Field(default=None, min_length=1, max_length=4000)
     recurrence_timezone: str | None = Field(default=None, min_length=1, max_length=120)
+
+    @field_validator("recurrence_rule")
+    @classmethod
+    def validate_supported_recurrence_rule(cls, value: str | None) -> str | None:
+        if value is not None:
+            parse_recurrence_rule(value)
+        return value
 
     @model_validator(mode="after")
     def recurrence_timezone_requires_rule_when_both_are_supplied(
