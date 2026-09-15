@@ -34,6 +34,7 @@ def main() -> int:
     assert "type ViewMode = 'list' | 'kanban' | 'gantt' | 'calendar'" in workspace
     assert "setEditingTaskId(task.id)" in workspace
     assert "onEditSchedule={setEditingTaskId}" in workspace
+    assert "apiUrl={apiUrl}" in workspace and "projectId={selectedProjectId}" in workspace
     assert "criticalPath.refresh()" in workspace
     assert "DndContext" in workspace
     assert "useDraggable" in workspace and "useDroppable" in workspace
@@ -77,14 +78,20 @@ def main() -> int:
     assert "criticalTaskIds" in gantt
     assert "`◆ ${source.title}`" in gantt
 
-    # Calendar is only a renderer over canonical timestamps: no local fetch, RRULE expansion or writes.
+    # Calendar renders canonical timestamps plus read-only virtual occurrences from Core. It never
+    # parses RRULE locally and editing a virtual occurrence resolves back to the canonical source Task.
     assert "Intl.DateTimeFormat().resolvedOptions().timeZone" in calendar
     assert "plannedStart < end && plannedEnd > start" in calendar
     assert "plannedStart >= start && plannedStart < end" in calendar
-    assert "onEditSchedule(entry.task.id)" in calendar
-    assert "recurrence_rule" in calendar
+    assert "/planning/occurrences?" in calendar
+    assert "X-Nevolium-Next-Cursor" in calendar
+    assert "AbortController" in calendar
+    assert "source_task_id" in calendar
+    assert "return task.source_task_id || task.id" in calendar
+    assert "onEditSchedule(editTaskId(entry.task))" in calendar
+    assert "recurrence_rule: 'virtual'" in calendar
     assert "RRULE" not in calendar and "FREQ=" not in calendar
-    assert "nevoliumFetch" not in calendar and "fetch(" not in calendar
+    assert "nevoliumFetch" in calendar
     assert "planning-calendar-agenda" in calendar
     assert "planning-calendar-scroll" in calendar
 
@@ -101,6 +108,8 @@ def main() -> int:
         "'planning.calendar'",
         "'planning.calendarTimezone'",
         "'planning.calendarAgenda'",
+        "'planning.calendarRecurrenceLoading'",
+        "'planning.calendarRecurrenceError'",
         "'planning.column.todo'",
         "'planning.column.execution'",
         "'planning.column.done'",
@@ -138,10 +147,10 @@ def main() -> int:
 
     print(
         "D06 PLANNING WORKSPACE PASS: one canonical projection feeds bilingual List/Kanban/"
-        "read-only Gantt/calendar, workflow-managed statuses stay locked, Core critical-path results "
-        "are surfaced, calendar intervals use DST-safe local day boundaries without recurrence "
-        "fabrication, and schedule mutations require cancellable preview/validate/apply instead of "
-        "writing dates directly through the legacy Task PATCH"
+        "read-only Gantt/calendar, workflow-managed statuses stay locked, Core critical-path and "
+        "virtual recurrence results are surfaced without local RRULE expansion, virtual occurrence "
+        "edits resolve to the source Task, and schedule mutations require cancellable preview/"
+        "validate/apply instead of writing dates directly through the legacy Task PATCH"
     )
     return 0
 
