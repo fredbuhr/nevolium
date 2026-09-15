@@ -62,7 +62,7 @@ Briques potentiellement récupérables après adaptation Nevolium :
 
 Éléments à ne pas reprendre tels quels :
 
-- types et noms historiques `Kairo*` ;
+- types et noms hérités du prototype historique ;
 - modèles de projection anciens plus larges que le snapshot D08 ;
 - état de layout/cache local non raccordé à `WorkspaceLayout` ;
 - hypothèses de navigation/identité antérieures à D05–D08 ;
