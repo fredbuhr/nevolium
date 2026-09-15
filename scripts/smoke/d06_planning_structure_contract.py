@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/domain proof for D06 canonical planning structure and dependency routes."""
+"""Static/domain proof for D06 canonical planning structure and projection routes."""
 
 from __future__ import annotations
 
@@ -64,6 +64,7 @@ def main() -> int:
         ("/v1/projects/{project_id}/task-dependencies", "GET"),
         ("/v1/projects/{project_id}/task-dependencies", "POST"),
         ("/v1/task-dependencies/{dependency_id}", "DELETE"),
+        ("/v1/projects/{project_id}/planning/tasks", "GET"),
     }
     assert expected_routes <= route_contract, route_contract
 
@@ -86,9 +87,19 @@ def main() -> int:
     assert "page_rows(" in implementation
     assert "Workflow-managed Task progress cannot be changed manually" in implementation
 
+    projection = (
+        ROOT / "services/core/src/nevolium_core/planning_projection.py"
+    ).read_text(encoding="utf-8")
+    assert "outerjoin(TaskPlanningProfile" in projection
+    assert "get_owned_project" in projection
+    assert "Task.created_at.desc()" in projection
+    assert "X-Nevolium-Next-Cursor" in projection
+    assert "PlanningTaskRead" in projection
+
     print(
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
-        "owner-scoped paginated dependencies, optimistic conflict detection and cycle guards are wired"
+        "owner-scoped dependencies, optimistic conflict detection, cycle guards and one paginated "
+        "Task+planning projection are wired"
     )
     return 0
 
