@@ -64,28 +64,33 @@ async def main() -> None:
         )
         foreign = Task(project_id=foreign_project.id, title="Foreign")
         session.add_all([a, b, c, ranged, foreign])
+        await session.flush()
+        project_id = project.id
+        foreign_project_id = foreign_project.id
+        a_id, b_id, c_id = a.id, b.id, c.id
+        ranged_id, foreign_id = ranged.id, foreign.id
         await session.commit()
 
         profile_a = await update_task_planning_structure(
-            a.id,
-            TaskPlanningStructureUpdate(expected_version=1, parent_task_id=b.id),
+            a_id,
+            TaskPlanningStructureUpdate(expected_version=1, parent_task_id=b_id),
             owner,
             session,
         )
-        assert profile_a.planning_version == 2 and profile_a.parent_task_id == b.id
+        assert profile_a.planning_version == 2 and profile_a.parent_task_id == b_id
         profile_b = await update_task_planning_structure(
-            b.id,
-            TaskPlanningStructureUpdate(expected_version=1, parent_task_id=c.id),
+            b_id,
+            TaskPlanningStructureUpdate(expected_version=1, parent_task_id=c_id),
             owner,
             session,
         )
-        assert profile_b.planning_version == 2 and profile_b.parent_task_id == c.id
+        assert profile_b.planning_version == 2 and profile_b.parent_task_id == c_id
 
         cycle = await expect_status(
             409,
             update_task_planning_structure(
-                c.id,
-                TaskPlanningStructureUpdate(expected_version=1, parent_task_id=a.id),
+                c_id,
+                TaskPlanningStructureUpdate(expected_version=1, parent_task_id=a_id),
                 owner,
                 session,
             ),
@@ -96,7 +101,7 @@ async def main() -> None:
         stale = await expect_status(
             409,
             update_task_planning_structure(
-                a.id,
+                a_id,
                 TaskPlanningStructureUpdate(expected_version=1, progress_percent=25),
                 owner,
                 session,
@@ -108,7 +113,7 @@ async def main() -> None:
         await expect_status(
             422,
             update_task_planning_structure(
-                ranged.id,
+                ranged_id,
                 TaskPlanningStructureUpdate(expected_version=1, kind="milestone"),
                 owner,
                 session,
@@ -119,7 +124,7 @@ async def main() -> None:
         await expect_status(
             422,
             update_task_planning_structure(
-                c.id,
+                c_id,
                 TaskPlanningStructureUpdate(
                     expected_version=1,
                     recurrence_rule="FREQ=DAILY",
@@ -132,25 +137,25 @@ async def main() -> None:
         await session.rollback()
 
         first = await create_task_dependency(
-            project.id,
-            TaskDependencyCreate(predecessor_task_id=a.id, successor_task_id=b.id),
+            project_id,
+            TaskDependencyCreate(predecessor_task_id=a_id, successor_task_id=b_id),
             owner,
             session,
         )
-        assert first.predecessor_task_id == a.id and first.successor_task_id == b.id
+        assert first.predecessor_task_id == a_id and first.successor_task_id == b_id
         second = await create_task_dependency(
-            project.id,
-            TaskDependencyCreate(predecessor_task_id=b.id, successor_task_id=c.id),
+            project_id,
+            TaskDependencyCreate(predecessor_task_id=b_id, successor_task_id=c_id),
             owner,
             session,
         )
-        assert second.predecessor_task_id == b.id and second.successor_task_id == c.id
+        assert second.predecessor_task_id == b_id and second.successor_task_id == c_id
 
         dependency_cycle = await expect_status(
             409,
             create_task_dependency(
-                project.id,
-                TaskDependencyCreate(predecessor_task_id=c.id, successor_task_id=a.id),
+                project_id,
+                TaskDependencyCreate(predecessor_task_id=c_id, successor_task_id=a_id),
                 owner,
                 session,
             ),
@@ -161,8 +166,8 @@ async def main() -> None:
         await expect_status(
             404,
             create_task_dependency(
-                project.id,
-                TaskDependencyCreate(predecessor_task_id=a.id, successor_task_id=foreign.id),
+                project_id,
+                TaskDependencyCreate(predecessor_task_id=a_id, successor_task_id=foreign_id),
                 owner,
                 session,
             ),
@@ -171,7 +176,7 @@ async def main() -> None:
 
         response = Response()
         dependencies = await list_task_dependencies(
-            project.id,
+            project_id,
             response,
             100,
             None,
@@ -179,12 +184,14 @@ async def main() -> None:
             session,
         )
         assert {(item.predecessor_task_id, item.successor_task_id) for item in dependencies} == {
-            (a.id, b.id),
-            (b.id, c.id),
+            (a_id, b_id),
+            (b_id, c_id),
         }
         assert response.headers.get("X-Nevolium-Next-Cursor") == ""
 
-        await session.execute(delete(Project).where(Project.id.in_([project.id, foreign_project.id])))
+        await session.execute(
+            delete(Project).where(Project.id.in_([project_id, foreign_project_id]))
+        )
         await session.commit()
 
     await engine.dispose()
