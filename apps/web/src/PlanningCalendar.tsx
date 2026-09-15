@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useI18n } from './i18n'
+import { nevoliumFetch } from './lib/apiClient'
 
 type CalendarTask = {
   id: string
+  source_task_id?: string
   title: string
   kind: 'task' | 'milestone'
   status: string
@@ -13,7 +15,25 @@ type CalendarTask = {
   recurrence_rule?: string | null
 }
 
+type VirtualOccurrence = {
+  id: string
+  source_task_id: string
+  project_id: string
+  number: number
+  title: string
+  status: string
+  kind: 'task' | 'milestone'
+  timezone: string
+  planning_version: number
+  start_at: string
+  end_at?: string | null
+  due_at?: string | null
+  virtual: true
+}
+
 type Props = {
+  apiUrl: string
+  projectId: string
   tasks: CalendarTask[]
   onEditSchedule: (taskId: string) => void
 }
@@ -74,13 +94,20 @@ function entriesForDay(tasks: CalendarTask[], day: Date): CalendarEntry[] {
   })
 }
 
-export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
+function editTaskId(task: CalendarTask) {
+  return task.source_task_id || task.id
+}
+
+export default function PlanningCalendar({ apiUrl, projectId, tasks, onEditSchedule }: Props) {
   const { locale, t, formatDateTime } = useI18n()
   const today = useMemo(() => startOfLocalDay(new Date()), [])
   const [visibleMonth, setVisibleMonth] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
   )
   const [selectedDay, setSelectedDay] = useState(today)
+  const [occurrences, setOccurrences] = useState<VirtualOccurrence[]>([])
+  const [recurrenceLoading, setRecurrenceLoading] = useState(false)
+  const [recurrenceError, setRecurrenceError] = useState(false)
 
   const gridDays = useMemo(() => {
     const first = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1)
@@ -88,6 +115,69 @@ export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
     const gridStart = addDays(first, -mondayOffset)
     return Array.from({ length: 42 }, (_, index) => addDays(gridStart, index))
   }, [visibleMonth])
+
+  const windowBounds = useMemo(() => ({
+    start: startOfLocalDay(gridDays[0]),
+    end: addDays(startOfLocalDay(gridDays[gridDays.length - 1]), 1),
+  }), [gridDays])
+  const hasRecurringTasks = tasks.some((task) => Boolean(task.recurrence_rule))
+
+  useEffect(() => {
+    setOccurrences([])
+    setRecurrenceError(false)
+    if (!hasRecurringTasks) {
+      setRecurrenceLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    setRecurrenceLoading(true)
+    void (async () => {
+      try {
+        const collected: VirtualOccurrence[] = []
+        let cursor = ''
+        for (let page = 0; page < 10; page += 1) {
+          const params = new URLSearchParams({
+            from: windowBounds.start.toISOString(),
+            to: windowBounds.end.toISOString(),
+            limit: '1000',
+          })
+          if (cursor) params.set('cursor', cursor)
+          const response = await nevoliumFetch(
+            `${apiUrl}/v1/projects/${encodeURIComponent(projectId)}/planning/occurrences?${params}`,
+            { signal: controller.signal },
+          )
+          if (!response.ok) throw new Error(`Nevolium ${response.status}`)
+          const body = await response.json() as VirtualOccurrence[]
+          collected.push(...body)
+          cursor = response.headers.get('X-Nevolium-Next-Cursor') || ''
+          if (!cursor) break
+        }
+        if (!controller.signal.aborted) setOccurrences(collected)
+      } catch {
+        if (!controller.signal.aborted) setRecurrenceError(true)
+      } finally {
+        if (!controller.signal.aborted) setRecurrenceLoading(false)
+      }
+    })()
+
+    return () => controller.abort()
+  }, [apiUrl, hasRecurringTasks, projectId, windowBounds])
+
+  const calendarTasks = useMemo<CalendarTask[]>(() => [
+    ...tasks,
+    ...occurrences.map((occurrence) => ({
+      id: occurrence.id,
+      source_task_id: occurrence.source_task_id,
+      title: occurrence.title,
+      kind: occurrence.kind,
+      status: occurrence.status,
+      planned_start_at: occurrence.start_at,
+      planned_end_at: occurrence.end_at,
+      due_at: occurrence.due_at,
+      recurrence_rule: 'virtual',
+    })),
+  ], [occurrences, tasks])
 
   const weekdays = useMemo(() => {
     const monday = new Date(2026, 8, 14)
@@ -99,7 +189,7 @@ export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
     month: 'long',
     year: 'numeric',
   }).format(visibleMonth)
-  const selectedEntries = entriesForDay(tasks, selectedDay)
+  const selectedEntries = entriesForDay(calendarTasks, selectedDay)
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
   function changeMonth(delta: number) {
@@ -130,13 +220,16 @@ export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
         </div>
       </div>
 
+      {recurrenceLoading ? <small>{t('planning.calendarRecurrenceLoading')}</small> : null}
+      {recurrenceError ? <div className="error-panel">{t('planning.calendarRecurrenceError')}</div> : null}
+
       <div className="planning-calendar-scroll">
         <div className="planning-calendar-weekdays" aria-hidden="true">
           {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
         </div>
         <div className="planning-calendar-grid">
           {gridDays.map((day) => {
-            const entries = entriesForDay(tasks, day)
+            const entries = entriesForDay(calendarTasks, day)
             const key = dayKey(day)
             const currentMonth = day.getMonth() === visibleMonth.getMonth()
             const selected = key === dayKey(selectedDay)
@@ -163,11 +256,12 @@ export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
                       className={`planning-calendar-event is-${entry.kind}`}
                       onClick={() => {
                         setSelectedDay(day)
-                        onEditSchedule(entry.task.id)
+                        onEditSchedule(editTaskId(entry.task))
                       }}
                       title={entry.task.title}
                     >
-                      {entry.kind === 'due' ? '◇ ' : ''}{entry.task.title}
+                      {entry.task.source_task_id ? '↻ ' : entry.kind === 'due' ? '◇ ' : ''}
+                      {entry.task.title}
                     </button>
                   ))}
                   {entries.length > 3 ? <small>+{entries.length - 3}</small> : null}
@@ -195,7 +289,7 @@ export default function PlanningCalendar({ tasks, onEditSchedule }: Props) {
                 <button
                   key={`${entry.task.id}:${entry.kind}:${index}`}
                   type="button"
-                  onClick={() => onEditSchedule(entry.task.id)}
+                  onClick={() => onEditSchedule(editTaskId(entry.task))}
                 >
                   <span>
                     <strong>{entry.task.title}</strong>
