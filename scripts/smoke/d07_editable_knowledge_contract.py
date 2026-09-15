@@ -30,6 +30,8 @@ def main() -> int:
     assert "ck_document_citations_chunk_requires_version" in migration
     assert '"document_asset_links"' in migration
     assert "role IN ('attachment', 'whiteboard')" in migration
+    assert "0018 downgrade refused: authored documents without source assets exist" in migration
+    assert "IF EXISTS (SELECT 1 FROM documents WHERE asset_id IS NULL)" in migration
 
     assert "asset_id: Mapped[uuid.UUID | None]" in model
     assert 'kind: Mapped[str]' in model and 'default="source"' in model
@@ -45,8 +47,6 @@ def main() -> int:
     assert 'role: Mapped[str]' in model
     assert "UniqueConstraint(\"document_id\", \"asset_id\", \"role\"" in model
 
-    # Authored knowledge always creates immutable generations. Restoring and metadata edits create
-    # another generation rather than overwriting history, and stale clients are rejected.
     assert 'AUTHORED_PARSER = "nevolium-authored"' in editable
     assert "expected_generation" in editable
     assert 'detail="Document generation changed; reload before saving"' in editable
@@ -63,7 +63,6 @@ def main() -> int:
     assert 'owner_subject"].astext == principal.subject' in editable
     assert 'role: AssetLinkRole' in editable
 
-    # The existing Knowledge router remains the public surface: no second main.py registration.
     for route in (
         '"/v1/knowledge/items"',
         '"/v1/knowledge/items/{document_id}/versions"',
@@ -76,11 +75,12 @@ def main() -> int:
     assert "project_id: uuid.UUID | None = None" in knowledge
     assert "if project_id is not None" in knowledge
     assert 'Document.metadata_json["owner_subject"].astext == principal.subject' in knowledge
+    assert 'DocumentVersion.search_status == "ready"' in knowledge
 
     print(
         "D07 EDITABLE KNOWLEDGE PASS: canonical Document supports authored kinds, immutable "
         "rich/plain generations, version-bound citations, Asset links, optimistic concurrency, "
-        "restore-by-new-generation and owner-wide search with optional project scope"
+        "restore-by-new-generation, owner-wide search, failed-projection exclusion and safe rollback"
     )
     return 0
 
