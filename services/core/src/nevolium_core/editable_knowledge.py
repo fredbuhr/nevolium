@@ -6,7 +6,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from fastapi import Depends, HTTPException, Query, status
+from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,7 +83,7 @@ class DocumentMetadataUpdate(BaseModel):
 
     @model_validator(mode="after")
     def require_change(self) -> "DocumentMetadataUpdate":
-        if self.title is None and self.kind is None and self.epistemic_status is None:
+        if not ({"title", "kind", "epistemic_status"} & self.model_fields_set):
             raise ValueError("at least one metadata field is required")
         return self
 
@@ -149,15 +149,6 @@ class AuthoredKnowledgeRead(BaseModel):
     status: str
     generation: int
     version: AuthoredKnowledgeVersionRead
-
-
-class AuthoredKnowledgeMetadataRead(BaseModel):
-    id: uuid.UUID
-    project_id: uuid.UUID
-    title: str
-    kind: str
-    epistemic_status: str | None
-    generation: int
 
 
 def _canonical_content(content_json: dict[str, Any], content_text: str) -> tuple[str, str]:
@@ -257,6 +248,30 @@ async def _add_citations(
                 excerpt=citation.excerpt,
             )
         )
+
+
+async def _citation_inputs(session: AsyncSession, version_id: uuid.UUID) -> list[CitationCreate]:
+    rows = list(
+        (
+            await session.execute(
+                select(DocumentCitation)
+                .where(DocumentCitation.document_version_id == version_id)
+                .order_by(DocumentCitation.created_at, DocumentCitation.id)
+                .limit(MAX_CITATIONS_PER_VERSION)
+            )
+        ).scalars()
+    )
+    return [
+        CitationCreate(
+            source_document_id=row.source_document_id,
+            source_document_version_id=row.source_document_version_id,
+            source_chunk_id=row.source_chunk_id,
+            source_url=row.source_url,
+            label=row.label,
+            excerpt=row.excerpt,
+        )
+        for row in rows
+    ]
 
 
 async def _create_version(
@@ -466,24 +481,7 @@ async def restore_authored_version(
     )
     if source is None or source.content_json is None:
         raise HTTPException(status_code=404, detail="Restorable authored version not found")
-    citation_rows = list(
-        (
-            await session.execute(
-                select(DocumentCitation).where(DocumentCitation.document_version_id == source.id)
-            )
-        ).scalars()
-    )
-    citations = [
-        CitationCreate(
-            source_document_id=row.source_document_id,
-            source_document_version_id=row.source_document_version_id,
-            source_chunk_id=row.source_chunk_id,
-            source_url=row.source_url,
-            label=row.label,
-            excerpt=row.excerpt,
-        )
-        for row in citation_rows
-    ]
+    citations = await _citation_inputs(session, source.id)
     version = await _create_version(
         session,
         document,
@@ -512,53 +510,56 @@ async def update_authored_metadata(
     body: DocumentMetadataUpdate,
     principal: Principal = Depends(require_nevolium_user),
     session: AsyncSession = Depends(get_session),
-) -> AuthoredKnowledgeMetadataRead:
+) -> AuthoredKnowledgeRead:
     document = await _owned_document(session, document_id, principal, lock=True)
     if document.kind == "source" or document.asset_id is not None:
         raise HTTPException(status_code=409, detail="Imported source metadata is managed by the document ingestion surface")
     latest = await _latest_generation(session, document.id)
     if latest != body.expected_generation:
         raise HTTPException(status_code=409, detail="Document generation changed; reload before editing metadata")
-    if body.title is not None:
-        document.title = body.title.strip()
-    if body.kind is not None:
-        document.kind = body.kind
-    if "epistemic_status" in body.model_fields_set:
-        document.epistemic_status = body.epistemic_status
-    correlation_id = uuid.uuid4()
-    await enqueue_domain_event(
-        session,
-        event_type="knowledge.metadata.updated",
-        aggregate_type="document",
-        aggregate_id=document.id,
-        correlation_id=correlation_id,
-        payload={
-            "document_id": str(document.id),
-            "generation": latest,
-            "title": document.title,
-            "kind": document.kind,
-            "epistemic_status": document.epistemic_status,
-        },
+    source = await session.scalar(
+        select(DocumentVersion).where(
+            DocumentVersion.document_id == document.id,
+            DocumentVersion.generation == latest,
+            DocumentVersion.parser == AUTHORED_PARSER,
+            DocumentVersion.status == "completed",
+        )
     )
-    await append_audit(
+    if source is None or source.content_json is None:
+        raise HTTPException(status_code=409, detail="Latest authored version is unavailable")
+    citations = await _citation_inputs(session, source.id)
+    changed_fields: list[str] = []
+    if body.title is not None and body.title.strip() != document.title:
+        document.title = body.title.strip()
+        changed_fields.append("title")
+    if body.kind is not None and body.kind != document.kind:
+        document.kind = body.kind
+        changed_fields.append("kind")
+    if "epistemic_status" in body.model_fields_set and body.epistemic_status != document.epistemic_status:
+        document.epistemic_status = body.epistemic_status
+        changed_fields.append("epistemic_status")
+    if not changed_fields:
+        raise HTTPException(status_code=422, detail="Metadata update does not change the document")
+    version = await _create_version(
         session,
-        actor_type="user",
-        actor_id=principal.subject,
+        document,
+        latest + 1,
+        dict(source.content_json),
+        source.content_text or "",
+        citations,
+        principal,
+    )
+    await _emit_version_event(
+        session,
+        document,
+        version,
+        principal,
+        event_type="knowledge.metadata.updated",
         action="knowledge.metadata.update",
-        resource_type="document",
-        resource_id=str(document.id),
-        authority_level=1,
-        correlation_id=correlation_id,
+        extra={"changed_fields": changed_fields},
     )
     await session.commit()
-    return AuthoredKnowledgeMetadataRead(
-        id=document.id,
-        project_id=document.project_id,
-        title=document.title,
-        kind=document.kind,
-        epistemic_status=document.epistemic_status,
-        generation=latest,
-    )
+    return _read(document, version)
 
 
 async def list_version_citations(
