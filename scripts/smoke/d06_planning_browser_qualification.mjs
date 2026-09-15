@@ -241,10 +241,23 @@ async function qualifyTablet(browser) {
     isMobile: true, serviceWorkers: 'block' })
   await installApiMock(context, state)
   const page = await context.newPage()
+  const pageErrors = []
+  const consoleErrors = []
+  page.on('pageerror', error => { pageErrors.push(error.message) })
+  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()) })
   const planning = await openPlanning(page, state)
 
   assert(await page.evaluate(() => navigator.maxTouchPoints > 0), 'tablet: touch input missing')
-  await planning.getByRole('button', { name: 'Gantt', exact: true }).click()
+  const ganttButton = planning.getByRole('button', { name: 'Gantt', exact: true })
+  await ganttButton.click()
+  assert.equal(await ganttButton.getAttribute('aria-pressed'), 'true', 'tablet: Gantt view did not activate')
+  await page.waitForTimeout(1_000)
+  if (await planning.locator('.planning-gantt-canvas').count() === 0) {
+    const empty = await planning.locator('.planning-gantt-empty').allTextContents()
+    const diagnostic = { empty, pageErrors, consoleErrors, planningText: (await planning.innerText()).slice(0, 2000) }
+    await fs.writeFile(path.join(output, 'tablet-gantt-diagnostic.json'), `${JSON.stringify(diagnostic, null, 2)}\n`)
+    throw new Error(`tablet: Gantt canvas absent: ${JSON.stringify(diagnostic)}`)
+  }
   await planning.locator('.planning-gantt-canvas').waitFor({ state: 'visible' })
   const canvas = await planning.locator('.planning-gantt-canvas').boundingBox()
   assert(canvas && canvas.width >= 300 && canvas.height >= 240, 'tablet: Gantt canvas is not usable')
