@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -80,4 +81,24 @@ class TaskDependency(Base):
             "successor_task_id",
             name="uq_task_dependencies_pair",
         ),
+    )
+
+
+class ProjectWorkCalendar(Base):
+    __tablename__ = "project_work_calendars"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
+    )
+    timezone: Mapped[str] = mapped_column(String(120), nullable=False, default="UTC")
+    weekly_intervals: Mapped[list[Any]] = mapped_column(JSONB, nullable=False, default=list)
+    exceptions: Mapped[list[Any]] = mapped_column(JSONB, nullable=False, default=list)
+    calendar_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint("calendar_version >= 1", name="ck_project_work_calendar_version_positive"),
     )
