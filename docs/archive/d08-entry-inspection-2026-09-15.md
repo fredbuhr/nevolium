@@ -58,8 +58,8 @@ de projection/layout sans y déplacer l'autorité métier.
 
 ## Prototype historique `ed12d503…`
 
-Le prototype KAIRO contenait `BrainMindMap.tsx` et un `mindmap.ts` radial. Les éléments réutilisables
-sélectivement sont :
+Le prototype historique contenait `BrainMindMap.tsx` et un `mindmap.ts` radial. Les éléments
+réutilisables sélectivement sont :
 
 - XYFlow comme renderer 2D ;
 - sélection et double-clic d'exploration ;
@@ -67,7 +67,7 @@ sélectivement sont :
 - distinction visuelle relations explicites / structurelles ;
 - conservation des positions locales lorsqu'une projection est rafraîchie.
 
-À **ne pas reprendre tel quel** : types `KAIRO`, score importance/activity/recency, arêtes
+À **ne pas reprendre tel quel** : anciens types de marque, score importance/activity/recency, arêtes
 structurelles synthétiques considérées comme une projection autonome, et stockage implicite des
 positions uniquement dans l'état React. Le prototype ne sera jamais fusionné en bloc.
 
