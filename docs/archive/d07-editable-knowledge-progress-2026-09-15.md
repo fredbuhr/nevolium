@@ -1,17 +1,21 @@
 # D07 — connaissances éditables, recherche et provenance — checkpoint du 15 septembre 2026
 
-## État d'intégration
+## Intégration
 
 D07 a été ouvert depuis `main` `958f440183c5d0051d869474784251eb20bd8fb4` sur
-`feat/d07-editable-knowledge`, PR #91. La tête fonctionnelle candidate
-`01c035ec7e7fae01513788d04695fcff63a075fe` passe **9/9 workflows PR**. Le checkpoint et les
-fichiers d'état sont ensuite mis à jour sur la branche ; cette nouvelle tête documentaire doit elle
-même être requalifiée avant passage de la PR en ready et avant fusion.
+`feat/d07-editable-knowledge`, PR #91. La tête finale qualifiée de la PR est
+`0db6df6326b553136ab8a375b30fddbe5f6b27aa` et passe **9/9 workflows PR**. La PR #91 est intégrée
+par le merge GitHub vérifié `f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`.
+
+Le merge a pour parents l'ancien `main` `958f440183c5d0051d869474784251eb20bd8fb4` et la tête finale
+D07 `0db6df6326b553136ab8a375b30fddbe5f6b27aa`. Son arbre
+`ecd1947a1cf7f2adf2f6583b54748fdd62289e98` est exactement identique à l'arbre qualifié de la
+branche. L'intégration a donc préservé byte-for-byte le contenu validé.
 
 Le serveur pilote reste inchangé sur le runtime D05
 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` et le schéma `0015_model_configurations`. Les
-migrations D06 `0016`/`0017` et D07 `0018_editable_knowledge` n'ont été appliquées qu'en CI. D07
-n'a donc modifié aucune donnée, aucun secret, aucun snapshot B2 et aucun conteneur du pilote.
+migrations D06 `0016`/`0017` et D07 `0018_editable_knowledge` n'ont été appliquées qu'en CI. D07 n'a
+modifié aucune donnée, aucun secret, aucun snapshot B2 et aucun conteneur du pilote.
 
 ## Résultat D07
 
@@ -45,20 +49,23 @@ nouvelle génération, recherche universelle d'une connaissance située dans un 
 inspection avec changement de contexte, puis bascule de la nouvelle surface en anglais. Un second
 contexte téléphone tactile vérifie l'absence de débordement horizontal et l'édition utilisable.
 
-Artefact navigateur du run UI exact-head : ID `10405706103`, digest
+Artefact navigateur du run UI de la tête fonctionnelle : ID `10405706103`, digest
 `sha256:97c73911dd15945eb80fa18dde5c3f2c8dbb9c9ce7463c36232cbe84e1bbcc6a`.
 
-## Validation de la tête fonctionnelle
+## Validation finale
 
-Sur `01c035ec7e7fae01513788d04695fcff63a075fe` :
+Sur la tête finale `0db6df6326b553136ab8a375b30fddbe5f6b27aa` :
 
 - **9/9 workflows PR réussis** : Code quality, UI workspace, MCP registry, Document ingestion,
   Baseline reproducibility, Foundation, Multi-user isolation, Autonomous research et D04 real engine ;
 - migration Alembic complète jusqu'à `0018_editable_knowledge` sur PostgreSQL réel ;
 - scénario D07 PostgreSQL réel vert et ingestion Docling historique verte sur le même head ;
 - TypeScript/Vite, contrat Web D07 et contrats Core réussis ;
-- Chromium D05, D06 et nouveau D07 réussis sur la même tête ;
+- Chromium D05, D06 et D07 réussis sur la même tête ;
 - sauvegarde/restauration B2, moteurs réels D04, Research crash/replay et isolation OIDC restent verts.
+
+Le merge `f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4` a été revérifié sur `main` : second parent exact,
+merge signé/vérifié et arbre identique à la tête qualifiée.
 
 ## Données, rollback et limites
 
@@ -76,7 +83,8 @@ La CI Chromium ne remplace pas une revue ergonomique sur appareils physiques.
 
 ## Handoff
 
-D07 peut être intégré seulement après requalification **9/9** de la tête documentaire finale. Après
-fusion, vérifier le commit de merge et son arbre sur `main`, puis mettre à jour l'état opérationnel
-pour ouvrir **D08 — mindmap 2D éditable** sur une branche fraîche. Ne pas commencer D08/D09 sur la
-branche D07.
+D07 est intégré. La prochaine tranche produit est **D08 — mindmap 2D éditable**. D08 doit démarrer
+sur une branche fraîche depuis le `main` live après vérification du commit de handoff. La mindmap doit
+réutiliser les identités D06/D07, les relations typées et les primitives de layout présentes ; elle ne
+doit pas devenir une seconde source de vérité. Le prototype historique `ed12d503…` peut être inspecté
+sélectivement, jamais fusionné en bloc. D09 ne doit pas commencer en parallèle.

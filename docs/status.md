@@ -7,10 +7,12 @@ exécute toujours le runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` avec
 `0015_model_configurations` et OpenAI `openai/gpt-4.1` qualifié/activé. D06 est intégré par #90,
 commit `20720774552418a6c9e7acbfbf069945ff0f57df`, mais n'est pas encore déployé sur le pilote.
 
-D07 est **candidat final qualifié** dans la PR #91. Sa tête fonctionnelle
-`01c035ec7e7fae01513788d04695fcff63a075fe` passe 9/9 workflows PR, PostgreSQL D07 réel et
-Chromium D07 compris. La tête documentaire de clôture doit encore repasser ces gates avant fusion ;
-D07 n'est donc pas encore déclaré intégré dans `main` dans ce document.
+D07 est désormais **intégré par la PR #91**, merge GitHub vérifié
+`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. La tête finale qualifiée
+`0db6df6326b553136ab8a375b30fddbe5f6b27aa` passe **9/9 workflows PR**. Le merge a pour parents
+l'ancien `main` `958f440183c5d0051d869474784251eb20bd8fb4` et cette tête D07 ; son arbre
+`ecd1947a1cf7f2adf2f6583b54748fdd62289e98` est identique à l'arbre qualifié. D07 n'est pas encore
+déployé sur le pilote.
 
 ## Acquis canoniques
 
@@ -25,7 +27,7 @@ D07 n'est donc pas encore déclaré intégré dans `main` dans ce document.
 | Secrets / reprise | OpenBao persistant, snapshots et matériel LiteLLM chiffré restaurés | Préserver snapshots et réservations historiques |
 | Cockpit D05 | Mycelium 2D, Dockview, recherche rapide, inspecteur, layouts privés, PWA, responsive et popout bureau | Revue humaine continue sur appareils physiques |
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
-| Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Candidat PR #91 ; coédition D12, mindmap D08, Mycelium 3D D09 |
+| Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12, mindmap D08, Mycelium 3D D09 |
 | Langues | Fondation FR/EN extensible ; nouvelles surfaces D06/D07 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
@@ -46,7 +48,7 @@ intercepte les gestes de date/progression et conserve Core comme autorité. Le G
 Le calendrier qualifié est une surface Nevolium dédiée ; Schedule-X est installé mais non utilisé
 comme preuve de cette capacité.
 
-## D07 — connaissances éditables qualifiées sur la branche
+## D07 — connaissances éditables intégrées
 
 D07 généralise le canon Documents sans créer une seconde base Knowledge. Les sources importées
 conservent leur `Asset`; les entrées authored `note`, `idea` et `decision` peuvent exister sans Asset.
@@ -83,7 +85,7 @@ Le détail des preuves et du rollback est dans le
 |---|---|---|
 | Cockpit | D05 intégré : Mycelium 2D, espaces réels, Dockview, clavier, PWA, responsive et popout bureau | Raffinement continu et fonctions spécialisées |
 | Planification | D06 intégré : Liste/Kanban/Gantt/Calendrier, hiérarchie/jalons/dépendances, récurrences, work calendar, CPM et replanification | Déploiement distinct ; calendriers externes D11 ; offline D12 |
-| Connaissances/graphes | D07 candidat qualifié : Documents authored, versions, provenance, recherche universelle, Lexical, import/export | D08 mindmap 2D après intégration D07 ; D09 Mycelium 3D |
+| Connaissances/graphes | D07 intégré : Documents authored, versions, provenance, recherche universelle, Lexical, import/export | **D08 mindmap 2D** ; D09 Mycelium 3D |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
 | Finance/Crypto/Home/Dev | Profils optionnels déclarés | Adaptateurs, policy, workspaces et parcours réels |
 | Langues | Fondation FR/EN extensible, D06/D07 raccordés | D13 : complétude produit FR/EN puis langues supplémentaires |
