@@ -45,6 +45,8 @@ def main() -> int:
     assert "planning_version: updated.planning_version" in workspace
     assert "apiUrl={apiUrl}" in workspace and "projectId={selectedProjectId}" in workspace
     assert "criticalPath.refresh()" in workspace
+    assert "void page.reload()" in workspace
+    assert "onApplied={() =>" in workspace
     assert "DndContext" in workspace
     assert "useDraggable" in workspace and "useDroppable" in workspace
     assert "['todo', 'completed'].includes(task.status)" in workspace
@@ -68,6 +70,17 @@ def main() -> int:
     assert "canonicalTimestamp" in schedule_editor
     assert "dependencyStatusLabel" in schedule_editor
     assert "finding.detail" not in schedule_editor
+    # Downstream effects remain advisory until the user explicitly includes them and requests a
+    # second server preview. Applying always uses the exact update batch validated by that preview.
+    assert "suggested_task_count" in schedule_editor
+    assert "suggested_changes" in schedule_editor
+    assert "includedUpdates" in schedule_editor
+    assert "suggestionPatch" in schedule_editor
+    assert "includeSuggestedEffects" in schedule_editor
+    assert "updates: includedUpdates" in schedule_editor
+    assert "updates: applyUpdates" in schedule_editor
+    assert "preview.suggested_changes.length > 0" in schedule_editor
+    assert "planning-replan-suggestions" in schedule_editor
 
     assert "/planning/critical-path" in critical_hook
     assert "critical_task_ids" in critical_hook
@@ -150,6 +163,10 @@ def main() -> int:
         "'planning.editSchedule'",
         "'planning.schedulePreview'",
         "'planning.scheduleApply'",
+        "'planning.scheduleSuggestedHeading'",
+        "'planning.scheduleSuggestedHint'",
+        "'planning.scheduleIncludeEffects'",
+        "'planning.scheduleRechecking'",
         "'planning.scheduleDependencySatisfied'",
         "'planning.scheduleDependencyIncomplete'",
         "'planning.scheduleDependencyViolated'",
@@ -178,9 +195,11 @@ def main() -> int:
     print(
         "D06 PLANNING WORKSPACE PASS: one canonical projection feeds bilingual List/Kanban/"
         "editable Gantt/calendar; Gantt drag/resize proposals are reset to canonical state and routed "
-        "through cancellable preview/validate/apply, Gantt progress uses versioned planning-structure "
-        "updates, structural Gantt mutations stay blocked, Core critical-path and virtual recurrence "
-        "results remain authoritative, and dates never write directly through the legacy Task PATCH"
+        "through cancellable preview/validate/apply, downstream dependency effects stay advisory until "
+        "explicitly included in a second preview, successful batches reload canonical planning, Gantt "
+        "progress uses versioned planning-structure updates, structural Gantt mutations stay blocked, "
+        "Core critical-path and virtual recurrence results remain authoritative, and dates never write "
+        "directly through the legacy Task PATCH"
     )
     return 0
 
