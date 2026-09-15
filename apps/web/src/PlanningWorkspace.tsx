@@ -14,6 +14,7 @@ import { useI18n } from './i18n'
 import PlanningGantt from './PlanningGantt'
 import { nevoliumFetch } from './lib/apiClient'
 import { usePagedCollection } from './lib/usePagedCollection'
+import { usePlanningCriticalPath } from './lib/usePlanningCriticalPath'
 import { useProjectSelection } from './lib/projectSelection'
 
 type PlanningTask = {
@@ -72,13 +73,27 @@ async function readJson<T>(response: Response): Promise<T> {
   return body as T
 }
 
+function formatElapsed(seconds: number) {
+  const safe = Math.max(0, Math.floor(seconds))
+  const days = Math.floor(safe / 86400)
+  const hours = Math.floor((safe % 86400) / 3600)
+  const minutes = Math.floor((safe % 3600) / 60)
+  const remainingSeconds = safe % 60
+  if (days) return `${days}d ${hours}h`
+  if (hours) return `${hours}h ${minutes}min`
+  if (minutes) return `${minutes}min ${remainingSeconds}s`
+  return `${remainingSeconds}s`
+}
+
 function DraggableTaskCard({
   task,
   disabled,
+  critical,
   children,
 }: {
   task: PlanningTask
   disabled: boolean
+  critical: boolean
   children: ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -95,7 +110,7 @@ function DraggableTaskCard({
   return (
     <article
       ref={setNodeRef}
-      className="planning-card"
+      className={`planning-card${critical ? ' is-critical' : ''}`}
       style={style}
       {...(!disabled ? attributes : {})}
       {...(!disabled ? listeners : {})}
@@ -149,6 +164,11 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     selectedProjectId
       ? `${apiUrl}/v1/projects/${encodeURIComponent(selectedProjectId)}/task-dependencies?limit=100`
       : null,
+  )
+  const criticalPath = usePlanningCriticalPath(apiUrl, selectedProjectId || null)
+  const criticalTaskIds = useMemo(
+    () => new Set(criticalPath.data?.critical_task_ids || []),
+    [criticalPath.data],
   )
 
   const grouped = useMemo(() => {
@@ -230,8 +250,9 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
   function renderTaskCard(task: PlanningTask) {
     const workflowManaged = ['queued', 'running'].includes(task.status)
     const disabled = workflowManaged || task.status === 'failed' || savingTaskId === task.id
+    const critical = criticalTaskIds.has(task.id)
     return (
-      <DraggableTaskCard key={task.id} task={task} disabled={disabled}>
+      <DraggableTaskCard key={task.id} task={task} disabled={disabled} critical={critical}>
         <div className="planning-card-topline">
           <span className="source-id">P{task.priority}</span>
           <span>{task.kind === 'milestone' ? t('planning.milestone') : t('planning.task')}</span>
@@ -241,6 +262,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
         <small>{timingLabel(task)}</small>
         <div className="planning-card-meta">
           <span>{t('planning.progress')} · {task.progress_percent}%</span>
+          {critical ? <span className="planning-critical-badge">◆ {t('planning.critical')}</span> : null}
           {task.parent_task_id ? <span>{t('planning.parent')}</span> : null}
           {task.recurrence_rule ? <span>{t('planning.recurring')}</span> : null}
           {workflowManaged ? <span>{t('planning.executionLocked')}</span> : null}
@@ -270,7 +292,9 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     )
   }
 
-  const visibleError = mutationError || page.error || (viewMode === 'gantt' ? dependencyPage.error : null)
+  const visibleError = mutationError || page.error || (
+    viewMode === 'gantt' ? dependencyPage.error || criticalPath.error : null
+  )
   const canLoadMore = page.hasMore || (viewMode === 'gantt' && dependencyPage.hasMore)
 
   return (
@@ -332,10 +356,13 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
             </thead>
             <tbody>
               {page.items.map((task) => (
-                <tr key={task.id}>
+                <tr key={task.id} className={criticalTaskIds.has(task.id) ? 'is-critical' : ''}>
                   <td>
                     <strong>{task.title}</strong>
-                    <small>{statusLabel(task.status)} · {task.kind === 'milestone' ? t('planning.milestone') : t('planning.task')}</small>
+                    <small>
+                      {statusLabel(task.status)} · {task.kind === 'milestone' ? t('planning.milestone') : t('planning.task')}
+                      {criticalTaskIds.has(task.id) ? ` · ◆ ${t('planning.critical')}` : ''}
+                    </small>
                   </td>
                   <td>P{task.priority}</td>
                   <td>{task.progress_percent}%</td>
@@ -363,14 +390,29 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
         </DndContext>
       ) : null}
 
+      {viewMode === 'gantt' && criticalPath.data ? (
+        <div className="planning-critical-summary" role="status">
+          <strong>{t('planning.criticalPath')}</strong>
+          <span>
+            {criticalPath.data.critical_task_ids.length} {t('planning.criticalTasks')} · {' '}
+            {t('planning.criticalDuration')} · {formatElapsed(criticalPath.data.project_duration_seconds)}
+          </span>
+          {!criticalPath.data.network_complete ? <small>{t('planning.networkIncomplete')}</small> : null}
+        </div>
+      ) : null}
+
       {viewMode === 'gantt' && page.items.length > 0 ? (
-        <PlanningGantt tasks={page.items} dependencies={dependencyPage.items} />
+        <PlanningGantt
+          tasks={page.items}
+          dependencies={dependencyPage.items}
+          criticalTaskIds={criticalPath.data?.critical_task_ids || []}
+        />
       ) : null}
 
       {canLoadMore ? (
         <button
           type="button"
-          disabled={page.loading || dependencyPage.loading}
+          disabled={page.loading || dependencyPage.loading || criticalPath.loading}
           onClick={() => void loadMore()}
         >
           {t('planning.loadMore')}
