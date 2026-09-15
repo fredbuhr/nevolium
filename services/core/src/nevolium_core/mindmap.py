@@ -13,6 +13,8 @@ from .events import append_audit, enqueue_domain_event
 from .mindmap_schemas import (
     MindMapEdgeRead,
     MindMapEntityType,
+    MindMapIdeaConversionRead,
+    MindMapIdeaToTaskCreate,
     MindMapNodeRead,
     MindMapRelationshipCreate,
     MindMapSnapshotRead,
@@ -367,6 +369,147 @@ async def create_mindmap_relationship(
     await session.commit()
     await session.refresh(relationship)
     return _edge(relationship)
+
+
+@router.post(
+    "/v1/projects/{project_id}/mindmap/ideas/{document_id}/convert-to-task",
+    response_model=MindMapIdeaConversionRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def convert_mindmap_idea_to_task(
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    body: MindMapIdeaToTaskCreate,
+    principal: Principal = Depends(require_nevolium_user),
+    session: AsyncSession = Depends(get_session),
+) -> MindMapIdeaConversionRead:
+    project = await _locked_owned_project(session, project_id, principal)
+    idea = await session.scalar(
+        select(Document).where(
+            Document.id == document_id,
+            Document.project_id == project.id,
+            Document.metadata_json["owner_subject"].astext == principal.subject,
+        )
+    )
+    if idea is None:
+        raise HTTPException(status_code=404, detail="Idea not found")
+    if idea.kind != "idea":
+        raise HTTPException(status_code=409, detail="Only an idea can be converted to a task")
+
+    existing_conversion = await session.scalar(
+        select(RelationshipRecord.id).where(
+            RelationshipRecord.owner_subject == principal.subject,
+            RelationshipRecord.source_type == "document",
+            RelationshipRecord.source_id == idea.id,
+            RelationshipRecord.relation_type == "converted_to",
+            RelationshipRecord.target_type == "task",
+        )
+    )
+    if existing_conversion is not None:
+        raise HTTPException(status_code=409, detail="Idea is already converted to a task")
+
+    task_title = body.title.strip() if body.title else idea.title
+    if not task_title:
+        task_title = idea.title
+    correlation_id = uuid.uuid4()
+    task = Task(
+        project_id=project.id,
+        title=task_title,
+        description=body.description,
+        status="todo",
+        owner_type="user",
+        owner_ref=principal.subject,
+        authority_ceiling=1,
+        input={},
+        priority=body.priority,
+    )
+    session.add(task)
+    await session.flush()
+
+    relationship = RelationshipRecord(
+        owner_subject=principal.subject,
+        source_type="document",
+        source_id=idea.id,
+        relation_type="converted_to",
+        target_type="task",
+        target_id=task.id,
+        metadata_json={
+            "surface": "mindmap",
+            "project_id": str(project.id),
+            "conversion": True,
+        },
+    )
+    session.add(relationship)
+    await session.flush()
+
+    await enqueue_domain_event(
+        session,
+        event_type="task.created",
+        aggregate_type="task",
+        aggregate_id=task.id,
+        correlation_id=correlation_id,
+        payload={"task_id": str(task.id), "project_id": str(project.id), "title": task.title},
+    )
+    await enqueue_domain_event(
+        session,
+        event_type="relationship.created",
+        aggregate_type="relationship",
+        aggregate_id=relationship.id,
+        correlation_id=correlation_id,
+        payload={
+            "relationship_id": str(relationship.id),
+            "project_id": str(project.id),
+            "source_type": "document",
+            "source_id": str(idea.id),
+            "relation_type": "converted_to",
+            "target_type": "task",
+            "target_id": str(task.id),
+            "surface": "mindmap",
+        },
+    )
+    await append_audit(
+        session,
+        actor_type="user",
+        actor_id=principal.subject,
+        action="task.create",
+        resource_type="task",
+        resource_id=str(task.id),
+        authority_level=1,
+        correlation_id=correlation_id,
+        request_json={
+            "project_id": str(project.id),
+            "source_document_id": str(idea.id),
+            "source": "mindmap.idea_conversion",
+            **body.model_dump(mode="json"),
+        },
+    )
+    await append_audit(
+        session,
+        actor_type="user",
+        actor_id=principal.subject,
+        action="relationship.create",
+        resource_type="relationship",
+        resource_id=str(relationship.id),
+        authority_level=1,
+        correlation_id=correlation_id,
+        request_json={
+            "project_id": str(project.id),
+            "source_type": "document",
+            "source_id": str(idea.id),
+            "relation_type": "converted_to",
+            "target_type": "task",
+            "target_id": str(task.id),
+        },
+    )
+    await session.commit()
+    await session.refresh(task)
+    await session.refresh(relationship)
+    return MindMapIdeaConversionRead(
+        document_id=idea.id,
+        task_id=task.id,
+        task_title=task.title,
+        relationship=_edge(relationship),
+    )
 
 
 @router.delete(
