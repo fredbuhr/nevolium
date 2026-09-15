@@ -4,18 +4,21 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
+from sqlalchemy import select
 
 from nevolium_core.auth import Principal
 from nevolium_core.db import SessionFactory, engine
 from nevolium_core.document_models import Document
 from nevolium_core.mindmap import (
+    convert_mindmap_idea_to_task,
     create_mindmap_relationship,
     delete_mindmap_relationship,
     get_project_mindmap,
 )
-from nevolium_core.mindmap_schemas import MindMapRelationshipCreate
-from nevolium_core.models import Project, RelationshipRecord, Task
+from nevolium_core.mindmap_schemas import MindMapIdeaToTaskCreate, MindMapRelationshipCreate
+from nevolium_core.models import AuditRecord, OutboxEvent, Project, RelationshipRecord, Task
+from nevolium_core.planning_projection import list_project_planning_tasks
 
 
 def user(subject: str) -> Principal:
@@ -292,16 +295,154 @@ async def main() -> None:
         assert response.status_code == 204
         assert await session.get(RelationshipRecord, related.id) is None
 
+        conversion = await convert_mindmap_idea_to_task(
+            project_id=project_id,
+            document_id=idea_id,
+            body=MindMapIdeaToTaskCreate(
+                title="Converted idea task",
+                description="Created explicitly from the D08 idea.",
+                priority=1,
+            ),
+            principal=owner,
+            session=session,
+        )
+        assert conversion.document_id == idea_id
+        assert conversion.task_title == "Converted idea task"
+        assert conversion.relationship.relation_type == "converted_to"
+        assert conversion.relationship.source_key == f"document:{idea_id}"
+        assert conversion.relationship.target_key == f"task:{conversion.task_id}"
+        assert conversion.relationship.metadata_json["conversion"] is True
+
+        converted_task = await session.get(Task, conversion.task_id)
+        assert converted_task is not None
+        assert converted_task.project_id == project_id
+        assert converted_task.status == "todo"
+        assert converted_task.owner_ref == owner.subject
+        assert converted_task.priority == 1
+        assert converted_task.description == "Created explicitly from the D08 idea."
+
+        planning_response = Response()
+        planning_tasks = await list_project_planning_tasks(
+            project_id=project_id,
+            response=planning_response,
+            limit=50,
+            cursor=None,
+            principal=owner,
+            session=session,
+        )
+        converted_projection = next(
+            item for item in planning_tasks if item.id == conversion.task_id
+        )
+        assert converted_projection.kind == "task"
+        assert converted_projection.planning_version == 1
+        assert converted_projection.progress_percent == 0
+
+        conversion_snapshot = await get_project_mindmap(
+            project_id=project_id,
+            task_limit=10,
+            document_limit=10,
+            relationship_limit=20,
+            principal=owner,
+            session=session,
+        )
+        assert f"task:{conversion.task_id}" in {node.key for node in conversion_snapshot.nodes}
+        assert conversion.relationship.id in {edge.id for edge in conversion_snapshot.edges}
+
+        conversion_events = list(
+            (
+                await session.execute(
+                    select(OutboxEvent).where(
+                        OutboxEvent.aggregate_id.in_(
+                            [conversion.task_id, conversion.relationship.id]
+                        )
+                    )
+                )
+            ).scalars()
+        )
+        assert {event.event_type for event in conversion_events} == {
+            "task.created",
+            "relationship.created",
+        }
+        assert len({event.correlation_id for event in conversion_events}) == 1
+
+        conversion_audits = list(
+            (
+                await session.execute(
+                    select(AuditRecord).where(
+                        AuditRecord.resource_id.in_(
+                            [str(conversion.task_id), str(conversion.relationship.id)]
+                        )
+                    )
+                )
+            ).scalars()
+        )
+        assert {audit.action for audit in conversion_audits} == {
+            "task.create",
+            "relationship.create",
+        }
+        assert len({audit.correlation_id for audit in conversion_audits}) == 1
+
+        await rejected(
+            409,
+            convert_mindmap_idea_to_task(
+                project_id=project_id,
+                document_id=idea_id,
+                body=MindMapIdeaToTaskCreate(),
+                principal=owner,
+                session=session,
+            ),
+        )
+        await rejected(
+            409,
+            convert_mindmap_idea_to_task(
+                project_id=project_id,
+                document_id=note_id,
+                body=MindMapIdeaToTaskCreate(),
+                principal=owner,
+                session=session,
+            ),
+        )
+        await rejected(
+            404,
+            convert_mindmap_idea_to_task(
+                project_id=project_id,
+                document_id=other_idea_id,
+                body=MindMapIdeaToTaskCreate(),
+                principal=owner,
+                session=session,
+            ),
+        )
+        await rejected(
+            404,
+            convert_mindmap_idea_to_task(
+                project_id=project_id,
+                document_id=idea_id,
+                body=MindMapIdeaToTaskCreate(),
+                principal=foreign,
+                session=session,
+            ),
+        )
+        await rejected(
+            409,
+            delete_mindmap_relationship(
+                project_id=project_id,
+                relationship_id=conversion.relationship.id,
+                principal=owner,
+                session=session,
+            ),
+        )
+
         after_delete = await get_project_mindmap(
             project_id=project_id,
             task_limit=10,
             document_limit=10,
-            relationship_limit=10,
+            relationship_limit=20,
             principal=owner,
             session=session,
         )
         assert created.id not in {edge.id for edge in after_delete.edges}
         assert related.id not in {edge.id for edge in after_delete.edges}
+        assert conversion.relationship.id in {edge.id for edge in after_delete.edges}
 
         small = await get_project_mindmap(
             project_id=project_id,
@@ -349,8 +490,8 @@ async def main() -> None:
 
     await engine.dispose()
     print(
-        "D08 POSTGRES PASS: project snapshot is bounded and owner-scoped; typed mindmap links "
-        "are serialized, duplicate-safe, same-project and deletable only when mindmap-owned"
+        "D08 POSTGRES PASS: bounded owner-scoped map, typed links and atomic idea conversion "
+        "produce canonical Tasks visible through Planning while provenance remains durable"
     )
 
 
