@@ -4,6 +4,7 @@ import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
 import InstanceModelSettings from './InstanceModelSettings'
 import KnowledgePanel from './KnowledgePanel'
+import MindMapWorkspace from './MindMapWorkspace'
 import MyceliumHome, { type MyceliumDestinationKey } from './MyceliumHome'
 import { MyceliumAtmosphere } from './MyceliumField'
 import NewsWorkspacePanel, {
@@ -564,6 +565,14 @@ export default function App() {
                 title: t('planning.panelTitle'),
                 keywords: ['planification', 'planning', 'liste', 'kanban', 'tasks', 'tâches'],
                 content: <PlanningWorkspace apiUrl={API_URL} />,
+                minimumWidth: 320,
+              },
+              {
+                key: 'mindmap',
+                id: 'mindmap-workspace',
+                title: t('mindmap.panelTitle'),
+                keywords: ['carte', 'mindmap', 'idée', 'decision', 'relation', 'graph'],
+                content: <MindMapWorkspace apiUrl={API_URL} />,
                 minimumWidth: 320,
               },
               {
