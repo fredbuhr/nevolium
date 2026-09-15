@@ -9,7 +9,7 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Base intégrée | `main` = `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`, 8/8 workflows push verts |
 | D08 intégré | PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f`, 9/9 workflows PR verts, arbre identique au merge |
 | Branche / PR active | `feat/d09-mycelium-3d`, **PR #93 draft** ; aucune autre branche normale ouverte par ce travail |
-| Référence qualifiée D09 | `0fa97e6a5a35cd5c4ba1d967665ba21fa420f369` : **8/8 workflows PR verts**, UI run `35033102993`. Membranes fonctionnelles, dessin jugé encore circulaire et immobile |
+| Référence qualifiée D09 | `43e7c9ee25f3bf00eeb222a6f94fb96cf3d0a471` : **8/8 workflows PR verts**, UI run `35035965800`. Animation visible et arrêt calme vérifiés ; corps encore trop pleins/mouchetés à affiner |
 | Présent descendant | Corps neuronaux 3D, dendrites effilées, respiration au repos et vagues lumineuses ; commande calme/mouvement réduit ; vérifier les checks/captures/vidéo du head live #93, sans transférer les performances du parent |
 | Implémenté D09 | Projection pure ; renderer R3F/Three différé ; orbite/focus/zoom ; sélection 2D↔3D ; filaments/groupes/labels bornés ; activité réelle des Tasks ; navigation Planning/Knowledge |
 | Canon | Snapshot D08 owner-scoped, mêmes `project`/`task`/`document` et `RelationshipRecord`; aucune nouvelle migration ou API métier |
@@ -19,7 +19,7 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Compatibilité | React/DOM 19.2.8 fixés dans la plage supportée par R3F 9.7.0 ; types Three 0.180.0 |
 | Retours utilisateur | Nouveau kit correct/fonctionnel, mais manque de vie et de volume : demande explicite de neurones, ramifications naturelles et énergie en circulation |
 | Rapport physique récent | Build 0fa97e6, 201/300, éco, 601,216 s, 401 fenêtres : médiane 151 / p10 41 / minimum 1 FPS ; mémoire absente. Journal préservé, 0 événements perdus annoncés ; chute de fluidité à prendre en compte |
-| Preuves | Rapport joint analysé et hash conservé dans le suivi organique ; référence kit `10419823329` ; preuve exacte du descendant dans les checks et le corps de #93 |
+| Preuves | Deux rapports physiques et hashes conservés dans les suivis ; référence kit neuronal `10423288654`, vidéo/test navigateur `10423114382` ; preuve exacte du descendant dans les checks et le corps de #93 |
 | Banc matériel | `node apps/web/qualification.build.mjs` ; artefact CI `d09-hardware-kit`, HTML autonome. Renderer réel, graphes synthétiques 51/50, 201/300, 401/1000, stress 501/1500. Aucune API ; campagne 10 minutes, interruptions distinctes, mémoire inconnue conservée comme inconnue, export local `needs_review` |
 | Limites | API navigateur simulée distincte des contrats PostgreSQL ; mémoire longue durée et cockpit physique à compléter ; design révisé à examiner. DPR corrigé : comparer les nouvelles mesures à résolution déclarée |
 | Production | Dernier runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations`; D06–D09 non déployés |

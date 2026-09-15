@@ -65,3 +65,18 @@ dans #93 après vérification. Les mesures CI restent du rendu logiciel, distinc
 Prochaine action : examiner la silhouette, la matière et la circulation sur les captures/vidéo,
 corriger tout défaut observé puis remettre le HTML. L'avis utilisateur sur cette proposition,
 la mémoire longue durée et les essais physiques du cockpit restent nécessaires à la clôture D09.
+
+## Revue de la première réalisation
+
+Head `43e7c9ee25f3bf00eeb222a6f94fb96cf3d0a471` : 8/8 workflows verts, UI `35035965800`.
+Les treize contrôles du kit passent, dont 27 521 pixels modifiés à caméra fixe et zéro en mode
+calme. Vidéo du canvas enregistrée (6,52 s) et captures examinées. La sélection en volume, le
+tactile et les treize scénarios spatiaux passent. Le volume est réel, mais le corps paraît trop
+plein et sa texture mouchetée : la reprise suivante rétrécit le centre, prolonge trois lobes vers
+les dendrites et remplace les taches par des nervures continues, avec une lumière moins laiteuse.
+
+Observations SwiftShader ponctuelles sur 43e7c9e : 22/16/13 FPS pour 51/201/501 objets,
+heap 16,1/18,2/47,4 Mo, 4 géométries, zéro texture, 5 appels. Le parcours court 201/300 mêlant
+interactions et contrôle du mode calme donne médiane 4 FPS, minimum 1 et une longue interruption.
+Ces essais ne constituent pas une campagne de fluidité physique ni une preuve de fuite mémoire ;
+les résultats du descendant et son propre kit sont consignés dans #93.

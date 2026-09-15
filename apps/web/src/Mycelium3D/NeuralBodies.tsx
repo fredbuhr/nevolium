@@ -34,11 +34,15 @@ const common = `
 `
 const somaVertex = common + `
   attribute vec3 axis;
+  attribute vec3 axisB;
+  attribute vec3 axisC;
   vec3 surface(vec3 p) {
-    float lobe = pow(max(0.0, dot(p, axis)), 6.0) * 0.32;
-    float folds = 0.12 * sin(p.x * 4.3 + phase) * sin(p.y * 3.7 - phase)
-      + 0.08 * sin(p.z * 5.0 + p.x * 2.0 + phase);
-    vec3 shape = p * (1.0 + folds + lobe) * vec3(1.13, 0.84 + sin(phase) * 0.09, 0.94);
+    float lobe = max(pow(max(0.0, dot(p, axis)), 10.0) * 0.58,
+      max(pow(max(0.0, dot(p, axisB)), 8.0) * 0.43,
+          pow(max(0.0, dot(p, axisC)), 9.0) * 0.46));
+    float folds = 0.095 * sin(p.x * 4.3 + phase) * sin(p.y * 3.7 - phase)
+      + 0.055 * sin(p.z * 5.0 + p.x * 2.0 + phase);
+    vec3 shape = p * (0.7 + folds + lobe) * vec3(1.13, 0.84 + sin(phase) * 0.09, 0.94);
     return shape * (1.0 + motion * 0.047 * sin(lifeTime * 1.1 + phase + p.y * 0.8));
   }
   void main() {
@@ -83,16 +87,20 @@ const tissueFragment = `
     float facing = max(0.0, dot(n, view));
     float rim = pow(1.0 - facing, 2.4);
     float diffuse = max(0.0, dot(n, light));
-    float grain = sin(vLocal.x * 16.0 + sin(vLocal.z * 12.0 + vPhase) * 2.0
-      + vLocal.y * 9.0) * sin(vLocal.y * 11.0 - vLocal.z * 7.0 + vPhase);
-    float veins = smoothstep(0.57, 0.9, grain);
+    // Warped continuous ridges read as tissue and capillaries, not a dotted shell.
+    vec3 q = vLocal * 5.0;
+    float warp = sin(q.y * 1.6 + sin(q.z * 1.3 + vPhase)) * 1.8;
+    float ridge = abs(sin(q.x * 2.3 + warp + sin(q.z * 2.1) * 0.8));
+    float branch = abs(sin(q.y * 1.9 + sin(q.x * 1.4 + vPhase) * 1.6 + q.z));
+    float veins = (1.0 - smoothstep(0.025, 0.15, ridge))
+      + (1.0 - smoothstep(0.02, 0.10, branch)) * 0.38;
     float breathing = 0.5 + 0.5 * sin(lifeTime * 1.1 + vPhase);
-    float tide = motion * (0.08 + 0.14 * breathing);
+    float tide = motion * (0.025 + 0.09 * breathing);
     float specular = pow(max(0.0, dot(n, normalize(light + view))), 24.0);
-    vec3 deep = vec3(0.004, 0.025, 0.03);
-    vec3 tissue = vTone * (0.13 + diffuse * 0.28 + rim * 0.48 + veins * (0.32 + tide));
-    tissue += vec3(0.42, 0.83, 0.73) * specular * 0.24;
-    tissue += vTone * pow(facing, 5.0) * (0.09 + tide);
+    vec3 deep = vec3(0.002, 0.009, 0.014);
+    vec3 tissue = vTone * (0.035 + diffuse * 0.13 + rim * 0.22 + veins * (0.22 + tide));
+    tissue += vec3(0.34, 0.75, 0.68) * specular * 0.12;
+    tissue += vTone * pow(facing, 5.0) * (0.025 + tide * 0.45);
     // Warm local activity is backed by queued/running Tasks; ambient tide exists at rest.
     tissue += vec3(0.35, 0.18, 0.025) * vState.z * pow(facing, 8.0) * (0.25 + tide);
     tissue *= (1.0 + vState.y * 0.3) * vState.x;
@@ -102,7 +110,8 @@ const tissueFragment = `
   }
 `
 
-type Form = { id: string; center: THREE.Vector3; radius: number; phase: number; tone: THREE.Color; axis: THREE.Vector3; active: number }
+type Form = { id: string; center: THREE.Vector3; radius: number; phase: number; tone: THREE.Color
+  axis: THREE.Vector3; axisB: THREE.Vector3; axisC: THREE.Vector3; active: number }
 type Arbor = Form & { tip: THREE.Vector3; bend: THREE.Vector3; girth: number }
 
 function formsFor(nodes: SpatialNode[], graph: NevoliumGraphSnapshot, poses: PoseMap) {
@@ -112,7 +121,10 @@ function formsFor(nodes: SpatialNode[], graph: NevoliumGraphSnapshot, poses: Pos
     const phase = seed(node.id) * Math.PI * 2
     const local = hubs.filter(hub => hub.nodeId === node.id).sort((a, b) => b.count - a.count).slice(0, 5)
     const axis = local[0]?.direction.clone() || new THREE.Vector3(Math.sin(phase), 0.35, Math.cos(phase)).normalize()
+    const axisB = local[1]?.direction.clone() || axis.clone().multiplyScalar(-0.5).add(new THREE.Vector3(0.1, 1, 0.4)).normalize()
+    const axisC = local[2]?.direction.clone() || new THREE.Vector3().crossVectors(axis, axisB).addScaledVector(axis, -0.4).normalize()
     const form: Form = { id: node.id, center: poses.get(node.id) || new THREE.Vector3(), radius: neuralRadius(node), phase, axis,
+      axisB, axisC,
       tone: new THREE.Color(node.kind === 'project' ? '#58d5be' : node.kind === 'task' ? '#65cfa7' : node.kind === 'idea' ? '#9b95d3' : '#5eafc8'),
       active: ['queued', 'running'].includes(node.status) ? 1 : 0 }
     forms.push(form)
@@ -123,7 +135,7 @@ function formsFor(nodes: SpatialNode[], graph: NevoliumGraphSnapshot, poses: Pos
       const extent = (1.65 + seed(`${node.id}:${index}`) * 0.6) / form.radius
       const tip = direction.clone().multiplyScalar(extent)
       const bend = side.clone().multiplyScalar((seed(`${node.id}:${index}:bend`) - 0.5) * 0.4)
-      arbors.push({ ...form, tip, bend, girth: 0.33 })
+      arbors.push({ ...form, tip, bend, girth: 0.4 })
       if (index < 2) {
         // A short tapering fork stays within the local neuron; it never becomes an extra edge.
         arbors.push({ ...form, tip: tip.clone().multiplyScalar(0.8).addScaledVector(side, 0.65),
@@ -145,6 +157,8 @@ function instances(base: THREE.BufferGeometry, items: Form[] | Arbor[]) {
   attribute('phase', 1, items.map(item => item.phase))
   attribute('radius', 1, items.map(item => item.radius))
   attribute('axis', 3, items.flatMap(item => item.axis.toArray()))
+  attribute('axisB', 3, items.flatMap(item => item.axisB.toArray()))
+  attribute('axisC', 3, items.flatMap(item => item.axisC.toArray()))
   attribute('state', 3, items.flatMap(item => [1, 0, item.active]))
   if (items.length && 'tip' in items[0]) {
     const branches = items as Arbor[]
@@ -192,7 +206,7 @@ export function NeuralBodies({ nodes, graph, poses, selected, reducedMotion, tie
       const item = model.forms[i]
       const depth = item.center.clone().sub(cameraPosition).dot(normal)
       const size = Math.min(item.radius * (selected.includes(item.id) ? 1.12 : 1), Math.max(0, depth) * 0.105)
-      sphere.set(item.center, size * 1.16)
+      sphere.set(item.center, size * 1.7)
       if (!raycaster.ray.intersectSphere(sphere, point)) continue
       const distance = point.distanceTo(raycaster.ray.origin)
       if (distance >= raycaster.near && distance <= raycaster.far) intersections.push({ distance, point: point.clone(), object: this, instanceId: i })
