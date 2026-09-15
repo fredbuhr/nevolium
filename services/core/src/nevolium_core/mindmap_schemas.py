@@ -44,6 +44,12 @@ class MindMapRelationshipCreate(BaseModel):
         return self
 
 
+class MindMapIdeaToTaskCreate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=320)
+    description: str | None = Field(default=None, max_length=16_000)
+    priority: int = Field(default=2, ge=0, le=4)
+
+
 class MindMapEdgeRead(BaseModel):
     id: uuid.UUID
     source_key: str
@@ -56,6 +62,13 @@ class MindMapEdgeRead(BaseModel):
     directed: bool
     metadata_json: dict[str, Any]
     created_at: datetime
+
+
+class MindMapIdeaConversionRead(BaseModel):
+    document_id: uuid.UUID
+    task_id: uuid.UUID
+    task_title: str
+    relationship: MindMapEdgeRead
 
 
 class MindMapSnapshotRead(BaseModel):
