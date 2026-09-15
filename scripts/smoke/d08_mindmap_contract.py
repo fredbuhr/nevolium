@@ -74,7 +74,7 @@ def main() -> int:
     assert 'action="relationship.create"' in mindmap
     assert 'action="relationship.delete"' in mindmap
 
-    # Idea conversion creates a canonical Task and provenance edge atomically under the same lock.
+    # Idea conversion creates a canonical Task and durable provenance edge atomically.
     assert '"/v1/projects/{project_id}/mindmap/ideas/{document_id}/convert-to-task"' in mindmap
     assert "class MindMapIdeaToTaskCreate" in schemas
     assert "class MindMapIdeaConversionRead" in schemas
@@ -87,6 +87,8 @@ def main() -> int:
     assert '"conversion": True' in mindmap
     assert 'event_type="task.created"' in mindmap
     assert '"source": "mindmap.idea_conversion"' in mindmap
+    assert 'relationship.relation_type == "converted_to"' in mindmap
+    assert 'detail="Conversion provenance is read-only in mindmap"' in mindmap
 
     # Reuse the already included Knowledge router; never add another top-level main.py registration.
     assert "from .mindmap import router as mindmap_router" in knowledge
@@ -95,7 +97,7 @@ def main() -> int:
 
     print(
         "D08 MINDMAP CONTRACT PASS: bounded canonical identities, typed link mutations, layout "
-        "handoff and atomic idea-to-task provenance are explicit"
+        "handoff and durable atomic idea-to-task provenance are explicit"
     )
     return 0
 
