@@ -65,6 +65,11 @@ const messages = {
     'planning.ganttReadonly': 'Le Gantt est en lecture seule pendant la validation du moteur de planification.',
     'planning.ganttEmpty': 'Aucune tâche ne possède encore un créneau complet à afficher dans le Gantt.',
     'planning.ganttHidden': 'tâche(s) sans créneau complet restent visibles en Liste et Kanban.',
+    'planning.critical': 'Critique',
+    'planning.criticalPath': 'Chemin critique',
+    'planning.criticalTasks': 'tâche(s) critique(s)',
+    'planning.criticalDuration': 'Durée minimale du réseau',
+    'planning.networkIncomplete': 'Le réseau critique est partiel : certaines dépendances touchent des tâches non planifiées.',
   },
   en: {
     'language.label': 'Language',
@@ -101,6 +106,11 @@ const messages = {
     'planning.ganttReadonly': 'The Gantt chart is read-only while the planning engine is being qualified.',
     'planning.ganttEmpty': 'No task has a complete planning window to display in the Gantt chart yet.',
     'planning.ganttHidden': 'task(s) without a complete planning window remain visible in List and Kanban.',
+    'planning.critical': 'Critical',
+    'planning.criticalPath': 'Critical path',
+    'planning.criticalTasks': 'critical task(s)',
+    'planning.criticalDuration': 'Minimum network duration',
+    'planning.networkIncomplete': 'The critical network is partial: some dependencies touch unscheduled tasks.',
   },
 } as const
 
