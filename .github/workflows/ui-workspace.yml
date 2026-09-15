@@ -33,6 +33,8 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/d06_work_calendar_contract.py
       - name: Prove D06 list, Kanban and Gantt planning workspace
         run: python scripts/smoke/d06_planning_workspace_contract.py
+      - name: Prove D07 canonical editable-knowledge foundation
+        run: python scripts/smoke/d07_editable_knowledge_contract.py
       - name: Prove canonical Project ownership contract
         run: uv run --locked --project services/core python scripts/smoke/project_ownership_contract.py
       - name: Prove Project-bound Task access contract
@@ -43,12 +45,13 @@ jobs:
         run: uv run --locked --project services/core python scripts/smoke/task_dispatch_contract.py
       - name: Prove Daily Spine planning and Today workspace contract
         run: uv run --locked --project services/core python scripts/smoke/daily_spine_contract.py
-      - name: Compile Core UI ownership and planning modules
+      - name: Compile Core UI, planning and knowledge models
         run: >-
           python -m compileall
           services/core/src/nevolium_core/ui_layouts.py
           services/core/src/nevolium_core/ui_models.py
           services/core/src/nevolium_core/project_access.py
+          services/core/src/nevolium_core/document_models.py
           services/core/src/nevolium_core/planning.py
           services/core/src/nevolium_core/planning_critical_path.py
           services/core/src/nevolium_core/planning_critical_path_schemas.py
@@ -88,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - name: Apply canonical migrations through D06
+      - name: Apply canonical migrations through current head
         working-directory: services/core
         run: uv run --locked alembic upgrade head
       - name: Prove D06 projection, CPM, replanning, cycles, conflicts and isolation on PostgreSQL
