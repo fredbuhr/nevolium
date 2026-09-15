@@ -48,3 +48,19 @@ multi-utilisateur. La CI et ses captures doivent être relues avant validation d
 Production inchangée sur `c17c7e24…`. La clé saisie par l’utilisateur n’a pas été examinée et son
 acceptation reste inconnue. Lire le badge actuel dans les réglages administrateur sans retransmettre
 la clé. Préserver snapshots B2, images de rollback, sel LiteLLM et cinq réservations historiques.
+
+## Relecture CI
+
+Le premier candidat `1582021` a révélé que Dockview conservait les vues de taille nulle accessibles
+au navigateur pendant le centrage. Le correctif masque les conteneurs non visibles et leurs commandes,
+sans détruire leur disposition. Le candidat `36a153a797c1a350dda43cbd56935bf8a6ba8b31` passe ensuite
+la suite responsive et le scénario connecté, ainsi que la vraie isolation entre comptes et le parcours
+OIDC. L’artefact UI `10374019474` du run `34910993667` a été téléchargé et son SHA-256 revérifié :
+`be9af5f7bb4b4e41b8f5ca9db62fe0af2652445bd40ee008c697d85a535c1caf`.
+Les quatre captures connectées/connexion IA ont été relues. Elles n’attestent aucune validation
+de la clé du pilote : les états de fournisseur y sont des fixtures explicites.
+
+Cette relecture conduit à regrouper Profil/Ambiance sous « Personnaliser » sur tablette/téléphone,
+à traduire les statuts du contexte et à recadrer les captures après défilement. L’état de connexion
+est annoncé aux lecteurs d’écran à son changement, sans relire toute la carte à chaque horodatage.
+Ce dernier ajustement doit passer sa propre CI avant remise du rendu.

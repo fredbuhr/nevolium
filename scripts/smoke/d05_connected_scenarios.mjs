@@ -63,6 +63,8 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     const navigator = page.getByRole('complementary', { name: 'Fil relié' })
     await navigator.getByLabel('Votre contexte').selectOption('p1')
     await navigator.getByRole('button', { name: /Les besoins des habitants/ }).waitFor()
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.screenshot({ path: path.join(outputDirectory, `nevolium-connected-${phone ? 'phone' : 'desktop'}-overview.png`) })
     await navigator.getByRole('button', { name: 'Voir le contexte parent' }).click()
     assert.equal(await page.locator('#thread-parent').evaluate(element => element === document.activeElement), true)
     await navigator.getByRole('button', { name: /Revenir au projet parent/ }).click()
@@ -70,6 +72,7 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     await navigator.getByRole('button', { name: /Revenir au lien précédent/ }).click()
     await navigator.getByRole('button', { name: /Les besoins des habitants/ }).click()
     await navigator.getByRole('button', { name: /Vers · fait référence à/ }).waitFor()
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: path.join(outputDirectory, `nevolium-connected-${phone ? 'phone' : 'desktop'}.png`) })
     await navigator.getByRole('button', { name: /Vers · fait référence à/ }).click()
     await page.waitForFunction(() => document.querySelector('.thread-focus strong')?.textContent === 'Notes de terrain')
@@ -105,6 +108,10 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     await summary.getByRole('button', { name: 'Actualiser l’état', exact: true }).click()
     await activate.click()
     await summary.getByText('Connexion vérifiée et activée', { exact: true }).waitFor()
+    await settings.evaluate(element => {
+      for (let parent = element.parentElement; parent; parent = parent.parentElement) parent.scrollTop = 0
+    })
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: path.join(outputDirectory, `nevolium-connection-${phone ? 'phone' : 'desktop'}.png`) })
     readsFail = true
     await summary.getByRole('button', { name: 'Actualiser l’état', exact: true }).click()
@@ -115,6 +122,11 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     assert.equal(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]).includes('fixture-not-a-real-key')), false)
     assert.deepEqual(errors, [])
     assert.deepEqual(unknownRequests, [])
+    if (phone) {
+      await page.locator('.cockpit-preferences summary').click()
+      await page.getByLabel('Ambiance', { exact: true }).selectOption('minimal')
+      assert.equal(await page.locator('.quiet-atmosphere').count(), 0)
+    }
     await context.close()
   }
   console.log('D05 CONNECTED PASS: parent, neighbourhood, transversal, shared document selection, key receipt/test/activation, polling error retention, read-only refresh, responsive and reduced motion (mock API, no paid call)')

@@ -247,9 +247,9 @@ export default function InstanceModelSettings({ apiUrl }: { apiUrl: string }) {
         </div>
       ) : null}
 
-      <div className="model-connection-summary" role="status" aria-live="polite" aria-atomic="true">
+      <div className="model-connection-summary">
         <span className="eyebrow">VOTRE CONNEXION IA</span>
-        <strong>{pollError ? 'Vérification momentanément indisponible' : latest?.status === 'active' ? 'Connexion vérifiée et activée' : latest?.status === 'verified' ? 'Test réussi — activation encore nécessaire' : latest?.status === 'failed' ? 'Le test n’a pas validé cette connexion' : latest?.status === 'testing' ? 'Test en cours — clé pas encore confirmée' : loading ? 'Lecture de l’état serveur…' : 'Aucune nouvelle clé validée dans ces réglages'}</strong>
+        <strong role="status" aria-live="polite">{pollError ? 'Vérification momentanément indisponible' : latest?.status === 'active' ? 'Connexion vérifiée et activée' : latest?.status === 'verified' ? 'Test réussi — activation encore nécessaire' : latest?.status === 'failed' ? 'Le test n’a pas validé cette connexion' : latest?.status === 'testing' ? 'Test en cours — clé pas encore confirmée' : loading ? 'Lecture de l’état serveur…' : 'Aucune nouvelle clé validée dans ces réglages'}</strong>
         {latest ? <span>{PROVIDER_LABELS[latest.provider as Provider] || latest.provider} · {latest.model_name}</span> : null}
         {latest?.provider_model ? <span>Modèle retourné : {latest.provider_model}</span> : null}
         {receipt && (!latest || latest.status === 'testing' || latest.status === 'active') ? <p>{receipt}</p> : null}

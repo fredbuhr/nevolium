@@ -475,7 +475,9 @@ export default function App() {
               <span>{{ phone: 'Téléphone', tablet: 'Tablette', desktop: 'Bureau' }[deviceClass]}</span>
               <span>Disposition privée</span>
             </div>
-            <div>
+            <details className="cockpit-preferences" open={deviceClass === 'desktop'}>
+              <summary>Personnaliser</summary>
+              <div>
               <label>
                 Profil
                 <select
@@ -503,7 +505,8 @@ export default function App() {
                   Installer l’app
                 </button>
               ) : null}
-            </div>
+              </div>
+            </details>
           </section>
 
           {!online ? (

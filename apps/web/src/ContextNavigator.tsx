@@ -12,6 +12,7 @@ const TYPES: Record<EntityType, string> = { project: 'Projet', task: 'Action', d
 const RESOURCES: Record<EntityType, string> = { project: 'projects', task: 'tasks', document: 'documents' }
 const RELATIONS: Record<string, string> = { contains: 'contient', related_to: 'est relié à', supports: 'étaye', derived_from: 'provient de', depends_on: 'dépend de', references: 'fait référence à', informs: 'éclaire' }
 const title = (entity: Entity) => entity.name || entity.title || 'Élément sans titre'
+const stateLabel = (state: string) => ({ active: 'Actif', ready: 'Prêt', todo: 'À faire', queued: 'En attente', running: 'En cours', completed: 'Terminé', failed: 'En échec', processing: 'En traitement', pending: 'En attente' }[state] || state)
 
 /** Inspect existing canonical links. No inferred links, graph projection or mutation. */
 export default function ContextNavigator({ apiUrl, onOpenSpace }: {
@@ -116,7 +117,7 @@ export default function ContextNavigator({ apiUrl, onOpenSpace }: {
         <div className="thread-focus" aria-live="polite" aria-busy={opening}>
           <img src="/icons/nevolium.svg" alt="" />
           <strong>{title(current.entity)}</strong>
-          <small>{current.entity.status}</small>
+          <small>{stateLabel(current.entity.status)}</small>
           {current.entity.summary || current.entity.description ? <p>{current.entity.summary || current.entity.description}</p> : null}
           <button type="button" onClick={openCurrent}>{current.type === 'task' ? 'Ouvrir le projet de cette action' : 'Ouvrir cet élément'} →</button>
         </div>

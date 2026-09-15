@@ -9,6 +9,9 @@
 .ambience-calm .quiet-atmosphere i { animation: none; }
 .surface-cockpit .cockpit-shell { border: 0; border-radius: 0; box-shadow: none; background: transparent; backdrop-filter: none; height: max(680px, calc(100dvh - 180px)); }
 .surface-cockpit .cockpit-context { border-color: #8accd31a; background: #06172599; }
+.cockpit-preferences { margin-left: auto; position: relative; }
+.cockpit-preferences summary { display: none; cursor: pointer; min-height: 44px; padding: 12px; color: #c6e9df; }
+.cockpit-preferences > div { display: flex; align-items: center; gap: 12px; }
 .cockpit-toolbar { flex-wrap: wrap; border: 0; background: #061725bb; border-radius: 16px 16px 0 0; }
 .cockpit-panel-buttons { flex: 1 1 550px; }
 .cockpit-panel-buttons button { position: relative; border-color: transparent; background: transparent; border-radius: 18px 10px 16px 8px; }
@@ -74,6 +77,8 @@
   .space-thread small { display: none; }
 }
 @media (max-width: 1023px) {
+  .cockpit-preferences summary { display: list-item; }
+  .cockpit-preferences[open] > div { position: absolute; right: 0; top: 44px; z-index: 50; display: grid; width: min(320px, calc(100vw - 48px)); background: #071e28; border: 1px solid #7ad6c55c; border-radius: 12px; padding: 16px; box-shadow: 0 16px 32px #0008; }
   .surface-cockpit .cockpit-shell { height: max(700px, calc(100dvh - 180px)); }
   .connected-workspace { position: relative; }
   #context-thread { position: absolute; inset: 0; z-index: 20; background: #041720; border: 1px solid #75bbad55; border-radius: 14px; }
