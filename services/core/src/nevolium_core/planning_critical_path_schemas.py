@@ -18,7 +18,9 @@ class CriticalPathTaskRead(BaseModel):
 
 class CriticalPathRead(BaseModel):
     project_id: uuid.UUID
-    basis: Literal["elapsed_seconds"] = "elapsed_seconds"
+    basis: Literal["working_seconds"] = "working_seconds"
+    work_calendar_timezone: str
+    work_calendar_version: int = Field(ge=1)
     network_complete: bool
     project_duration_seconds: int = Field(ge=0)
     project_task_count: int = Field(ge=0)
