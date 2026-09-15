@@ -15,6 +15,8 @@ from .pagination import PageCursor, decode_cursor, encode_cursor
 from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
+from .planning_critical_path import read_project_critical_path
+from .planning_critical_path_schemas import CriticalPathRead
 from .planning_projection import list_project_planning_tasks
 from .planning_projection_schemas import PlanningTaskRead
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
@@ -253,4 +255,10 @@ router.add_api_route(
     list_project_planning_tasks,
     methods=["GET"],
     response_model=list[PlanningTaskRead],
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/critical-path",
+    read_project_critical_path,
+    methods=["GET"],
+    response_model=CriticalPathRead,
 )
