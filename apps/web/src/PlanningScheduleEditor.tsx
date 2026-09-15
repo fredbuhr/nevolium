@@ -102,6 +102,14 @@ async function readJson<T>(response: Response): Promise<T> {
   return body as T
 }
 
+function suggestionPatch(suggestion: ReplanSuggestion): ReplanUpdate {
+  return {
+    task_id: suggestion.task_id,
+    expected_version: suggestion.expected_version,
+    ...suggestion.proposed,
+  }
+}
+
 export default function PlanningScheduleEditor({
   apiUrl,
   projectId,
@@ -181,12 +189,14 @@ export default function PlanningScheduleEditor({
 
   async function includeSuggestedEffects() {
     if (!preview?.suggested_changes.length) return
-    const effects: ReplanUpdate[] = preview.suggested_changes.map((suggestion) => ({
-      task_id: suggestion.task_id,
-      expected_version: suggestion.expected_version,
-      ...suggestion.proposed,
-    }))
-    await requestPreview([update, ...effects])
+    const merged = new Map<string, ReplanUpdate>()
+    const explicitUpdates = previewUpdates.length > 0 ? previewUpdates : [update]
+    for (const item of explicitUpdates) merged.set(item.task_id, item)
+    for (const suggestion of preview.suggested_changes) {
+      merged.set(suggestion.task_id, suggestionPatch(suggestion))
+    }
+    const includedUpdates = [...merged.values()]
+    await requestPreview(includedUpdates)
   }
 
   async function applyPreview() {
@@ -194,18 +204,20 @@ export default function PlanningScheduleEditor({
       !preview
       || !preview.can_apply
       || preview.changed_task_count === 0
+      || preview.suggested_changes.length > 0
       || previewUpdates.length === 0
     ) return
     setApplying(true)
     setError(null)
     try {
+      const applyUpdates = previewUpdates
       const response = await nevoliumFetch(
         `${apiUrl}/v1/projects/${encodeURIComponent(projectId)}/planning/replan/apply`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            updates: previewUpdates,
+            updates: applyUpdates,
             preview_digest: preview.preview_digest,
           }),
         },
@@ -294,25 +306,25 @@ export default function PlanningScheduleEditor({
             </ul>
           ) : null}
           {preview.suggested_changes.length > 0 ? (
-            <div className="planning-replan-effects">
-              <strong>{t('planning.scheduleSuggestedEffects')}</strong>
+            <div className="planning-replan-suggestions">
+              <strong>{t('planning.scheduleSuggestedHeading')}</strong>
               <small>
-                {preview.suggested_task_count} {t('planning.scheduleSuggestedTaskCount')}
+                {preview.suggested_task_count} · {t('planning.scheduleSuggestedHint')}
               </small>
               <ul>
                 {preview.suggested_changes.map((suggestion) => (
                   <li key={suggestion.task_id}>
-                    <strong>{suggestion.title}</strong> · {suggestion.changed_fields.length} {' '}
-                    {t('planning.scheduleSuggestedFields')}
+                    <strong>{suggestion.title}</strong> · {suggestion.changed_fields.join(', ')}
                   </li>
                 ))}
               </ul>
               <button
                 type="button"
+                className="planning-edit-schedule planning-replan-include"
                 onClick={() => void includeSuggestedEffects()}
                 disabled={previewing || applying}
               >
-                {t('planning.scheduleIncludeEffects')}
+                {previewing ? t('planning.scheduleRechecking') : t('planning.scheduleIncludeEffects')}
               </button>
             </div>
           ) : null}
@@ -331,7 +343,13 @@ export default function PlanningScheduleEditor({
         <button
           type="button"
           onClick={() => void applyPreview()}
-          disabled={!preview?.can_apply || preview.changed_task_count === 0 || previewing || applying}
+          disabled={
+            !preview?.can_apply
+            || preview.changed_task_count === 0
+            || preview.suggested_changes.length > 0
+            || previewing
+            || applying
+          }
         >
           {applying ? t('planning.scheduleApplying') : t('planning.scheduleApply')}
         </button>
