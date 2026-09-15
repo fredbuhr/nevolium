@@ -161,6 +161,7 @@ def _candidate_starts(
     if not isinstance(zone, ZoneInfo):
         raise ValueError("recurrence anchor must use an IANA ZoneInfo timezone")
     source_time = anchor.timetz().replace(tzinfo=None)
+    stop_local = stop_before.astimezone(zone)
     emitted = 0
     scanned = 0
 
@@ -231,6 +232,13 @@ def _candidate_starts(
         month_index = 0
         while True:
             year, month = _month(anchor.year, anchor.month, month_index * rule.interval)
+            # Sparse BYMONTHDAY rules can produce empty periods (for example day 31 in February).
+            # Bound those empty periods by the requested expansion window rather than relying on
+            # accepted-candidate counting, so a rule can never scan forever without yielding.
+            if (year, month) > (stop_local.year, stop_local.month):
+                return
+            if month_index > MAX_RECURRENCE_SCAN:
+                raise ValueError("recurrence expansion exceeded the scan bound")
             max_day = monthrange(year, month)[1]
             period_candidates = [
                 _normalize_wall_time(date(year, month, day), source_time, zone)
