@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { nevoliumFetch } from '../lib/apiClient'
+import { getAuthSnapshot, subscribeAuthSession } from '../lib/authSession'
 import type { AppLanguage } from '../i18n'
 
 export type LayoutSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -69,17 +70,33 @@ export class LatestLayoutWriter<T> {
 }
 
 export function useLayoutPersistence<T>(apiUrl: string, workspaceKey: string | null) {
-  const writer = useMemo(() => new LatestLayoutWriter<T>(async layout => {
-    if (!workspaceKey) throw new Error('Workspace is not loaded')
-    const response = await nevoliumFetch(
-      `${apiUrl}/v1/ui/workspaces/${encodeURIComponent(workspaceKey)}/layout`,
-      {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ schema_version: 1, layout }),
-      },
-    )
-    if (!response.ok) throw new Error(`Nevolium ${response.status}`)
-  }), [apiUrl, workspaceKey])
+  const writer = useMemo(() => {
+    const origin = getAuthSnapshot()
+    return new LatestLayoutWriter<T>(async layout => {
+      if (!workspaceKey) throw new Error('Workspace is not loaded')
+      const controller = new AbortController()
+      const checkSession = () => {
+        const current = getAuthSnapshot()
+        if (current.enabled !== origin.enabled || current.subject !== origin.subject
+          || (origin.enabled && !current.authenticated)) controller.abort()
+      }
+      // nevoliumFetch may await a token refresh. Abort if that changes identity,
+      // including after unmount, rather than saving old labels in a new user's layout.
+      const unsubscribe = subscribeAuthSession(checkSession)
+      try {
+        checkSession()
+        if (controller.signal.aborted) throw new Error('Nevolium session changed')
+        const response = await nevoliumFetch(
+          `${apiUrl}/v1/ui/workspaces/${encodeURIComponent(workspaceKey)}/layout`,
+          {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ schema_version: 1, layout }), signal: controller.signal,
+          },
+        )
+        if (!response.ok) throw new Error(`Nevolium ${response.status}`)
+      } finally { unsubscribe() }
+    })
+  }, [apiUrl, workspaceKey])
   const state = useSyncExternalStore(writer.subscribe, writer.getSnapshot, writer.getSnapshot)
   return { ...state, save: writer.enqueue, retry: writer.retry, writer }
 }
