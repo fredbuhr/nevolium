@@ -4,7 +4,7 @@ import re
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +13,19 @@ from sqlalchemy.orm import aliased
 from .auth import Principal, require_nevolium_user
 from .db import get_session
 from .document_models import Document, DocumentChunk, DocumentVersion
+from .editable_knowledge import (
+    AuthoredKnowledgeRead,
+    DocumentAssetLinkRead,
+    DocumentCitationRead,
+    create_authored_knowledge,
+    create_authored_version,
+    create_document_asset_link,
+    list_document_asset_links,
+    list_version_citations,
+    restore_authored_version,
+    update_authored_metadata,
+)
+from .knowledge_exchange import KnowledgeExchangeRead, export_knowledge, import_knowledge
 from .project_access import get_owned_project
 
 router = APIRouter()
@@ -82,14 +95,14 @@ def _excerpt(text: str, query: str, limit: int = MAX_KNOWLEDGE_SEARCH_EXCERPT_CH
 
 @router.get("/v1/knowledge/search", response_model=list[KnowledgeSearchResultRead])
 async def search_knowledge(
-    project_id: uuid.UUID,
     q: str = Query(min_length=2, max_length=400),
+    project_id: uuid.UUID | None = None,
     offset: int = Query(default=0, ge=0, le=MAX_KNOWLEDGE_SEARCH_OFFSET),
     limit: int = Query(default=20, ge=1, le=MAX_KNOWLEDGE_SEARCH_RESULTS),
     principal: Principal = Depends(require_nevolium_user),
     session: AsyncSession = Depends(get_session),
 ) -> list[KnowledgeSearchResultRead]:
-    if not await get_owned_project(session, project_id, principal):
+    if project_id is not None and not await get_owned_project(session, project_id, principal):
         raise HTTPException(status_code=404, detail="Project not found")
 
     query = q.strip()
@@ -110,6 +123,16 @@ async def search_knowledge(
     query_vector = func.plainto_tsquery("simple", query)
     document_vector = func.to_tsvector("simple", searchable)
     rank = func.ts_rank_cd(document_vector, query_vector)
+    filters = [
+        Document.status == "ready",
+        Document.metadata_json["owner_subject"].astext == principal.subject,
+        DocumentVersion.status == "completed",
+        DocumentVersion.search_status == "ready",
+        DocumentVersion.generation == latest_completed_generation,
+        document_vector.op("@@")(query_vector),
+    ]
+    if project_id is not None:
+        filters.append(Document.project_id == project_id)
 
     rows = (
         await session.execute(
@@ -127,14 +150,7 @@ async def search_knowledge(
             )
             .join(DocumentVersion, DocumentVersion.document_id == Document.id)
             .join(DocumentChunk, DocumentChunk.document_version_id == DocumentVersion.id)
-            .where(
-                Document.project_id == project_id,
-                Document.status == "ready",
-                Document.metadata_json["owner_subject"].astext == principal.subject,
-                DocumentVersion.status == "completed",
-                DocumentVersion.generation == latest_completed_generation,
-                document_vector.op("@@")(query_vector),
-            )
+            .where(*filters)
             .order_by(
                 rank.desc(),
                 Document.updated_at.desc(),
@@ -247,3 +263,65 @@ async def get_knowledge_chunk_window(
         total=total,
         chunks=[KnowledgeChunkRead.model_validate(chunk) for chunk in chunks],
     )
+
+
+router.add_api_route(
+    "/v1/knowledge/items",
+    create_authored_knowledge,
+    methods=["POST"],
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/versions",
+    create_authored_version,
+    methods=["POST"],
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/versions/{version_id}/restore",
+    restore_authored_version,
+    methods=["POST"],
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/metadata",
+    update_authored_metadata,
+    methods=["PATCH"],
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/versions/{version_id}/citations",
+    list_version_citations,
+    methods=["GET"],
+    response_model=list[DocumentCitationRead],
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/assets",
+    create_document_asset_link,
+    methods=["POST"],
+    response_model=DocumentAssetLinkRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/assets",
+    list_document_asset_links,
+    methods=["GET"],
+    response_model=list[DocumentAssetLinkRead],
+)
+router.add_api_route(
+    "/v1/knowledge/import",
+    import_knowledge,
+    methods=["POST"],
+    response_model=AuthoredKnowledgeRead,
+    status_code=status.HTTP_201_CREATED,
+)
+router.add_api_route(
+    "/v1/knowledge/items/{document_id}/export",
+    export_knowledge,
+    methods=["GET"],
+    response_model=KnowledgeExchangeRead,
+)

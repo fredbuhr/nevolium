@@ -1,11 +1,18 @@
+export type KnowledgeKind = 'source' | 'note' | 'idea' | 'decision'
+export type AuthoredKnowledgeKind = Exclude<KnowledgeKind, 'source'>
+export type EpistemicStatus = 'hypothesis' | 'supported' | 'contested' | 'verified'
+export type KnowledgeExchangeFormat = 'nevolium-json' | 'markdown' | 'plain'
+
 export type CanonicalDocument = {
   id: string
-  asset_id: string
+  asset_id: string | null
   project_id: string
   title: string
   media_type?: string | null
   source_sha256?: string | null
   status: string
+  kind: KnowledgeKind
+  epistemic_status?: EpistemicStatus | null
   metadata_json: Record<string, unknown>
   created_at: string
   updated_at: string
@@ -21,6 +28,11 @@ export type DocumentVersion = {
   source_sha256?: string | null
   status: string
   chunk_count: number
+  content_json?: Record<string, unknown> | null
+  content_text?: string | null
+  content_sha256?: string | null
+  search_status?: 'pending' | 'ready' | 'failed'
+  search_error?: string | null
   metadata_json: Record<string, unknown>
   last_error?: string | null
   created_at: string
@@ -37,7 +49,39 @@ export type DocumentChunk = {
   created_at: string
 }
 
+export type KnowledgeCitation = {
+  id: string
+  document_version_id: string
+  source_document_id?: string | null
+  source_document_version_id?: string | null
+  source_chunk_id?: string | null
+  source_url?: string | null
+  label?: string | null
+  excerpt?: string | null
+  created_at: string
+}
+
+export type AuthoredKnowledgeRead = {
+  id: string
+  project_id: string
+  title: string
+  kind: AuthoredKnowledgeKind
+  epistemic_status?: EpistemicStatus | null
+  status: string
+  generation: number
+  version: DocumentVersion
+}
+
+export type KnowledgeExchangeRead = {
+  format: KnowledgeExchangeFormat
+  media_type: string
+  filename: string
+  lossless: boolean
+  content: string
+}
+
 export type KnowledgeInspectionTarget = {
+  projectId: string
   documentId: string
   documentVersionId: string
   chunkId: string

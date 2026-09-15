@@ -56,6 +56,10 @@ export function KnowledgeDocumentsView({
   onOpenSource,
   onReingest,
 }: DocumentsProps) {
+  const selectedSource = Boolean(
+    selectedDocument?.kind === 'source' && selectedDocument.asset_id,
+  )
+
   return (
     <>
       <section className="sources" aria-label="Documents du projet sélectionné">
@@ -69,7 +73,7 @@ export function KnowledgeDocumentsView({
               <span className="source-id">0</span>
               <div>
                 <strong>Aucun document pour ce projet.</strong>
-                <small>Importez un fichier pour ajouter une première source.</small>
+                <small>Importez un fichier ou créez une connaissance éditable.</small>
               </div>
             </div>
           )}
@@ -79,7 +83,7 @@ export function KnowledgeDocumentsView({
               <span className="source-id">{statusLabel(document.status)}</span>
               <div>
                 <strong>{document.title}</strong>
-                <small>{document.media_type || 'Type de média inconnu'}</small>
+                <small>{document.kind === 'source' ? document.media_type || 'Type de média inconnu' : document.kind}</small>
                 <small>
                   {formatDate(document.created_at)
                     ? `Créé le ${formatDate(document.created_at)}`
@@ -116,7 +120,7 @@ export function KnowledgeDocumentsView({
             <button
               type="button"
               onClick={() => onOpenSource()}
-              disabled={openingSource || !selectedDocument}
+              disabled={openingSource || !selectedSource}
             >
               {openingSource ? 'Ouverture…' : 'Ouvrir la source'}
             </button>
@@ -126,8 +130,8 @@ export function KnowledgeDocumentsView({
               disabled={
                 reingesting ||
                 Boolean(trackingDocumentId) ||
-                !selectedDocument ||
-                ['pending', 'processing'].includes(selectedDocument.status)
+                !selectedSource ||
+                ['pending', 'processing'].includes(selectedDocument?.status || '')
               }
             >
               {reingesting ? 'Nouvelle lecture…' : 'Relire le document'}
@@ -149,7 +153,9 @@ export function KnowledgeDocumentsView({
                 </span>
               </div>
               <div className="brief-summary">
-                {selectedDocument.media_type || 'Type de média inconnu'}
+                {selectedDocument.kind === 'source'
+                  ? selectedDocument.media_type || 'Type de média inconnu'
+                  : `${selectedDocument.kind}${selectedDocument.epistemic_status ? ` · ${selectedDocument.epistemic_status}` : ''}`}
               </div>
             </article>
           )}
@@ -230,7 +236,9 @@ export function KnowledgeVersionsView({
                   {version.source_sha256 && (
                     <small>Source SHA-256 · {version.source_sha256.slice(0, 16)}…</small>
                   )}
+                  {version.search_status && <small>Recherche · {statusLabel(version.search_status)}</small>}
                   {version.last_error && <small>Erreur · {version.last_error}</small>}
+                  {version.search_error && <small>Index · {version.search_error}</small>}
                 </div>
               </div>
             ))}

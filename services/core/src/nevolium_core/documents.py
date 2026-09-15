@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -14,15 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .auth import Principal, require_nevolium_user
 from .config import settings
-from .pagination import PageCursor, PageLimit, page_rows
-from fastapi import Response
 from .db import get_session
-from .work_capacity import ensure_work_request, require_work_lease
 from .document_models import DOCUMENTS_PROJECT_ID, Document, DocumentChunk, DocumentVersion
 from .events import append_audit, enqueue_domain_event
 from .models import Asset, Project, Task
+from .pagination import PageCursor, PageLimit, page_rows
 from .project_access import get_owned_project
 from .security import require_internal_token
+from .work_capacity import ensure_work_request, require_work_lease
 from .workflows import run_task
 
 router = APIRouter()
@@ -57,6 +56,11 @@ class DocumentVersionRead(BaseModel):
     source_sha256: str | None
     status: str
     chunk_count: int
+    content_json: dict[str, Any] | None = None
+    content_text: str | None = None
+    content_sha256: str | None = None
+    search_status: str = "pending"
+    search_error: str | None = None
     metadata_json: dict[str, Any]
     last_error: str | None
     created_at: datetime
@@ -67,12 +71,14 @@ class DocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    asset_id: uuid.UUID
+    asset_id: uuid.UUID | None
     project_id: uuid.UUID
     title: str
     media_type: str | None
     source_sha256: str | None
     status: str
+    kind: str = "source"
+    epistemic_status: str | None = None
     metadata_json: dict[str, Any]
     created_at: datetime
     updated_at: datetime
@@ -267,6 +273,8 @@ async def _start_version(
         parser="docling",
         source_sha256=asset.sha256,
         status="queued",
+        search_status="pending",
+        search_error=None,
         metadata_json={"asset_id": str(asset.id), "media_type": asset.mime_type},
     )
     session.add(version)
@@ -356,6 +364,8 @@ async def create_document(
         media_type=asset.mime_type,
         source_sha256=asset.sha256,
         status="pending",
+        kind="source",
+        epistemic_status=None,
         metadata_json={"owner_subject": principal.subject},
     )
     session.add(document)
@@ -383,6 +393,8 @@ async def reingest_document(
     document = await session.get(Document, document_id)
     if not document or str((document.metadata_json or {}).get("owner_subject") or "") != principal.subject:
         raise HTTPException(status_code=404, detail="Document not found")
+    if document.kind != "source" or document.asset_id is None:
+        raise HTTPException(status_code=409, detail="Authored knowledge is versioned through the Knowledge API")
     asset = await session.get(Asset, document.asset_id)
     if asset is None:
         raise HTTPException(status_code=410, detail="Source asset metadata is missing")
@@ -428,8 +440,15 @@ async def list_documents(
     statement = select(Document).where(Document.metadata_json["owner_subject"].astext == principal.subject)
     if project_id is not None:
         statement = statement.where(Document.project_id == project_id)
-    return await page_rows(session, statement, Document, limit=limit, cursor=cursor,
-                           response=response, descending=True)
+    return await page_rows(
+        session,
+        statement,
+        Document,
+        limit=limit,
+        cursor=cursor,
+        response=response,
+        descending=True,
+    )
 
 
 @router.get("/v1/documents/{document_id}", response_model=DocumentRead)
@@ -454,14 +473,24 @@ async def list_document_versions(
     cursor: PageCursor = None,
 ) -> list[DocumentVersion]:
     await get_document(document_id, principal, session)
-    return await page_rows(session, select(DocumentVersion).where(DocumentVersion.document_id == document_id),
-                           DocumentVersion, limit=limit, cursor=cursor, response=response,
-                           descending=True, key_name="generation")
+    return await page_rows(
+        session,
+        select(DocumentVersion).where(DocumentVersion.document_id == document_id),
+        DocumentVersion,
+        limit=limit,
+        cursor=cursor,
+        response=response,
+        descending=True,
+        key_name="generation",
+    )
 
 
 @router.get("/v1/document-versions/{version_id}", response_model=DocumentVersionRead)
-async def get_document_version(version_id: uuid.UUID, principal: Principal = Depends(require_nevolium_user),
-                               session: AsyncSession = Depends(get_session)) -> DocumentVersion:
+async def get_document_version(
+    version_id: uuid.UUID,
+    principal: Principal = Depends(require_nevolium_user),
+    session: AsyncSession = Depends(get_session),
+) -> DocumentVersion:
     version = await session.get(DocumentVersion, version_id)
     if version is None:
         raise HTTPException(404, "Document version not found")
@@ -503,8 +532,10 @@ async def internal_document_source(
     if version is None:
         raise HTTPException(status_code=404, detail="Document version not found")
     document = await session.get(Document, version.document_id)
-    asset = await session.get(Asset, document.asset_id) if document else None
-    if document is None or asset is None:
+    if document is None or document.kind != "source" or document.asset_id is None:
+        raise HTTPException(status_code=410, detail="Document source asset is unavailable")
+    asset = await session.get(Asset, document.asset_id)
+    if asset is None:
         raise HTTPException(status_code=410, detail="Document source asset is unavailable")
 
     await _require_internal_source_binding(version, document, asset, session)
@@ -534,8 +565,8 @@ async def internal_complete_document_ingestion(
     if version is None:
         raise HTTPException(status_code=404, detail="Document version not found")
     document = await session.get(Document, version.document_id, with_for_update=True)
-    if document is None:
-        raise HTTPException(status_code=410, detail="Document is missing")
+    if document is None or document.kind != "source" or document.asset_id is None:
+        raise HTTPException(status_code=410, detail="Document source asset is unavailable")
     asset = await session.get(Asset, document.asset_id)
     if asset is None:
         raise HTTPException(status_code=410, detail="Document source asset is unavailable")
@@ -545,9 +576,7 @@ async def internal_complete_document_ingestion(
     if version.source_sha256 and body.source_sha256 != version.source_sha256:
         raise HTTPException(status_code=409, detail="Document source digest changed during ingestion")
 
-    await session.execute(
-        delete(DocumentChunk).where(DocumentChunk.document_version_id == version.id)
-    )
+    await session.execute(delete(DocumentChunk).where(DocumentChunk.document_version_id == version.id))
     for ordinal, item in enumerate(body.chunks):
         text = str(item.get("text") or "").strip()
         if not text:
@@ -577,9 +606,14 @@ async def internal_complete_document_ingestion(
     version.parser_version = body.parser_version
     version.chunk_count = count
     version.status = "completed"
+    version.search_status = "ready"
+    version.search_error = None
     version.last_error = None
     version.completed_at = datetime.now(UTC)
-    version.metadata_json = {**(version.metadata_json or {}), **{key: value for key, value in body.metadata.items() if key != "work_lease_token"}}
+    version.metadata_json = {
+        **(version.metadata_json or {}),
+        **{key: value for key, value in body.metadata.items() if key != "work_lease_token"},
+    }
     document.status = "ready"
 
     correlation_id = uuid.uuid4()
@@ -634,8 +668,8 @@ async def internal_fail_document_ingestion(
     if version is None:
         raise HTTPException(status_code=404, detail="Document version not found")
     document = await session.get(Document, version.document_id, with_for_update=True)
-    if document is None:
-        raise HTTPException(status_code=410, detail="Document is missing")
+    if document is None or document.kind != "source" or document.asset_id is None:
+        raise HTTPException(status_code=410, detail="Document source asset is unavailable")
     asset = await session.get(Asset, document.asset_id)
     if asset is None:
         raise HTTPException(status_code=410, detail="Document source asset is unavailable")
@@ -643,7 +677,9 @@ async def internal_fail_document_ingestion(
     await _require_internal_source_binding(version, document, asset, session)
     await require_work_lease(session, version.task_id, body.get("work_lease_token"))
     version.status = "failed"
-    version.last_error = str(body.get("error") or "Document ingestion failed")[:4000]
+    version.search_status = "failed"
+    version.search_error = str(body.get("error") or "Document ingestion failed")[:4000]
+    version.last_error = version.search_error
     version.completed_at = datetime.now(UTC)
     document.status = "failed"
     await session.commit()

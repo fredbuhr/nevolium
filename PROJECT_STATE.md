@@ -2,36 +2,40 @@
 
 Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live avant toute action.
 
-## D06 intégré ; passage à D07 autorisé
+## D07 candidat final — connaissances éditables, recherche et provenance
 
 | Champ | État attesté |
 |---|---|
-| `main` vérifié | D06 intégré par [PR #90](https://github.com/fredbuhr/nevolium/pull/90), commit de fusion signé `20720774552418a6c9e7acbfbf069945ff0f57df` |
-| Vérification du merge | Parents exacts `03a1fcf348361f870556e0c8808cae5d70970394` + `b09a62cd207371c2610d16198bbbaa0b46561c1c`; arbre du merge `5d29dfaee0b0c0d4857956efeb4da8f4254151d0`, identique à la tête D06 fusionnée |
-| Branche / PR active | Aucune après nettoyage D06 ; ne pas réutiliser `feat/d06-planning-workspace` |
-| Tête D06 qualifiée | `b09a62cd207371c2610d16198bbbaa0b46561c1c` : **9/9 workflows PR réussis** après le commit documentaire final |
-| Réalisé D06 | Fondation FR/EN extensible ; sous-tâches/jalons/dépendances ; projection paginée ; calendrier de travail/DST ; récurrences virtuelles ; chemin critique ; preview/apply ; effets aval explicites ; Liste/Kanban/Gantt/Calendrier et cohérence Today |
-| Validation navigateur | Tablette tactile : Gantt + alternative d'édition ; téléphone : calendrier + preview/apply + reload Planning + Today. Preuve fonctionnelle conservée dans le checkpoint D06 |
-| Incident fermé | Crash SVAR `null.forEach` : les feuilles (`data=null`) ne sont plus `open`; seules les tâches ayant un enfant rendu sont ouvertes et la règle est couverte par contrat |
-| Production | **Inchangée** : runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations`; la fusion D06 ne constitue pas un déploiement |
-| Données / récupération | Snapshots et matériel D04/D05 préservés ; aucune ancienne Task, réservation, clé, volume ou sauvegarde modifié par D06 |
-| Migrations D06 | `0016_planning_structure` puis `0017_project_work_calendar`, intégrées au code et qualifiées en CI mais non appliquées au pilote |
-| Limites | Complétude FR/EN en D13 ; voix anglaise non qualifiée ; calendriers externes D11 ; offline/synchronisation D12 ; pas de solveur universel |
-| Rollback futur | Si D06 est déployé puis retiré : examiner les données et downgrader `0017` → `0016` → `0015` après arrêt/drainage ; aucun rollback production requis aujourd'hui |
-| Prochaine action | Annoncer D07, relire son périmètre dans `docs/implementation-plan.md`, vérifier le `main` live puis ouvrir une seule branche D07 fraîche. Ne pas commencer D08/D09 en parallèle |
+| Base vérifiée | `main` `958f440183c5d0051d869474784251eb20bd8fb4`, D06 intégré par #90 |
+| Branche / PR active | `feat/d07-editable-knowledge` · PR #91, encore draft au moment de ce checkpoint |
+| Objectif D07 | Documents/notes riches éditables et versionnés, restauration, recherche owner-wide, sources/citations, idées/décisions + statuts épistémiques minimaux, pièces jointes/whiteboards liés, import/export documenté |
+| Réalisé | Migration `0018_editable_knowledge`, canon authored sur `Document`/`DocumentVersion`, provenance/citations, liens Asset, recherche universelle, import/export documenté, éditeur Lexical, navigation cross-project et nouvelles surfaces FR/EN |
+| Architecture retenue | `Document` reste canonique ; une sauvegarde/restauration crée une génération immuable ; Lexical sérialise dans `content_json`, `content_text` reste projection lisible ; chunks/recherche restent reconstruisibles |
+| Validation fonctionnelle | Head `01c035ec7e7fae01513788d04695fcff63a075fe` : **9/9 workflows PR verts**, PostgreSQL D07 réel, ingestion Docling historique, TypeScript/Vite et Chromium D07 verts |
+| Preuve navigateur | Artefact D07 `10405706103`, digest `sha256:97c73911dd15945eb80fa18dde5c3f2c8dbb9c9ce7463c36232cbe84e1bbcc6a` |
+| Production | Inchangée : runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations` ; D06/D07 non déployés |
+| Hors scope | Coédition D12 ; mindmap D08 ; Mycelium 3D D09 ; traduction historique complète D13 ; modèle conceptuel spéculatif complet |
+| Rollback / données | `0018` est additive mais son downgrade refuse de restaurer `asset_id NOT NULL` tant que des Documents authored sans Asset existent ; exporter/préserver ou migrer ces données avant rollback réel |
+| Prochaine action | Requalifier **9/9** la tête documentaire finale de #91 ; si verte, passer la PR en ready, fusionner, vérifier `main`, puis ouvrir D08 sur une branche fraîche |
 
-## Autorité et continuité
+## Principes D07 verrouillés
 
-PostgreSQL/Core restent l'autorité de planification. SVAR est uniquement un renderer/input Gantt et
-le calendrier D06 est une surface Nevolium dédiée. Les mutations de dates passent par aperçu puis
-application atomique versionnée ; les effets aval doivent être explicitement inclus. Les occurrences
-récurrentes sont virtuelles et bornées. Today, Liste, Kanban, Gantt et Calendrier relisent les mêmes
-Tasks canoniques.
+Une connaissance éditable reste un `Document` canonique. Une sauvegarde, une modification de
+métadonnées ou une restauration crée une nouvelle `DocumentVersion`; l'historique n'est jamais
+réécrit. Les chunks et l'état de recherche sont des projections reconstruisibles. Une panne de
+projection ne doit pas perdre la version canonique ni ses permissions.
 
-La fondation linguistique accepte `fr`/`en`, persiste le choix et propage la locale aux surfaces
-touchées. Elle prépare les langues futures sans remplacer D13, qui reste le gate de complétude du
-produit entier. Aucune voix TTS anglaise n'est déduite de la voix française existante.
+Les citations sont liées à une version cible. Les citations inter-projets ne sont autorisées qu'entre
+objets du même propriétaire. La recherche est owner-wide par défaut avec filtre projet optionnel ;
+inspecter un résultat situé ailleurs change explicitement projet + document sans exposer un autre
+propriétaire.
 
-[Checkpoint D06 détaillé](docs/archive/d06-planning-workspace-progress-2026-09-15.md) ·
-[État produit](docs/status.md) · [Plan](docs/implementation-plan.md) ·
-[Workflow](docs/development-workflow.md) · [PR #90](https://github.com/fredbuhr/nevolium/pull/90)
+Les pièces jointes et whiteboards réutilisent `Asset`; les sources importées conservent leur Asset
+canonique et restent relues par le pipeline Docling. `nevolium-json` est le format d'échange lossless ;
+Markdown et texte sont des projections non-lossless. Les nouvelles chaînes visibles D07 utilisent la
+fondation i18n FR/EN de D06.
+
+[Checkpoint D07](docs/archive/d07-editable-knowledge-progress-2026-09-15.md) ·
+[Inspection D07](docs/archive/d07-entry-inspection-2026-09-15.md) ·
+[Plan](docs/implementation-plan.md) · [Workflow](docs/development-workflow.md) ·
+[État produit](docs/status.md)

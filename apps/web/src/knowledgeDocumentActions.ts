@@ -87,7 +87,13 @@ export function useKnowledgeDocumentActions({
   }
 
   async function reingestSelectedDocument() {
-    if (!selectedDocument || reingesting || trackingDocumentId) return
+    if (
+      !selectedDocument ||
+      !selectedDocument.asset_id ||
+      selectedDocument.kind !== 'source' ||
+      reingesting ||
+      trackingDocumentId
+    ) return
 
     setReingesting(true)
     setReingestError(null)
@@ -113,7 +119,12 @@ export function useKnowledgeDocumentActions({
   }
 
   async function openSelectedSource() {
-    if (!selectedDocument || openingSource) return
+    if (
+      !selectedDocument ||
+      !selectedDocument.asset_id ||
+      selectedDocument.kind !== 'source' ||
+      openingSource
+    ) return
 
     const previewWindow = window.open('', '_blank')
     if (!previewWindow) {

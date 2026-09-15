@@ -10,7 +10,12 @@ type Props = {
 }
 
 export default function KnowledgePanel({ apiUrl }: Props) {
-  const { selectedDocumentId, setSelectedDocumentId } = useProjectSelection()
+  const {
+    selectedDocumentId,
+    selectedProjectId,
+    setSelectedDocumentId,
+    setSelectedProjectId,
+  } = useProjectSelection()
   const [inspectionTarget, setInspectionTarget] = useState<KnowledgeInspectionTarget | null>(null)
 
   return (
@@ -18,6 +23,7 @@ export default function KnowledgePanel({ apiUrl }: Props) {
       <KnowledgeSearchPanel
         apiUrl={apiUrl}
         onInspectResult={(target) => {
+          if (target.projectId !== selectedProjectId) setSelectedProjectId(target.projectId)
           setSelectedDocumentId(target.documentId)
           setInspectionTarget(target)
         }}

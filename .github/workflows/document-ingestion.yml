@@ -18,6 +18,30 @@ jobs:
       - name: Prove bounded document execution and real subprocess cleanup
         run: uv run --locked --project services/worker python scripts/smoke/document_execution_contract.py
 
+  editable-knowledge-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
+        env:
+          POSTGRES_USER: nevolium
+          POSTGRES_PASSWORD: nevolium-test-only
+          POSTGRES_DB: nevolium_d07_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nevolium -d nevolium_d07_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://nevolium:nevolium-test-only@localhost:5432/nevolium_d07_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Apply canonical migrations through D07
+        working-directory: services/core
+        run: uv run --locked alembic upgrade head
+      - name: Prove D07 editable knowledge, provenance, search and projection-failure recovery
+        run: uv run --locked --project services/core python scripts/smoke/d07_editable_knowledge_db_contract.py
+
   document-ingestion-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 25
