@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import date
+from datetime import UTC, date, datetime
 
 from fastapi import HTTPException
 from sqlalchemy import delete
 
 from nevolium_core.auth import Principal
 from nevolium_core.db import SessionFactory, engine
-from nevolium_core.models import Project
+from nevolium_core.models import Project, Task
+from nevolium_core.planning_critical_path import read_project_critical_path
 from nevolium_core.planning_models import ProjectWorkCalendar
 from nevolium_core.planning_work_calendar_schemas import (
     ProjectWorkCalendarUpdate,
@@ -98,6 +99,26 @@ async def main() -> None:
         assert reread.weekly_intervals[0][0]["start"] == "09:00"
         assert reread.weekly_intervals[5] == []
 
+        weekend_task = Task(
+            project_id=project_id,
+            title="Weekend-spanning task",
+            planned_start_at=datetime(2026, 9, 18, 14, 0, tzinfo=UTC),
+            planned_end_at=datetime(2026, 9, 21, 8, 0, tzinfo=UTC),
+        )
+        session.add(weekend_task)
+        await session.commit()
+
+        critical = await read_project_critical_path(project_id, owner, session)
+        assert critical.basis == "working_seconds"
+        assert critical.work_calendar_timezone == "Europe/Paris"
+        assert critical.work_calendar_version == 2
+        assert critical.project_duration_seconds == 7200
+        assert critical.critical_task_ids == [weekend_task.id]
+        critical_task = next(item for item in critical.tasks if item.task_id == weekend_task.id)
+        assert critical_task.earliest_start_seconds == 0
+        assert critical_task.earliest_finish_seconds == 7200
+        assert critical_task.slack_seconds == 0
+
         unchanged = await update_project_work_calendar(
             project_id,
             ProjectWorkCalendarUpdate(expected_version=2, timezone="Europe/Paris"),
@@ -143,7 +164,8 @@ async def main() -> None:
     await engine.dispose()
     print(
         "D06 WORK CALENDAR DB PASS: non-persistent 24/7 default, owner-scoped versioned project "
-        "configuration, normalized exceptions, no-op stability and stale-write rejection hold"
+        "configuration, normalized exceptions, working-second critical path, no-op stability and "
+        "stale-write rejection hold"
     )
 
 
