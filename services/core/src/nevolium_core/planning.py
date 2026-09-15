@@ -34,6 +34,8 @@ from .planning_structure import (
     update_task_planning_structure,
 )
 from .planning_structure_schemas import TaskDependencyRead, TaskPlanningProfileRead
+from .planning_work_calendar_schemas import ProjectWorkCalendarRead
+from .planning_work_calendars import read_project_work_calendar, update_project_work_calendar
 from .project_access import get_owned_task, owned_project_clause
 
 router = APIRouter()
@@ -300,6 +302,18 @@ router.add_api_route(
     list_project_planning_occurrences,
     methods=["GET"],
     response_model=list[PlanningOccurrenceRead],
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/work-calendar",
+    read_project_work_calendar,
+    methods=["GET"],
+    response_model=ProjectWorkCalendarRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/work-calendar",
+    update_project_work_calendar,
+    methods=["PATCH"],
+    response_model=ProjectWorkCalendarRead,
 )
 router.add_api_route(
     "/v1/projects/{project_id}/planning/replan/preview",
