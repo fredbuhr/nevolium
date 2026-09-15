@@ -14,8 +14,12 @@ from nevolium_core.db import SessionFactory, engine
 from nevolium_core.models import Project, Task
 from nevolium_core.planning_critical_path import read_project_critical_path
 from nevolium_core.planning_models import ProjectWorkCalendar
-from nevolium_core.planning_replan import preview_project_replan
-from nevolium_core.planning_replan_schemas import ReplanRequest, ReplanTaskPatch
+from nevolium_core.planning_replan import apply_project_replan, preview_project_replan
+from nevolium_core.planning_replan_schemas import (
+    ReplanApplyRequest,
+    ReplanRequest,
+    ReplanTaskPatch,
+)
 from nevolium_core.planning_structure import create_task_dependency
 from nevolium_core.planning_structure_schemas import TaskDependencyCreate
 from nevolium_core.planning_work_calendar_schemas import (
@@ -76,19 +80,20 @@ async def main() -> None:
             [WorkInterval(start="09:00", end="12:00"), WorkInterval(start="13:00", end="17:00")]
             for _ in range(5)
         ] + [[], []]
+        base_exceptions = [
+            WorkCalendarException(date=date(2026, 12, 25), intervals=[]),
+            WorkCalendarException(
+                date=date(2026, 12, 24),
+                intervals=[WorkInterval(start="09:00", end="12:00")],
+            ),
+        ]
         updated = await update_project_work_calendar(
             project_id,
             ProjectWorkCalendarUpdate(
                 expected_version=1,
                 timezone="Europe/Paris",
                 weekly_intervals=office_week,
-                exceptions=[
-                    WorkCalendarException(date=date(2026, 12, 25), intervals=[]),
-                    WorkCalendarException(
-                        date=date(2026, 12, 24),
-                        intervals=[WorkInterval(start="09:00", end="12:00")],
-                    ),
-                ],
+                exceptions=base_exceptions,
             ),
             owner,
             session,
@@ -137,10 +142,17 @@ async def main() -> None:
             planned_start_at=datetime(2026, 9, 18, 16, 0, tzinfo=UTC),
             planned_end_at=datetime(2026, 9, 18, 17, 0, tzinfo=UTC),
         )
-        session.add_all([lag_predecessor, lag_successor])
+        digest_task = Task(
+            project_id=project_id,
+            title="Calendar digest task",
+            planned_start_at=datetime(2026, 9, 21, 7, 0, tzinfo=UTC),
+            planned_end_at=datetime(2026, 9, 21, 8, 0, tzinfo=UTC),
+        )
+        session.add_all([lag_predecessor, lag_successor, digest_task])
         await session.flush()
         lag_predecessor_id = lag_predecessor.id
         lag_successor_id = lag_successor.id
+        digest_task_id = digest_task.id
         await session.commit()
 
         lag_dependency = await create_task_dependency(
@@ -177,24 +189,70 @@ async def main() -> None:
         assert lag_finding.status == "violated"
         assert "working lag" in lag_finding.detail
 
-        unchanged = await update_project_work_calendar(
+        digest_request = ReplanRequest(
+            updates=[
+                ReplanTaskPatch(
+                    task_id=digest_task_id,
+                    expected_version=1,
+                    due_at=datetime(2026, 9, 21, 9, 0, tzinfo=UTC),
+                )
+            ]
+        )
+        digest_preview = await preview_project_replan(
             project_id,
-            ProjectWorkCalendarUpdate(expected_version=2, timezone="Europe/Paris"),
+            digest_request,
             owner,
             session,
         )
-        assert unchanged.calendar_version == 2
+        assert digest_preview.can_apply is True
+        assert digest_preview.changed_task_count == 1
+
+        calendar_v3 = await update_project_work_calendar(
+            project_id,
+            ProjectWorkCalendarUpdate(
+                expected_version=2,
+                exceptions=[
+                    *base_exceptions,
+                    WorkCalendarException(date=date(2026, 9, 22), intervals=[]),
+                ],
+            ),
+            owner,
+            session,
+        )
+        assert calendar_v3.calendar_version == 3
+        stale_preview = await expect_status(
+            409,
+            apply_project_replan(
+                project_id,
+                ReplanApplyRequest(
+                    updates=digest_request.updates,
+                    preview_digest=digest_preview.preview_digest,
+                ),
+                owner,
+                session,
+            ),
+        )
+        assert "preview is stale" in str(stale_preview.detail).lower()
+        await session.rollback()
+
+        unchanged = await update_project_work_calendar(
+            project_id,
+            ProjectWorkCalendarUpdate(expected_version=3, timezone="Europe/Paris"),
+            owner,
+            session,
+        )
+        assert unchanged.calendar_version == 3
 
         stale = await expect_status(
             409,
             update_project_work_calendar(
                 project_id,
-                ProjectWorkCalendarUpdate(expected_version=1, timezone="UTC"),
+                ProjectWorkCalendarUpdate(expected_version=2, timezone="UTC"),
                 owner,
                 session,
             ),
         )
-        assert stale.detail["current_version"] == 2
+        assert stale.detail["current_version"] == 3
         await session.rollback()
 
         await expect_status(
@@ -223,7 +281,7 @@ async def main() -> None:
     print(
         "D06 WORK CALENDAR DB PASS: non-persistent 24/7 default, owner-scoped versioned project "
         "configuration, normalized exceptions, working-second critical path and dependency lags, "
-        "no-op stability and stale-write rejection hold"
+        "calendar-bound replan digests, no-op stability and stale-write rejection hold"
     )
 
 
