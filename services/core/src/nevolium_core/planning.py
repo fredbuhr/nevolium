@@ -19,8 +19,17 @@ from .planning_critical_path import read_project_critical_path
 from .planning_critical_path_schemas import CriticalPathRead
 from .planning_projection import list_project_planning_tasks
 from .planning_projection_schemas import PlanningTaskRead
+from .planning_replan import apply_project_replan, preview_project_replan
+from .planning_replan_schemas import (
+    ReplanApplyRead,
+    ReplanApplyRequest,
+    ReplanPreviewRead,
+    ReplanRequest,
+)
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
 from .planning_structure import (
+    _ensure_profile_locked,
+    _serialize_project_planning,
     create_task_dependency,
     delete_task_dependency,
     list_task_dependencies,
@@ -102,6 +111,28 @@ async def update_planned_task(
     if planned_start is not None and planned_end is not None and planned_end < planned_start:
         raise HTTPException(status_code=422, detail="planned_end_at must be on or after planned_start_at")
 
+    planning_fields = {"planned_start_at", "planned_end_at", "due_at"}
+    planning_changed = any(
+        field in changes and getattr(task, field) != changes[field] for field in planning_fields
+    )
+    planning_profile = None
+    if planning_changed:
+        # Legacy Today/task edits participate in the same planning version stream. New multi-view
+        # Gantt/calendar edits use preview/apply, but this prevents older writes from leaving a valid
+        # optimistic snapshot behind them.
+        await _serialize_project_planning(session, task.project_id)
+        planning_profile = await _ensure_profile_locked(session, task.id)
+        if (
+            planning_profile.kind == "milestone"
+            and planned_start is not None
+            and planned_end is not None
+            and planned_start != planned_end
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="A milestone cannot have a non-zero planned duration",
+            )
+
     correlation_id = uuid.uuid4()
     previous_status = task.status
     for field in (
@@ -123,6 +154,9 @@ async def update_planned_task(
             task.completed_at = None
             task.started_at = None
 
+    if planning_profile is not None:
+        planning_profile.planning_version += 1
+
     await session.flush()
     event_payload = {
         "task_id": str(task.id),
@@ -132,6 +166,8 @@ async def update_planned_task(
         "previous_status": previous_status,
         "priority": task.priority,
     }
+    if planning_profile is not None:
+        event_payload["planning_version"] = planning_profile.planning_version
     await enqueue_domain_event(
         session,
         event_type="task.updated",
@@ -261,4 +297,16 @@ router.add_api_route(
     read_project_critical_path,
     methods=["GET"],
     response_model=CriticalPathRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/replan/preview",
+    preview_project_replan,
+    methods=["POST"],
+    response_model=ReplanPreviewRead,
+)
+router.add_api_route(
+    "/v1/projects/{project_id}/planning/replan/apply",
+    apply_project_replan,
+    methods=["POST"],
+    response_model=ReplanApplyRead,
 )
