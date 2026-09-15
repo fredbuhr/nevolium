@@ -11,6 +11,7 @@ import NewsWorkspacePanel, {
   type NewsMode,
   type NewsOutput,
 } from './NewsWorkspacePanel'
+import PlanningWorkspace from './PlanningWorkspace'
 import ProjectsWorkspace from './ProjectsWorkspace'
 import ResearchWorkspace from './ResearchWorkspace'
 import TodayWorkspace from './TodayWorkspace'
@@ -89,7 +90,7 @@ type CommandState = {
 }
 
 export default function App() {
-  const { language, locale, newsLanguage } = useI18n()
+  const { language, locale, newsLanguage, t } = useI18n()
   const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
   const [online, setOnline] = useState(() => navigator.onLine)
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
@@ -556,6 +557,14 @@ export default function App() {
                 title: 'Projets',
                 keywords: ['projet', 'ouvrir', 'tâches'],
                 content: <ProjectsWorkspace apiUrl={API_URL} />,
+              },
+              {
+                key: 'planning',
+                id: 'planning-workspace',
+                title: t('planning.panelTitle'),
+                keywords: ['planification', 'planning', 'liste', 'kanban', 'tasks', 'tâches'],
+                content: <PlanningWorkspace apiUrl={API_URL} />,
+                minimumWidth: 320,
               },
               {
                 key: 'knowledge',
