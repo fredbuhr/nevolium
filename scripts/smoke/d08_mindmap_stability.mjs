@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
+import './d08_layout_persistence_unit.mjs'
 
 // Reuses the D08 runner's API fixture. These are browser regressions, not a
 // substitute for the independent owner-scoped PostgreSQL integration job.

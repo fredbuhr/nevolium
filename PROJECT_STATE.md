@@ -2,33 +2,33 @@
 
 Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live avant toute action.
 
-## D08 actif — stabilité de la mindmap et persistance de toute la sélection
+## D08 actif — revue finale de la mindmap 2D
 
 | Champ | État attesté |
 |---|---|
 | Base intégrée | `main` = `a9edcd96b6227fe362765863aabbcacbbc53fa4f` ; D07 intégré par #91 |
 | Branche / PR | `feat/d08-editable-mindmap`, **#92 ouverte et draft** ; ne pas recréer de branche |
-| Dernier point qualifié avant cette correction | `eaa2f3d5f977880f59921270754f9838b7d62756`, 9/9 workflows PR réussis ; run UI `35001745851`, artefact `10410435665`, SHA256 `4ee23d888e51cdb51009a399cbf68cd0ae6bdcfef95abea2efd391efa14b0f15` |
-| Limite du point précédent | Le smoke passait mais la capture EN montrait une restauration du cockpit. Le déplacement conjoint, sa persistance et les erreurs de sauvegarde n'étaient pas prouvés |
-| Correction de cette reprise | Callback d'initialisation Dockview stable, titres actualisés en place, réponses de restauration périmées ignorées ; la langue ne recharge plus le snapshot Mindmap ni son layout |
-| Positions et historique | Les événements de drag de nœud et de sélection transmettent tous les nœuds concernés. Capture des positions initiales, y compris générées, et une seule entrée undo/redo pour tout le geste ; fusion synchronisée avec le viewport |
-| Persistance | Un PUT à la fois par workspace, dernier snapshot complet retenu, succès affiché seulement après son acquittement ; erreur visible, retry explicite et brouillon conservé pendant la bascule de langue. Les événements de fitView programmatiques ne déclenchent pas de sauvegarde |
-| Qualification nouvelle | `d08_mindmap_stability.mjs`, appelé par le scénario Chromium D08 existant : déplacement conjoint, undo/redo après FR/EN, identité du panneau/projet sans restauration, échec HTTP 503 puis retry, deux edits pendant un PUT retenu, rechargement de trois positions |
-| État CI de cette correction | À vérifier sur le **head live**. Le succès de `eaa2f3d…` ne qualifie pas ces fichiers nouveaux. Consulter la dernière mise à jour de #92 et les artefacts de la même tête |
-| Prochaine action | Lire les neuf workflows exact-head, particulièrement l'étape D08 du job navigateur. Si rouge, lire `failure.json` avec son `stage` et corriger la cause. Si vert, inspecter les captures `desktop-canvas`, `stability-en-canvas` et `stability-reload-canvas`, puis les critères de sortie ci-dessous |
-| Sortie encore non couverte | Lien profond ouvert dans un contexte neuf ; conversion d'une branche d'idées puis planification explicite de ses tâches réellement visibles au Gantt. Le smoke de conversion individuelle vers la liste Planning ne suffit pas |
-| Portée des preuves | Chromium avec API simulée ; PostgreSQL réel dans un job séparé. Pas une preuve Web→Core→PostgreSQL complète ni une validation sur matériel physique. Environnement local sans accès réseau au dépôt : CI requise pour build/intégrations |
-| Limite de la file de sauvegarde | Ordonnancement des écritures de ce client, pas résolution de conflits inter-onglets ni coédition. Le retry du brouillon est disponible tant que le workspace est monté ; aucune promesse de stockage offline, traitement global multi-appareil en D12 |
-| Production / rollback | Production inchangée, aucun déploiement/commande serveur/migration. Dernier runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations` ; D06/D07/D08 non déployés. Correctif Web/tests/documentation réversible sans toucher aux données |
-| Hors scope | D09 3D, D10 assistant opérant, D12 coédition/offline ; complétude FR/EN historique globale en D13. Aucune fusion implicite |
+| Dernier point entièrement qualifié avant le garde de session | `373635ebb377ca4615b1d08d84b62c581ab82296` : **9/9 workflows PR réussis**, dont UI `35005655461`. Artefact `10411308084`, SHA256 `3c90cb415062034cd3c4b2af72ef71ce539e0a4b8c77f2751e875088b1a1d8e6`, ZIP téléchargé et vérifié |
+| Corrections validées à ce point | Langue sans relecture/restauration du workspace ; brouillon, projet et historique conservés ; déplacement conjoint de deux nœuds avec undo/redo et rechargement ; échec de sauvegarde visible puis retry ; écritures sérialisées sans acquittement périmé |
+| Captures vérifiées | `desktop.png`, `stability-en.png` et captures du canevas : carte et contexte du projet visibles, aucun panneau vide en restauration. Ne pas réutiliser la capture défectueuse de `eaa2f3d…` comme preuve actuelle |
+| Garde ajouté ensuite | `cc8615588f4a554d6e993f1b64f943dd6e372233` lie les PUT en attente à la session d'origine ; changement de sujet ou déconnexion interrompt la requête avant qu'un nouveau jeton transmette l'ancien contenu |
+| Tests supplémentaires de ce checkpoint | `d08_layout_persistence_unit.mjs` exécute le vrai module de persistance transpilé avec hooks/session/transport simulés : dernière révision, snapshot immuable, retry, changement de compte pendant attente du jeton, ancienne session exclue, nettoyage des listeners et déconnexion. Importé par le scénario D08 existant |
+| État de la tête courante | Le présent checkpoint descend du garde de session. **Consulter les neuf workflows de la tête live et le dernier bilan de #92** ; les résultats de `373635e…` ne qualifient pas les descendants |
+| Prochaine action immédiate | Vérifier le résultat exact-head du scénario D08, y compris `D08 LAYOUT UNIT PASS` et son artefact. Si rouge, corriger seulement la cause identifiée dans le log/failure.json ; ne pas déclarer le lot clos sur un succès historique |
+| Prochaine étape fonctionnelle si vert | Prouver l'ouverture d'un lien profond dans un contexte neuf, puis la conversion d'une branche d'idées en tâches explicitement planifiées et réellement visibles au Gantt. La conversion individuelle vers la liste Planning ne couvre pas ces critères |
+| Portée des preuves | Chromium avec API simulée ; PostgreSQL réel dans un job séparé. Tests de session isolés avec doubles, pas session Keycloak réelle ni preuve Web→Core→PostgreSQL complète. Pas de validation sur matériel physique |
+| Limite de persistance | Un PUT à la fois par client/workspace, pas résolution inter-onglets/coédition. Brouillon retenu et retry tant que le workspace reste monté ; ne pas promettre une sauvegarde offline durable. D12 porte les garanties offline/multi-appareils |
+| Production / rollback | Production inchangée : aucune commande serveur, migration ou déploiement. Dernier runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations` ; D06/D07/D08 non déployés. Correctifs Web/tests/documentation réversibles sans toucher aux données |
+| Hors scope | D09 3D, D10 assistant opérant, D12 coédition/offline ; complétude FR/EN historique globale en D13. Pas de fusion implicite |
 
-Le modèle ne change pas : `RelationshipRecord` porte les liens, les idées/notes/décisions sont
-les `Document` D07 et `WorkspaceLayout` ne contient que positions/viewport/groupes.
-Les nouveaux fichiers de persistance sont des adaptateurs Web, pas un nouveau modèle métier.
+Les identités ne changent pas : liens dans `RelationshipRecord`, idées/notes/décisions dans les
+`Document` D07, positions/viewport/groupes seulement dans `WorkspaceLayout`. La file de
+persistance reste un adaptateur Web, pas un nouveau modèle métier.
 
-Les preuves du point précédent et le diagnostic historique de l'export (`Exporter JSON`, pas
-`Exporter`) figurent dans le bilan de #92. Les nouveaux tests conservent le scénario initial,
-ses assertions de provenance, ses trois exports réellement relus et le contrôle téléphone.
+Les tests du scénario initial sont conservés : provenance de conversion individuelle, liens,
+undo/redo, groupes, exports FR/EN/reload téléchargés et relus, création de lien tactile sur
+ téléphone émulé. Le scénario de stabilité ajoute de vraies interactions et assertions, pas des
+sleeps ou une suppression des contrôles existants.
 
 ## D07 intégré et verrouillé
 
