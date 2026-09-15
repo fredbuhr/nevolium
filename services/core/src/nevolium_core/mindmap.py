@@ -531,8 +531,11 @@ async def delete_mindmap_relationship(
     )
     if relationship is None:
         raise HTTPException(status_code=404, detail="Relationship not found")
-    if (relationship.metadata_json or {}).get("surface") != "mindmap":
+    metadata = relationship.metadata_json or {}
+    if metadata.get("surface") != "mindmap":
         raise HTTPException(status_code=409, detail="Relationship is read-only in mindmap")
+    if relationship.relation_type == "converted_to" or metadata.get("conversion") is True:
+        raise HTTPException(status_code=409, detail="Conversion provenance is read-only in mindmap")
 
     await _require_entity_in_project(
         session,
