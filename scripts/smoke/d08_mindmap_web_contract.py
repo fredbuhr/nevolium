@@ -9,6 +9,7 @@ MAIN = ROOT / "apps/web/src/main.tsx"
 I18N = ROOT / "apps/web/src/i18n.tsx"
 VITE = ROOT / "apps/web/vite.config.ts"
 TSCONFIG = ROOT / "apps/web/tsconfig.json"
+DOCKERFILE = ROOT / "apps/web/Dockerfile"
 GRAPH = ROOT / "packages/graph/src/mindmap.ts"
 
 
@@ -19,6 +20,7 @@ def main() -> int:
     i18n = I18N.read_text(encoding="utf-8")
     vite = VITE.read_text(encoding="utf-8")
     tsconfig = TSCONFIG.read_text(encoding="utf-8")
+    dockerfile = DOCKERFILE.read_text(encoding="utf-8")
     graph = GRAPH.read_text(encoding="utf-8")
 
     # Canonical projection in, layout projection out: no business copy in Web.
@@ -32,6 +34,7 @@ def main() -> int:
     assert "@nevolium/graph" in vite
     assert "@nevolium/graph" in tsconfig
     assert '"baseUrl"' not in tsconfig
+    assert "COPY packages/graph ./packages/graph" in dockerfile
     assert "Math.random" not in graph
 
     # Renderer/input capabilities required by the D08 slice.
