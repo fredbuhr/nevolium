@@ -361,6 +361,183 @@
   color: var(--text-muted, #9db4a9);
 }
 
+.planning-calendar {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.planning-calendar-toolbar,
+.planning-calendar-nav,
+.planning-calendar-agenda > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.planning-calendar-toolbar {
+  flex-wrap: wrap;
+  border: 1px solid rgba(126, 215, 207, 0.14);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(4, 16, 23, 0.42);
+}
+
+.planning-calendar-toolbar > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.planning-calendar-toolbar small,
+.planning-calendar-agenda small {
+  color: var(--text-muted, #9db4a9);
+}
+
+.planning-calendar-nav button,
+.planning-calendar-date,
+.planning-calendar-event,
+.planning-calendar-agenda-list button {
+  border: 1px solid rgba(126, 215, 207, 0.16);
+  background: rgba(8, 25, 32, 0.7);
+  color: inherit;
+}
+
+.planning-calendar-nav button {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 10px;
+}
+
+.planning-calendar-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(126, 215, 207, 0.14);
+  border-radius: 16px;
+  background: rgba(4, 16, 23, 0.42);
+}
+
+.planning-calendar-weekdays,
+.planning-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(88px, 1fr));
+  min-width: 660px;
+}
+
+.planning-calendar-weekdays {
+  border-bottom: 1px solid rgba(126, 215, 207, 0.12);
+}
+
+.planning-calendar-weekdays span {
+  padding: 8px 9px;
+  color: var(--text-muted, #9db4a9);
+  font-size: 0.72rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.planning-calendar-day {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-height: 112px;
+  border-right: 1px solid rgba(126, 215, 207, 0.08);
+  border-bottom: 1px solid rgba(126, 215, 207, 0.08);
+  padding: 7px;
+  background: rgba(4, 16, 23, 0.22);
+}
+
+.planning-calendar-day.is-outside {
+  opacity: 0.42;
+}
+
+.planning-calendar-day.is-selected {
+  background: rgba(105, 232, 188, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(202, 255, 223, 0.34);
+}
+
+.planning-calendar-date {
+  justify-self: start;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 999px;
+}
+
+.planning-calendar-date[aria-current='date'] {
+  border-color: rgba(202, 255, 223, 0.56);
+  background: rgba(105, 232, 188, 0.14);
+}
+
+.planning-calendar-events {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.planning-calendar-event {
+  width: 100%;
+  min-width: 0;
+  border-radius: 7px;
+  padding: 4px 6px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.7rem;
+}
+
+.planning-calendar-event.is-due {
+  border-color: color-mix(in srgb, var(--accent-violet, #9782ff) 42%, transparent);
+}
+
+.planning-calendar-events small {
+  color: var(--text-muted, #9db4a9);
+  font-size: 0.68rem;
+}
+
+.planning-calendar-agenda {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(126, 215, 207, 0.14);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(4, 16, 23, 0.42);
+}
+
+.planning-calendar-agenda > div:first-child {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.planning-calendar-agenda-list {
+  display: grid;
+  gap: 7px;
+}
+
+.planning-calendar-agenda-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 11px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.planning-calendar-agenda-list button > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.planning-calendar-agenda-list strong,
+.planning-calendar-agenda-list small {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 820px) {
   .planning-kanban,
   .planning-schedule-fields {
@@ -370,6 +547,29 @@
   .planning-gantt-canvas {
     height: 520px;
     overflow-x: auto;
+  }
+
+  .planning-calendar-weekdays,
+  .planning-calendar-grid {
+    min-width: 620px;
+  }
+}
+
+@media (max-width: 520px) {
+  .planning-calendar-toolbar {
+    align-items: stretch;
+  }
+
+  .planning-calendar-nav {
+    width: 100%;
+  }
+
+  .planning-calendar-nav button:nth-child(2) {
+    flex: 1;
+  }
+
+  .planning-calendar-agenda-list button {
+    align-items: flex-start;
   }
 }
 
