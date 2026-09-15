@@ -317,6 +317,7 @@ export default function CockpitShell({
   const disposedRef = useRef(false)
   const cleanupRef = useRef<(() => void) | null>(null)
   const apiRef = useRef<CockpitApi | null>(null)
+  const restoreGenerationRef = useRef(0)
   const saveChainRef = useRef<Promise<void>>(Promise.resolve())
   const paletteInputRef = useRef<HTMLInputElement | null>(null)
   const paletteDialogRef = useRef<HTMLElement | null>(null)
@@ -334,6 +335,8 @@ export default function CockpitShell({
   const [centered, setCentered] = useState(false)
 
   const normalizedExtras = useMemo(() => normalizeExtraPanels(extraPanels), [extraPanels])
+  const extrasRef = useRef(normalizedExtras)
+  extrasRef.current = normalizedExtras
   const cockpitContent = useMemo<CockpitContent>(
     () => ({
       ...slots,
@@ -382,6 +385,7 @@ export default function CockpitShell({
     disposedRef.current = false
     return () => {
       disposedRef.current = true
+      restoreGenerationRef.current += 1
       apiRef.current = null
       cleanupRef.current?.()
       cleanupRef.current = null
@@ -438,7 +442,7 @@ export default function CockpitShell({
       const updateActive = () => {
         const panel = api.activePanel
         const key = Object.entries(PANEL_DEFINITIONS).find(([, value]) => value.id === panel?.id)?.[0]
-          || normalizedExtras.find(value => value.id === panel?.id)?.key
+          || extrasRef.current.find(value => value.id === panel?.id)?.key
         if (key) {
           setActiveSpace(key)
           setRecentSpaces(previous => previous.at(-1) === key ? previous : [...previous.slice(-4), key])
@@ -469,11 +473,14 @@ export default function CockpitShell({
         }
       }
     },
-    [queueLayoutSave, normalizedExtras],
+    [queueLayoutSave],
   )
 
   const restoreAndAttach = useCallback(
     async (api: CockpitApi) => {
+      const generation = ++restoreGenerationRef.current
+      const isCurrent = () => !disposedRef.current && apiRef.current === api
+        && restoreGenerationRef.current === generation
       cleanupRef.current?.()
       cleanupRef.current = null
       setLayoutState('loading')
@@ -487,7 +494,7 @@ export default function CockpitShell({
           saved = await loadWorkspaceLayout(apiUrl, legacyWorkspaceKey)
           restoredLegacyLayout = saved.kind === 'found'
         }
-        if (disposedRef.current) return
+        if (!isCurrent()) return
         if (saved.kind === 'found') {
           api.clear()
           api.fromJSON(saved.layout as ReturnType<typeof api.toJSON>)
@@ -509,7 +516,7 @@ export default function CockpitShell({
           )
         }
       } catch (error) {
-        if (disposedRef.current) return
+        if (!isCurrent()) return
         if (!api.activePanel) createDefaultLayout(api, profile, deviceClass, normalizedExtras)
         setLayoutState('error')
         setLayoutRetry('restore')
@@ -517,7 +524,7 @@ export default function CockpitShell({
           `${error instanceof Error ? error.message : 'lecture impossible'} — synchronisation suspendue`,
         )
       } finally {
-        if (!disposedRef.current) setReady(true)
+        if (isCurrent()) setReady(true)
       }
     },
     [
@@ -533,13 +540,26 @@ export default function CockpitShell({
     ],
   )
 
-  const onReady = useCallback(
-    (event: DockviewReadyEvent) => {
-      apiRef.current = event.api
-      void restoreAndAttach(event.api)
-    },
-    [restoreAndAttach],
-  )
+  // Dockview's lifetime must not follow translated titles or changing slot content.
+  // The stable callback reads the latest restore implementation only for a new API.
+  const restoreAndAttachRef = useRef(restoreAndAttach)
+  restoreAndAttachRef.current = restoreAndAttach
+  const onReady = useCallback((event: DockviewReadyEvent) => {
+    if (apiRef.current === event.api) return
+    apiRef.current = event.api
+    void restoreAndAttachRef.current(event.api)
+  }, [])
+
+  useEffect(() => {
+    const api = apiRef.current
+    if (!ready || !api) return
+    // A locale change updates existing tabs in place; it never reloads the layout
+    // or reopens the initial panel. Current project, editor and history stay mounted.
+    for (const definition of normalizedExtras) {
+      const panel = api.getPanel(definition.id)
+      if (panel && panel.title !== definition.title) panel.api.setTitle(definition.title)
+    }
+  }, [normalizedExtras, ready])
 
   const choosePaletteItem = (index: number) => {
     const api = apiRef.current
@@ -607,7 +627,6 @@ export default function CockpitShell({
     api.clear()
     createDefaultLayout(api, profile, deviceClass, normalizedExtras)
   }
-
   const detachActivePanel = async () => {
     const api = apiRef.current
     const activePanel = api?.activePanel

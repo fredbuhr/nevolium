@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { qualifyMindMapStability } from './d08_mindmap_stability.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const output = path.join(root, 'artifacts/d08-mindmap-browser')
@@ -12,10 +13,17 @@ const playwrightModule = process.env.NEVOLIUM_PLAYWRIGHT_MODULE
 assert(playwrightModule, 'NEVOLIUM_PLAYWRIGHT_MODULE is required')
 const { chromium } = await import(pathToFileURL(playwrightModule).href)
 await fs.mkdir(output, { recursive: true })
-// Keep the exact isolated preview (mock API, auth disabled by the CI build) and
-// its runner for reproducible browser diagnostics, without production credentials.
+// Reproducible isolated Web preview; never production credentials or runtime data.
 await fs.cp(path.join(root, 'apps/web/dist'), path.join(output, 'preview'), { recursive: true })
 await fs.copyFile(fileURLToPath(import.meta.url), path.join(output, 'qualification.mjs'))
+for (const relative of [
+  'apps/web/src/CockpitShell.tsx', 'apps/web/src/MindMapWorkspace/index.tsx',
+  'apps/web/src/MindMapWorkspace/useLayoutPersistence.ts', 'scripts/smoke/d08_mindmap_stability.mjs',
+]) {
+  const destination = path.join(output, 'source', relative)
+  await fs.mkdir(path.dirname(destination), { recursive: true })
+  await fs.copyFile(path.join(root, relative), destination)
+}
 
 const preview = spawn(
   path.join(root, 'apps/web/node_modules/.bin/vite'),
@@ -71,6 +79,7 @@ function makeState() {
     edges: [edge('d08-canonical-edge', `document:${ids.idea}`, `task:${ids.task}`, 'supports')],
     layouts: new Map(), linkCreates: 0, linkDeletes: 0, conversions: 0, layoutWrites: 0,
     mindmapReads: 0, planningReads: 0, nextEdge: 1, requests: [],
+    failLayoutSaves: 0, layoutSaveGate: null, layoutAttempts: 0, layoutInFlight: 0, maxLayoutInFlight: 0,
   }
 }
 function json(route, value, status = 200, headers = {}) {
@@ -91,14 +100,27 @@ async function installApiMock(context, state) {
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: {
       'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,PUT,POST,PATCH,DELETE,OPTIONS', 'access-control-allow-headers': 'content-type',
     } })
-
     const layoutMatch = p.match(/^\/v1\/ui\/workspaces\/(.+)\/layout$/)
     if (layoutMatch) {
       const key = decodeURIComponent(layoutMatch[1])
       if (request.method() === 'PUT') {
-        const body = request.postDataJSON(); state.layouts.set(key, body)
-        if (key.startsWith('mindmap.project.')) state.layoutWrites += 1
-        return json(route, { id: `layout-${key}`, workspace_key: key, schema_version: body.schema_version, layout: body.layout, created_at: now, updated_at: now })
+        const body = request.postDataJSON()
+        const isMap = key.startsWith('mindmap.project.')
+        if (isMap) {
+          state.layoutAttempts += 1; state.layoutInFlight += 1
+          state.maxLayoutInFlight = Math.max(state.maxLayoutInFlight, state.layoutInFlight)
+        }
+        try {
+          if (isMap && state.failLayoutSaves > 0) {
+            state.failLayoutSaves -= 1
+            return await json(route, { detail: 'Injected layout save failure' }, 503)
+          }
+          const gate = isMap ? state.layoutSaveGate : null
+          if (gate) { state.layoutSaveGate = null; await gate }
+          state.layouts.set(key, body)
+          if (isMap) state.layoutWrites += 1
+          return await json(route, { id: `layout-${key}`, workspace_key: key, schema_version: body.schema_version, layout: body.layout, created_at: now, updated_at: now })
+        } finally { if (isMap) state.layoutInFlight -= 1 }
       }
       if (!state.layouts.has(key)) return json(route, { detail: 'Workspace layout not found' }, 404)
       const body = state.layouts.get(key)
@@ -146,7 +168,6 @@ async function installApiMock(context, state) {
       state.edges.unshift(converted); state.conversions += 1
       return json(route, { document_id: source.entity_id, task_id: ids.convertedTask, task_title: source.label, relationship: converted }, 201)
     }
-
     if (p.endsWith('/planning/tasks')) {
       state.planningReads += 1; return json(route, state.tasks.map(planningTask), 200, { 'x-nevolium-next-cursor': '' })
     }
@@ -193,8 +214,6 @@ async function dragNode(page, locator, dx, dy) {
 }
 
 async function selectOnlyNode(map, key) {
-  // Clicking an already-selected member preserves XYFlow's multi-selection.
-  // Clear it through the visible canvas before requesting an individual action.
   await map.locator('.react-flow__pane').click({ position: { x: 8, y: 8 } })
   await eventually(async () => await map.locator('.react-flow__node.selected').count() === 0,
     'D08: canvas click did not clear the previous selection')
@@ -205,12 +224,9 @@ async function selectOnlyNode(map, key) {
 
 async function qualifyExport(page, map, state, label, filename) {
   const button = map.getByRole('button', { name: label, exact: true })
-  // Detect a wrong accessible name before starting the download waiter. Both promises
-  // are handled immediately so a failed click cannot escape failure.json/finally.
   await button.waitFor({ state: 'visible', timeout: 10_000 })
   const [download] = await Promise.all([
-    page.waitForEvent('download', { timeout: 10_000 }),
-    button.click({ timeout: 10_000 }),
+    page.waitForEvent('download', { timeout: 10_000 }), button.click({ timeout: 10_000 }),
   ])
   assert.equal(download.suggestedFilename(), `nevolium-mindmap-${ids.project}.json`)
   assert.equal(await download.failure(), null, 'D08: export download failed')
@@ -235,7 +251,6 @@ async function qualifyDesktop(browser, state) {
     colorScheme: 'dark', reducedMotion: 'reduce', serviceWorkers: 'block', acceptDownloads: true,
   })
   let map = await openMindMap(page); assert.equal(await map.locator('.react-flow__node').count(), 4)
-
   stage = 'desktop:drag'
   let idea = map.locator(`.react-flow__node[data-id="document:${ids.idea}"]`)
   await idea.click(); assert.equal(new URL(page.url()).searchParams.get('mindmap'), `document:${ids.idea}`)
@@ -257,8 +272,7 @@ async function qualifyDesktop(browser, state) {
   stage = 'desktop:group'
   const taskNode = map.locator(`.react-flow__node[data-id="task:${ids.task}"]`)
   idea = map.locator(`.react-flow__node[data-id="document:${ids.idea}"]`)
-  await taskNode.click()
-  await page.keyboard.down('Shift')
+  await taskNode.click(); await page.keyboard.down('Shift')
   try { await idea.click() } finally { await page.keyboard.up('Shift') }
   const groupCard = map.locator('.mindmap-editor-card').nth(1)
   const writesBeforeGroup = state.layoutWrites
@@ -271,15 +285,14 @@ async function qualifyDesktop(browser, state) {
   }, 'D08: selected group members were not persisted')
 
   stage = 'desktop:export-fr'
+  await map.locator('[data-save-state="saved"]').waitFor()
   await qualifyExport(page, map, state, 'Exporter JSON', 'export-fr.json')
-
   stage = 'desktop:conversion'
   await selectOnlyNode(map, `document:${ids.idea}`)
   await map.locator('.mindmap-conversion-bar').getByRole('button').click()
-  // The request counter changes before refreshSnapshot and the URL update finish.
   await eventually(() => state.conversions === 1
     && new URL(page.url()).searchParams.get('mindmap') === `task:${ids.convertedTask}`,
-  'D08: idea conversion did not finish canonical refresh and deep-link update')
+    'D08: idea conversion did not finish canonical refresh and deep-link update')
   await map.locator(`.react-flow__node[data-id="task:${ids.convertedTask}"]`).waitFor()
 
   stage = 'desktop:planning'
@@ -288,15 +301,15 @@ async function qualifyDesktop(browser, state) {
   await planning.getByText('Idée navigateur D08', { exact: true }).waitFor(); assert(state.planningReads > 0)
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Carte mentale', exact: true }).click()
   map = page.locator('.mindmap-workspace:visible')
-
   stage = 'desktop:english'
   await page.getByRole('button', { name: 'English', exact: true }).click()
   await map.getByRole('heading', { name: 'Mind map', exact: true }).waitFor()
   await map.locator(`.react-flow__node[data-id="task:${ids.convertedTask}"]`).waitFor()
   await qualifyExport(page, map, state, 'Export JSON', 'export-en.json')
+  assert.equal(await page.locator('.layout-state-loading:visible').count(), 0)
+  await map.locator('.mindmap-canvas').screenshot({ path: path.join(output, 'desktop-canvas.png') })
   await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true })
-  assert.deepEqual(errors, [])
-  await context.close()
+  assert.deepEqual(errors, []); await context.close()
 }
 
 async function qualifyReload(browser, state) {
@@ -316,8 +329,7 @@ async function qualifyReload(browser, state) {
   const reloaded = JSON.parse(await fs.readFile(path.join(output, 'export-reload.json'), 'utf8'))
   assert.deepEqual(reloaded.layout.positions, savedBeforeReload.positions, 'D08: reload lost persisted positions')
   assert.deepEqual(reloaded.layout.groups, savedBeforeReload.groups, 'D08: reload lost persisted groups')
-  assert.deepEqual(errors, [])
-  await context.close()
+  assert.deepEqual(errors, []); await context.close()
 }
 
 async function qualifyPhone(browser) {
@@ -350,10 +362,12 @@ try {
   browser = await chromium.launch({ headless: true,
     ...(process.env.NEVOLIUM_CHROMIUM_EXECUTABLE ? { executablePath: process.env.NEVOLIUM_CHROMIUM_EXECUTABLE } : {}) })
   await qualifyDesktop(browser, state); await qualifyReload(browser, state); await qualifyPhone(browser)
+  const stability = await qualifyMindMapStability({ browser, makeState, casePage, openMindMap, dragNode,
+    selectOnlyNode, eventually, ids, output, setStage: value => { stage = value } })
   const result = { status: 'passed', scope: 'Chromium Web with mocked API; PostgreSQL integration is a separate job',
     mindmap_reads: state.mindmapReads, layout_writes: state.layoutWrites,
     link_creates: state.linkCreates, link_deletes: state.linkDeletes, conversions: state.conversions, planning_reads: state.planningReads,
-    exported_payloads: ['export-fr.json', 'export-en.json', 'export-reload.json'] }
+    exported_payloads: ['export-fr.json', 'export-en.json', 'export-reload.json'], stability }
   await fs.writeFile(path.join(output, 'result.json'), `${JSON.stringify(result, null, 2)}\n`)
   console.log('D08 BROWSER PASS', result)
 } catch (error) {

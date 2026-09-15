@@ -22,11 +22,15 @@ def main() -> int:
     tsconfig = TSCONFIG.read_text(encoding="utf-8")
     dockerfile = DOCKERFILE.read_text(encoding="utf-8")
     graph = GRAPH.read_text(encoding="utf-8")
+    persistence = (WORKSPACE.parent / "useLayoutPersistence.ts").read_text(encoding="utf-8")
+    cockpit = (ROOT / "apps/web/src/CockpitShell.tsx").read_text(encoding="utf-8")
+    stability = (ROOT / "scripts/smoke/d08_mindmap_stability.mjs").read_text(encoding="utf-8")
+    runner = (ROOT / "scripts/smoke/d08_mindmap_browser_qualification.mjs").read_text(encoding="utf-8")
 
     # Canonical projection in, layout projection out: no business copy in Web.
     assert "/v1/projects/${encodeURIComponent(selectedProjectId)}/mindmap" in workspace
     assert "/v1/ui/workspaces/${encodeURIComponent(nextSnapshot.layout_workspace_key)}/layout" in workspace
-    assert "schema_version: 1" in workspace
+    assert "schema_version: 1" in persistence
     assert "positions: Record<string, SavedPosition>" in workspace
     assert "groups?: Record<string" in workspace
     assert "buildRadialMindMapLayout" in workspace
@@ -37,7 +41,7 @@ def main() -> int:
     assert "COPY packages/graph ./packages/graph" in dockerfile
     assert "Math.random" not in graph
 
-    # XYFlow is deliberately uncontrolled: internal measurement changes must never feed a React loop.
+    # Internal measurement changes must never feed a controlled React loop.
     assert "<ReactFlow" in workspace
     assert "defaultNodes={renderedNodes}" in workspace
     assert "defaultEdges={renderedEdges}" in workspace
@@ -54,7 +58,6 @@ def main() -> int:
     assert "const renderedEdges = useMemo<Edge[]>" in workspace
     assert "key={flowKey}" in workspace
 
-    # Renderer/input capabilities required by the D08 slice.
     assert "onNodeDragStop" in workspace
     assert "onMoveEnd" in workspace
     assert "selectionOnDrag" in workspace
@@ -63,10 +66,9 @@ def main() -> int:
     assert "async function redo()" in workspace
     assert "type HistoryEntry" in workspace
     assert "type FilterMode" in workspace
-    assert "type=\"search\"" in workspace
+    assert 'type="search"' in workspace
     assert "window.history.replaceState" in workspace
 
-    # Link editing is explicit/touch-usable and reuses Core mutations rather than XYFlow truth.
     assert "/mindmap/relationships`" in workspace
     assert "/mindmap/relationships/${encodeURIComponent(edge.id)}`" in workspace
     assert "async function createLink()" in workspace
@@ -80,7 +82,6 @@ def main() -> int:
     assert "linkTargetKey" in workspace
     assert "linkRelation" in workspace
 
-    # Layout-only groups stay in WorkspaceLayout; collapsed groups are presentation nodes only.
     assert "type MindMapGroup" in workspace
     assert "crypto.randomUUID()" in workspace
     assert "function createGroup()" in workspace
@@ -88,53 +89,57 @@ def main() -> int:
     assert "function deleteGroup(" in workspace
     assert "layout-group:${groupId}" in workspace
     assert "mindmap-node-group" in workspace
-
-    # Idea conversion hits the atomic Core endpoint and reloads canonical data afterward.
     assert "/convert-to-task`" in workspace
     assert "async function convertSelectedIdea()" in workspace
     assert "await refreshSnapshot(taskKey)" in workspace
     assert "task:${conversion.task_id}" in workspace
 
-    # Export preserves canonical node ids, relationships and user layout in one documented payload.
     assert "function exportMindMap()" in workspace
     assert "schema: 'nevolium-mindmap-v1'" in workspace
     assert "relationships: snapshot.edges" in workspace
     assert "layout," in workspace
     assert "nevolium-mindmap-${snapshot.project_id}.json" in workspace
-
-    # Mindmap is a cockpit panel, not a D05 home-geometry rewrite.
     assert "import MindMapWorkspace from './MindMapWorkspace'" in app
     assert "key: 'mindmap'" in app
     assert "content: <MindMapWorkspace apiUrl={API_URL} />" in app
     assert "./mindmap.css" in main_tsx
 
-    # All new user-visible D08 strings use the central FR/EN catalogue.
     for key in (
-        "mindmap.panelTitle",
-        "mindmap.heading",
-        "mindmap.projectRequired",
-        "mindmap.search",
-        "mindmap.filter",
-        "mindmap.undo",
-        "mindmap.redo",
-        "mindmap.export",
-        "mindmap.linkEditor",
-        "mindmap.linkSource",
-        "mindmap.linkTarget",
-        "mindmap.linkRelation",
-        "mindmap.useSelection",
-        "mindmap.groups",
-        "mindmap.groupCreate",
-        "mindmap.convertIdea",
-        "mindmap.kind.idea",
-        "mindmap.status.supported",
-        "mindmap.relation.converted_to",
+        "mindmap.panelTitle", "mindmap.heading", "mindmap.projectRequired",
+        "mindmap.search", "mindmap.filter", "mindmap.undo", "mindmap.redo", "mindmap.export",
+        "mindmap.linkEditor", "mindmap.linkSource", "mindmap.linkTarget", "mindmap.linkRelation",
+        "mindmap.useSelection", "mindmap.groups", "mindmap.groupCreate", "mindmap.convertIdea",
+        "mindmap.kind.idea", "mindmap.status.supported", "mindmap.relation.converted_to",
     ):
         assert i18n.count(f"'{key}'") == 2, key
 
+    # Locale is presentation, not a workspace restore trigger. Runtime proof below
+    # verifies the same mounted workspace, project and local history survive.
+    assert "restoreAndAttachRef.current(event.api)" in cockpit
+    assert "panel.api.setTitle(definition.title)" in cockpit
+    assert "apiRef.current === api" in cockpit
+    assert "tRef.current('mindmap.loadError')" in workspace
+    assert "}, [apiUrl, selectedProjectId, replaceLayout])" in workspace
+    assert "onSelectionDragStart" in workspace and "onSelectionDragStop" in workspace
+    assert "for (const node of affected)" in workspace
+    assert "recordLayout({ ...current, positions }, before)" in workspace
+    assert "data-save-state={persistence.status}" in workspace
+    assert "onClick={persistence.retry}" in workspace
+    assert "if (this.inFlight) return" in persistence
+    assert "this.acknowledged = revision" in persistence
+    assert "this.publish('error'" in persistence
+    assert "Disposition non enregistrée" in persistence and "Layout not saved" in persistence
+    assert "await qualifyMindMapStability(" in runner
+    for marker in (
+        "stability:joint-drag", "stability:locale-with-history",
+        "stability:joint-undo-redo-after-locale", "stability:save-failure-retains-local-layout",
+        "stability:serialized-latest-snapshot", "stability:reload-both-positions",
+    ):
+        assert marker in stability, marker
+
     print(
-        "D08 WEB CONTRACT PASS: canonical data feed an uncontrolled XYFlow renderer; layout/groups "
-        "stay presentation-only; typed links, export, deep links and idea conversion are FR/EN"
+        "D08 WEB CONTRACT PASS: canonical uncontrolled XYFlow, typed links, export, "
+        "FR/EN, stable cockpit lifetime, whole-selection history and acknowledged serial saves"
     )
     return 0
 
