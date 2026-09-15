@@ -8,6 +8,8 @@ import {
   type SetStateAction,
 } from 'react'
 
+import { readMindMapDeepLink } from './mindmapDeepLink'
+
 type ProjectSelectionContextValue = {
   selectedProjectId: string
   setSelectedProjectId: Dispatch<SetStateAction<string>>
@@ -18,7 +20,9 @@ type ProjectSelectionContextValue = {
 const ProjectSelectionContext = createContext<ProjectSelectionContextValue | null>(null)
 
 export function ProjectSelectionProvider({ children }: { children: ReactNode }) {
-  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    () => readMindMapDeepLink()?.projectId || '',
+  )
   const [selectedDocumentId, setSelectedDocumentId] = useState('')
   const value = useMemo(
     () => ({ selectedProjectId, setSelectedProjectId, selectedDocumentId, setSelectedDocumentId }),
