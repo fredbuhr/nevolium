@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static/domain proof for D06 canonical planning structure, projection and CPM routes."""
+"""Static/domain proof for D06 canonical planning structure, projection, CPM and replanning."""
 
 from __future__ import annotations
 
@@ -66,6 +66,8 @@ def main() -> int:
         ("/v1/task-dependencies/{dependency_id}", "DELETE"),
         ("/v1/projects/{project_id}/planning/tasks", "GET"),
         ("/v1/projects/{project_id}/planning/critical-path", "GET"),
+        ("/v1/projects/{project_id}/planning/replan/preview", "POST"),
+        ("/v1/projects/{project_id}/planning/replan/apply", "POST"),
     }
     assert expected_routes <= route_contract, route_contract
 
@@ -109,10 +111,33 @@ def main() -> int:
         ROOT / "services/core/src/nevolium_core/planning_critical_path_schemas.py"
     ).read_text(encoding="utf-8")
 
+    replan = (
+        ROOT / "services/core/src/nevolium_core/planning_replan.py"
+    ).read_text(encoding="utf-8")
+    assert "hashlib.sha256" in replan
+    assert '"context_windows"' in replan
+    assert "_serialize_project_planning(session, project.id)" in replan
+    assert "with_for_update()" in replan
+    assert "profile.planning_version += 1" in replan
+    assert 'event_type="task.replanned"' in replan
+    assert "Replanning preview is stale" in replan
+    assert "Replanning would violate one or more task dependencies" in replan
+    replan_schemas = (
+        ROOT / "services/core/src/nevolium_core/planning_replan_schemas.py"
+    ).read_text(encoding="utf-8")
+    assert "max_length=100" in replan_schemas
+    assert 'pattern=r"^[0-9a-f]{64}$"' in replan_schemas
+    assert "replanning request contains duplicate task IDs" in replan_schemas
+
+    planning = (ROOT / "services/core/src/nevolium_core/planning.py").read_text(encoding="utf-8")
+    assert "planning_profile.planning_version += 1" in planning
+    assert '"planning_version"' in planning
+
     print(
         "D06 PLANNING STRUCTURE PASS: canonical hierarchy/milestone/progress/recurrence metadata, "
         "owner-scoped dependencies, optimistic conflict detection, cycle guards, one paginated "
-        "Task+planning projection and bounded elapsed-time critical path analysis are wired"
+        "Task+planning projection, bounded elapsed-time critical path and transactional preview/apply "
+        "replanning are wired"
     )
     return 0
 
