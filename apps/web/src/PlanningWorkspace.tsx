@@ -323,28 +323,10 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
     void updateManualStatus(task, nextStatus)
   }
 
-  function applyScheduleLocally(updated: {
-    id: string
-    planning_version: number
-    planned_start_at?: string | null
-    planned_end_at?: string | null
-    due_at?: string | null
-  }) {
-    page.setItems((current) =>
-      current.map((item) =>
-        item.id === updated.id
-          ? {
-              ...item,
-              planning_version: updated.planning_version,
-              planned_start_at: updated.planned_start_at,
-              planned_end_at: updated.planned_end_at,
-              due_at: updated.due_at,
-            }
-          : item,
-      ),
-    )
+  async function refreshPlanningAfterApply() {
     closeScheduleEditor()
     setMutationError(null)
+    await page.reload()
     criticalPath.refresh()
   }
 
@@ -461,7 +443,7 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
           projectId={selectedProjectId}
           task={editingTask}
           onCancel={closeScheduleEditor}
-          onApplied={(updated) => applyScheduleLocally(updated)}
+          onApplied={() => void refreshPlanningAfterApply()}
         />
       ) : null}
 
