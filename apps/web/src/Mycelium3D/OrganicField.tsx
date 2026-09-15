@@ -170,6 +170,11 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier }: {
       const marker = 'offset *= linewidth;'
       if (!line.vertexShader.includes(marker)) throw new Error('Organic line width shader contract changed')
       line.vertexShader = 'attribute float instanceWidth;\n' + line.vertexShader.replace(marker, 'offset *= linewidth * instanceWidth;')
+      // Three's coverage branch replaces opacity at every round segment cap. Preserve it,
+      // otherwise the faint glow becomes opaque dots and saturates dense junctions.
+      const coverage = 'alpha = 1.0 - smoothstep'
+      if (!line.fragmentShader.includes(coverage)) throw new Error('Organic line coverage shader contract changed')
+      line.fragmentShader = line.fragmentShader.replaceAll(coverage, 'alpha *= 1.0 - smoothstep')
       return line
     }
     const core = new LineSegments2(geometry, makeMaterial(1.5, 0.75))

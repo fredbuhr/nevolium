@@ -88,3 +88,18 @@ Pour le premier rendu organique, les mesures SwiftShader éco 51/201/501 sont 25
 17,1/19,3/24,5 Mo, 3 géométries et 1 texture. Elles ne qualifient pas la correction suivante ni le
 matériel utilisateur. Le coût du rendu et la disparition des bandes doivent être examinés sur leur propre
 head ; la PR conserve les captures et mesures finales.
+
+### Transparence des jonctions
+
+Head `25997d2e78d9696d4ab8bda2ebe60fc18822996f` : 8/8 workflows verts, UI run
+`35032575243`. Le zoom ne montre plus de grandes bandes ; les membranes restent sélectionnables
+sur ordinateur et téléphone émulé. La vue générale révèle cependant des points trop lumineux.
+Le shader installé de `LineMaterial` remplace l'alpha par la couverture des extrémités : la lueur
+à faible opacité devient localement opaque à chaque raccord. La correction multiplie la couverture
+par l'opacité prévue, avec une garde sur le contrat du shader. Les captures suivantes doivent
+confirmer l'atténuation, et leur propre head porte les preuves finales dans #93.
+
+Mesures SwiftShader ponctuelles du head 25997d2 : 20/16/14 FPS pour 51/201/501 objets,
+16,1/18,2/21,7 Mo de heap, 3 géométries, 1 texture et 4 appels. Le court parcours du banc 201/300
+avec interactions donne une médiane de 6 FPS ; il ne mesure pas une campagne stable ou physique.
+Ces observations ne sont pas transférées au matériel utilisateur ni au descendant corrigé.
