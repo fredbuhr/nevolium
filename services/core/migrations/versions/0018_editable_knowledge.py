@@ -20,20 +20,14 @@ depends_on = None
 
 def upgrade() -> None:
     op.alter_column(
-        "documents",
-        "asset_id",
-        existing_type=postgresql.UUID(as_uuid=True),
-        nullable=True,
+        "documents", "asset_id", existing_type=postgresql.UUID(as_uuid=True), nullable=True
     )
     op.add_column(
-        "documents",
-        sa.Column("kind", sa.String(32), nullable=False, server_default="source"),
+        "documents", sa.Column("kind", sa.String(32), nullable=False, server_default="source")
     )
     op.add_column("documents", sa.Column("epistemic_status", sa.String(32), nullable=True))
     op.create_check_constraint(
-        "ck_documents_kind",
-        "documents",
-        "kind IN ('source', 'note', 'idea', 'decision')",
+        "ck_documents_kind", "documents", "kind IN ('source', 'note', 'idea', 'decision')"
     )
     op.create_check_constraint(
         "ck_documents_epistemic_status",
@@ -110,10 +104,7 @@ def upgrade() -> None:
         sa.Column("label", sa.String(320), nullable=True),
         sa.Column("excerpt", sa.Text(), nullable=True),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
         ),
         sa.CheckConstraint(
             "(source_document_id IS NOT NULL AND source_url IS NULL) OR "
@@ -135,9 +126,7 @@ def upgrade() -> None:
         ["document_version_id", "created_at", "id"],
     )
     op.create_index(
-        "ix_document_citations_source_document",
-        "document_citations",
-        ["source_document_id"],
+        "ix_document_citations_source_document", "document_citations", ["source_document_id"]
     )
 
     op.create_table(
@@ -159,21 +148,14 @@ def upgrade() -> None:
         sa.Column("label", sa.String(320), nullable=True),
         sa.Column("ordinal", sa.Integer(), nullable=False, server_default="0"),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
         ),
         sa.CheckConstraint(
-            "role IN ('attachment', 'whiteboard')",
-            name="ck_document_asset_links_role",
+            "role IN ('attachment', 'whiteboard')", name="ck_document_asset_links_role"
         ),
         sa.CheckConstraint("ordinal >= 0", name="ck_document_asset_links_ordinal"),
         sa.UniqueConstraint(
-            "document_id",
-            "asset_id",
-            "role",
-            name="uq_document_asset_link_role",
+            "document_id", "asset_id", "role", name="uq_document_asset_link_role"
         ),
     )
     op.create_index(
@@ -184,6 +166,20 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Once authored knowledge exists, making asset_id NOT NULL would require deleting or inventing
+    # source Assets. Refuse that destructive downgrade and keep the canonical data intact.
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM documents WHERE asset_id IS NULL) THEN
+                RAISE EXCEPTION '0018 downgrade refused: authored documents without source assets exist';
+            END IF;
+        END
+        $$;
+        """
+    )
+
     op.drop_index("ix_document_asset_links_document", table_name="document_asset_links")
     op.drop_table("document_asset_links")
     op.drop_index("ix_document_citations_source_document", table_name="document_citations")
