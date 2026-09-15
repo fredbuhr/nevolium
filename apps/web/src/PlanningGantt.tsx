@@ -85,6 +85,11 @@ export default function PlanningGantt({
     }
 
     const ids = new Set(renderable.map(({ source }) => source.id))
+    const renderedParentIds = new Set(
+      renderable
+        .map(({ source }) => source.parent_task_id)
+        .filter((parentId): parentId is string => Boolean(parentId && ids.has(parentId))),
+    )
     const ganttTasks: GanttTasks = renderable.map(({ source, start, end }) => ({
       id: source.id,
       text: critical.has(source.id) ? `◆ ${source.title}` : source.title,
@@ -93,7 +98,7 @@ export default function PlanningGantt({
       progress: source.progress_percent,
       type: source.kind === 'milestone' ? 'milestone' : 'task',
       parent: source.parent_task_id && ids.has(source.parent_task_id) ? source.parent_task_id : 0,
-      open: true,
+      ...(renderedParentIds.has(source.id) ? { open: true } : {}),
     }))
     const ganttLinks: GanttLinks = dependencies
       .filter(
