@@ -172,6 +172,6 @@ export default function Scene(props: SceneProps) {
     <CameraAndMetrics {...props} poses={poses} tier={tier} onTier={setAutoTier} />
     <OrganicFilaments graph={visibleGraph} poses={poses} layout={spatial} selected={props.selected} tier={tier} />
     <OrganicGroups groups={props.groups} poses={poses} />
-    <OrganicNodes nodes={props.nodes} poses={poses} selected={props.selected} reducedMotion={props.reducedMotion} onSelect={props.onSelect} />
+    <OrganicNodes nodes={props.nodes} graph={visibleGraph} poses={poses} selected={props.selected} reducedMotion={props.reducedMotion} onSelect={props.onSelect} />
   </Canvas>
 }

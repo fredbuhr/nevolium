@@ -10,7 +10,7 @@ Dernière revue : 2026-09-15. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | D08 intégré | PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f`, 9/9 workflows PR verts, arbre identique au merge |
 | Branche / PR active | `feat/d09-mycelium-3d`, **PR #93 draft** ; aucune autre branche normale ouverte par ce travail |
 | Référence qualifiée D09 | `81f4cf2f163dd314684dc312d90ab5dbba749315` : **8/8 workflows PR verts**, dont parcours D05–D09, kit hors ligne et contrats PostgreSQL ; UI run `35026723093` |
-| Présent descendant | Reprise organique demandée après essais utilisateur : membranes D05, faisceaux ramifiés, voiles diffus, suppression des cages ; vérifier les checks du head live #93, sans transférer automatiquement les résultats du parent |
+| Présent descendant | Reprise organique demandée après essais utilisateur : membranes D05, faisceaux ramifiés, voiles diffus, épaisseur bornée au zoom ; vérifier les checks du head live #93, sans transférer automatiquement les résultats du parent |
 | Implémenté D09 | Projection pure ; renderer R3F/Three différé ; orbite/focus/zoom ; sélection 2D↔3D ; filaments/groupes/labels bornés ; activité réelle des Tasks ; navigation Planning/Knowledge |
 | Canon | Snapshot D08 owner-scoped, mêmes `project`/`task`/`document` et `RelationshipRecord`; aucune nouvelle migration ou API métier |
 | Présentation | `WorkspaceLayout` distinct `mycelium3d.project.{project_id}` : vue/qualité/caméra, PUT sérialisés/retry/garde de session ; positions spatiales dérivées, positions 2D conservées |

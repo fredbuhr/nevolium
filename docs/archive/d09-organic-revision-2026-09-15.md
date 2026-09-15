@@ -70,3 +70,21 @@ une capture pleine page sur téléphone. Résultats exacts et artefacts du nouve
 Le retour matériel favorable est conservé. La présente révision ne déclare ni acceptation du
 nouveau dessin ni clôture D09. Prochaine action : examiner les captures, remettre le kit organique,
 puis recueillir le retour visuel et compléter les preuves matérielles/manquantes selon le plan.
+
+### Première revue des captures
+
+Head `7bac00bbc0cba0a457c990ddac6f8c6a435f6ebd` : 8/8 workflows PR verts, UI run `35031292487`.
+Les 13 scénarios spatiaux et les neuf contrôles du kit passent, notamment le clic sur membrane
+et le DPR effectif. La vue rapprochée montre toutefois des gaines qui deviennent de larges bandes
+quand la caméra traverse le réseau : cette première proposition n'est pas retenue comme finale.
+
+La correction borne l'épaisseur en pixels avec `LineSegments2`/`LineMaterial` de Three, inspectés
+dans leur version installée, tout en gardant les trajectoires 3D, la variation d'épaisseur et le
+faisceau. La lueur réutilise la géométrie, sans post-traitement. Le voisinage sélectionné reste
+visible ; les autres fibres et membranes reculent. Le diamètre apparent des membranes est borné
+près de la caméra, avec le même calcul pour le raycast. Les géométries restent bornées et libérées.
+
+Pour le premier rendu organique, les mesures SwiftShader éco 51/201/501 sont 25/20/16 FPS, heap
+17,1/19,3/24,5 Mo, 3 géométries et 1 texture. Elles ne qualifient pas la correction suivante ni le
+matériel utilisateur. Le coût du rendu et la disparition des bandes doivent être examinés sur leur propre
+head ; la PR conserve les captures et mesures finales.

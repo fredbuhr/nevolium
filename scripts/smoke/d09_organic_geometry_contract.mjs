@@ -17,7 +17,9 @@ for (const caseId of ['small', 'stress']) {
     const grown = growFilaments(data, poses, layout, tier, [])
     assert.deepEqual(grown.edgeIds, data.edges.map(edge => edge.id).sort((a, b) => a.localeCompare(b)))
     const detail = GROWTH_DETAIL[tier]
-    assert.equal(grown.body.attributes.position.count, data.edges.length * detail.segments * detail.sides * 6)
+    assert.equal(grown.body.attributes.position.count, data.edges.length * detail.segments * 2)
+    assert.equal(grown.widths.length, data.edges.length * detail.segments)
+    assert([...grown.widths].every(width => width > 0 && width < 1.5), 'Near-camera fibres must retain a bounded pixel width')
     assert.equal(grown.fibres.attributes.position.count, data.edges.length * detail.segments * detail.strands * 2)
     for (const geometry of [grown.body, grown.fibres]) {
       assert([...geometry.attributes.position.array].every(Number.isFinite), 'Growth must not introduce invalid vertices')

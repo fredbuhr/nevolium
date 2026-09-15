@@ -1,6 +1,6 @@
 # Nevolium — langage visuel Mycelium
 
-Révision : 2026-09-14. Ce contrat traduit les références visuelles fournies pendant D05,
+Révision : 2026-09-15. Ce contrat traduit les références visuelles fournies pendant D05,
 y compris les huit images de la reprise « matière organique ».
 Les images restent des inspirations de conversation ; elles ne sont pas attribuées au dépôt et
 ne constituent pas des captures de l'interface livrée.

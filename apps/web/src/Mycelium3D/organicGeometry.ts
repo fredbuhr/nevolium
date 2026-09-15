@@ -27,9 +27,9 @@ export function organicPositions(layout: NevoliumSpatialLayout): PoseMap {
 }
 
 export const GROWTH_DETAIL = {
-  eco: { segments: 14, strands: 2, sides: 3 },
-  balanced: { segments: 22, strands: 3, sides: 4 },
-  high: { segments: 30, strands: 4, sides: 4 },
+  eco: { segments: 18, strands: 2 },
+  balanced: { segments: 26, strands: 3 },
+  high: { segments: 34, strands: 4 },
 } as const
 
 type Batch = { positions: number[]; colors: number[] }
@@ -49,6 +49,7 @@ function vertex(data: Batch, point: THREE.Vector3, tint: THREE.Color, light: num
 export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layout: NevoliumSpatialLayout, tier: Tier, selected: string[]) {
   const settings = GROWTH_DETAIL[tier]
   const body = batch(), fibres = batch()
+  const widths: number[] = []
   const edges = [...graph.edges].filter(edge => poses.has(edge.source) && poses.has(edge.target)
     && edge.source !== edge.target).sort((a, b) => a.id.localeCompare(b.id))
   const parents = new Map(layout.placements.map(p => [p.id, p.parentId]))
@@ -82,7 +83,7 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
     const curve = new THREE.CatmullRomCurve3([from, start, middle, end, to], false, 'centripetal')
     const primary = parents.get(edge.target) === edge.source || parents.get(edge.source) === edge.target
     const highlighted = selected.includes(edge.source) || selected.includes(edge.target)
-    const strength = highlighted ? 1.15 : selected.length ? 0.13 : primary ? 0.65 : 0.15
+    const strength = highlighted ? 0.95 : selected.length ? 0.018 : primary ? 0.45 : 0.035
     const tint = new THREE.Color(edge.relation === 'contradicts' ? '#c89ac5' : seed(edge.id) > 0.7 ? '#72dbb3' : '#4bc6d5')
     const points: THREE.Vector3[] = []
     const phase = seed(`${edge.id}:phase`) * Math.PI * 2
@@ -92,25 +93,15 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
         .addScaledVector(side, Math.sin(t * 17 + phase) * envelope * Math.min(0.17, length * 0.012))
         .addScaledVector(up, Math.sin(t * 11 - phase) * envelope * Math.min(0.13, length * 0.01)))
     }
-    // One tapered sheath per canonical edge, then fine fibres splitting and rejoining it.
-    const rings: THREE.Vector3[][] = []
-    for (let i = 0; i < points.length; i++) {
+    // Screen-bounded, tapered fibres avoid giant tube faces when the camera enters the graph.
+    for (let i = 1; i < points.length; i++) {
       const t = i / settings.segments
-      const tangent = points[Math.min(i + 1, settings.segments)].clone().sub(points[Math.max(0, i - 1)]).normalize()
-      const normal = new THREE.Vector3().crossVectors(tangent, side).normalize()
-      const binormal = new THREE.Vector3().crossVectors(tangent, normal).normalize()
-      const radius = (primary ? 0.025 : 0.01) * (0.65 + seed(edge.id) * 0.7)
-        * (0.45 + Math.pow(Math.abs(Math.cos(t * Math.PI)), 3) * 1.4)
-      const ring = Array.from({ length: settings.sides }, (_, s) => points[i].clone()
-        .addScaledVector(normal, Math.cos(s / settings.sides * Math.PI * 2) * radius)
-        .addScaledVector(binormal, Math.sin(s / settings.sides * Math.PI * 2) * radius))
-      rings.push(ring)
-      if (!i) continue
-      const variation = strength * (0.55 + 0.45 * Math.pow(Math.sin(t * 8 + phase), 2))
-      for (let s = 0; s < settings.sides; s++) {
-        const next = (s + 1) % settings.sides
-        for (const p of [rings[i - 1][s], ring[s], ring[next], rings[i - 1][s], ring[next], rings[i - 1][next]]) vertex(body, p, tint, variation)
-      }
+      const density = 1 + (Math.sqrt(aHub.count) - 1) * Math.pow(1 - t, 8)
+        + (Math.sqrt(bHub.count) - 1) * Math.pow(t, 8)
+      const variation = strength * (0.6 + 0.4 * Math.pow(Math.sin(t * 8 + phase), 2)) / density
+      vertex(body, points[i - 1], tint, variation); vertex(body, points[i], tint, variation)
+      widths.push((primary || highlighted ? 0.8 : 0.5) * (0.7 + Math.abs(Math.cos(t * Math.PI)) * 0.55)
+        * (0.85 + seed(edge.id) * 0.3))
     }
     for (let strand = 0; strand < settings.strands; strand++) {
       const trace = points.map((p, i) => {
@@ -127,5 +118,5 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
       }
     }
   }
-  return { body: geometry(body), fibres: geometry(fibres), edgeIds: edges.map(edge => edge.id) }
+  return { body: geometry(body), fibres: geometry(fibres), widths: new Float32Array(widths), edgeIds: edges.map(edge => edge.id) }
 }
