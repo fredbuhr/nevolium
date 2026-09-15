@@ -16,7 +16,6 @@ from .db import get_session
 from .events import append_audit, enqueue_domain_event
 from .models import Project, Task, WorkflowExecution
 from .planning_schemas import PlannedTaskRead, TaskPlanningUpdate, TodayRead, TodayTaskItem
-from .planning_structure import router as planning_structure_router
 from .project_access import get_owned_task, owned_project_clause
 
 router = APIRouter()
@@ -204,8 +203,3 @@ async def today(
         buckets[name] = [_item(name, task, project) for task, project in rows[:limit]]
     return TodayRead(day=local_day, timezone=timezone_name, day_start=local_start, day_end=local_end,
                      next_cursors=next_cursors, **buckets)
-
-
-# Include the D06 structural routes only after their module and the existing planning routes are
-# fully defined. This avoids copying an empty child router during import-time initialization.
-router.include_router(planning_structure_router)
