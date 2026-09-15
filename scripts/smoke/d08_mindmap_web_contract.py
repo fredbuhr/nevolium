@@ -26,6 +26,9 @@ def main() -> int:
     cockpit = (ROOT / "apps/web/src/CockpitShell.tsx").read_text(encoding="utf-8")
     stability = (ROOT / "scripts/smoke/d08_mindmap_stability.mjs").read_text(encoding="utf-8")
     runner = (ROOT / "scripts/smoke/d08_mindmap_browser_qualification.mjs").read_text(encoding="utf-8")
+    exit_proof = (ROOT / "scripts/smoke/d08_mindmap_exit.mjs").read_text(encoding="utf-8")
+    deep_link = (ROOT / "apps/web/src/lib/mindmapDeepLink.ts").read_text(encoding="utf-8")
+    selection = (ROOT / "apps/web/src/lib/projectSelection.tsx").read_text(encoding="utf-8")
 
     # Canonical projection in, layout projection out: no business copy in Web.
     assert "/v1/projects/${encodeURIComponent(selectedProjectId)}/mindmap" in workspace
@@ -104,6 +107,17 @@ def main() -> int:
     assert "content: <MindMapWorkspace apiUrl={API_URL} />" in app
     assert "./mindmap.css" in main_tsx
 
+    # A node-only deep link is a real entry point, not merely a selection hint after manual navigation.
+    assert "readMindMapDeepLink" in app
+    assert "initialMindMapDeepLink ? 'cockpit'" in app
+    assert "initialMindMapDeepLink ? 'mindmap'" in app
+    assert "mindmapProject" in deep_link and "mindmap" in deep_link
+    assert "entityType: 'project' | 'task' | 'document'" in deep_link
+    assert "readMindMapDeepLink" in selection
+    assert "/v1/tasks/${encodeURIComponent(deepLink.entityId)}`" in selection
+    assert "/v1/documents/${encodeURIComponent(deepLink.entityId)}`" in selection
+    assert "setSelectedProjectId((current) => current || entity.project_id" in selection
+
     for key in (
         "mindmap.panelTitle", "mindmap.heading", "mindmap.projectRequired",
         "mindmap.search", "mindmap.filter", "mindmap.undo", "mindmap.redo", "mindmap.export",
@@ -137,9 +151,20 @@ def main() -> int:
     ):
         assert marker in stability, marker
 
+    # D08 exit proof: fresh deep link and an idea branch converted, planned through D06, then rendered in Gantt.
+    assert "qualifyMindMapExit" in stability
+    assert "exit:fresh-deep-link" in exit_proof
+    assert "?mindmap=${encodeURIComponent(`document:${ids.idea}`)}" in exit_proof
+    assert "exit:branch-conversion" in exit_proof
+    assert "exit:branch-planning" in exit_proof
+    assert "/planning/replan/preview" in exit_proof
+    assert "/planning/replan/apply" in exit_proof
+    assert "exit:branch-gantt" in exit_proof
+    assert ".planning-gantt-canvas:visible" in exit_proof
+
     print(
-        "D08 WEB CONTRACT PASS: canonical uncontrolled XYFlow, typed links, export, "
-        "FR/EN, stable cockpit lifetime, whole-selection history and acknowledged serial saves"
+        "D08 WEB CONTRACT PASS: canonical uncontrolled XYFlow, typed links, export, FR/EN, "
+        "stable acknowledged layout saves, fresh deep links and branch-to-Gantt exit proof"
     )
     return 0
 
