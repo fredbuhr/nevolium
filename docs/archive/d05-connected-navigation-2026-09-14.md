@@ -111,3 +111,13 @@ explicitement la Task avant sa clé étrangère, puis la conservation de la conf
 l’activation après drainage. Core et Web sont les seuls services de production dont le code change
 depuis `c17c7e24`; la mise à jour préparée les reconstruit avec des images de retour dédiées et ne
 modifie ni le schéma, ni les données, ni les snapshots existants.
+
+## Déploiement du correctif sur le pilote
+
+Le déploiement limité à Core et Web depuis e275b7b a réussi.
+Le script de déploiement porte le SHA-256 22259920fdce633f6458bb116fe112b54a8ac7f76fdfa78eb55e442a047078fb.
+Le préflight a retrouvé le schéma 0015, zéro configuration et cinq réservations uncertain.
+Les images Core/Web précédentes ont été étiquetées pour retour avant reconstruction.
+Le résultat atteste les nouvelles images Core 6e1c2dee et Web 40df2609.
+Ingress répond 200, 200, 200, 401, 401 et 404 ; les compteurs finaux restent inchangés.
+Les snapshots B2 et images historiques sont conservés. Aucun test fournisseur ni migration.

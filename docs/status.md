@@ -23,7 +23,8 @@ sans candidat ni appel à LiteLLM/OpenAI ; la configuration serveur reste active
 désormais la Task avant la configuration et étend le contrat PostgreSQL au véritable endpoint HTTP.
 Le correctif `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` réussit ses dix workflows ;
 le test PostgreSQL appelle le véritable endpoint, obtient `202` et retrouve la Task et sa
-configuration. Il doit être déployé avant un nouvel essai utilisateur.
+configuration. Core et Web exécutent maintenant ce correctif sur le pilote ; un nouvel essai
+utilisateur unique reste nécessaire.
 Les mesures cible proviennent des sorties opérateur conservées dans le
 [rapport final D04](archive/d04-pilot-qualification-2026-09-14.md).
 
