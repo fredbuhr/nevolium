@@ -73,6 +73,10 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
   graph: NevoliumGraphSnapshot; poses: PoseMap; layout: NevoliumSpatialLayout; selected: string[]; tier: Tier; reducedMotion: boolean
 }) {
   const material = useMemo(() => growFilaments(graph, poses, layout, tier, selected), [graph, poses, layout, tier, selected])
+  // Apply the density budget to opacity, after colour conversion. Lowering linear RGB
+  // alone still lets hundreds of sRGB-encoded strokes accumulate into a white centre.
+  const opacityBudget = Math.max(0.16, Math.min(1, 120 / Math.max(1, material.edgeIds.length)) ** 0.65)
+  const contextOpacity = selected.length ? 0.08 * Math.sqrt(opacityBudget) : opacityBudget
   const lines = useMemo(() => {
     const geometry = new LineSegmentsGeometry()
     geometry.setPositions(material.body.attributes.position.array as Float32Array)
@@ -92,6 +96,8 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
       if (!line.fragmentShader.includes(coverage)) throw new Error('Organic line coverage shader contract changed')
       line.fragmentShader = line.fragmentShader.replaceAll(coverage, 'alpha *= 1.0 - smoothstep')
       line.uniforms.lifeTime = { value: 0 }; line.uniforms.motion = { value: 0 }
+      line.uniforms.contextOpacity = { value: contextOpacity }
+      line.uniforms.focusedOpacity = { value: selected.length ? 1 : opacityBudget }
       const shared = 'uniform float lifeTime; uniform float motion; varying vec4 vFlow;\n'
       line.vertexShader = shared + 'attribute vec4 instanceFlow; attribute float instanceAttention;\n' + line.vertexShader.replace('void main() {', `void main() {
         vFlow = vec4(position.y < 0.5 ? instanceFlow.x : instanceFlow.y, instanceFlow.z, instanceFlow.w, instanceAttention);`)
@@ -111,13 +117,17 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
         vec3 pulse = mix(vec3(0.20, 0.62, 0.43), vec3(0.95, 0.28, 0.065), vFlow.w);
         diffuseColor.rgb += pulse * energy;
       `)
+      const output = 'gl_FragColor = vec4( diffuseColor.rgb, alpha );'
+      if (!line.fragmentShader.includes(output)) throw new Error('Organic line opacity shader contract changed')
+      line.fragmentShader = 'uniform float contextOpacity; uniform float focusedOpacity;\n' + line.fragmentShader
+        .replace(output, 'alpha *= mix(contextOpacity, focusedOpacity, vFlow.w);\n' + output)
       return line
     }
     const core = new LineSegments2(geometry, makeMaterial(1.5, 0.62))
     const glow = new LineSegments2(geometry, makeMaterial(4.0, 0.035))
     core.raycast = () => {}; glow.raycast = () => {}
     return { geometry, core, glow }
-  }, [material])
+  }, [material, contextOpacity, opacityBudget, selected.length])
   useFrame(({ clock }) => {
     for (const line of [lines.core, lines.glow]) {
       line.material.uniforms.lifeTime.value = reducedMotion ? 0 : clock.elapsedTime
@@ -132,7 +142,7 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
     <primitive object={lines.glow} dispose={null} />
     <primitive object={lines.core} dispose={null} />
     <lineSegments geometry={material.fibres} raycast={() => {}}>
-      <lineBasicMaterial vertexColors transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      <lineBasicMaterial vertexColors transparent opacity={0.3 * contextOpacity} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
     </lineSegments>
   </>
 }

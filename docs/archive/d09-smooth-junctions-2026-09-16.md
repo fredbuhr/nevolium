@@ -131,6 +131,15 @@ La qualification complète du descendant suivant reste à vérifier. Après
 publication sur #93, consigner son SHA exact, ses workflows, les identifiants et
 empreintes des artefacts, les captures/vidéo examinées et les limites constatées.
 
+Le descendant `11b138672a9ee5a48d757ce971fb53576bdcb991` passe **8/8 workflows**, UI run
+`35041792533`, 13 scénarios spatiaux et 16 contrôles du kit. L'animation change 1 134 pixels
+entre deux images à caméra fixe, le mode calme zéro. Les captures rapprochées montrent les
+corps arrondis et les raccords continus ; la vue 501/1500 reste trop brillante au centre et
+ses liens hors sélection trop présents. Cette observation motive le dernier ajustement :
+appliquer aussi le budget de densité à l'**opacité**, après conversion des couleurs, et atténuer
+davantage les relations hors sélection. Baisser leur RGB linéaire seul ne suffit pas à limiter
+l'accumulation additive après encodage sRGB. Requalifier ce descendant avant livraison.
+
 La revue doit couvrir la vue générale dense, la sélection locale, le gros plan à plusieurs angles
 et le téléphone. Vérifier particulièrement l'absence de cônes, de jours aux raccords pendant la
 respiration, de traits noirs et de saturation blanche ; la sélection doit rester fidèle au volume.

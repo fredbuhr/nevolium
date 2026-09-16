@@ -9,8 +9,8 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Base intégrée | `main` = `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`, 8/8 workflows push verts |
 | D08 intégré | PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f`, 9/9 workflows PR verts, arbre identique au merge |
 | Branche / PR active | `feat/d09-mycelium-3d`, **PR #93 draft** ; aucune autre branche normale ouverte par ce travail |
-| Référence qualifiée D09 | `f6912bd6440e9287f1a36eaa84d685b47571fbd0` : **8/8 workflows PR verts**, UI run `35036742678` ; rapport physique favorable mais captures montrant pointes et saturation |
-| Présent descendant | Suppression des cônes, corps doucement asymétriques, raccords portés par les filaments, grain/veinules affinés, réseau moins saturé, accents ambrés sélection/activité, fond opaque ; vérifier CI et preuves du head live #93 |
+| Référence qualifiée D09 | `11b138672a9ee5a48d757ce971fb53576bdcb991` : **8/8 workflows PR verts**, UI run `35041792533` ; 13 scénarios spatiaux, 16 contrôles kit ; animation 1 134 pixels changés, calme 0 ; vue 501/1500 encore trop lumineuse |
+| Présent descendant | Suppression des cônes, corps doucement asymétriques, raccords portés par les filaments, grain/veinules affinés, réseau moins saturé, accents ambrés sélection/activité, fond opaque ; dernier ajustement du budget d’opacité pour vue dense et liens hors sélection ; vérifier CI et preuves du head live #93 |
 | Implémenté D09 | Projection pure ; renderer R3F/Three différé ; orbite/focus/zoom ; sélection 2D↔3D ; filaments/groupes/labels bornés ; activité réelle des Tasks ; navigation Planning/Knowledge |
 | Canon | Snapshot D08 owner-scoped, mêmes `project`/`task`/`document` et `RelationshipRecord`; aucune nouvelle migration ou API métier |
 | Présentation | `WorkspaceLayout` distinct `mycelium3d.project.{project_id}` : vue/qualité/caméra, PUT sérialisés/retry/garde de session ; positions spatiales dérivées, positions 2D conservées |
@@ -19,7 +19,7 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Compatibilité | React/DOM 19.2.8 fixés dans la plage supportée par R3F 9.7.0 ; types Three 0.180.0 |
 | Retours utilisateur | Quatre captures : objets à harmoniser sans pointes ; connexions à souder aux surfaces ; améliorer matière, contraste et lisibilité avant le seul effet graphique |
 | Rapport physique récent | Build f6912bd, 201/300, balanced, 600,881 s, 408 fenêtres : médiane/p10 165, minimum 37 FPS ; 0 sous30, 1 sous60 ; 18 événements perdus, 2 bascules animation ; mémoire inconnue. Ne vaut pas mesure du descendant |
-| Preuves | Archive du 16 septembre : rapport/hash, captures reçues et références ; parent kit `10423976337`, navigateur `10424145875`, spatial `10423587654` ; SHA exact et artefacts du descendant dans #93 |
+| Preuves | Archive du 16 septembre : rapport/hash, captures reçues et références ; parent kit `10426005760`, navigateur `10426215164`, spatial `10426015699` ; SHA exact et artefacts du descendant dans #93 |
 | Banc matériel | `node apps/web/qualification.build.mjs` ; artefact CI `d09-hardware-kit`, HTML autonome. Renderer réel, graphes synthétiques 51/50, 201/300, 401/1000, stress 501/1500. Aucune API ; campagne 10 minutes, interruptions distinctes, mémoire inconnue conservée comme inconnue, export local `needs_review` |
 | Limites | API navigateur simulée distincte des contrats PostgreSQL ; mémoire longue durée et cockpit physique à compléter ; design révisé à examiner. DPR corrigé : comparer les nouvelles mesures à résolution déclarée |
 | Production | Dernier runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations`; D06–D09 non déployés |
