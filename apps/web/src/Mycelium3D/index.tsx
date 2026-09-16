@@ -40,6 +40,7 @@ export default function SpatialWorkspace(props: Props) {
   const state = useSpatialPresentation(props.apiUrl, props.projectId, props)
   const panelVisible = usePanelVisibility()
   const viewport = useRef<HTMLDivElement>(null)
+  const display = useRef<HTMLDetailsElement>(null)
   const labels = useRef(new Map<string, HTMLButtonElement>())
   const [intersecting, setIntersecting] = useState(false)
   const [documentVisible, setDocumentVisible] = useState(!document.hidden)
@@ -100,9 +101,14 @@ export default function SpatialWorkspace(props: Props) {
     {!props.compact ? <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button> : null}
   </div>
 
+  function selectView(view: '2d' | '3d') {
+    if (view === '3d') state.retry3d()
+    else state.update({ view })
+    if (props.compact && display.current) display.current.open = false
+  }
   const viewTabs = <div className="spatial-tabs" aria-label={m.title}>
-    <button type="button" aria-pressed={state.view === '2d'} disabled={!state.ready} onClick={() => state.update({ view: '2d' })}>{m.view2d}</button>
-    <button type="button" aria-pressed={state.view === '3d'} disabled={!state.ready} onClick={state.retry3d}>{m.view3d}</button>
+    <button type="button" aria-pressed={state.view === '2d'} disabled={!state.ready} onClick={() => selectView('2d')}>{m.view2d}</button>
+    <button type="button" aria-pressed={state.view === '3d'} disabled={!state.ready} onClick={() => selectView('3d')}>{m.view3d}</button>
   </div>
   const saveControls = <>
     <span className="spatial-save" data-spatial-save={state.persistence.status} aria-live="polite">{saveCopy[state.persistence.status]}</span>
@@ -111,7 +117,7 @@ export default function SpatialWorkspace(props: Props) {
 
   return <div className={`spatial-workspace${props.compact ? ' spatial-home' : ''}`} data-spatial-view={state.view}>
     {props.controlsVisible === false ? null : props.compact ? <div className="spatial-toolbar">
-      <details className="spatial-display">
+      <details ref={display} className="spatial-display">
         <summary aria-label={`${m.display} : ${state.view === '3d' ? m.mode3d : m.mode2d}`}>
           <span>{m.display}</span><strong>{state.view === '3d' ? m.mode3d : m.mode2d}</strong>
         </summary>
