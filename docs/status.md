@@ -5,9 +5,11 @@ Extension d’usage D09 intégrée par la PR #96 au merge `702c2a3` : accueil ut
 corpus fictif importable. Le code `9b6b01075fdc8b47e3f9a3eb14f6f3b14e71ffba` passe
 **9/9 workflows**, dont PostgreSQL réel et les parcours navigateur D05–D09.
 Neuf captures d’accueil et les captures Knowledge ont été inspectées. Cette extension
-est intégrée à main et activée sur le pilote ; les exemples n’y sont pas encore importés.
+est intégrée à main et activée sur le pilote ; les exemples y sont importés et relus.
 La tête finale `d9eff70` passe également 9/9 workflows, dont UI `35113871065` ;
-l’arbre du merge est identique. [Preuve et procédure serveur](d09-home-pilot-update.md).
+l’arbre du merge est identique. L'import pilote a créé 112 opérations journalisées
+sans exécution de tâche ni appel IA ; les fichiers et relations ont été vérifiés par
+l'API réelle. [Preuve et procédure serveur](d09-home-pilot-update.md).
 
 Révision : 2026-09-16.
 
@@ -30,9 +32,10 @@ plus l’en-tête. Sur téléphone, la liste 2D reste le défaut et la 3D un cho
 Le corpus contient 5 projets, 20 contenus, 12 fichiers, 12 tâches, 9 dépendances et
 32 relations explicites, avec citations versionnées et trois accueils métier.
 
-Les parcours navigateur utilisent des réponses Core simulées à partir du corpus ; le
-contrat de projection est testé séparément sur PostgreSQL réel. Il reste à qualifier
-l’import sur le pilote et les interactions/fluidité sur les appareils de l’utilisateur.
+Les parcours navigateur CI utilisent des réponses Core simulées à partir du corpus ; le
+contrat de projection est testé séparément sur PostgreSQL réel. L'import complet est
+désormais qualifié sur le pilote. Il reste à qualifier les interactions et la fluidité
+sur les appareils de l'utilisateur.
 La traduction exhaustive des écrans historiques reste en D13.
 
 Le modèle visuel `48d7be9` reste la référence adoptée. Les preuves antérieures du banc

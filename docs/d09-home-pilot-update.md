@@ -162,3 +162,19 @@ avec un compte de validation et un journal persistant. Ne pas transmettre son je
 dans le chat. Vérifier la lecture des fichiers, diagrammes et relations via l'API
 réelle, puis les parcours et la fluidité sur ordinateur/tablette/téléphone.
 L'import n'entraîne aucun appel IA. Le go fonctionnel D09 demeure ouvert.
+
+### Import réel attesté — 16 septembre 2026
+
+Le corpus `mycelium-example-v1` a été importé dans le compte de validation avec
+le profil d'accueil `crypto`. Résultat : cinq projets, vingt contenus, douze fichiers,
+douze tâches, neuf dépendances et trente-deux relations explicites. Le journal persistant
+0600 contient 112 opérations et aucune mutation en attente. Une seconde passe
+`--verify-only` a relu les fichiers, les objets owner-scoped, toutes les relations
+canoniques et leur pagination.
+
+Le jeton a été saisi hors historique shell dans un fichier éphémère sous `/dev/shm`,
+puis supprimé. Les compteurs sont passés exactement de
+`0018_editable_knowledge|7|57|2|0|0|0|0|5|1` à
+`0018_editable_knowledge|12|69|22|0|0|0|0|5|1`. Aucun workflow, Task, appel modèle
+ou réservation n'a été lancé ; l'outbox est revenue à zéro. Il reste le parcours
+fonctionnel et visuel sur les appareils réels avant le go D09.
