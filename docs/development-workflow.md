@@ -8,8 +8,9 @@ validations administratives. Il sert après changement de discussion, perte du w
 1. `AGENTS.md`, puis `PROJECT_STATE.md` depuis le live vérifié.
 2. Branche/PR active, diff contre `main`, derniers commits et checks réellement exécutés.
 3. Section Dxx du `docs/implementation-plan.md`, code concerné et ADR applicables.
-   Lire aussi `docs/product-memory.md` pour les décisions produit acceptées. Si le checkpoint de
-   main ne nomme aucune branche active, comparer les PR ouvertes et leurs checkpoints avant d'en créer une.
+   Lire aussi `docs/product-memory.md` et le [contrat de refondation](refoundation-contract.md)
+   adopté par ADR-034. Si le checkpoint de main ne nomme aucune branche active, comparer les PR
+   ouvertes et leurs checkpoints avant d'en créer une.
 4. `docs/status.md` pour la maturité ; audit et archives seulement comme preuves historiques.
 
 Ne pas repartir d'un SHA copié dans une conversation. Une branche retirée n'est pas un point de reprise.
@@ -32,6 +33,28 @@ Inspecter les réservoirs nommés avant de réinventer une implémentation, sans
 - Les opérations externes suivent l'autorisation utilisateur existante ; ce protocole n'en ajoute
   aucune et n'impose pas de confirmation pour les choix techniques ordinaires.
 
+## Définition de terminé par parcours
+
+La refondation conserve les lots D01–D22 ; ses critères ne créent pas 24 branches. Le résultat
+attendu est une tâche utilisateur accomplie, pas seulement un composant affiché.
+
+Une fonction exposée est qualifiée dans un périmètre nommé : opérations manuelles sans LLM,
+identités/validations canoniques, retour au contexte, erreurs/conflits visibles, droits et sorties
+de données contrôlés, variantes FR/EN, clavier/tactile et rechargement. Une fonction IA ajoute
+provenance, budget/coût, portée, approbation proportionnée et état d'exécution réel. Un connecteur
+ajoute synchronisation, révocation et cycle de vie. Une distribution ajoute les exigences
+applicables, licences, support et sécurité propres à l'offre.
+
+Pour chaque capacité modifiée, enregistrer le scénario et ses limites, le code, le runtime,
+le type de preuve et sa référence datée, ainsi que l'acceptation manuelle restant à obtenir.
+Lecture statique, unitaire, intégration, navigateur API simulée, services réels, appareil physique
+et acceptation utilisateur ne sont pas interchangeables. Une PR documentaire n'ajoute aucune
+preuve d'usage ; une fusion n'active pas de release.
+
+Fuite entre comptes, transmission interdite, effet non autorisé, perte de données, faux succès et
+double effet bloquent la livraison. Une obligation juridique déclenchée n'attend pas D22 ; la
+qualification des rôles/offres et les inconnues restent dans [data-governance](data-governance.md).
+
 ## Contenu obligatoire du checkpoint actif
 
 Un enregistrement compact et factuel :
@@ -49,6 +72,7 @@ Un enregistrement compact et factuel :
 
 Le checkpoint reste court. Les historiques longs vont dans `docs/archive/` avec renvoi,
 sans effacer les preuves. Ne jamais remplacer « non exécuté » par « validé ».
+Les registres privés, PDF/captures utilisateur et contrats signés ne vont pas dans ce dépôt public.
 
 ## Si une vérification échoue
 
@@ -65,10 +89,11 @@ de la même tête pour les intégrations. Si elle est inaccessible, laisser la P
 
 ## Message de reprise à utiliser dans une nouvelle discussion
 
-> Reprends Nevolium depuis https://github.com/fredbuhr/nevolium. Vérifie le main live, lis AGENTS.md et
-> PROJECT_STATE.md et docs/product-memory.md, inspecte les PR ouvertes, la branche active et ses checks. Continue uniquement le lot Dxx
-> réellement actif du plan, à partir de la prochaine action enregistrée. Ne fais confiance ni au
-> SHA de cette discussion ni aux anciens next action des archives. Préserve le scope, les preuves
-> et les décisions existantes ; signale tout écart avant de changer de direction.
+> Reprends Nevolium depuis https://github.com/fredbuhr/nevolium. Vérifie le main live, lis AGENTS.md,
+> PROJECT_STATE.md, docs/product-memory.md et le contrat accepté de refondation. Inspecte les PR
+> ouvertes, la branche active et ses checks. Continue uniquement le lot Dxx réellement actif du plan,
+> à partir de la prochaine action enregistrée. Ne fais confiance ni au SHA de cette discussion ni
+> aux anciens next action des archives. Préserve le scope, les preuves et les décisions existantes ;
+> signale tout écart avant de changer de direction.
 
 Le message volontairement ne fige pas de SHA ou de numéro de PR qui deviendrait périmé.

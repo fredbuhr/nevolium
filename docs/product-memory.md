@@ -20,6 +20,32 @@ d'exécution se lit dans [PROJECT_STATE](../PROJECT_STATE.md), puis dans GitHub 
 - Bilan du 16 septembre accepté, démarrage explicitement autorisé. Voir
   [ADR-033](decisions/ADR-033-kiss-contextual-mycelium.md) et [plan](implementation-plan.md).
 
+## Précisions de la refondation acceptées le 16 septembre
+
+Après le PDF « Design Interface » et le dossier de refondation, l'utilisateur demande de commencer
+la nouvelle direction. [ADR-034](decisions/ADR-034-human-first-refoundation.md) et le
+[contrat](refoundation-contract.md) rendent ces précisions indépendantes des conversations.
+
+- **Espace de pensée et d'action**, pas obligation de convertir toute pensée en tâche. Le produit
+  doit soulager l'organisation sans prendre l'intention ou le jugement à la place de la personne.
+- Les fonctions manuelles sont utilisables dans mindmap/Kanban/Gantt/calendrier, sans LLM. Les
+  gestes et agents passent par les mêmes opérations canoniques ; une vue n'est pas une base séparée.
+- Recherche et création, Projets et activité, Vie personnelle : trois contextes facultatifs d'un
+  même produit. Les métiers restent extensibles sans lancer vingt produits ou accorder des droits.
+- Chercher, Demander, Ajouter sont des intentions distinctes même dans une entrée commune. La
+  recherche locale ne transmet pas silencieusement les données à un modèle ou à un moteur Web.
+- Une mission possède objectif, périmètre, résultat, fréquence/durée, budget et arrêt. Première
+  récurrence à résultat interne ; ni effets externes ni écoute permanente impliqués par ce choix.
+- Consultation, traitement par un fournisseur et transmission à un tiers sont trois axes distincts.
+  Sources, versions, index, mémoire, audio, traces, caches et sauvegardes entrent dans le cycle de vie.
+  [Gouvernance](data-governance.md) : inventaire des flux déjà actifs, inconnues et preuves à compléter.
+- D09 reçoit KISS puis corrige les gestes/continuité sur les API existantes. D10 attend la sortie
+  D09 ; commandes et contrôles des données précèdent l'extension des flux personnels. Garder D01–D22.
+- Le pilote vise quelques adultes, au moins deux comptes isolés ; comparer 3D/2D/liste sans préjuger
+  du résultat. Les [24 critères](refoundation-backlog.md) sont planifiés, pas vingt-quatre gates actifs.
+- Adoption du plan ≠ fonctions livrées ≠ conformité attestée ≠ nouvelle autorisation de déploiement.
+  Les obligations effectivement déclenchées ne sont pas repoussées à un lot commercial futur.
+
 ## Fondations et preuves à préserver
 
 - Core/PostgreSQL sont le métier canonique, SeaweedFS conserve les fichiers, Temporal les exécutions.
