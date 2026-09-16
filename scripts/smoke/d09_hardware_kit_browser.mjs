@@ -172,7 +172,7 @@ try {
       stream.getTracks().forEach(track => track.stop())
       resolve(Array.from(new Uint8Array(await new Blob(chunks, { type: 'video/webm' }).arrayBuffer())))
     }
-    recorder.start(); setTimeout(() => recorder.stop(), 7000)
+    recorder.start(); setTimeout(() => recorder.stop(), 10000)
   }))
   assert(film.length > 1000, 'Animated preview must contain recorded frames')
   await fs.writeFile(path.join(output, 'neural-life.webm'), Buffer.from(film))

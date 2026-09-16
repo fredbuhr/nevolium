@@ -113,33 +113,38 @@ Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
 
 ## Traduction spatiale D09
 
-Le retour du 16 septembre précise la direction : des corps 3D arrondis, légèrement asymétriques,
-éclairés en volume, sans pointes ni cônes décoratifs. La matière mêle un modelé large, un grain
-fin et des veinules interrompues dont le détail s'efface à distance. La silhouette change avec
-l'orbite ; aucun panneau orienté vers la caméra ne représente l'objet.
+Le second retour du 16 septembre corrige la direction trop mate : une enveloppe translucide
+aux lobes larges et irréguliers entoure un petit noyau lumineux. Les deux couches sont des volumes
+3D, pas des panneaux orientés vers la caméra. Le noyau occupe environ un quart du rayon de
+l'enveloppe ; les veinules interrompues et la lumière de bord laissent lire une matière fine.
+La dominante revient au cyan et au vert menthe, avec quelques lueurs ambrées locales.
 
-Les seuls prolongements sont les filaments des relations canoniques. Ils pénètrent dans le corps
-opaque : la profondeur masque leur intérieur et maintient un raccord continu lorsque le corps
-respire ou que son diamètre apparent est limité au zoom. Leur raccord s'élargit doucement, dans
-une largeur écran bornée. Il ne s'agit pas d'une fusion volumétrique anatomique.
+Les seuls prolongements sont les filaments des relations canoniques. Ils convergent dans le
+petit noyau opaque, qui masque leurs extrémités par profondeur, à l'intérieur de l'enveloppe
+transparente. Les fibres secondaires se resserrent à l'approche. Le raccord s'élargit doucement,
+dans une largeur écran bornée ; il ne s'agit pas d'une fusion volumétrique anatomique.
 
-Une respiration asynchrone déforme légèrement la matière autour des centres fixes. Des vagues
-lumineuses parcourent un nombre borné de fibres, avec des intervalles de repos. Leur intensité,
-comme celle des traits secondaires, tient compte de la densité et de la sélection pour éviter
-l'accumulation blanche. Le fond WebGL opaque supprime les traits noirs de composition alpha.
+Une respiration asynchrone déforme légèrement les enveloppes autour des centres fixes. Des
+impulsions avec tête et traîne parcourent jusqu'à 32/48/72 relations selon le profil, en environ
+3,4–5,5 secondes avec un bref repos. Leur alpha est composé séparément de celui de la trame,
+après conversion colorimétrique : la densité atténue le fond sans effacer toute l'énergie. La
+sélection conserve une faible circulation périphérique. Les fibres secondaires ondulent en
+lumière, sans déplacement des centres ni recalcul géométrique à chaque image. Le fond WebGL
+reste opaque pour éviter les traits noirs de composition externe du canvas.
 
 La circulation exprime une vitalité visuelle, **pas une exécution de tâche ou un transfert réel**.
-L'ambre souligne l'objet sélectionné et les ondes de ses relations ; l'activité réelle
-queued/running garde une chaleur interne et son état textuel dans les surfaces métier. La couleur
-n'est jamais l'unique indication d'un état. La sélection rend ses voisins plus lisibles.
+Quelques têtes et zones de tissu portent une nuance ambrée décorative. L'activité réelle
+queued/running et la sélection renforcent localement la chaleur ; les états textuels restent
+l'autorité métier, jamais la couleur seule. La sélection rend ses voisins plus lisibles.
 
 « Animer le réseau » fige les animations ; le mouvement réduit système les supprime. Le panneau
 masqué démonte toujours le renderer. Centres, caméra et identités restent stables. Les cibles de
-sélection suivent l'enveloppe arrondie ; les étiquettes restent sous les volumes.
+sélection englobent l'enveloppe irrégulière ; les étiquettes restent sous les volumes.
 
 Les suivis de [première reprise](archive/d09-organic-revision-2026-09-15.md),
-[reprise neuronale](archive/d09-neural-life-2026-09-15.md) et
-[raccords et lisibilité](archive/d09-smooth-junctions-2026-09-16.md) distinguent les rapports
+[reprise neuronale](archive/d09-neural-life-2026-09-15.md),
+[raccords et lisibilité](archive/d09-smooth-junctions-2026-09-16.md) et
+[matière translucide](archive/d09-translucent-tissue-2026-09-16.md) distinguent les rapports
 matériels, l'implémentation, les preuves et l'acceptation visuelle encore attendue.
 
 ## Personnalisation

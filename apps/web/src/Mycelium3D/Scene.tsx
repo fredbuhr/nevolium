@@ -112,7 +112,7 @@ function CameraAndMetrics(props: SceneProps & { poses: PoseMap; tier: Tier; onTi
       projected.copy(pose).project(camera)
       let visible = projected.z >= -1 && projected.z <= 1 && Math.abs(projected.x) < 0.92 && Math.abs(projected.y) < 0.9
       const x = THREE.MathUtils.clamp((projected.x + 1) * size.width / 2, width / 2 + 8, size.width - width / 2 - 8)
-      const y = THREE.MathUtils.clamp((-projected.y + 1) * size.height / 2 + Math.max(12, screenRadius * 1.3 + 8), 8, size.height - height - 8)
+      const y = THREE.MathUtils.clamp((-projected.y + 1) * size.height / 2 + Math.max(12, screenRadius * 1.65 + 8), 8, size.height - height - 8)
       const box = { left: x - width / 2, right: x + width / 2, top: y, bottom: y + height }
       if (occupied.some(other => box.left < other.right + 6 && box.right + 6 > other.left
         && box.top < other.bottom + 6 && box.bottom + 6 > other.top)) visible = false

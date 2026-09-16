@@ -27,9 +27,9 @@ export function organicPositions(layout: NevoliumSpatialLayout): PoseMap {
 }
 
 export const GROWTH_DETAIL = {
-  eco: { segments: 18, strands: 2, pulses: 24 },
-  balanced: { segments: 26, strands: 3, pulses: 36 },
-  high: { segments: 34, strands: 4, pulses: 52 },
+  eco: { segments: 18, strands: 2, pulses: 32 },
+  balanced: { segments: 26, strands: 3, pulses: 48 },
+  high: { segments: 34, strands: 4, pulses: 72 },
 } as const
 
 export function growthHubs(graph: NevoliumGraphSnapshot, poses: PoseMap) {
@@ -67,7 +67,7 @@ function vertex(data: Batch, point: THREE.Vector3, tint: THREE.Color, light: num
 export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layout: NevoliumSpatialLayout, tier: Tier, selected: string[]) {
   const settings = GROWTH_DETAIL[tier]
   const body = batch(), fibres = batch()
-  const widths: number[] = [], flow: number[] = [], attention: number[] = []
+  const widths: number[] = [], flow: number[] = [], attention: number[] = [], fibrePhase: number[] = []
   const edges = [...graph.edges].filter(edge => poses.has(edge.source) && poses.has(edge.target)
     && edge.source !== edge.target).sort((a, b) => a.id.localeCompare(b.id))
   const parents = new Map(layout.placements.map(p => [p.id, p.parentId]))
@@ -97,7 +97,7 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
     const primary = parents.get(edge.target) === edge.source || parents.get(edge.source) === edge.target
     const highlighted = selected.includes(edge.source) || selected.includes(edge.target)
     const strength = highlighted ? 0.48 : selected.length ? 0.022 : (primary ? 0.26 : 0.065) * crowding
-    const tint = new THREE.Color(edge.relation === 'contradicts' ? '#b79dbb' : seed(edge.id) > 0.7 ? '#80c9b1' : '#64b8c0')
+    const tint = new THREE.Color(edge.relation === 'contradicts' ? '#89a9de' : seed(edge.id) > 0.65 ? '#54eab3' : '#36d5df')
     const points: THREE.Vector3[] = []
     const phase = seed(`${edge.id}:phase`) * Math.PI * 2
     for (let i = 0; i <= settings.segments; i++) {
@@ -108,9 +108,10 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
     }
     const densityAt = (t: number) => 1 + (Math.sqrt(aHub.count) - 1) * Math.pow(1 - t, 5)
       + (Math.sqrt(bHub.count) - 1) * Math.pow(t, 5)
-    // The actual connection enters the opaque soma. Depth testing masks its interior,
-    // so the visible join follows the breathing surface and its near-camera size cap.
-    // A short rounded widening belongs to the fibre, not to the object's silhouette.
+    // The real connection converges into the small depth-writing nucleus inside the
+    // translucent membrane. Its short widening belongs to the fibre, not the soma.
+    // Pulse power is independent of the background density/opacity budget: only a
+    // bounded set of canonical edges carries energy, with quieter peripheral flows.
     for (let i = 1; i < points.length; i++) {
       const t = i / settings.segments
       const density = densityAt(t)
@@ -120,24 +121,30 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
       const junction = 1 + 0.65 * Math.exp(-Math.pow((distance - 0.7) / 0.65, 2))
       widths.push((primary || highlighted ? 0.85 : 0.58) * junction * (0.9 + seed(edge.id) * 0.2))
       flow.push((i - 1) / settings.segments, t, seed(`${edge.id}:flow`),
-        flowing.has(edge.id) ? (highlighted ? 0.72 : selected.length ? 0.035 : 0.48 * crowding) / density : 0)
+        flowing.has(edge.id) ? (highlighted ? 0.9 : selected.length ? 0.18 : 0.7 * Math.sqrt(32 / settings.pulses)) / Math.sqrt(density) : 0)
       attention.push(highlighted ? 1 : 0)
     }
     for (let strand = 0; strand < settings.strands; strand++) {
       const trace = points.map((p, i) => {
         const t = i / settings.segments
         // All fibres retain the same actual endpoints; only their material branches.
-        const envelope = Math.pow(Math.sin(t * Math.PI), 1.2) * Math.sin(t * Math.PI * 2 + strand * 0.7)
-        const spread = (strand + 1) * (primary ? 0.12 : 0.055)
+        const attachment = Math.min(1, p.distanceTo(from) / 1.2, p.distanceTo(to) / 1.2)
+        const attachmentFade = attachment * attachment * (3 - 2 * attachment)
+        const envelope = Math.pow(Math.sin(t * Math.PI), 1.2) * Math.sin(t * Math.PI * 2 + strand * 0.7) * attachmentFade
+        const spread = (strand + 1) * (primary ? 0.16 : 0.075)
         return p.clone().addScaledVector(side, envelope * spread)
-          .addScaledVector(up, Math.sin(t * 10 + strand * 2 + phase) * Math.sin(t * Math.PI) * spread * 0.7)
+          .addScaledVector(up, Math.sin(t * 10 + strand * 2 + phase) * Math.sin(t * Math.PI) * spread * 0.7 * attachmentFade)
       })
       for (let i = 1; i < trace.length; i++) {
-        const light = strength * (0.16 + 0.10 * seed(`${edge.id}:${strand}:${i}`)) / densityAt(i / settings.segments)
+        const light = strength * (0.21 + 0.065 * Math.sin(i / settings.segments * 14 + phase + strand * 0.7)) / densityAt(i / settings.segments)
         vertex(fibres, trace[i - 1], tint, light); vertex(fibres, trace[i], tint, light)
+        const strandPhase = seed(`${edge.id}:strand:${strand}`)
+        fibrePhase.push((i - 1) / settings.segments, strandPhase, i / settings.segments, strandPhase)
       }
     }
   }
-  return { body: geometry(body), fibres: geometry(fibres), widths: new Float32Array(widths), flow: new Float32Array(flow), attention: new Float32Array(attention),
+  const fibreGeometry = geometry(fibres)
+  fibreGeometry.setAttribute('fibrePhase', new THREE.Float32BufferAttribute(fibrePhase, 2))
+  return { body: geometry(body), fibres: fibreGeometry, widths: new Float32Array(widths), flow: new Float32Array(flow), attention: new Float32Array(attention),
     edgeIds: edges.map(edge => edge.id), flowingIds: [...flowing] }
 }

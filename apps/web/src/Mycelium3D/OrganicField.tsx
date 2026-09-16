@@ -69,6 +69,55 @@ const groupShader = `
   }
 `
 
+const circulation = `
+  uniform float lifeTime;
+  uniform float motion;
+  float neuralFront(float phase) {
+    return fract(lifeTime * (0.145 + fract(phase * 7.0) * 0.09) + phase) * 1.25;
+  }
+  float neuralAlong(float progress, float phase) {
+    return fract(phase * 19.0) > 0.5 ? progress : 1.0 - progress;
+  }
+  float neuralWidth(float progress, float phase) {
+    float delta = neuralAlong(progress, phase) - neuralFront(phase);
+    return (1.0 - smoothstep(0.018, 0.065, abs(delta))) * motion;
+  }
+  vec2 neuralSignal(float progress, float phase) {
+    // A full journey takes 3.4–5.5 seconds, then a short, independently phased rest.
+    float front = neuralFront(phase);
+    float along = neuralAlong(progress, phase);
+    float delta = along - front;
+    float head = exp(-delta * delta * 1600.0);
+    float trail = exp(-abs(delta) * 18.0) * (1.0 - smoothstep(-0.018, 0.008, delta));
+    float arrival = smoothstep(-0.025, 0.045, front) * (1.0 - smoothstep(1.0, 1.12, front));
+    return vec2(head, trail) * arrival * motion;
+  }
+`
+const fibreVertex = `
+  attribute vec3 color;
+  attribute vec2 fibrePhase;
+  varying vec3 vColor;
+  varying vec2 vFibre;
+  void main() {
+    vColor = color; vFibre = fibrePhase;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+const fibreFragment = `
+  uniform float lifeTime;
+  uniform float motion;
+  uniform float opacity;
+  varying vec3 vColor;
+  varying vec2 vFibre;
+  void main() {
+    // Longitudinal illumination keeps the little strands alive without moving targets
+    // or their welds, and needs only one time uniform for the entire fibre batch.
+    float shimmer = 1.0 + motion * 0.18 * sin(vFibre.x * 23.0 - lifeTime * 1.2 + vFibre.y * 6.283185);
+    gl_FragColor = vec4(vColor, opacity * shimmer);
+    #include <colorspace_fragment>
+  }
+`
+
 export function OrganicFilaments({ graph, poses, layout, selected, tier, reducedMotion }: {
   graph: NevoliumGraphSnapshot; poses: PoseMap; layout: NevoliumSpatialLayout; selected: string[]; tier: Tier; reducedMotion: boolean
 }) {
@@ -76,7 +125,7 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
   // Apply the density budget to opacity, after colour conversion. Lowering linear RGB
   // alone still lets hundreds of sRGB-encoded strokes accumulate into a white centre.
   const opacityBudget = Math.max(0.16, Math.min(1, 120 / Math.max(1, material.edgeIds.length)) ** 0.65)
-  const contextOpacity = selected.length ? 0.08 * Math.sqrt(opacityBudget) : opacityBudget
+  const contextOpacity = selected.length ? 0.12 * Math.sqrt(opacityBudget) : opacityBudget
   const lines = useMemo(() => {
     const geometry = new LineSegmentsGeometry()
     geometry.setPositions(material.body.attributes.position.array as Float32Array)
@@ -84,12 +133,13 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
     geometry.setAttribute('instanceWidth', new THREE.InstancedBufferAttribute(material.widths, 1))
     geometry.setAttribute('instanceFlow', new THREE.InstancedBufferAttribute(material.flow, 4))
     geometry.setAttribute('instanceAttention', new THREE.InstancedBufferAttribute(material.attention, 1))
-    const makeMaterial = (linewidth: number, opacity: number) => {
+    const makeMaterial = (linewidth: number, opacity: number, pulseOpacity: number, halo: number) => {
       const line = new LineMaterial({ color: 0xffffff, vertexColors: true, linewidth, opacity,
         transparent: true, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending, alphaToCoverage: true })
       const marker = 'offset *= linewidth;'
       if (!line.vertexShader.includes(marker)) throw new Error('Organic line width shader contract changed')
-      line.vertexShader = 'attribute float instanceWidth;\n' + line.vertexShader.replace(marker, 'offset *= linewidth * instanceWidth;')
+      line.vertexShader = 'attribute float instanceWidth;\n' + line.vertexShader.replace(marker,
+        'offset *= linewidth * instanceWidth * (1.0 + (vFlow.z > 0.0 ? neuralWidth(vFlow.x, vFlow.y) * vFlow.z * 0.38 : 0.0));')
       // Three's coverage branch replaces opacity at every round segment cap. Preserve it,
       // otherwise the faint glow becomes opaque dots and saturates dense junctions.
       const coverage = 'alpha = 1.0 - smoothstep'
@@ -98,51 +148,61 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
       line.uniforms.lifeTime = { value: 0 }; line.uniforms.motion = { value: 0 }
       line.uniforms.contextOpacity = { value: contextOpacity }
       line.uniforms.focusedOpacity = { value: selected.length ? 1 : opacityBudget }
-      const shared = 'uniform float lifeTime; uniform float motion; varying vec4 vFlow;\n'
+      line.uniforms.pulseOpacity = { value: pulseOpacity }
+      line.uniforms.halo = { value: halo }
+      const shared = circulation + 'varying vec4 vFlow;\n'
       line.vertexShader = shared + 'attribute vec4 instanceFlow; attribute float instanceAttention;\n' + line.vertexShader.replace('void main() {', `void main() {
         vFlow = vec4(position.y < 0.5 ? instanceFlow.x : instanceFlow.y, instanceFlow.z, instanceFlow.w, instanceAttention);`)
-      // The broad wave brightens the existing fibre itself, rather than orbiting dots.
-      const color = '#include <color_fragment>'
-      if (!line.fragmentShader.includes(color)) throw new Error('Neural flow shader contract changed')
-      line.fragmentShader = shared + line.fragmentShader.replace(color, color + `
-        float direction = fract(vFlow.y * 19.0) > 0.5 ? 1.0 : -1.0;
-        // Rest intervals and a shared density budget prevent a dense white web.
-        float front = fract(lifeTime * (0.042 + fract(vFlow.y * 7.0) * 0.022) + vFlow.y) * 2.3;
-        float along = direction > 0.0 ? vFlow.x : 1.0 - vFlow.x;
-        float delta = along - front;
-        float head = exp(-delta * delta * 850.0);
-        float wake = exp(-delta * delta * 65.0) * (1.0 - smoothstep(-0.015, 0.02, delta));
-        float arrival = smoothstep(0.0, 0.06, front) * (1.0 - smoothstep(0.91, 1.0, front));
-        float energy = (head * 0.82 + wake * 0.22) * arrival * vFlow.z * motion;
-        vec3 pulse = mix(vec3(0.20, 0.62, 0.43), vec3(0.95, 0.28, 0.065), vFlow.w);
-        diffuseColor.rgb += pulse * energy;
-      `)
-      const output = 'gl_FragColor = vec4( diffuseColor.rgb, alpha );'
-      if (!line.fragmentShader.includes(output)) throw new Error('Organic line opacity shader contract changed')
-      line.fragmentShader = 'uniform float contextOpacity; uniform float focusedOpacity;\n' + line.fragmentShader
-        .replace(output, 'alpha *= mix(contextOpacity, focusedOpacity, vFlow.w);\n' + output)
+      // Compose two light contributions after colour conversion. Sharing the background
+      // alpha would erase energy in a dense view; adding linear RGB before conversion
+      // would instead bleach hundreds of faint lines. Additive blending applies this
+      // final alpha exactly once, while the journey stays on the actual fibre.
+      const output = '#include <colorspace_fragment>'
+      if (!line.fragmentShader.includes(output)) throw new Error('Organic line colour-space shader contract changed')
+      line.fragmentShader = shared + 'uniform float contextOpacity; uniform float focusedOpacity; uniform float pulseOpacity; uniform float halo;\n'
+        + line.fragmentShader.replace(output, output + `
+          vec2 signal = vFlow.z > 0.0 ? neuralSignal(vFlow.x, vFlow.y) : vec2(0.0);
+          float feather = mix(1.0, exp(-vUv.x * vUv.x * 3.5), halo);
+          float coverage = alpha / max(opacity, 0.0001) * feather;
+          float tide = 1.0 + motion * 0.10 * sin(lifeTime * 0.9 - vFlow.x * 18.0 + vFlow.y * 6.283185);
+          float strandAlpha = alpha * feather * mix(contextOpacity, focusedOpacity, vFlow.w) * tide;
+          float energyAlpha = coverage * pulseOpacity * (signal.x + signal.y * 0.30) * vFlow.z;
+          vec3 energyColor = mix(vec3(0.22, 0.91, 1.0), vec3(0.40, 1.0, 0.70), step(0.64, fract(vFlow.y * 11.0)));
+          // Rare amber flecks are decorative light; attention still records only real
+          // selection incidence. Neither material colour nor circulation claims a job.
+          float amber = clamp((step(0.88, fract(vFlow.y * 31.0)) * 0.85 + vFlow.w * 0.22) * signal.x, 0.0, 1.0);
+          energyColor = mix(energyColor, vec3(1.0, 0.61, 0.25), amber);
+          float combinedAlpha = min(1.0, strandAlpha + energyAlpha);
+          vec3 combinedLight = gl_FragColor.rgb * strandAlpha + energyColor * energyAlpha;
+          gl_FragColor = vec4(combinedLight / max(combinedAlpha, 0.0001), combinedAlpha);
+        `)
       return line
     }
-    const core = new LineSegments2(geometry, makeMaterial(1.5, 0.62))
-    const glow = new LineSegments2(geometry, makeMaterial(4.0, 0.035))
+    const core = new LineSegments2(geometry, makeMaterial(1.65, 0.58, 0.88, 0))
+    const glow = new LineSegments2(geometry, makeMaterial(5.5, 0.018, 0.19, 1))
+    const fibres = new THREE.ShaderMaterial({ vertexShader: fibreVertex, fragmentShader: fibreFragment,
+      uniforms: { lifeTime: { value: 0 }, motion: { value: 0 }, opacity: { value: 0.32 * contextOpacity } },
+      transparent: true, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending })
     core.raycast = () => {}; glow.raycast = () => {}
-    return { geometry, core, glow }
+    return { geometry, core, glow, fibres }
   }, [material, contextOpacity, opacityBudget, selected.length])
   useFrame(({ clock }) => {
     for (const line of [lines.core, lines.glow]) {
       line.material.uniforms.lifeTime.value = reducedMotion ? 0 : clock.elapsedTime
       line.material.uniforms.motion.value = reducedMotion ? 0 : 1
     }
+    lines.fibres.uniforms.lifeTime.value = reducedMotion ? 0 : clock.elapsedTime
+    lines.fibres.uniforms.motion.value = reducedMotion ? 0 : 1
   })
   useEffect(() => () => {
     material.body.dispose(); material.fibres.dispose(); lines.geometry.dispose()
-    lines.core.material.dispose(); lines.glow.material.dispose()
+    lines.core.material.dispose(); lines.glow.material.dispose(); lines.fibres.dispose()
   }, [material, lines])
   return <>
     <primitive object={lines.glow} dispose={null} />
     <primitive object={lines.core} dispose={null} />
     <lineSegments geometry={material.fibres} raycast={() => {}}>
-      <lineBasicMaterial vertexColors transparent opacity={0.3 * contextOpacity} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      <primitive object={lines.fibres} attach="material" dispose={null} />
     </lineSegments>
   </>
 }

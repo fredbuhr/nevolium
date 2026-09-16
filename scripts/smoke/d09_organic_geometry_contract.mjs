@@ -28,7 +28,7 @@ for (const caseId of ['small', 'stress']) {
     }
     assert([...grown.widths].every(width => width > 0 && width < 1.6), 'Near-camera fibre junctions must retain a bounded pixel width')
     assert.equal(grown.attention.length, grown.widths.length)
-    assert([...grown.attention].every(value => value === 0), 'Warm focus must not invent a selection')
+    assert([...grown.attention].every(value => value === 0), 'Material attention must not invent a selection')
     // Both ends must remain inside the moving soma, not terminate on a fixed-radius shell.
     for (const [index, id] of grown.edgeIds.entries()) {
       const edge = data.edges.find(item => item.id === id)
@@ -40,6 +40,8 @@ for (const caseId of ['small', 'stress']) {
       }
     }
     assert.equal(grown.fibres.attributes.position.count, data.edges.length * detail.segments * detail.strands * 2)
+    assert.equal(grown.fibres.attributes.fibrePhase.count, grown.fibres.attributes.position.count)
+    assert([...grown.fibres.attributes.fibrePhase.array].every(value => Number.isFinite(value) && value >= 0 && value <= 1), 'Fibre illumination coordinates must be finite and bounded')
     for (const geometry of [grown.body, grown.fibres]) {
       assert([...geometry.attributes.position.array].every(Number.isFinite), 'Growth must not introduce invalid vertices')
       assert(geometry.boundingSphere.radius < 250, 'Growth must stay within a bounded presentation volume')
@@ -53,8 +55,8 @@ for (const caseId of ['small', 'stress']) {
     const incident = [edge.source, edge.target].includes(selectedId)
     for (let segment = 0; segment < GROWTH_DETAIL.eco.segments; segment++) {
       const offset = index * GROWTH_DETAIL.eco.segments + segment
-      assert.equal(focused.attention[offset], incident ? 1 : 0, 'Amber flow must follow selected canonical relations')
-      if (!incident) assert(focused.flow[offset * 4 + 3] <= 0.036, 'Unrelated pulses must respect selection dimming')
+      assert.equal(focused.attention[offset], incident ? 1 : 0, 'Attention must follow selected canonical relations')
+      if (!incident) assert(focused.flow[offset * 4 + 3] <= 0.181, 'Peripheral energy must stay at most one fifth of the incident peak (0.9)')
     }
   }
   focused.body.dispose(); focused.fibres.dispose()
