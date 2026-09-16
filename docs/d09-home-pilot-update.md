@@ -129,6 +129,20 @@ son exécution serveur reste à attester par la sortie opérateur.
 
 ## Reprise après la sortie opérateur
 
+### Activation attestée — 16 septembre 2026
+
+La préparation puis l'activation opérateur ont réussi. Les images actives sont
+Core `sha256:454e44a27cc95540db4abe0f83b56b3c05d2ae6507fcd2d962ab5576d5051f69`
+et Web `sha256:85cf94464781356b1aa96ca43c9fb01e62693455e04089f0e97fbe2906c7032a`.
+Worker `dcbc682b00ed…` et Web-MCP `125dc53d049c…` sont restés inchangés.
+`/opt/nevolium/current` désigne désormais le merge `702c2a3…`.
+
+Core live/ready/trust et Web internes ont répondu ; PostgreSQL, NATS, Temporal et
+OpenBao étaient sains. L'état SQL est strictement identique avant/après :
+`0018_editable_knowledge|7|57|2|0|0|0|0|5|1`. Aucune migration et aucun import
+d'exemple. Les images Core/Web précédentes sont conservées sous les tags de retour
+`d09-69f5926b`. Le contrôle de stabilisation et l'import réel restent à effectuer.
+
 Vérifier les nouveaux digests, les santés, le schéma `0018`, les compteurs actuels
 et l'absence d'activité en cours. Ne pas imposer les anciens compteurs 7/57/2
 si l'utilisateur a créé des données depuis la dernière mesure. Préparer ensuite

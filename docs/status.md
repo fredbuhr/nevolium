@@ -5,9 +5,9 @@ Extension d’usage D09 intégrée par la PR #96 au merge `702c2a3` : accueil ut
 corpus fictif importable. Le code `9b6b01075fdc8b47e3f9a3eb14f6f3b14e71ffba` passe
 **9/9 workflows**, dont PostgreSQL réel et les parcours navigateur D05–D09.
 Neuf captures d’accueil et les captures Knowledge ont été inspectées. Cette extension
-est intégrée à main mais non déployée sur le pilote ; les exemples n’y sont pas importés.
+est intégrée à main et activée sur le pilote ; les exemples n’y sont pas encore importés.
 La tête finale `d9eff70` passe également 9/9 workflows, dont UI `35113871065` ;
-l’arbre du merge est identique. [Préparation serveur](d09-home-pilot-update.md).
+l’arbre du merge est identique. [Preuve et procédure serveur](d09-home-pilot-update.md).
 
 Révision : 2026-09-16.
 
