@@ -1,11 +1,18 @@
 # Nevolium : état fonctionnel vérifié
 
-**Gate actif au 16 septembre : D09 KISS.** L'utilisateur a accepté le bilan et la réorientation
-[ADR-033](decisions/ADR-033-kiss-contextual-mycelium.md). Le bureau transparent, son fond personnel
-et le parcours source/fiche/liens/retour sont en développement ; le checkpoint porte leurs preuves.
-La [mémoire de projet](product-memory.md) conserve les décisions pour les futures discussions.
+**Gate actif au 16 septembre : D09 KISS, code intégré et acceptation pilote ouverte.**
+La [PR #97](https://github.com/fredbuhr/nevolium/pull/97), merge
+`9a56ffe5d11c054ab5be6ef7af38f0df31759b0a`, livre le bureau Mycelium transparent, le fond privé
+facultatif, les relations dès la sélection et le retour d'un outil au même contexte.
+Les réglages sont regroupés et le cadrage portrait adapté. La tête `1af538b…` passe **8/8 workflows**,
+dont [UI 35131493038](https://github.com/fredbuhr/nevolium/actions/runs/35131493038) ; les 9 captures
+finales ont été revues et l'arbre fusionné est identique. [Preuves, limites et commandes](d09-kiss-desktop.md).
+Le Web reste à préparer puis activer par l'opérateur ; le runtime attesté demeure `702c2a3…`.
+Les tests navigateur simulent Core et ne valent pas acceptation physique/OIDC du nouveau parcours.
+La [mémoire de projet](product-memory.md) et [ADR-033](decisions/ADR-033-kiss-contextual-mycelium.md)
+conservent la vision et l'ordre accepté pour les futures discussions. D10 n'a pas commencé.
 
-Extension d’usage D09 intégrée par la PR #96 au merge `702c2a3` : accueil utilisant le Mycelium
+Preuve antérieure, toujours valable pour le runtime installé : extension d’usage D09 intégrée par la PR #96 au merge `702c2a3`, accueil utilisant le Mycelium
 3D partagé, raccourcis et dossiers privés, navigation transversale soumise aux droits et
 corpus fictif importable. Le code `9b6b01075fdc8b47e3f9a3eb14f6f3b14e71ffba` passe
 **9/9 workflows**, dont PostgreSQL réel et les parcours navigateur D05–D09.
