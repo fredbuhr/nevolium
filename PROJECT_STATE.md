@@ -7,11 +7,11 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, vérifier GitHub live, puis [mé
 | Champ | État attesté |
 |---|---|
 | Base vérifiée | Main `0aa4908ce0d2deed88ca8060e89a4afe6f9881d9`, arbre `5caa1062f5032487eced0ea188c80bf9d796ded4` ; GitHub live vérifié le 16 septembre |
-| Branche / PR | Une branche active : `fix/d09-kiss-desktop`, fraîche depuis main. PR à ouvrir après le premier checkpoint. #96 est fusionnée ; ancienne branche retirée du développement actif |
+| Branche / PR | Une branche active : `fix/d09-kiss-desktop`, fraîche depuis main. [PR #97](https://github.com/fredbuhr/nevolium/pull/97) en brouillon ; checkpoint publié `90bf80e52fed57b094ef0760a86d0c7a04b1da22`. #96 est fusionnée ; ancienne branche retirée du développement actif |
 | Gate autorisé | L'utilisateur a accepté le bilan KISS et demandé de commencer avec reprise fiable entre discussions. D09 : bureau transparent, fond choisi, fiche/liens et retour au contexte. [ADR-033](docs/decisions/ADR-033-kiss-contextual-mycelium.md) ; D10 planifié, non commencé |
-| Réalisé dans ce gate | Mémoire produit, décision acceptée, séquencement corrigé, preuves pilote archivées ; code du bureau encore à modifier |
-| Validation du gate | Relecture du code et comparaison au live ; aucune validation fonctionnelle du nouveau bureau encore exécutée |
-| Prochaine action | Implémenter scène transparente, fond privé et parcours source → fiche/liens → outil → retour ; vérifier formats écran, sauvegarde et changement de session |
+| Réalisé dans ce gate | Mémoire produit, décision acceptée, séquencement corrigé, preuves pilote archivées ; bureau transparent, fond privé persistant, réglages en dialogue, fiche avec relations immédiates et retour outil conservant la scène implémentés ; qualification en cours |
+| Validation du gate | Contrat modèle accueil et TypeScript/build locaux réussis. Chromium local ne démarre pas (SIGTRAP environnement) ; tests navigateur à exécuter en CI sur cette PR, aucune preuve navigateur revendiquée à ce stade |
+| Prochaine action | Inspecter les checks de la tête live de #97, corriger toute régression, examiner les captures desktop/tablette/téléphone ; mettre à jour ce checkpoint avant intégration |
 | Production attestée | `/opt/nevolium/current` → release `702c2a3de4b4bd2219e27bf12c5b5286624d4bd8`, schéma `0018_editable_knowledge` ; aucun déploiement du nouveau gate |
 | Images actives | Core `454e44a27cc9…`, Web `85cf94464781…` ; Worker `dcbc682b00ed…` et Web-MCP `125dc53d049c…` conservés. Digests complets dans [preuve pilote](docs/d09-home-pilot-update.md) |
 | Corpus déjà importé | `mycelium-example-v1` : 5 projets, 20 contenus, 12 fichiers, 12 tâches, 9 dépendances, 32 relations ; journal 112 opérations, double relecture API. Aucun appel IA ni tâche exécutée. Ne pas réimporter aveuglément |

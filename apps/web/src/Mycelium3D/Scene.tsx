@@ -22,6 +22,8 @@ export type SceneProps = {
   camera: CameraPose | null
   command: CameraCommand | null
   reducedMotion: boolean
+  transparent?: boolean
+  interactive?: boolean
   positions?: Record<string, [number, number, number]>
   labels: RefObject<Map<string, HTMLButtonElement>>
   onSelect: (id: string, additive: boolean) => void
@@ -69,6 +71,10 @@ function CameraAndMetrics(props: SceneProps & { poses: PoseMap; tier: Tier; onTi
       controls.dispose(); controlsRef.current = null
     }
   }, [camera, gl, invalidate])
+
+  useEffect(() => {
+    if (controlsRef.current) controlsRef.current.enabled = props.interactive !== false
+  }, [props.interactive])
 
   useEffect(() => {
     const controls = controlsRef.current
@@ -177,12 +183,12 @@ export default function Scene(props: SceneProps) {
   return <Canvas
     camera={defaultCamera}
     dpr={Math.min(window.devicePixelRatio || 1, QUALITY_SETTINGS[tier].dpr)}
-    gl={{ antialias: false, alpha: false, powerPreference: 'low-power' }}
+    gl={{ antialias: false, alpha: Boolean(props.transparent), powerPreference: 'low-power' }}
     frameloop={props.reducedMotion ? 'demand' : 'always'}
     onPointerMissed={() => props.onSelect('', false)}
   >
-    {/* An opaque backdrop keeps faint additive fibres from masking the CSS background. */}
-    <color attach="background" args={['#061216']} />
+    {/* The desktop's independently owned wallpaper remains visible through the scene. */}
+    {!props.transparent ? <color attach="background" args={['#061216']} /> : null}
     <CameraAndMetrics {...props} poses={poses} tier={tier} onTier={setAutoTier} />
     <OrganicFilaments graph={visibleGraph} poses={poses} layout={spatial} selected={props.selected} tier={tier} reducedMotion={props.reducedMotion} />
     <OrganicGroups groups={props.groups} poses={poses} />

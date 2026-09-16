@@ -28,6 +28,8 @@ type Props = {
   defaultView?: '2d' | '3d'
   positions?: Record<string, [number, number, number]>
   compact?: boolean
+  paused?: boolean
+  interactive?: boolean
 }
 
 export default function SpatialWorkspace(props: Props) {
@@ -47,6 +49,7 @@ export default function SpatialWorkspace(props: Props) {
   const [metrics, setMetrics] = useState<SceneMetrics | null>(null)
   const cameraSave = useCallback((camera: Parameters<typeof state.update>[0]['camera']) => state.update({ camera }), [state.update])
   const active = panelVisible && documentVisible && intersecting && state.view === '3d'
+  const motionPaused = reducedMotion || !animate || Boolean(props.paused)
   const saveCopy = layoutSaveCopy[language]
   useEffect(() => {
     const visible = () => setDocumentVisible(!document.hidden)
@@ -73,8 +76,27 @@ export default function SpatialWorkspace(props: Props) {
   }, [props.nodes, props.selected, props.compact, metrics?.tier])
   function issue(action: CameraCommand['action']) {
     setCommand({ sequence: ++commandSequence.current, action })
-    viewport.current?.scrollIntoView({ block: 'nearest' })
+    if (!props.compact) viewport.current?.scrollIntoView({ block: 'nearest' })
   }
+
+  const qualityControls = state.view === '3d' ? <>
+    <label>{m.quality}<select aria-label={m.quality} value={state.value.quality}
+      onChange={event => state.update({ quality: event.target.value as typeof state.value.quality })}>
+      {(['auto', 'eco', 'balanced', 'high'] as const).map(value => <option key={value} value={value}>{m[value]}</option>)}
+    </select></label>
+    <button type="button" aria-pressed={animate && !reducedMotion} disabled={reducedMotion}
+      onClick={() => setAnimate(value => !value)}>{m.animate}</button>
+  </> : null
+  const navigation = <div className="spatial-navigation">
+    {!props.compact ? <label>{m.select}<select aria-label={m.select} value={props.selected[0] || ''} onChange={event => props.onSelect(event.target.value, false)}>
+      <option value="">{m.none}</option>{props.nodes.map(node => <option key={node.id} value={node.id}>{node.label}</option>)}
+    </select></label> : null}
+    <button type="button" disabled={!props.selected.length} onClick={() => issue('focus')}>{m.focus}</button>
+    <button type="button" onClick={() => issue('reset')}>{m.reset}</button>
+    <button type="button" aria-label={m.zoomIn} onClick={() => issue('in')}>+</button>
+    <button type="button" aria-label={m.zoomOut} onClick={() => issue('out')}>−</button>
+    {!props.compact ? <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button> : null}
+  </div>
 
   return <div className={`spatial-workspace${props.compact ? ' spatial-home' : ''}`} data-spatial-view={state.view}>
     <div className="spatial-toolbar">
@@ -82,12 +104,8 @@ export default function SpatialWorkspace(props: Props) {
         <button type="button" aria-pressed={state.view === '2d'} disabled={!state.ready} onClick={() => state.update({ view: '2d' })}>{m.view2d}</button>
         <button type="button" aria-pressed={state.view === '3d'} disabled={!state.ready} onClick={state.retry3d}>{m.view3d}</button>
       </div>
-      {state.view === '3d' ? <label>{m.quality}<select aria-label={m.quality} value={state.value.quality}
-        onChange={event => state.update({ quality: event.target.value as typeof state.value.quality })}>
-        {(['auto', 'eco', 'balanced', 'high'] as const).map(value => <option key={value} value={value}>{m[value]}</option>)}
-      </select></label> : null}
-      {state.view === '3d' ? <button type="button" aria-pressed={animate && !reducedMotion} disabled={reducedMotion}
-        onClick={() => setAnimate(value => !value)}>{m.animate}</button> : null}
+      {props.compact && state.view === '3d' ? <details className="spatial-options"><summary>{m.options}</summary>
+        <div>{qualityControls}{navigation}</div></details> : qualityControls}
       <span className="spatial-save" data-spatial-save={state.persistence.status} aria-live="polite">{saveCopy[state.persistence.status]}</span>
       {state.persistence.status === 'error' ? <button type="button" onClick={state.persistence.retry}>{saveCopy.retry}</button> : null}
     </div>
@@ -95,27 +113,16 @@ export default function SpatialWorkspace(props: Props) {
     {state.unavailable ? <p role="status">{m.fallback} <button type="button" onClick={state.retry3d}>{m.retry}</button></p> : null}
     {state.view === '3d' ? <>
       {reducedMotion || !animate ? <p role="status">{reducedMotion ? m.motionReduced : m.motionPaused}</p> : null}
-      <div className="spatial-navigation">
-        {!props.compact ? <>
-        <label>{m.select}<select aria-label={m.select} value={props.selected[0] || ''} onChange={event => props.onSelect(event.target.value, false)}>
-          <option value="">{m.none}</option>
-          {props.nodes.map(node => <option key={node.id} value={node.id}>{node.label}</option>)}
-        </select></label>
-        </> : null}
-        <button type="button" disabled={!props.selected.length} onClick={() => issue('focus')}>{m.focus}</button>
-        <button type="button" onClick={() => issue('reset')}>{m.reset}</button>
-        <button type="button" aria-label={m.zoomIn} onClick={() => issue('in')}>+</button>
-        <button type="button" aria-label={m.zoomOut} onClick={() => issue('out')}>−</button>
-        {!props.compact ? <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button> : null}
-      </div>
+      {!props.compact ? navigation : null}
       {!props.compact ? <p className="spatial-hint">{m.hint} {m.lifeHint}</p> : null}
       <div ref={viewport} className="spatial-viewport" aria-label={m.title}
-        data-spatial-active={active} data-spatial-reduced-motion={reducedMotion || !animate}
+        data-spatial-active={active} data-spatial-reduced-motion={motionPaused} data-spatial-background={Boolean(props.paused)}
         data-spatial-metrics={metrics ? JSON.stringify(metrics) : ''} data-spatial-nodes={props.nodes.length}>
         {active ? <SceneBoundary onFailure={state.fail}>
           <Suspense fallback={<p className="spatial-placeholder">{m.loading}</p>}>
             <Scene {...props} rootId={props.rootId || `project:${props.projectId}`} camera={state.value.camera}
-              command={command} onCommandHandled={commandHandled} quality={state.value.quality} reducedMotion={reducedMotion || !animate}
+              command={command} onCommandHandled={commandHandled} quality={state.value.quality} reducedMotion={motionPaused}
+              transparent={props.compact} interactive={props.interactive !== false}
               labels={labels} onCamera={cameraSave} onFailure={state.fail} onMetrics={setMetrics} />
           </Suspense>
         </SceneBoundary> : <p className="spatial-placeholder">{m.paused}</p>}
