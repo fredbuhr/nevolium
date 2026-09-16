@@ -48,6 +48,7 @@ const messages: Record<string, readonly [string, string]> = {
   FF: ['fin → fin', 'finish → finish'], SF: ['début → fin', 'start → finish'],
   localExamples: ['Exemples', 'Examples'],
   close: ['Fermer la fiche', 'Close details'],
+  organize: ['Organiser mes raccourcis', 'Organise my shortcuts'], otherSettings: ['Autres réglages', 'Other settings'],
   background: ['Fond de mon bureau', 'My desktop background'], backgroundKind: ['Apparence', 'Appearance'],
   solidBackground: ['Couleur unie', 'Solid colour'], neuralBackground: ['Ambiance Mycelium', 'Mycelium atmosphere'],
   personalBackground: ['Mon image', 'My image'], backgroundColor: ['Couleur du fond', 'Background colour'],

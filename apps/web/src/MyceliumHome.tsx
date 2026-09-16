@@ -177,7 +177,7 @@ export default function MyceliumHome(props: Props) {
     </div>
     {customizing && layout.ready ? <Customize apiUrl={props.apiUrl} layout={layout.value} update={layout.update} resolved={resolved} onDone={() => setCustomizing(false)} undo={layout.undo} canUndo={layout.canUndo} saveStatus={saveStatus}>
       <BackgroundSettings apiUrl={props.apiUrl} value={background} update={next => layout.update(value => ({ ...value, background: next }))} />
-      <details className="home-preferences-simple"><summary>{w('customize')}</summary><div className="home-controls">
+      <details className="home-preferences-simple"><summary>{m('otherSettings')}</summary><div className="home-controls">
         <label>{w('profile')}<select value={props.profile} onChange={event => props.onProfileChange(event.target.value as CockpitProfile)}>
           {(['balanced', 'focus', 'review'] as const).map(key => <option key={key} value={key}>{w(key === 'focus' ? 'focusProfile' : key)}</option>)}
         </select></label><label>{w('ambience')}<select value={props.ambience} onChange={event => props.onAmbienceChange(event.target.value as CockpitAmbience)}>

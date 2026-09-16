@@ -23,6 +23,7 @@ export default function Customize(props: Props) {
     <div className="home-section-heading"><h2>{m('customize')}</h2><button type="button" onClick={props.onDone}>{m('done')}</button></div>
     {props.saveStatus}
     {props.children}
+    <details className="home-organization"><summary>{m('organize')}</summary>
     <p>{m('folderHelp')}</p>
     <div className="home-controls">
       <label>{m('folderName')}<input value={folder} maxLength={80} onChange={event => setFolder(event.target.value)} /></label>
@@ -52,6 +53,7 @@ export default function Customize(props: Props) {
           <button type="button" onClick={() => props.update(layout => ({ ...layout, entries: layout.entries.filter(item => item.ref !== entry.ref) }))}>{m('remove')}</button></div>
       </li>)}
     </ol>
+    </details>
     <div className="home-controls">
       <label>{m('choose')}<select value={source} onChange={event => { setSource(event.target.value); setFilter('') }}>
         {['tools', 'projects', 'documents', 'tasks', 'assets'].map(key => <option key={key} value={key}>{m(key)}</option>)}

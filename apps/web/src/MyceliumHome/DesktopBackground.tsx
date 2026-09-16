@@ -7,6 +7,14 @@ import type { DesktopBackground as Background } from './model'
 const IMAGE_TYPES = /^image\/(png|jpeg|webp)$/
 const MAX_BYTES = 8 * 1024 * 1024
 
+async function validateImage(blob: Blob) {
+  if (!IMAGE_TYPES.test(blob.type) || blob.size > MAX_BYTES) throw new Error('Unsupported background')
+  const bitmap = await createImageBitmap(blob)
+  const pixels = bitmap.width * bitmap.height
+  bitmap.close()
+  if (pixels > 24_000_000) throw new Error('Background too large')
+}
+
 // Only an owned Asset ID is persisted. Blob URLs never enter WorkspaceLayout or localStorage.
 export function DesktopBackground({ apiUrl, value, onError }: { apiUrl: string; value: Background; onError: (error: boolean) => void }) {
   const [url, setUrl] = useState<string | null>(null)
@@ -25,7 +33,7 @@ export function DesktopBackground({ apiUrl, value, onError }: { apiUrl: string; 
       const response = await nevoliumFetch(`${apiUrl}/v1/assets/${value.assetId}/content`, { signal: controller.signal })
       if (!response.ok) throw new Error('Background unavailable')
       const blob = await response.blob()
-      if (!IMAGE_TYPES.test(blob.type) || blob.size > MAX_BYTES) throw new Error('Unsupported background')
+      await validateImage(blob)
       if (controller.signal.aborted) return
       objectUrl = URL.createObjectURL(blob); setUrl(objectUrl)
     })().catch(() => { if (!controller.signal.aborted) onError(true) })
@@ -38,6 +46,7 @@ export function DesktopBackground({ apiUrl, value, onError }: { apiUrl: string; 
 
 export function BackgroundSettings({ apiUrl, value, update }: { apiUrl: string; value: Background; update: (next: Background) => void }) {
   const m = useHomeMessages(), request = useRef<AbortController | null>(null)
+  const picker = useRef<HTMLInputElement | null>(null)
   const [busy, setBusy] = useState(false), [error, setError] = useState(false)
   useEffect(() => {
     const origin = getAuthSnapshot()
@@ -52,10 +61,7 @@ export function BackgroundSettings({ apiUrl, value, update }: { apiUrl: string; 
     const controller = new AbortController(); request.current = controller
     setBusy(true); setError(false)
     try {
-      if (!IMAGE_TYPES.test(file.type) || file.size > MAX_BYTES) throw new Error('Unsupported background')
-      const bitmap = await createImageBitmap(file)
-      const pixels = bitmap.width * bitmap.height; bitmap.close()
-      if (pixels > 24_000_000) throw new Error('Background too large')
+      await validateImage(file)
       if (controller.signal.aborted) return
       const body = new FormData(); body.append('file', file)
       const response = await nevoliumFetch(`${apiUrl}/v1/assets`, { method: 'POST', body, signal: controller.signal })
@@ -72,8 +78,9 @@ export function BackgroundSettings({ apiUrl, value, update }: { apiUrl: string; 
         {value.assetId ? <option value="image">{m('personalBackground')}</option> : null}
       </select></label>
       <label>{m('backgroundColor')}<input type="color" value={value.color} disabled={busy} onChange={event => update({ ...value, color: event.target.value })} /></label>
-      <label>{m('uploadBackground')}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy}
-        onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(file) }} /></label>
+      <div className="home-file-picker"><input ref={picker} className="sr-only" type="file" aria-label={m('uploadBackground')} accept="image/png,image/jpeg,image/webp" disabled={busy} tabIndex={-1}
+        onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(file) }} />
+        <button type="button" disabled={busy} onClick={() => picker.current?.click()}>{m('uploadBackground')}</button></div>
     </div>
     <p className="home-field-help">{m('backgroundHelp')}</p>
     {value.kind !== 'solid' ? <label>{m('backgroundDim')}<input type="range" min="0" max="0.85" step="0.05" value={value.dim} disabled={busy}
