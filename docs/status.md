@@ -11,11 +11,11 @@ l’arbre du merge est identique. [Preuve et procédure serveur](d09-home-pilot-
 
 Révision : 2026-09-16.
 
-D04–D09 sont intégrés sur la ligne canonique. Le pilote a activé la release
-`69f5926be72227a5fc1c4e3dff7c0e436099e51c` le 16 septembre 2026, avec le schéma
-`0018_editable_knowledge`. La stabilisation opérateur après 6–7 minutes atteste les quatre
-images applicatives exactes, zéro redémarrage, les services de stockage sains, Core
-live/ready/trust et Web à 200, ainsi que des compteurs SQL inchangés.
+D04–D09 sont intégrés sur la ligne canonique. Le pilote a activé la release corrective
+`702c2a3de4b4bd2219e27bf12c5b5286624d4bd8` le 16 septembre 2026, avec le schéma
+`0018_editable_knowledge`. La stabilisation opérateur après huit minutes atteste Core/Web
+sur les nouveaux digests sans redémarrage, Worker/Web-MCP inchangés, les services de stockage
+sains, Core live/ready/trust et Web interne/public à 200, ainsi que des compteurs SQL inchangés.
 
 Cette stabilité technique **ne vaut pas acceptation produit**. L’utilisateur signale dans le
 pilote des langues mélangées, un formulaire d’idée ambigu, des objets sans liens visibles et

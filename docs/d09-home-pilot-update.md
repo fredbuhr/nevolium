@@ -141,7 +141,13 @@ Core live/ready/trust et Web internes ont répondu ; PostgreSQL, NATS, Temporal 
 OpenBao étaient sains. L'état SQL est strictement identique avant/après :
 `0018_editable_knowledge|7|57|2|0|0|0|0|5|1`. Aucune migration et aucun import
 d'exemple. Les images Core/Web précédentes sont conservées sous les tags de retour
-`d09-69f5926b`. Le contrôle de stabilisation et l'import réel restent à effectuer.
+`d09-69f5926b`.
+
+Après huit minutes, Core/Web n'avaient aucun redémarrage ; Worker/Web-MCP étaient
+toujours sur leurs digests attendus. Core live/ready/trust, Web interne et public
+répondaient à 200, l'API sans jeton était refusée à 401, les quatre santés critiques
+étaient vertes et le SQL restait identique. Le corpus local a validé son inventaire
+5/20/12/12/9/32 en mode aperçu, sans écriture. L'import réel reste à effectuer.
 
 Vérifier les nouveaux digests, les santés, le schéma `0018`, les compteurs actuels
 et l'absence d'activité en cours. Ne pas imposer les anciens compteurs 7/57/2
