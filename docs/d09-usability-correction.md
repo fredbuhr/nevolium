@@ -5,6 +5,10 @@ Branche unique : `fix/d09-guided-workspace`, [PR #96 en brouillon](https://githu
 
 ## Gate
 
+Correctif publié `9b6b010` : neuf workflows verts, captures inspectées. Voir la
+qualification finale en fin de document ; les sections intermédiaires conservent
+la chronologie des diagnostics et corrections.
+
 Pilote techniquement stable, acceptation fonctionnelle bloquée par le retour utilisateur.
 Pas de D10, de nouveau déploiement, de migration, de redémarrage ni de nettoyage Docker.
 Le modèle translucide validé n’est pas remplacé.
@@ -245,3 +249,41 @@ de cette attente, séparation du titre des raccourcis, boutons harmonisés,
 hauteur de scène adaptée à l’écran et pagination limitée au contexte actif.
 Les captures initiales montrent le renderer partagé ; elles ne valent pas
 validation visuelle finale. Aucun import ni déploiement sur le pilote.
+
+## Qualification finale du code publié — 16 septembre 2026
+
+Code `9b6b01075fdc8b47e3f9a3eb14f6f3b14e71ffba`, arbre
+`6e2e1c5aadd7e7b30919f5ff18767b49115d272b` : **9/9 workflows verts**.
+[UI run 35112551196](https://github.com/fredbuhr/nevolium/actions/runs/35112551196),
+quatre jobs réussis dont toutes les suites navigateur D05–D09. Les huit autres
+workflows (Foundation, qualité, reproductibilité, ingestion, isolation, recherche,
+registre MCP et moteurs D04) sont également réussis sur ce SHA.
+
+La deuxième passe fonctionnelle avait réussi l’accueil, mais ses captures révélaient
+un axe flex hérité comprimant le renderer à droite. L’axe est désormais explicite et
+les tests vérifient la largeur centrale ainsi que la taille du canvas. Un scénario
+historique de stabilité a aussi changé de disposition pendant une capture pleine page ;
+sa capture utilise désormais le viewport fixe, avec contrôle qu’aucune lecture de
+restauration supplémentaire n’a perturbé l’état testé. La passe finale est verte.
+
+| Preuve | Résultat |
+| --- | --- |
+| Projection PostgreSQL | Neuf types, relations canoniques, citations historiques, pagination et isolation entre comptes |
+| Importateur HTTP | Payloads validés par les schémas Core ; corpus complet, octets relus, reprise sans doublon, réponse perdue bloquée, accueil existant conservé |
+| Accueil Chromium | Desktop et tablette 3D ; téléphone 2D par défaut ; liens transversaux, épinglage, dossiers, renommage privé, ordre, annulation, erreur/retry, reload, FR/EN, téléchargement et aperçu SVG |
+| Régressions | Cockpit, clavier, écrans tactiles simulés, Planning, Knowledge, cartes 2D/3D, sauvegardes, caméra et secours sans WebGL |
+| Animation petit réseau | Zéro relation sémantique ajoutée, trois appartenances, 443 pixels modifiés en animation, zéro en pause |
+| Inspection visuelle | Neuf captures accueil FR/EN, traversée et personnalisation ; idée guidée FR, Knowledge EN/téléphone, petit réseau 3D |
+
+Archives téléchargées et empreintes comparées aux métadonnées GitHub :
+
+- Accueil `10453436354` : `dc12622044e2c3c50ec624cee8214cdbcd4f4c329dcc0f4a2e5ab0b165587df4`.
+- Knowledge `10453576262` : `ea3738ce1718bb3ed21af76c4f621755988616df154a8b55a3084e8e6479b26a`.
+- Spatial `10453536433` : `bcac3ae974dd1b17cf56800c8e8bd3a434a3d6c438ea15b3d17a878e1d17959a`.
+
+Ces preuves qualifient le code de la PR, pas le pilote. Chromium utilise des API
+simulées ; PostgreSQL réel est vérifié séparément. L’import complet dans un compte
+pilote, le ressenti et la fluidité sur matériel physique restent à contrôler après
+installation. Le suivi documentaire qui suit cette qualification ne modifie aucun
+code, test, fichier d’exemple ni workflow. Aucun merge, déploiement, import pilote,
+nettoyage Docker ou début de D10 n’a été effectué.
