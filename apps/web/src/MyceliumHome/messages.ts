@@ -47,6 +47,16 @@ const messages: Record<string, readonly [string, string]> = {
   FS: ['fin → début', 'finish → start'], SS: ['début → début', 'start → start'],
   FF: ['fin → fin', 'finish → finish'], SF: ['début → fin', 'start → finish'],
   localExamples: ['Exemples', 'Examples'],
+  close: ['Fermer la fiche', 'Close details'],
+  organize: ['Organiser mes raccourcis', 'Organise my shortcuts'], otherSettings: ['Autres réglages', 'Other settings'],
+  background: ['Fond de mon bureau', 'My desktop background'], backgroundKind: ['Apparence', 'Appearance'],
+  solidBackground: ['Couleur unie', 'Solid colour'], neuralBackground: ['Ambiance Mycelium', 'Mycelium atmosphere'],
+  personalBackground: ['Mon image', 'My image'], backgroundColor: ['Couleur du fond', 'Background colour'],
+  uploadBackground: ['Choisir une image', 'Choose an image'], backgroundDim: ['Assombrir l’image', 'Dim the image'],
+  backgroundHelp: ['PNG, JPEG ou WebP · 8 Mo et 24 mégapixels maximum. L’image est enregistrée dans vos fichiers privés.', 'PNG, JPEG or WebP · up to 8 MB and 24 megapixels. The image is saved to your private files.'],
+  uploadingBackground: ['Enregistrement de l’image…', 'Saving image…'],
+  backgroundUploadError: ['L’image n’a pas pu être enregistrée. Vérifiez son format et sa taille, puis réessayez.', 'The image could not be saved. Check its format and size, then retry.'],
+  backgroundUnavailable: ['Votre image de fond est indisponible. La couleur choisie reste affichée.', 'Your background image is unavailable. Your chosen colour is displayed.'],
 }
 export function useHomeMessages() {
   const { language } = useI18n()

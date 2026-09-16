@@ -10,11 +10,22 @@ export type BrowserEdge = NevoliumGraphSnapshot['edges'][number] & { category?: 
 export type BrowserPage = { focus: string; nodes: BrowserNode[]; edges: BrowserEdge[]; next_cursor: string | null }
 export type HomeEntry = { ref: string; label: string; folder: string }
 export type HomeFolder = { id: string; label: string }
-export type HomeLayout = { entries: HomeEntry[]; folders: HomeFolder[] }
+export type DesktopBackground = { kind: 'solid' | 'neural' | 'image'; color: string; assetId: string | null; dim: number }
+export const DEFAULT_BACKGROUND: DesktopBackground = { kind: 'solid', color: '#061216', assetId: null, dim: 0.35 }
+export type HomeLayout = { entries: HomeEntry[]; folders: HomeFolder[]; background?: DesktopBackground }
 export const HOME_KEY = 'mycelium.home.navigation'
 export const MAX_ENTRIES = 24
 export const ENTITY_REF = /^(project|task|document|asset|artifact|conversation|workflow_execution|approval|citation):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export const validRef = (value: string) => ENTITY_REF.test(value) || TOOLS.some(tool => value === `tool:${tool}`)
+export function readBackground(value: unknown): DesktopBackground {
+  if (!value || typeof value !== 'object') throw new Error('Invalid background')
+  const data = value as DesktopBackground
+  if (!['solid', 'neural', 'image'].includes(data.kind) || !/^#[0-9a-f]{6}$/i.test(data.color)
+    || !Number.isFinite(data.dim) || data.dim < 0 || data.dim > 0.85
+    || (data.assetId !== null && (typeof data.assetId !== 'string' || !ENTITY_REF.test(`asset:${data.assetId}`)))
+    || (data.kind === 'image' && !data.assetId)) throw new Error('Invalid background')
+  return { kind: data.kind, color: data.color, assetId: data.assetId, dim: data.dim }
+}
 export const DEFAULT_HOME: HomeLayout = { entries: ['command', 'projects', 'research', 'today', 'knowledge', 'news']
   .map(tool => ({ ref: `tool:${tool}`, label: '', folder: '' })), folders: [] }
 
@@ -39,7 +50,7 @@ export function readHomeLayout(value: unknown): HomeLayout {
     return { ref: entry.ref, label: entry.label, folder: entry.folder }
   })
   if (ids.size !== folders.length) throw new Error('Duplicate home folder')
-  return { entries, folders }
+  return { entries, folders, ...(data.background === undefined ? {} : { background: readBackground(data.background) }) }
 }
 
 export function reorder(layout: HomeLayout, from: number, to: number): HomeLayout {

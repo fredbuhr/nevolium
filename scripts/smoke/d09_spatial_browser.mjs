@@ -77,7 +77,9 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
   await eventually(async () => await map.getByLabel('Sélectionner un élément').inputValue() === `task:${ids.convertedTask}`, 'D09 canonical converted Task not selected')
   await map.getByRole('button', { name: 'Ouvrir l’élément', exact: true }).click()
   await page.locator('.planning-workspace:visible').getByText('Idée navigateur D08', { exact: true }).waitFor()
-  assert.equal(await page.locator('.spatial-viewport canvas').count(), 0, 'Hidden Dockview panel retained a WebGL renderer')
+  assert.equal(await page.locator('.cockpit-dock .spatial-viewport canvas').count(), 0, 'Hidden Dockview panel retained a WebGL renderer')
+  const desktopBackground = page.locator('.home-browser .spatial-viewport')
+  assert.equal(await desktopBackground.getAttribute('data-spatial-background'), 'true', 'The desktop scene must pause behind tools')
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Carte mentale', exact: true }).click()
   map = page.locator('.mindmap-workspace:visible'); viewport = map.locator('.spatial-viewport')
   await viewport.scrollIntoViewIfNeeded(); await viewport.locator('canvas').waitFor()
@@ -104,6 +106,7 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
   await page.emulateMedia({ reducedMotion: 'no-preference' })
 
   setStage('d09:webgl-loss-fallback')
+  await viewport.locator('canvas[data-spatial-ready="true"]').waitFor()
   await viewport.locator('canvas').evaluate(canvas => {
     const gl = canvas.getContext('webgl2')
     const extension = gl?.getExtension('WEBGL_lose_context')

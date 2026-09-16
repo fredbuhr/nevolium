@@ -121,15 +121,24 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     await summary.getByText('Vérification momentanément indisponible', { exact: true }).waitFor()
     assert.equal(testCalls, 2)
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true)
-    assert.equal(await page.locator('.quiet-atmosphere i').first().evaluate(element => getComputedStyle(element).animationName), 'none')
+    const home = page.locator('.home-browser')
+    const desktopScene = home.locator('.spatial-viewport')
+    if (await desktopScene.count()) assert.equal(await desktopScene.getAttribute('data-spatial-reduced-motion'), 'true')
+    else assert.equal(await home.locator('canvas').count(), 0, 'The 2D fallback must not animate a background renderer')
     assert.equal(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]).includes('fixture-not-a-real-key')), false)
     assert.deepEqual(errors, [])
     assert.deepEqual(unknownRequests, [])
     if (phone) {
       await page.locator('.cockpit-preferences summary').click()
       await page.locator('.cockpit-preferences').getByLabel('Ambiance', { exact: true }).selectOption('minimal')
-      assert.equal(await page.locator('.quiet-atmosphere').count(), 0)
+      assert.equal(await page.locator('.app-shell.ambience-minimal').count(), 1)
+      await page.locator('.cockpit-preferences summary').click()
     }
+    await page.locator('.cockpit-home-button').click()
+    if (await desktopScene.count()) {
+      await home.locator('.spatial-options > summary').click()
+      assert.equal(await home.getByRole('button', { name: 'Animer le réseau', exact: true }).isDisabled(), true, 'Reduced motion remains enforced after returning home')
+    } else assert.equal(await home.locator('.spatial-workspace').getAttribute('data-spatial-view'), '2d')
     await context.close()
   }
   console.log('D05 CONNECTED PASS: parent, neighbourhood, transversal, shared document selection, key receipt/test/activation, polling error retention, read-only refresh, responsive and reduced motion (mock API, no paid call)')

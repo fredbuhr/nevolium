@@ -8,7 +8,6 @@ import KnowledgePanel from './KnowledgePanel'
 import LanguageSwitcher from './LanguageSwitcher'
 import MindMapWorkspace from './MindMapWorkspace'
 import MyceliumHome, { type MyceliumDestinationKey } from './MyceliumHome'
-import { MyceliumAtmosphere } from './MyceliumField'
 import NewsWorkspacePanel, {
   type NewsBrief,
   type NewsMode,
@@ -454,10 +453,9 @@ export default function App() {
   }
 
   return (
-    <main className={`app-shell ambience-${ambience} surface-${surface}`}>
-      {ambience !== 'minimal' ? <MyceliumAtmosphere /> : null}
-      <div hidden={surface !== 'home'}>
-      <PanelVisibilityContext.Provider value={surface === 'home'}>
+    <main className={`app-shell mycelium-desktop ambience-${ambience} surface-${surface}`}>
+      <div className="desktop-home-layer">
+      <PanelVisibilityContext.Provider value={true}>
         <MyceliumHome
           key={`${auth.enabled}:${auth.subject || 'local'}`}
           apiUrl={API_URL}
@@ -478,7 +476,7 @@ export default function App() {
       </PanelVisibilityContext.Provider>
       </div>
       {surface !== 'home' ? (
-        <>
+        <div className="desktop-workspace-layer">
           <header className="app-header cockpit-app-header">
             <button className="brand-lockup" type="button" onClick={openHome}>
               <img className="mycelium-mark" src="/icons/nevolium.svg" alt="" aria-hidden="true" />
@@ -505,7 +503,7 @@ export default function App() {
               <span>{{ phone: w('phone'), tablet: w('tablet'), desktop: w('desktop') }[deviceClass]}</span>
               <span>{w('privateLayout')}</span>
             </div>
-            <details className="cockpit-preferences" open={deviceClass === 'desktop'}>
+            <details className="cockpit-preferences">
               <summary>{w('customize')}</summary>
               <div>
               <label>
@@ -614,7 +612,7 @@ export default function App() {
                 : []),
             ]}
           />
-        </>
+        </div>
       ) : null}
     </main>
   )

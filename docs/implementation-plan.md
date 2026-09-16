@@ -192,6 +192,12 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 ### D09 — Mycelium 3D interactif et vue spatiale
 
 - **Prérequis :** D08.
+- **Révision KISS acceptée :** [ADR-033](decisions/ADR-033-kiss-contextual-mycelium.md).
+  Le réseau transparent occupe le bureau au-dessus d'un fond choisi ; les outils lisibles s'ouvrent
+  au-dessus avec retour au même contexte. Simplifier sélection/fiche/liens et personnalisation,
+  garder la scène bornée, les repères stables et les voies clavier/liste/tactile. Fond personnel
+  conservé via Assets/WorkspaceLayout ; aucune nouvelle source de vérité. Le parcours et FR/EN
+  sont des critères d'acceptation immédiats, pas seulement une consolidation D13.
 - **Clarification utilisateur du 16 septembre :** le moteur 3D adopté doit porter l’accueil
   et la navigation transversale dès l’ouverture. L’accueil est personnalisable par utilisateur
   (outils, objets épinglés, dossiers de raccourcis, ordre), FR/EN, avec présentation simplifiée
@@ -217,6 +223,14 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 - **Livraison :** contexte de sélection contrôlé ; propositions de tâches/liens/replanification,
   aperçu, approbation, progression, annulation et historique. Interface Agents/Skills : portée,
   modèle, budget, outils, mémoire ; commandes/raccourcis déterministes avant le modèle.
+- **Ordre interne KISS (ADR-033) :** capture personnelle sans classement préalable et liens
+  automatiques explicables/corrigeables ; assistant sur les sources et plan inspectable ; voix
+  Web push-to-talk vers les mêmes commandes ; première mission serveur récurrente avec budget,
+  pause/historique et attention minimale. Points de reprise d'un même lot, pas branches concurrentes.
+  Les confirmations suivent le périmètre autorisé et les conséquences ; pas d'approbation par lien courant.
+- **Qualification :** corpus brut avec attentes séparées du contexte modèle, contradictions,
+  provenance versionnée, refus durable, absence de fuite et de mutation planning par simple similarité.
+  Voix/texte et retries aboutissent aux mêmes identités ; une mission survit à la fermeture du navigateur.
 - **Sortie :** une demande sur des sources propose un plan inspectable ; rejet sans mutation,
   approbation idempotente, conflit concurrent détecté, coût/provenance visibles.
 - **Limite :** adaptation du profil proposée ou paramétrée ; aucune autorité augmentée à l'insu de l'utilisateur.
@@ -236,6 +250,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 ### D12 — synchronisation, attention et collaboration
 
 - **Prérequis :** D11.
+- **Réemploi :** l'attention minimale des missions arrive en D10. D12 consolide notifications et
+  continuité ; la collaboration avancée est qualifiée séparément du premier pilote quotidien.
 - **Livraison :** boîte d'attention (approbations/tâches/messages/alertes), préférences et livraison
   des notifications ; reconnexion multi-appareil. Realtime authentifié, documents persistés,
   partage/rôles/conflits explicites sans casser l'isolation privée.
@@ -252,7 +268,10 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 
 ### D13 — version personnelle utilisable, pilote à deux
 
-- **Prérequis :** D05–D12.
+- **Prérequis :** D05–D11 et continuité minimale D12 pour les fonctions exposées ; deux comptes
+  isolés. Coédition avancée exclue du pilote tant qu'elle n'est pas qualifiée.
+- **Règle transversale :** onboarding, simplicité, accessibilité et FR/EN commencent en D09/D10 ;
+  D13 consolide l'ensemble, mesure l'usage autonome et les dépenses sur plusieurs jours.
 - **Livraison :** onboarding/aide, consolidation des réglages API de D05 et clés propres par compte (BYOK), coûts/quotas,
   sauvegarde/export/suppression, santé/erreurs actionnables, Web mobile/PWA, accessibilité, FR/EN
   de base et upgrades réversibles ; aucun cache offline de secrets.
@@ -275,7 +294,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 
 ### D15 — voix conversationnelle
 
-- **Prérequis :** D14.
+- **Prérequis :** commandes D10 ; D14 seulement pour les fonctions locales/globales de l'appareil.
+  Le push-to-talk Web arrive en D10. D15 étend le dialogue, les interruptions et la présence.
 - **Livraison :** push-to-talk avant wake word optionnel, VAD/transcription, transport temps réel,
   synthèse/interruption, reprise texte, consentement et conservation audio.
 - **Sortie :** latence mesurée, microphone réellement coupé, action sensible confirmée sur le
@@ -284,6 +304,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 ### D16 — automatisations et navigateur contrôlé
 
 - **Prérequis :** D11–D13 ; D14 seulement pour les actions sur appareil.
+- **Réemploi :** les missions serveur horaires simples arrivent en D10, les premiers déclencheurs
+  connectés en D11. D16 étend conditions/actions et navigation contrôlée sans second ordonnanceur.
 - **Livraison :** horaires/événements, conditions/actions, pause/expiration, simulation/historique ;
   réutiliser Temporal/MCP/Activepieces selon besoin. Browser déterministe avant navigation IA,
   comptes/domaines autorisés, téléchargements bornés, effets externes contrôlés.

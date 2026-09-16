@@ -13,7 +13,9 @@ import type { CockpitProfile, CockpitDeviceClass } from './CockpitShell'
 import Customize from './MyceliumHome/Customize'
 import { useHomeLayout } from './MyceliumHome/useHomeLayout'
 import { useHomeMessages } from './MyceliumHome/messages'
-import { TOOLS, MAX_ENTRIES, homeGraph, type BrowserNode, type BrowserPage, type ToolKey } from './MyceliumHome/model'
+import { DesktopBackground, BackgroundSettings } from './MyceliumHome/DesktopBackground'
+import { useSelectionDetails } from './MyceliumHome/useSelectionDetails'
+import { DEFAULT_BACKGROUND, TOOLS, MAX_ENTRIES, homeGraph, type BrowserNode, type BrowserPage, type ToolKey } from './MyceliumHome/model'
 import './MyceliumHome/home.css'
 
 export type MyceliumDestinationKey = ToolKey
@@ -34,6 +36,7 @@ export default function MyceliumHome(props: Props) {
   const layout = useHomeLayout(props.apiUrl)
   const panelVisible = usePanelVisibility()
   const [customizing, setCustomizing] = useState(false)
+  const [backgroundError, setBackgroundError] = useState(false)
   const [place, setPlace] = useState<Place>(ROOT), [history, setHistory] = useState<Place[]>([])
   const [selectedId, setSelectedId] = useState('')
   const [page, setPage] = useState<BrowserPage | null>(null), [loading, setLoading] = useState(false), [error, setError] = useState(false)
@@ -42,9 +45,13 @@ export default function MyceliumHome(props: Props) {
   const [revision, setRevision] = useState(0), [filter, setFilter] = useState('')
   const [fileUrl, setFileUrl] = useState<string | null>(null), [fileError, setFileError] = useState(false), [fileBusy, setFileBusy] = useState(false)
   const toolsMenu = useRef<HTMLDetailsElement | null>(null)
+  const detailsPanel = useRef<HTMLElement | null>(null)
+  const selectionOrigin = useRef<HTMLElement | null>(null)
   const fileRequest = useRef<AbortController | null>(null)
   const { setSelectedProjectId, setSelectedDocumentId, setSelectedTaskId } = useProjectSelection()
   const pins = layout.value.entries.filter(entry => !entry.ref.startsWith('tool:')).map(entry => entry.ref).sort().join('|')
+  const details = useSelectionDetails(props.apiUrl, selectedId, props.active, revision + authEpoch)
+  const background = layout.value.background || DEFAULT_BACKGROUND
 
   useEffect(() => {
     if (!layout.ready || !props.active) return
@@ -78,10 +85,13 @@ export default function MyceliumHome(props: Props) {
       if (props.active && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault(); if (toolsMenu.current) { toolsMenu.current.open = true; toolsMenu.current.querySelector('button')?.focus() }
       }
-      if (event.key === 'Escape' && toolsMenu.current?.open) { toolsMenu.current.open = false; toolsMenu.current.querySelector('summary')?.focus() }
+      if (event.key === 'Escape' && props.active && !customizing) {
+        if (toolsMenu.current?.open) { toolsMenu.current.open = false; toolsMenu.current.querySelector('summary')?.focus() }
+        else { setSelectedId(''); selectionOrigin.current?.focus() }
+      }
     }
     window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key)
-  }, [props.active])
+  }, [props.active, customizing])
   useEffect(() => {
     const refresh = () => { if (props.active && !document.hidden) setRevision(value => value + 1) }
     window.addEventListener('focus', refresh); window.addEventListener('online', refresh)
@@ -99,14 +109,21 @@ export default function MyceliumHome(props: Props) {
   useEffect(() => { fileRequest.current?.abort(); setFileUrl(null); setFileError(false); setFileBusy(false) }, [selectedId])
   useEffect(() => () => { if (fileUrl) URL.revokeObjectURL(fileUrl) }, [fileUrl])
   useEffect(() => () => fileRequest.current?.abort(), [])
+  useEffect(() => {
+    if (selectedId && props.active) detailsPanel.current?.focus({ preventScroll: props.deviceClass !== 'phone' })
+  }, [selectedId, props.active, props.deviceClass])
 
   const home = useMemo(() => homeGraph(layout.value, resolved, key => m(key), place.folder), [layout.value, resolved, place.folder, language])
   const graph = place.ref ? (page?.focus === place.ref ? page : { nodes: [], edges: [] }) : home
   const selected = graph.nodes.find(node => node.id === selectedId)
   const neighbours = graph.nodes.filter(node => node.id !== (place.ref || home.root))
   const saveCopy = layoutSaveCopy[language]
+  const saveStatus = <div className="home-save-status"><span role="status">{saveCopy[layout.persistence.status]}</span>
+    {layout.persistence.status === 'error' ? <button type="button" onClick={layout.persistence.retry}>{saveCopy.retry}</button> : null}</div>
+  function closeDetails() { setSelectedId(''); selectionOrigin.current?.focus() }
   function visit(next: Place) { setHistory(value => [...value.slice(-39), place]); setPlace(next); setSelectedId(''); setFilter('') }
   function activate(node: BrowserNode) {
+    selectionOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     if (node.unavailable) { setSelectedId(node.id); return }
     if (node.entityType === 'tool') { props.onOpenSpace(node.id.slice(5) as ToolKey); return }
     if (node.entityType === 'folder') { visit({ ref: null, folder: node.id.slice(7), cursor: null }); return }
@@ -138,7 +155,9 @@ export default function MyceliumHome(props: Props) {
     } catch { if (!controller.signal.aborted) setFileError(true) }
     finally { if (!controller.signal.aborted) setFileBusy(false) }
   }
-  return <section className="mycelium-home home-browser" aria-labelledby="mycelium-home-title">
+  return <section className={`mycelium-home home-browser${props.active ? '' : ' is-background'}`} aria-labelledby="mycelium-home-title" inert={!props.active} aria-hidden={!props.active || undefined}>
+    <DesktopBackground apiUrl={props.apiUrl} value={background} onError={setBackgroundError} />
+    <div className="home-interface home-topbar">
     <header className="app-header">
       <div className="brand-lockup"><img className="mycelium-mark" src="/icons/nevolium.svg" alt="" /><div><span className="eyebrow">{w('brandMotto')}</span><h1>Nevolium</h1></div></div>
       <div className="app-header-actions"><span className={`connection-state ${props.online ? 'is-online' : 'is-offline'}`}><i aria-hidden="true" />{props.online ? w('online') : w('offline')}</span>
@@ -150,24 +169,35 @@ export default function MyceliumHome(props: Props) {
     <div className="home-navigation"><button type="button" disabled={!history.length} onClick={() => { setPlace(history.at(-1) || ROOT); setHistory(value => value.slice(0, -1)); setSelectedId('') }}>← {m('back')}</button>
       <button type="button" onClick={() => { setPlace(ROOT); setHistory([]); setSelectedId('') }}>{m('home')}</button>
       <details ref={toolsMenu} className="home-tools"><summary aria-keyshortcuts="Control+K Meta+K">{m('browseTools')}</summary><div>{[...TOOLS, ...(props.isAdmin ? ['model-settings' as const] : [])].map(key =>
-        <button type="button" key={key} data-space={key} onClick={() => props.onOpenSpace(key)}>{m(key)}</button>)}</div></details>
-      <button type="button" onClick={() => setRevision(value => value + 1)}>{m('refresh')}</button>
-      <span role="status">{saveCopy[layout.persistence.status]}</span>
-      {layout.persistence.status === 'error' ? <button type="button" onClick={layout.persistence.retry}>{saveCopy.retry}</button> : null}
+        <button type="button" key={key} data-space={key} onClick={() => props.onOpenSpace(key)}>{m(key)}</button>)}
+        <button type="button" onClick={() => { setRevision(value => value + 1); if (toolsMenu.current) toolsMenu.current.open = false }}>{m('refresh')}</button>
+      </div></details>
+      {saveStatus}
     </div>
-    {customizing && layout.ready ? <Customize apiUrl={props.apiUrl} layout={layout.value} update={layout.update} resolved={resolved} onDone={() => setCustomizing(false)} undo={layout.undo} canUndo={layout.canUndo} /> : null}
+    {backgroundError ? <p role="status">{m('backgroundUnavailable')}</p> : null}
+    </div>
+    {customizing && layout.ready ? <Customize apiUrl={props.apiUrl} layout={layout.value} update={layout.update} resolved={resolved} onDone={() => setCustomizing(false)} undo={layout.undo} canUndo={layout.canUndo} saveStatus={saveStatus}>
+      <BackgroundSettings apiUrl={props.apiUrl} value={background} update={next => layout.update(value => ({ ...value, background: next }))} />
+      <details className="home-preferences-simple"><summary>{m('otherSettings')}</summary><div className="home-controls">
+        <label>{w('profile')}<select value={props.profile} onChange={event => props.onProfileChange(event.target.value as CockpitProfile)}>
+          {(['balanced', 'focus', 'review'] as const).map(key => <option key={key} value={key}>{w(key === 'focus' ? 'focusProfile' : key)}</option>)}
+        </select></label><label>{w('ambience')}<select value={props.ambience} onChange={event => props.onAmbienceChange(event.target.value as CockpitAmbience)}>
+          {(['neural', 'calm', 'minimal'] as const).map(key => <option key={key} value={key}>{w(key)}</option>)}
+        </select></label>{props.installAvailable ? <button type="button" onClick={props.onInstall}>{w('installApp')}</button> : null}
+      </div></details>
+    </Customize> : null}
     {pinsError || error ? <p role="alert">{m('error')} <button type="button" onClick={() => setRevision(value => value + 1)}>{m('retry')}</button></p> : null}
     {loading ? <p role="status">{m('loading')}</p> : null}
     <div className={`home-browser-body${selected ? ' has-selection' : ''}`}>
       <div className="home-network-area">
         <p className="home-legend">{place.ref ? m('actualLinks') : m('shortcuts')}</p>
         {graph.nodes.length ? <SpatialWorkspace key={place.ref || home.root} apiUrl={props.apiUrl} projectId="" workspaceKey={`mycelium.home.camera.${(place.ref || home.root).replaceAll(':', '.')}`}
-          rootId={place.ref || home.root} defaultView="3d" compact graph={graph} nodes={graph.nodes} selected={selectedId ? [selectedId] : []} groups={[]}
+          rootId={place.ref || home.root} defaultView="3d" compact paused={!props.active || customizing || props.ambience !== 'neural'} interactive={props.active && !customizing} graph={graph} nodes={graph.nodes} selected={selectedId ? [selectedId] : []} groups={[]}
           positions={place.ref ? undefined : home.positions} onSelect={id => { const node = graph.nodes.find(item => item.id === id); if (node) activate(node); else setSelectedId('') }} onOpen={() => { if (selected) open(selected) }}>
           <ul className="home-simple-list" aria-label={m('browse')}>{neighbours.map(node => <li key={node.id}><button type="button" data-node={node.id}
             onClick={() => activate(node)}><span>{node.label}</span><small>{m(node.kind)}</small></button></li>)}</ul>
         </SpatialWorkspace> : null}
-        <details className="home-browse-list"><summary>{m('browse')} · {neighbours.length}</summary>
+        <details className="home-browse-list home-interface"><summary>{m('browse')} · {neighbours.length}</summary>
           <label>{m('search')}<input value={filter} onChange={event => setFilter(event.target.value)} /></label>
           <ul className="home-simple-list">{neighbours.filter(node => node.label.toLocaleLowerCase().includes(filter.toLocaleLowerCase())).map(node => <li key={node.id}>
             <button type="button" onClick={() => activate(node)}><span>{node.label}</span><small>{m(node.kind)}</small></button></li>)}</ul>
@@ -176,8 +206,8 @@ export default function MyceliumHome(props: Props) {
         {!place.ref && !neighbours.length ? <p>{m('noPins')}</p> : null}
         {place.ref && page?.focus === place.ref && page.next_cursor ? <button type="button" onClick={() => visit({ ...place, cursor: page.next_cursor })}>{m('more')}</button> : null}
       </div>
-      {selected ? <aside className="home-item-details" aria-label={selected.label}>
-        <span className="eyebrow">{m(selected.kind)}</span><h2>{selected.label}</h2>
+      {selected ? <aside ref={detailsPanel} tabIndex={-1} className="home-item-details home-interface" aria-label={selected.label}>
+        <div className="home-details-heading"><span className="eyebrow">{m(selected.kind)}</span><button type="button" onClick={closeDetails} aria-label={m('close')}>×</button></div><h2>{selected.label}</h2>
         {selected.unavailable ? <p>{m('unavailableHelp')}</p> : <>
           <div className="home-controls"><button type="button" onClick={() => explore(selected)} disabled={selected.id === place.ref}>{m('explore')}</button>
             {['project', 'task', 'document', 'conversation'].includes(selected.entityType) ? <button type="button" onClick={() => open(selected)}>{m('open')}</button> : null}
@@ -193,21 +223,20 @@ export default function MyceliumHome(props: Props) {
             {fileUrl ? <img className="home-file-preview" src={fileUrl} alt={selected.label} /> : null}
             {fileError ? <p role="alert">{m('error')}</p> : null}
           </div> : null}
-          {place.ref ? <><h3>{m('links')}</h3><ul className="home-relations">{graph.edges.filter(edge => edge.source === selected.id || edge.target === selected.id).map(edge => {
-            const source = graph.nodes.find(node => node.id === edge.source), target = graph.nodes.find(node => node.id === edge.target)
+          <h3>{m('links')}</h3>
+          {details.loading ? <p role="status">{m('loading')}</p> : null}
+          {details.error ? <p role="alert">{m('error')} <button type="button" onClick={() => setRevision(value => value + 1)}>{m('retry')}</button></p> : null}
+          {!details.loading && !details.error && details.page && !details.page.edges.length ? <p>{m('noLinks')}</p> : null}
+          <ul className="home-relations">{(details.page?.edges || []).filter(edge => edge.source === selected.id || edge.target === selected.id).map(edge => {
+            const source = details.page?.nodes.find(node => node.id === edge.source), target = details.page?.nodes.find(node => node.id === edge.target)
             const other = selected.id === edge.source ? target : source
             return <li key={edge.id}><span>{source?.label} — {m(edge.relation)} {edge.directed ? '→' : '↔'} {target?.label}{edge.dependencyType ? ` (${m(edge.dependencyType)}${edge.lagSeconds ? `, +${edge.lagSeconds} s` : ''})` : ''}</span>{other ? <button type="button" onClick={() => explore(other)}>{m('explore')} : {other.label}</button> : null}</li>
-          })}</ul></> : null}
+          })}</ul>
+          <div className="home-controls">{details.cursor ? <button type="button" disabled={details.loading} onClick={details.first}>{m('back')}</button> : null}
+            {details.page?.next_cursor ? <button type="button" disabled={details.loading} onClick={details.more}>{m('more')}</button> : null}</div>
         </>}
       </aside> : null}
     </div>
-    <details className="home-preferences-simple"><summary>{w('customize')}</summary><div className="home-controls">
-      <label>{w('profile')}<select value={props.profile} onChange={event => props.onProfileChange(event.target.value as CockpitProfile)}>
-        {(['balanced', 'focus', 'review'] as const).map(key => <option key={key} value={key}>{w(key === 'focus' ? 'focusProfile' : key)}</option>)}
-      </select></label><label>{w('ambience')}<select value={props.ambience} onChange={event => props.onAmbienceChange(event.target.value as CockpitAmbience)}>
-        {(['neural', 'calm', 'minimal'] as const).map(key => <option key={key} value={key}>{w(key)}</option>)}
-      </select></label>{props.installAvailable ? <button type="button" onClick={props.onInstall}>{w('installApp')}</button> : null}
-    </div></details>
     {!panelVisible ? null : <span className="sr-only">{w(props.deviceClass)}</span>}
   </section>
 }

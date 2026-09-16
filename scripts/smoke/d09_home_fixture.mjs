@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto'
 export const corpus=JSON.parse(fs.readFileSync(new URL('../../examples/mycelium/manifest.json',import.meta.url),'utf8'))
 export function uuid(key){const h=createHash('sha256').update(key).digest('hex');return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-a${h.slice(17,20)}-${h.slice(20,32)}`}
 export const ref=key=>{const [kind,id]=key.split(':');return kind==='tool'?key:`${kind}:${uuid(key)}`}
+export const wallpaperId=uuid('wallpaper')
+export const wallpaperBytes=fs.readFileSync(new URL('../../apps/web/public/icons/nevolium-192.png',import.meta.url))
 export function makeHomeFixture(){
  const nodes=new Map(),edges=[],layouts=new Map(),writes=[]
  for(const [kind,group] of [['project','projects'],['document','documents'],['task','tasks'],['asset','assets']])for(const item of corpus[group]){
@@ -24,7 +26,7 @@ export function makeHomeFixture(){
  for(const t of corpus.tasks.filter(t=>t.parent))edges.push({id:`task-parent:${t.key}`,source:ref(`task:${t.parent}`),target:ref(`task:${t.key}`),relation:'contains',category:'planning',directed:true})
  const profile=corpus.home_profiles.recherche
  layouts.set('mycelium.home.navigation',{schema_version:1,layout:{folders:profile.folders,entries:profile.entries.map(e=>({...e,ref:ref(e.ref)}))}})
- return {nodes,edges,layouts,writes,failSave:false,revoked:new Set(),reads:0}
+ return {nodes,edges,layouts,writes,failSave:false,revoked:new Set(),reads:0,wallpaperUpload:null,wallpaperUnavailable:false}
 }
 export async function mockHome(context,state){
  await context.route('**/v1/**',async route=>{
@@ -49,6 +51,14 @@ export async function mockHome(context,state){
    return send({focus,nodes:[...ids].map(id=>state.nodes.get(id)),edges,next_cursor:start+limit<all.length?String(start+limit):null})
   }
   const collection={projects:'project',documents:'document',tasks:'task',assets:'asset'}[p.split('/')[2]]
+  if(p==='/v1/assets'&&method==='POST'){
+   state.wallpaperUpload=request.postDataBuffer()
+   return send({id:wallpaperId,mime_type:'image/png',size_bytes:wallpaperBytes.length},201)
+  }
+  if(p===`/v1/assets/${wallpaperId}/content`){
+   if(state.wallpaperUnavailable)return send({},404)
+   return route.fulfill({contentType:'image/png',headers:{'access-control-allow-origin':'*'},body:wallpaperBytes})
+  }
   if(collection&&p.endsWith('/content')){
    const item=corpus.assets.find(a=>uuid(`asset:${a.key}`)===p.split('/')[3]);if(!item)return send({},404)
    return route.fulfill({contentType:item.mime_type,headers:{'access-control-allow-origin':'*'},body:fs.readFileSync(new URL(`../../examples/mycelium/${item.path}`,import.meta.url))})

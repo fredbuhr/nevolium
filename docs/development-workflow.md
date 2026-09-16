@@ -8,6 +8,8 @@ validations administratives. Il sert après changement de discussion, perte du w
 1. `AGENTS.md`, puis `PROJECT_STATE.md` depuis le live vérifié.
 2. Branche/PR active, diff contre `main`, derniers commits et checks réellement exécutés.
 3. Section Dxx du `docs/implementation-plan.md`, code concerné et ADR applicables.
+   Lire aussi `docs/product-memory.md` pour les décisions produit acceptées. Si le checkpoint de
+   main ne nomme aucune branche active, comparer les PR ouvertes et leurs checkpoints avant d'en créer une.
 4. `docs/status.md` pour la maturité ; audit et archives seulement comme preuves historiques.
 
 Ne pas repartir d'un SHA copié dans une conversation. Une branche retirée n'est pas un point de reprise.
@@ -64,7 +66,7 @@ de la même tête pour les intégrations. Si elle est inaccessible, laisser la P
 ## Message de reprise à utiliser dans une nouvelle discussion
 
 > Reprends Nevolium depuis https://github.com/fredbuhr/nevolium. Vérifie le main live, lis AGENTS.md et
-> PROJECT_STATE.md, inspecte la branche/PR active et ses checks. Continue uniquement le lot Dxx
+> PROJECT_STATE.md et docs/product-memory.md, inspecte les PR ouvertes, la branche active et ses checks. Continue uniquement le lot Dxx
 > réellement actif du plan, à partir de la prochaine action enregistrée. Ne fais confiance ni au
 > SHA de cette discussion ni aux anciens next action des archives. Préserve le scope, les preuves
 > et les décisions existantes ; signale tout écart avant de changer de direction.
