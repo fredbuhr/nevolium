@@ -147,6 +147,10 @@ Les suivis de [première reprise](archive/d09-organic-revision-2026-09-15.md),
 [matière translucide](archive/d09-translucent-tissue-2026-09-16.md) distinguent les rapports
 matériels, l'implémentation, les preuves et l'acceptation visuelle encore attendue.
 
+Le modèle `48d7be9` est accepté pour l'instant par l'utilisateur le 16 septembre 2026.
+Cette référence est adoptée pour l'installation ; les prochaines étapes portent sur l'usage
+et la qualification du pilote, sans relancer une recherche esthétique non demandée.
+
 ## Personnalisation
 
 Les profils `Équilibré`, `Concentration` et `Revue` organisent les panneaux. Les ambiances

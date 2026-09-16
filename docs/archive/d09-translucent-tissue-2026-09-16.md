@@ -200,3 +200,17 @@ focus et l'énergie indépendante sont conservés. Les diagnostics avant la vue 
 échec consignent boîte, viewport, visibilité, canvas et compteur ; aucun délai ni seuil de
 réussite n'est assoupli. Cette réduction traite une hausse concrète du budget de géométrie ;
 elle ne prétend pas démontrer à elle seule la cause du timeout. Une nouvelle exécution est requise.
+
+## Acceptation utilisateur et passage à l'installation
+
+Le 16 septembre, l'utilisateur valide pour l'instant le modèle remis et autorise son
+installation puis la continuation du travail. La référence finale 48d7be9 passe 8/8 workflows,
+13 scénarios spatiaux et 16 contrôles kit (UI run 35046479283, animation 2 388 pixels/calme 0).
+La forme et la matière sont conservées. L'intégration au dépôt et l'installation pilote
+peuvent avancer ; les essais physiques manquants ne sont pas déclarés accomplis.
+
+La préparation ajoute un inventaire SSH en lecture seule, testé sur fixtures : références
+Git, projet Compose, images/montages et compteurs SQL. Il ne déclenche aucune sauvegarde,
+migration ou activation. La [procédure D09](../d09-pilot-installation.md) conserve le point
+de départ D05/0015 attesté et organise la transition compatible jusqu'à 0018, avec sauvegarde
+et retour cohérents. Le prochain résultat requis est le relevé réel du serveur Netcup.

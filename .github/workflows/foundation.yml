@@ -107,6 +107,9 @@ jobs:
       - name: Prove monitored OpenBao token renewal contract
         run: python scripts/smoke/openbao_renewal_contract.py
 
+      - name: Prove D09 pilot inventory is read-only and withholds private diagnostics
+        run: python scripts/smoke/d09_pilot_preflight_contract.py
+
       - name: Prove bounded production TLS ingress contract
         run: python scripts/smoke/ingress_contract.py
 

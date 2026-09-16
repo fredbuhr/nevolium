@@ -17,9 +17,10 @@ Sa tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f` passe **9/9 workflows
 avec un arbre identique au merge. Le handoff main `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`
 passe **8/8 workflows push**. D08 n'est pas déployé sur le pilote.
 
-D09 est implémenté sur la branche de la PR #93 draft, en qualification. La référence fonctionnelle `81f4cf2f163dd314684dc312d90ab5dbba749315` passe **8/8 workflows PR**.
-Ses preuves exactes et les limites matérielles restent dans [PROJECT_STATE](../PROJECT_STATE.md) et le
-[suivi D09](archive/d09-spatial-progress-2026-09-15.md). Ce statut ne déclare pas D09 intégré.
+D09 est implémenté sur la PR #93 ; le modèle visuel `48d7be9` est accepté par l'utilisateur
+le 16 septembre avec autorisation d'installation. Cette tête passe **8/8 workflows PR**, les
+13 scénarios spatiaux et les 16 contrôles du kit. Intégration puis installation pilote en cours :
+voir [la procédure D09](d09-pilot-installation.md) et `PROJECT_STATE.md` pour l'état live.
 L'utilisateur rapporte un bon fonctionnement du banc sur ordinateur/tablette/téléphone et fournit
 un essai ordinateur de dix minutes, 501 objets/1 500 liens, médiane 165 FPS. La mémoire n'est pas
 mesurée. La correction du dessin trop technologique est en cours de qualification :
@@ -40,7 +41,7 @@ mesurée. La correction du dessin trop technologique est en cours de qualificati
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
 | Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
-| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; enveloppes translucides irrégulières, petits noyaux cyan/menthe, raccords continus et circulation lumineuse après retours utilisateur | Non intégré/déployé ; nouveau rendu/animation à qualifier, preuve mémoire/GPU intégré/cockpit à compléter |
+| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; enveloppes translucides irrégulières, petits noyaux cyan/menthe, raccords continus et circulation lumineuse après retours utilisateur | Design accepté ; intégration/installation en cours ; mémoire/GPU intégré/cockpit physique à compléter |
 | Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
@@ -183,4 +184,4 @@ migrer ces données avant un rollback réel.
 
 Reprise visuelle du 16 septembre : [corps arrondis et raccords](archive/d09-smooth-junctions-2026-09-16.md). Le relevé matériel f6912bd (201/300 balanced, médiane/p10 165 FPS sur 600,881 s) concerne le parent ; il ne qualifie pas les changements suivants. Les preuves du descendant sont rattachées au head exact de #93.
 
-Second retour du 16 septembre : [matière translucide et énergie](archive/d09-translucent-tissue-2026-09-16.md). Le rapport d5c438e (401/1000 high, médiane 136 FPS sur 60,281 s, mémoire inconnue) décrit la version jugée trop mate ; il ne mesure pas le descendant. La validation visuelle du nouveau tissu reste ouverte.
+Second retour du 16 septembre : [matière translucide et énergie](archive/d09-translucent-tissue-2026-09-16.md). Le rapport d5c438e (401/1000 high, médiane 136 FPS sur 60,281 s, mémoire inconnue) décrit la version jugée trop mate ; il ne mesure pas le descendant. Le modèle visuel 48d7be9 est ensuite accepté pour l’instant ; l’installation et les mesures physiques restent distinctes.
