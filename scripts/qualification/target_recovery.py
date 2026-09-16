@@ -94,6 +94,7 @@ class Runner:
         self.restic_env_file = args.restic_env_file.absolute()
         self.openbao_recovery_file = args.openbao_recovery_file.absolute()
         self.report_root = args.report_dir.absolute()
+        self.expected_commit = getattr(args, "expected_commit", None)
         self.commit = ""
         self.private_log: Path | None = None
         self.redactions: set[str] = set()
@@ -113,6 +114,16 @@ class Runner:
         self.nats_stream = f"D04_RECOVERY_{suffix.upper()}"
         self.nats_subject = f"d04.recovery.{suffix}"
         self.seaweed_path = f"d04-recovery/{suffix}.bin"
+
+    def validate_checkout(self, branch: str, commit: str) -> None:
+        if self.expected_commit is not None:
+            if not re.fullmatch(r"[0-9a-f]{40}", self.expected_commit):
+                raise RuntimeError("--expected-commit doit etre un SHA Git complet")
+            if commit != self.expected_commit:
+                raise RuntimeError("le checkout ne correspond pas au commit attendu")
+            return
+        if branch != EXPECTED_BRANCH:
+            raise RuntimeError("branche D04 attendue absente")
 
     def emit(self, event: str, **values: object) -> None:
         print(json.dumps({"event": event, **values}, separators=(",", ":")), flush=True)
@@ -283,18 +294,17 @@ class Runner:
         self.private_file(self.env_file)
         self.private_file(self.openbao_recovery_file)
         git_env = dict(os.environ, GIT_OPTIONAL_LOCKS="0")
-        branch = self.run(
-            ["git", "branch", "--show-current"], env=git_env
-        ).stdout.strip()
-        if branch != EXPECTED_BRANCH:
-            raise RuntimeError("branche D04 attendue absente")
         if self.run(
             ["git", "status", "--porcelain"], env=git_env
         ).stdout.strip():
             raise RuntimeError("checkout non propre")
+        branch = self.run(
+            ["git", "branch", "--show-current"], env=git_env
+        ).stdout.strip()
         self.commit = self.run(
             ["git", "rev-parse", "HEAD"], env=git_env
         ).stdout.strip()
+        self.validate_checkout(branch, self.commit)
         values = self.configure_restic()
 
         stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
@@ -868,6 +878,13 @@ def main() -> None:
     )
     parser.add_argument(
         "--report-dir", type=Path, default=Path("/var/lib/nevolium/qualification")
+    )
+    parser.add_argument(
+        "--expected-commit",
+        help=(
+            "SHA Git complet exige pour le checkout source ; remplace le garde de branche D04 "
+            "pour une sauvegarde de release epinglee"
+        ),
     )
     args = parser.parse_args()
     runner = Runner(args)
