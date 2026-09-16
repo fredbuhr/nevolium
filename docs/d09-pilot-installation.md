@@ -173,6 +173,19 @@ publié et zéro réservation active. Les 5 réservations historiques `uncertain
 la configuration modèle active reste unique. L'activation technique est donc réussie ; le go final
 reste soumis au contrôle après stabilisation et aux parcours fonctionnels/visuels réels.
 
+### Contrôle après stabilisation
+
+Après 6 à 7 minutes, les quatre conteneurs applicatifs sont toujours `running`, avec zéro
+redémarrage, les digests attendus et le répertoire Compose de la release active. PostgreSQL,
+NATS, Temporal et OpenBao sont `healthy`. Les routes Core `/health/live`, `/health/ready` et
+`/health/trust`, ainsi que la racine Web interne, répondent toutes HTTP 200.
+
+La transaction SQL en lecture seule retrouve exactement
+`0018_editable_knowledge|7|57|2|0|0|0|0|5|1` : le schéma, les objets métier, l'absence de
+travail/outbox/réservation active, les cinq réservations historiques `uncertain` et l'unique
+configuration modèle active sont inchangés. Le runtime D09 est donc techniquement stable.
+L'acceptation du lot attend encore les parcours navigateur, la persistance et le contrôle tactile.
+
 ## Retour arrière
 
 Le lien `current` sélectionne des sources, pas une version de la base. Après `0018`,
