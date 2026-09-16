@@ -163,7 +163,7 @@ export default function KnowledgeWorkspace({
 
       <KnowledgeWorkspaceStateView loading={loading} error={error} selectedProjectId={selectedProjectId} />
 
-      {!loading && !error && selectedProjectId && (
+      {(!loading || projectDocuments.length > 0) && !error && selectedProjectId && (
         <>
           {projectDocuments.length > 0 && <label className="knowledge-document-picker">{w('currentDocument')}
             <select value={selectedDocumentId} onChange={event => onSelectedDocumentIdChange(event.target.value)}>

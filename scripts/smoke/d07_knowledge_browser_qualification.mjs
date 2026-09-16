@@ -233,6 +233,7 @@ async function qualifyDesktop(browser, state) {
   assert.equal(await editor.locator('.knowledge-create-row:visible').count(), 0, 'Advanced capture fields must start collapsed')
   await editor.getByLabel('Titre', { exact: true }).first().fill('Idée simple')
   await editor.getByLabel('Votre idée', { exact: true }).fill('Une idée enregistrée sans choisir un type ou un statut.')
+  await editor.locator('.knowledge-capture').screenshot({ path: path.join(output, 'guided-idea-fr.png') })
   await editor.getByRole('button', { name: 'Enregistrer l’idée', exact: true }).click()
   await eventually(() => Boolean(state.createdId), 'Simple idea capture was not submitted')
   const simpleIdeaId = state.createdId
@@ -255,6 +256,9 @@ async function qualifyDesktop(browser, state) {
   await editor.getByLabel('URL de la source').fill('https://example.com/source-d07')
   await editor.getByLabel('Libellé').fill('Source D07')
   await editor.getByRole('button', { name: 'Ajouter la citation', exact: true }).click()
+  await editor.evaluate(element => { window.__d09CaptureBeforeSave = element })
+  await editor.getByLabel('Titre', { exact: true }).first().fill('Brouillon suivant conservé')
+  await editor.getByLabel('Votre idée', { exact: true }).fill('Cette saisie ne doit pas disparaître pendant la sauvegarde du document ouvert.')
   await editor.getByRole('button', { name: 'Enregistrer une nouvelle version', exact: true }).click()
   await eventually(() => state.saveCount === 1 && latest(state, state.createdId)?.generation === 2,
     'D07: new canonical generation was not saved')
@@ -262,6 +266,10 @@ async function qualifyDesktop(browser, state) {
   assert(saved.content_json?.root, 'D07: Lexical EditorState JSON was not sent')
   assert.match(saved.content_text, /Décision D07 avec provenance/)
   assert.equal((state.citations.get(saved.id) || []).length, 1, 'D07: citation was not version-bound')
+  await editor.getByRole('heading', { name: 'Décision navigateur D07 v2', exact: true }).waitFor()
+  assert.equal(await editor.evaluate(element => element === window.__d09CaptureBeforeSave), true,
+    'Saving must not remount the capture form or collapse the open source tools')
+  assert.equal(await editor.getByLabel('Titre', { exact: true }).first().inputValue(), 'Brouillon suivant conservé')
 
   await editor.getByRole('button', { name: 'Restaurer la version sélectionnée', exact: true }).waitFor({ state: 'visible' })
   await editor.getByRole('button', { name: 'Restaurer la version sélectionnée', exact: true }).click()

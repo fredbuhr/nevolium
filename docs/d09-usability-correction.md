@@ -73,6 +73,15 @@ masquer aucun échec ni retirer de contrôle. Nouvelle tête complète à requal
 
 ## Reprise
 
+Deuxième tête `26b9ccd…`, UI run `35098342681` : D05 bureau/tablette/téléphone et parcours
+connectés verts ; D06 planning vert ; D08/3D et leur persistance/FR-EN/tactile verts.
+Le cas sans relations affiche trois appartenances et anime 379 pixels à caméra fixe,
+contre 0 en pause. Les sept autres workflows PR sont verts. D07 reste rouge : après une
+sauvegarde, le rafraîchissement des documents démontait l’éditeur et refermait le volet
+des sources, masquant la restauration. Le correctif maintient l’éditeur pendant une
+relecture du même projet déjà chargé et filtre ses versions par document ; un test garde
+un brouillon de l’idée suivante pendant cette sauvegarde. Requalification requise.
+
 Lancer/inspecter UI workspace validation sur la tête de cette branche, traiter les échecs,
 inspecter les captures d’idée et de graphe peu relié. Ne proposer une activation qu’après
 qualification cohérente et conservation des protections de reprise du pilote.

@@ -120,7 +120,7 @@ export default function KnowledgeEditor({
 }: Props) {
   const m = useKnowledgeMessages()
   const w = useWorkspaceMessages()
-  const latest = useMemo(() => latestVersion(versions), [versions])
+  const latest = useMemo(() => latestVersion(versions.filter(version => version.document_id === selectedDocument?.id)), [versions, selectedDocument?.id])
   const authored = Boolean(selectedDocument && selectedDocument.kind !== 'source' && !selectedDocument.asset_id)
 
   const [newTitle, setNewTitle] = useState('')
