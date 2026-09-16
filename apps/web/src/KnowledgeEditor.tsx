@@ -17,6 +17,7 @@ import {
 
 import { readKnowledgeJson } from './knowledgeApi'
 import { useKnowledgeMessages } from './knowledgeMessages'
+import { useWorkspaceMessages } from './workspaceMessages'
 import type {
   AuthoredKnowledgeKind,
   AuthoredKnowledgeRead,
@@ -67,6 +68,7 @@ function editorStateFrom(version: DocumentVersion | null) {
 }
 
 function Toolbar({ label }: { label: (key: 'bold' | 'italic' | 'underline') => string }) {
+  const w = useWorkspaceMessages()
   const [editor] = useLexicalComposerContext()
   const controls = [
     ['bold', 'B'],
@@ -74,7 +76,7 @@ function Toolbar({ label }: { label: (key: 'bold' | 'italic' | 'underline') => s
     ['underline', 'U'],
   ] as const
   return (
-    <div className="knowledge-editor-toolbar" aria-label="Formatting">
+    <div className="knowledge-editor-toolbar" aria-label={w('formatting')}>
       {controls.map(([format, glyph]) => (
         <button
           type="button"
@@ -117,11 +119,13 @@ export default function KnowledgeEditor({
   onChanged,
 }: Props) {
   const m = useKnowledgeMessages()
+  const w = useWorkspaceMessages()
   const latest = useMemo(() => latestVersion(versions), [versions])
   const authored = Boolean(selectedDocument && selectedDocument.kind !== 'source' && !selectedDocument.asset_id)
 
   const [newTitle, setNewTitle] = useState('')
-  const [newKind, setNewKind] = useState<AuthoredKnowledgeKind>('note')
+  const [newKind, setNewKind] = useState<AuthoredKnowledgeKind>('idea')
+  const [newContent, setNewContent] = useState('')
   const [newEpistemic, setNewEpistemic] = useState<EpistemicStatus | ''>('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -212,11 +216,12 @@ export default function KnowledgeEditor({
           kind: newKind,
           epistemic_status: newEpistemic || null,
           content_json: {},
-          content_text: '',
+          content_text: newContent,
           citations: [],
         },
       )
       setNewTitle('')
+      setNewContent('')
       onChanged(created.id)
     } catch (cause) {
       setCreateError(cause instanceof Error ? cause.message : m('createError'))
@@ -369,26 +374,32 @@ export default function KnowledgeEditor({
     <section className="knowledge-editor-shell" aria-labelledby="knowledge-editor-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">{m('eyebrow')}</span>
-          <h2 id="knowledge-editor-heading">{m('heading')}</h2>
+          <h2 id="knowledge-editor-heading">{w('newIdea')}</h2>
+          <p>{w('ideaHelp')}</p>
         </div>
-        {latest && <span className="run-state">{m('generation')} {latest.generation}</span>}
       </div>
 
-      <div className="knowledge-create-row">
-        <label><span>{m('title')}</span><input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} maxLength={320} /></label>
-        <label><span>{m('kind')}</span><select value={newKind} onChange={(e) => setNewKind(e.target.value as AuthoredKnowledgeKind)}><option value="note">{m('note')}</option><option value="idea">{m('idea')}</option><option value="decision">{m('decision')}</option></select></label>
-        <label><span>{m('epistemic')}</span><select value={newEpistemic} onChange={(e) => setNewEpistemic(e.target.value as EpistemicStatus | '')}><option value="">{m('none')}</option><option value="hypothesis">{m('hypothesis')}</option><option value="supported">{m('supported')}</option><option value="contested">{m('contested')}</option><option value="verified">{m('verified')}</option></select></label>
-        <button type="button" disabled={!newTitle.trim() || creating} onClick={() => void createItem()}>{creating ? m('creating') : m('create')}</button>
-      </div>
+      <form className="knowledge-capture" onSubmit={event => { event.preventDefault(); void createItem() }}>
+        <label><span>{m('title')}</span><input value={newTitle} placeholder={w('ideaTitle')} onChange={(e) => setNewTitle(e.target.value)} maxLength={320} required disabled={creating} /></label>
+        <label><span>{w('ideaContent')}</span><textarea value={newContent} placeholder={w('newContent')} onChange={event => setNewContent(event.target.value)} rows={3} maxLength={100000} disabled={creating} /></label>
+        <details className="workspace-details">
+          <summary>{w('ideaOptions')}</summary>
+        <div className="knowledge-create-row">
+        <label><span>{m('kind')}</span><select disabled={creating} value={newKind} onChange={(e) => setNewKind(e.target.value as AuthoredKnowledgeKind)}><option value="note">{m('note')}</option><option value="idea">{m('idea')}</option><option value="decision">{m('decision')}</option></select></label>
+        <label><span>{m('epistemic')}</span><select disabled={creating} value={newEpistemic} onChange={(e) => setNewEpistemic(e.target.value as EpistemicStatus | '')}><option value="">{m('none')}</option><option value="hypothesis">{m('hypothesis')}</option><option value="supported">{m('supported')}</option><option value="contested">{m('contested')}</option><option value="verified">{m('verified')}</option></select></label>
+        </div>
+        </details>
+        <button type="submit" disabled={!newTitle.trim() || creating}>{creating ? m('creating') : newKind === 'idea' ? w('saveIdea') : m('create')}</button>
+      </form>
       {createError && <div className="error-panel">{createError}</div>}
 
       {selectedDocument && !authored && <div className="progress-panel"><strong>{selectedDocument.title}</strong><span>{m('importedSource')}</span></div>}
 
       {selectedDocument && authored && latest && (
         <>
-          <section className="knowledge-metadata-panel">
-            <strong>{m('metadata')}</strong>
+          <h3>{selectedDocument.title} <small>v{latest.generation}</small></h3>
+          <details className="knowledge-metadata-panel workspace-details">
+            <summary>{w('editMetadata')}</summary>
             <div className="knowledge-create-row">
               <label><span>{m('title')}</span><input value={metadataTitle} onChange={(e) => setMetadataTitle(e.target.value)} maxLength={320} /></label>
               <label><span>{m('kind')}</span><select value={metadataKind} onChange={(e) => setMetadataKind(e.target.value as AuthoredKnowledgeKind)}><option value="note">{m('note')}</option><option value="idea">{m('idea')}</option><option value="decision">{m('decision')}</option></select></label>
@@ -396,7 +407,7 @@ export default function KnowledgeEditor({
               <button type="button" disabled={metadataBusy || !metadataTitle.trim()} onClick={() => void saveMetadata()}>{m('applyMetadata')}</button>
             </div>
             {metadataError && <div className="error-panel">{metadataError}</div>}
-          </section>
+          </details>
 
           <LexicalComposer key={`${selectedDocument.id}:${latest.id}`} initialConfig={{
             namespace: `nevolium-knowledge-${selectedDocument.id}`,
@@ -424,6 +435,7 @@ export default function KnowledgeEditor({
             {saveMessage && <span className="route-chip">{saveMessage}</span>}
           </div>
 
+          <details className="workspace-details"><summary>{w('sourcesAndExport')}</summary>
           <section className="knowledge-citations-panel">
             <strong>{m('citations')}</strong>
             <span>{citations.length ? m('citationPending') : m('noCitation')}</span>
@@ -462,6 +474,7 @@ export default function KnowledgeEditor({
               {restoreError && <div className="error-panel">{restoreError}</div>}
             </section>
           )}
+          </details>
         </>
       )}
     </section>

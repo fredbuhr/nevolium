@@ -1,3 +1,5 @@
+import { useWorkspaceMessages } from './workspaceMessages'
+
 type Props = {
   loading: boolean
   error: string | null
@@ -9,21 +11,22 @@ export default function KnowledgeWorkspaceStateView({
   error,
   selectedProjectId,
 }: Props) {
+  const w = useWorkspaceMessages()
   return (
     <>
       {error && <div className="error-panel">{error}</div>}
 
       {loading && !error && (
         <div className="progress-panel">
-          <strong>Chargement de vos documents.</strong>
-          <span>Seuls les documents du projet sélectionné sont affichés.</span>
+          <strong>{w('loadingDocuments')}</strong>
+          <span>{w('scopedDocuments')}</span>
         </div>
       )}
 
       {!loading && !error && !selectedProjectId && (
         <div className="progress-panel">
-          <strong>Aucun projet sélectionné.</strong>
-          <span>Sélectionnez un projet dans Projets ou Recherche pour afficher ses documents.</span>
+          <strong>{w('noProject')}</strong>
+          <span>{w('chooseProject')}</span>
         </div>
       )}
     </>

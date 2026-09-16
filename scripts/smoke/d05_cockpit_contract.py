@@ -81,7 +81,7 @@ def main() -> None:
     assert "handlePaletteDialogKey" in cockpit and "paletteReturnFocusRef" in cockpit
     assert "disableDnd={deviceClass === 'phone'}" in cockpit
     assert "api.addPopoutGroup(activePanel" in cockpit
-    assert "deviceClass === 'desktop'" in cockpit and "Détacher" in cockpit
+    assert "deviceClass === 'desktop'" in cockpit and "w('detach')" in cockpit
     assert cockpit.count("deviceClass !== 'desktop'") >= 3
     assert "layoutRetry === 'save'" in cockpit and "queueLayoutSave(api)" in cockpit
     assert "window.sessionStorage" in device
@@ -108,9 +108,9 @@ def main() -> None:
     assert "nevolium-web" in isolation_workflow
     assert "nevolium-dev-2" in authenticated_browser and "Réglages API" in authenticated_browser
 
-    catch_block = cockpit.split("} catch (error) {", 1)[1].split("} finally {", 1)[0]
+    catch_block = cockpit.split("} catch {", 1)[1].split("} finally {", 1)[0]
     assert "attachPersistence" not in catch_block
-    assert "synchronisation suspendue" in catch_block
+    assert "restoreFailed" in catch_block
 
     # D09 may load a 3D scene explicitly. The D05 baseline must still have no
     # WebGL dependency in the static import graph starting at the Web entrypoint.

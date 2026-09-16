@@ -89,6 +89,7 @@ export default function SpatialWorkspace(props: Props) {
     {state.loadError ? <p role="alert">{m.loadError} <button type="button" onClick={state.restore}>{m.restore}</button></p> : null}
     {state.unavailable ? <p role="status">{m.fallback} <button type="button" onClick={state.retry3d}>{m.retry}</button></p> : null}
     {state.view === '3d' ? <>
+      {reducedMotion || !animate ? <p role="status">{reducedMotion ? m.motionReduced : m.motionPaused}</p> : null}
       <div className="spatial-navigation">
         <label>{m.select}<select aria-label={m.select} value={props.selected[0] || ''} onChange={event => props.onSelect(event.target.value, false)}>
           <option value="">{m.none}</option>

@@ -14,6 +14,7 @@ import {
 import KnowledgeWorkspaceStateView from './KnowledgeWorkspaceStateView'
 import type { KnowledgeInspectionTarget } from './knowledgeTypes'
 import { useProjectSelection } from './lib/projectSelection'
+import { useWorkspaceMessages } from './workspaceMessages'
 
 type Props = {
   apiUrl: string
@@ -28,6 +29,11 @@ export default function KnowledgeWorkspace({
   onSelectedDocumentIdChange,
   inspectionTarget,
 }: Props) {
+  const w = useWorkspaceMessages()
+  const [sourceToolsOpen, setSourceToolsOpen] = useState(false)
+  useEffect(() => {
+    if (inspectionTarget) setSourceToolsOpen(true)
+  }, [inspectionTarget])
   const { selectedProjectId } = useProjectSelection()
   const { documentPage, versionPage, versionsDocumentId, setVersionsDocumentId } = useKnowledgeDocumentDataLoading({
     apiUrl, projectId: selectedProjectId, documentId: selectedDocumentId,
@@ -149,16 +155,21 @@ export default function KnowledgeWorkspace({
     <section className="news-workspace" aria-labelledby="knowledge-heading">
       <div className="news-heading">
         <div>
-          <span className="eyebrow">DOCUMENTS</span>
-          <h2 id="knowledge-heading">Sources et versions du projet sélectionné.</h2>
+          <span className="eyebrow">{w('documents')}</span>
+          <h2 id="knowledge-heading">{w('knowledgeTitle')}</h2>
         </div>
-        <span className="run-state">{projectDocuments.length} document(s) affiché(s)</span>
+        <span className="run-state">{projectDocuments.length} {w('documentCount')}</span>
       </div>
 
       <KnowledgeWorkspaceStateView loading={loading} error={error} selectedProjectId={selectedProjectId} />
 
       {!loading && !error && selectedProjectId && (
         <>
+          {projectDocuments.length > 0 && <label className="knowledge-document-picker">{w('currentDocument')}
+            <select value={selectedDocumentId} onChange={event => onSelectedDocumentIdChange(event.target.value)}>
+              {projectDocuments.map(document => <option key={document.id} value={document.id}>{document.title}</option>)}
+            </select>
+          </label>}
           <KnowledgeEditor
             apiUrl={apiUrl}
             projectId={selectedProjectId}
@@ -168,6 +179,7 @@ export default function KnowledgeWorkspace({
             onChanged={refreshAuthoredKnowledge}
           />
 
+          <details className="workspace-details" open={sourceToolsOpen} onToggle={event => setSourceToolsOpen(event.currentTarget.open)}><summary>{w('sourceTools')}</summary>
           <KnowledgeIngestionView
             selectedFile={selectedFile}
             importing={importing}
@@ -178,7 +190,7 @@ export default function KnowledgeWorkspace({
             onSubmit={importDocument}
           />
 
-          {documentPage.hasMore && <button type="button" disabled={loading} onClick={() => void documentPage.loadMore()}>Charger les documents suivants</button>}
+          {documentPage.hasMore && <button type="button" disabled={loading} onClick={() => void documentPage.loadMore()}>{w('moreDocuments')}</button>}
           <KnowledgeDocumentsView
             documents={projectDocuments}
             selectedDocument={selectedDocument}
@@ -205,7 +217,7 @@ export default function KnowledgeWorkspace({
                 onLoadChunks={() => void loadChunkPage(0)}
               />
 
-              {versionPage.hasMore && <button type="button" disabled={loadingVersions} onClick={() => void versionPage.loadMore()}>Charger les versions précédentes</button>}
+              {versionPage.hasMore && <button type="button" disabled={loadingVersions} onClick={() => void versionPage.loadMore()}>{w('moreVersions')}</button>}
               {versions.length > 0 && (
                 <KnowledgeChunksView
                   selectedVersion={selectedVersion}
@@ -224,6 +236,7 @@ export default function KnowledgeWorkspace({
               )}
             </>
           )}
+          </details>
         </>
       )}
     </section>

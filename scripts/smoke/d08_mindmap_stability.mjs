@@ -57,6 +57,7 @@ export async function qualifyMindMapStability(harness) {
   assert.deepEqual(saved().positions[noteKey], initial.positions[noteKey], 'D08: an unselected node moved')
 
   setStage('stability:locale-with-history')
+  await map.getByText('Relier des idées et organiser les groupes', { exact: true }).click()
   await map.getByLabel('Nom du groupe', { exact: true }).fill('Brouillon préservé')
   const readsBeforeLocale = protectedReads()
   await map.evaluate(element => { window.__d08WorkspaceUnderTest = element })

@@ -269,6 +269,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     `${name}: disposition initiale inattendue`,
   )
   if (name === 'desktop' || name === 'desktop-admin' || name === 'compact-desktop') {
+    await page.getByText('Options de l’espace', { exact: true }).click()
     await page.getByRole('button', { name: 'Retrouver mes vues', exact: true }).click()
     await newsHeading.waitFor({ state: 'visible' })
     await page.getByRole('button', { name: 'Centrer l’activité', exact: true }).click()

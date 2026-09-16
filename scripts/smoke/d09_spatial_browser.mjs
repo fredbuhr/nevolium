@@ -129,6 +129,58 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
   await context.close()
   assert.equal(errors.length, 0, errors.join('\n'))
 
+
+  setStage('d09:sparse-project-membership-and-motion')
+  const sparseState = makeState()
+  sparseState.edges = []
+  const sparse = await casePage(browser, sparseState, 'd09-sparse', { locale: 'fr-FR', viewport: { width: 1440, height: 1050 }, reducedMotion: 'no-preference' })
+  const sparseMap = await openMindMap(sparse.page)
+  assert.equal(await sparseMap.locator('.react-flow__edge.is-membership').count(), 3,
+    'A project with three members and no semantic relationships must show three membership links')
+  assert.equal(await sparseMap.locator('.mindmap-editors:visible').count(), 0, 'Advanced graph editing must start collapsed')
+  await sparseMap.getByRole('button', { name: 'Vue 3D', exact: true }).click()
+  await sparseMap.getByLabel('Qualité 3D').selectOption('eco')
+  const sparseSurface = sparseMap.locator('.spatial-viewport'), sparseCanvas = sparseSurface.locator('canvas')
+  await sparseSurface.scrollIntoViewIfNeeded()
+  await eventually(async () => JSON.parse(await sparseSurface.getAttribute('data-spatial-metrics') || '{}').frames > 3,
+    'Sparse project did not render measured 3D frames', 30000)
+  const pixelDifference = async (a, b) => sparse.page.evaluate(async ([first, second]) => {
+    const pixels = async source => {
+      const image = new Image(); image.src = source; await image.decode()
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height
+      const context = canvas.getContext('2d'); context.drawImage(image, 0, 0)
+      return context.getImageData(0, 0, canvas.width, canvas.height).data
+    }
+    const aa = await pixels(first), bb = await pixels(second)
+    if (aa.length !== bb.length) throw new Error('Sparse scene dimensions changed')
+    let changed = 0
+    for (let i = 0; i < aa.length; i += 4)
+      if (Math.abs(aa[i] - bb[i]) + Math.abs(aa[i + 1] - bb[i + 1]) + Math.abs(aa[i + 2] - bb[i + 2]) > 24) changed++
+    return changed
+  }, [a, b].map(buffer => `data:image/png;base64,${buffer.toString('base64')}`))
+  const movingA = await sparseCanvas.screenshot()
+  await sparse.page.waitForTimeout(1200)
+  const movingB = await sparseCanvas.screenshot({ path: path.join(target, 'sparse-project-3d.png') })
+  const animatedPixels = await pixelDifference(movingA, movingB)
+  assert(animatedPixels > 20, `Sparse project must visibly animate without moving the camera: ${animatedPixels}`)
+  await sparseMap.getByRole('button', { name: 'Animer le réseau', exact: true }).click()
+  await sparseSurface.scrollIntoViewIfNeeded()
+  await sparse.page.waitForTimeout(500)
+  const calmA = await sparseCanvas.screenshot()
+  await sparse.page.waitForTimeout(1200)
+  const calmPixels = await pixelDifference(calmA, await sparseCanvas.screenshot())
+  assert(calmPixels < 3, `Paused sparse scene must be static: ${calmPixels}`)
+  await sparseMap.getByRole('button', { name: 'Animer le réseau', exact: true }).click()
+  await sparse.page.emulateMedia({ reducedMotion: 'reduce' })
+  await sparseMap.getByText('Animations en pause : votre appareil demande de réduire les mouvements.', { exact: true }).waitFor()
+  assert.equal(await sparseMap.getByRole('button', { name: 'Animer le réseau', exact: true }).isDisabled(), true)
+  assert.deepEqual(sparseState.edges, [], 'Visual membership must never create canonical semantic relationships')
+  assert.equal(sparseState.linkCreates, 0)
+  assert.equal(sparseState.conversions, 0)
+  const sparseEvidence = { canonical_edges: 0, membership_edges: 3, animated_pixels: animatedPixels, calm_pixels: calmPixels }
+  assert.deepEqual(sparse.errors, [])
+  await sparse.context.close()
+
   const measurements = []
   for (const count of [51, 201, 501]) {
     setStage(`d09:measure-${count}`)
@@ -154,7 +206,7 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
       return { renderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
         heap_bytes: performance.memory?.usedJSHeapSize ?? null, user_agent: navigator.userAgent }
     })
-    measurements.push({ nodes: count, edges: count - 1, viewport: '1280x900', quality: 'eco', ...measured, ...environment })
+    measurements.push({ nodes: count, canonical_edges: count - 1, displayed_edges: (count - 1) + Math.max(0, count - 4), viewport: '1280x900', quality: 'eco', ...measured, ...environment })
     if (count === 201) {
       const overlapping = await surface.locator('.spatial-labels').evaluate(element => {
         const boxes = [...element.querySelectorAll('button')].filter(button => getComputedStyle(button).visibility === 'visible')
@@ -203,8 +255,8 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
   const result = { status: 'passed', scope: 'Chromium WebGL with mocked owner-scoped Core API; not physical GPU/tablet qualification',
     checks: ['2d-3d-selection', 'separate-camera-layout', 'save-error-retry-serialization', 'conversion-and-planning-navigation',
       'orbit-camera', 'hidden-panel', 'hidden-document', 'reduced-motion', 'reconnect-coalescing', 'context-loss-fallback',
-      'webgl-unavailable', 'reload-FR-EN', 'phone-optional-3d'],
-    measurements }
+      'webgl-unavailable', 'reload-FR-EN', 'phone-optional-3d', 'sparse-membership', 'sparse-visible-motion', 'sparse-calm'],
+    sparse: sparseEvidence, measurements }
   await fs.writeFile(path.join(target, 'result.json'), JSON.stringify(result, null, 2) + '\n')
   console.log('D09 SPATIAL BROWSER PASS', result)
   return result

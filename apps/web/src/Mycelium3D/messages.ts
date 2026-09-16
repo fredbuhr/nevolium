@@ -3,6 +3,11 @@ import { useI18n } from '../i18n'
 const messages = {
   fr: {
     title: 'Mycelium 3D', view2d: 'Vue 2D', view3d: 'Vue 3D', quality: 'Qualité 3D',
+    membership: 'Appartient au projet',
+    membershipHint: 'Les rattachements au projet sont affichés automatiquement. Les liens de sens entre idées restent ceux que vous créez.',
+    editLinks: 'Relier des idées et organiser les groupes',
+    motionReduced: 'Animations en pause : votre appareil demande de réduire les mouvements.',
+    motionPaused: 'Animations en pause. Activez « Animer le réseau » pour voir la circulation.',
     auto: 'Automatique', eco: 'Économique', balanced: 'Équilibrée', high: 'Élevée',
     select: 'Sélectionner un élément', none: 'Aucune sélection', focus: 'Centrer la sélection',
     reset: 'Vue d’ensemble', zoomIn: 'Rapprocher', zoomOut: 'Éloigner', open: 'Ouvrir l’élément',
@@ -17,6 +22,11 @@ const messages = {
   },
   en: {
     title: '3D Mycelium', view2d: '2D view', view3d: '3D view', quality: '3D quality',
+    membership: 'Belongs to the project',
+    membershipHint: 'Project membership is shown automatically. Meaningful links between ideas remain the ones you create.',
+    editLinks: 'Connect ideas and organise groups',
+    motionReduced: 'Animations paused: your device requests reduced motion.',
+    motionPaused: 'Animations paused. Turn on “Animate the network” to see the flow.',
     auto: 'Automatic', eco: 'Economy', balanced: 'Balanced', high: 'High',
     select: 'Select an item', none: 'No selection', focus: 'Focus selection',
     reset: 'Overview', zoomIn: 'Zoom in', zoomOut: 'Zoom out', open: 'Open item',

@@ -13,6 +13,7 @@ import '@xyflow/react/dist/style.css'
 
 import {
   buildRadialMindMapLayout,
+  withProjectMembership,
   type NevoliumGraphSnapshot,
 } from '@nevolium/graph'
 
@@ -133,7 +134,7 @@ function nodeClassName(node: MindMapApiNode) {
 }
 
 function graphSnapshot(snapshot: MindMapSnapshot): NevoliumGraphSnapshot {
-  return {
+  return withProjectMembership({
     nodes: snapshot.nodes.map((node) => ({
       id: node.key,
       entityType: node.entity_type,
@@ -147,7 +148,7 @@ function graphSnapshot(snapshot: MindMapSnapshot): NevoliumGraphSnapshot {
       relation: edge.relation_type,
       directed: edge.directed,
     })),
-  }
+  })
 }
 
 function averageGroupPosition(group: MindMapGroup, positions: Map<string, SavedPosition>): SavedPosition {
@@ -714,7 +715,7 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
   )
   const renderedEdges = useMemo<Edge[]>(() => {
     if (!snapshot) return []
-    return snapshot.edges
+    const relations: Edge[] = snapshot.edges
       .filter((edge) => visibleCanonicalIds.has(edge.source_key) && visibleCanonicalIds.has(edge.target_key))
       .map((edge) => ({
         id: edge.id,
@@ -727,7 +728,13 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
         markerEnd: edge.directed ? { type: MarkerType.ArrowClosed } : undefined,
         selected: edge.id === selectedEdgeId,
       }))
-  }, [relationLabel, selectedEdgeId, snapshot, visibleCanonicalIds])
+    const membership: Edge[] = graphSnapshot(snapshot).edges
+      .filter(edge => edge.presentation === 'project-membership' && visibleCanonicalIds.has(edge.source) && visibleCanonicalIds.has(edge.target))
+      .map(edge => ({ id: edge.id, source: edge.source, target: edge.target, type: 'bezier',
+        label: selectedNodeIds.includes(edge.target) ? spatialMessages.membership : undefined,
+        className: 'mindmap-edge is-membership', selectable: false, deletable: false }))
+    return [...relations, ...membership]
+  }, [relationLabel, selectedEdgeId, selectedNodeIds, snapshot, spatialMessages.membership, visibleCanonicalIds])
 
   const spatialGraph = useMemo(() => snapshot ? graphSnapshot(snapshot) : { nodes: [], edges: [] }, [snapshot])
   const spatialNodes = useMemo(() => (snapshot?.nodes || [])
@@ -807,6 +814,8 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
         <span>{selectedNodeIds.length} {t('mindmap.selected')}</span>
       </div>
 
+      <details className="workspace-details">
+        <summary>{spatialMessages.editLinks}</summary>
       <div className="mindmap-editors">
         <section className="mindmap-editor-card" aria-label={t('mindmap.linkEditor')}>
           <strong>{t('mindmap.linkEditor')}</strong>
@@ -847,6 +856,9 @@ function ProjectMindMap({ apiUrl, selectedProjectId }: Props & { selectedProject
           </div>
         </section>
       </div>
+
+      </details>
+      <p className="spatial-hint">{spatialMessages.membershipHint}</p>
 
       {canConvertIdea ? (
         <div className="mindmap-conversion-bar">
