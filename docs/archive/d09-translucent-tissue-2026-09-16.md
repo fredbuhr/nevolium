@@ -256,9 +256,8 @@ La PR #93 est fusionnée avec tête attendue explicite. Le merge
 La branche locale est supprimée et la branche D09 retirée du travail actif ; sa référence
 distante reste conservée. Le suivi post-fusion est documentaire seulement.
 
-Aucune commande n'a été exécutée sur Netcup par cette session. La prochaine action reste
-l'inventaire SSH épinglé dans la procédure ; D09 reste actif jusqu'à l'installation et aux
-preuves physiques manquantes. D10 n'est pas commencé.
+À ce point du suivi, aucune commande n'avait encore été exécutée sur Netcup. D09 reste actif
+jusqu'à l'installation et aux preuves physiques manquantes. D10 n'est pas commencé.
 
 ## Premier inventaire Netcup et défaut Docker 29.8
 
@@ -272,3 +271,10 @@ image, labels Compose, statut, santé et montages réussissent séparément. Le 
 sans santé et échoue avec la condition santé. Le correctif D09 sépare donc strictement ces deux
 gabarits autorisés ; aucun inspect brut, environnement de conteneur ou diagnostic privé n'est lu
 ou affiché. Un nouveau relevé réel reste nécessaire après qualification et fusion du correctif.
+
+La tête finale #94 `19f5b7f96e1cdd121f83f1e03207ea4a1dcee4f6` passe 9/9 workflows PR,
+dont le contrat d'inventaire dans Foundation. Le merge
+`fb755c238408f940ab3e7e25c3d3f65abf9948e6` a pour parents `1f6bd6e…` et `19f5b7f…` ;
+son arbre `367efb95c59fa64b7448da5149def7b92d071e7e` est identique à la tête qualifiée.
+La commande opérateur est réépinglée sur ce merge. La fusion ne constitue toujours pas le
+second relevé serveur : celui-ci reste la prochaine preuve nécessaire avant l'installation.

@@ -6,9 +6,9 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 
 | Champ | État attesté |
 |---|---|
-| Base intégrée vérifiée | `main` = `1f6bd6e15856953bf5d590e3fe5f13327774e5b2`. Merge D09 `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76` ; arbre `43cce3911a70f3e3f6645df939a550affc11c894`, identique à la tête PR qualifiée |
+| Base intégrée vérifiée | `main` = merge correctif D09 `fb755c238408f940ab3e7e25c3d3f65abf9948e6` ; arbre `367efb95c59fa64b7448da5149def7b92d071e7e`, identique à la tête #94 qualifiée. Merge design D09 `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76` |
 | D08 intégré | PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f`, 9/9 workflows PR verts, arbre identique au merge |
-| Branche / PR active | `fix/d09-pilot-health-inspect`, [#94](https://github.com/fredbuhr/nevolium/pull/94), tête `b7bbef2ff37dbeb78ab750a75c223eee7459c095`, base `1f6bd6e…` |
+| Branche / PR | [#94](https://github.com/fredbuhr/nevolium/pull/94) fusionnée ; aucune branche de développement active. Tête finale `19f5b7f96e1cdd121f83f1e03207ea4a1dcee4f6`, base `1f6bd6e…` |
 | Tête finale qualifiée D09 | `7d748797c6accc8a6c5115abe634c24d3d5dee29` : **9/9 workflows PR verts**, UI run `35047879779` ; 13 scénarios spatiaux, 16 contrôles kit ; animation 1 978 pixels, calme 0. Contrat d’inventaire réussi dans Foundation |
 | Modèle adopté | Renderer `48d7be9752424e8cd4c3793ee5da58225ab2069b` inchangé ; acceptation utilisateur du 16 septembre et autorisation d’installer. Inventaire serveur en lecture seule et plan D05→D09 intégrés ; aucune activation serveur depuis cette session |
 | Implémenté D09 | Projection pure ; renderer R3F/Three différé ; orbite/focus/zoom ; sélection 2D↔3D ; filaments/groupes/labels bornés ; activité réelle des Tasks ; navigation Planning/Knowledge |
@@ -23,8 +23,8 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Banc matériel | `node apps/web/qualification.build.mjs` ; artefact CI `d09-hardware-kit`, HTML autonome. Renderer réel, graphes synthétiques 51/50, 201/300, 401/1000, stress 501/1500. Aucune API ; campagne 10 minutes, interruptions distinctes, mémoire inconnue conservée comme inconnue, export local `needs_review` |
 | Limites | API navigateur simulée distincte des contrats PostgreSQL ; mémoire longue durée/GPU intégré/cockpit physique à compléter. Le premier inventaire réel s'arrête avant SQL ; aucun déploiement D06–D09 attesté |
 | Production | Runtime D05 propre `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, ancêtre de D09 ; un Core, pas de disposition `current`/`releases`, 597 719 744 512 octets libres. Schéma et projet Compose restent à relever |
-| Correctif inventaire | Docker 29.8 accepte tous les champs séparés et le JSON sans santé, mais refuse la condition santé dans le JSON combiné. #94 sépare les deux lectures autorisées ; 4/4 tests locaux, compilation et diff-check réussis |
-| Prochaine action | Qualifier puis fusionner #94 à sa tête exacte ; relancer ensuite l’inventaire épinglé depuis la session SSH et examiner images/montages/projet Compose, schéma et activité avant sauvegarde ou activation |
+| Correctif inventaire | Docker 29.8 accepte tous les champs séparés et le JSON sans santé, mais refuse la condition santé dans le JSON combiné. #94 sépare les deux lectures autorisées ; **9/9 workflows PR**, dont le contrat d'inventaire Foundation, et arbre du merge vérifié |
+| Prochaine action | Relancer l’inventaire corrigé, épinglé à `fb755c2…`, depuis la session SSH ; examiner images/montages/projet Compose, schéma et activité avant de fixer sauvegarde, migrations et activation |
 | Reprise / retour | Ne pas activer Web seul contre Core D05. Préserver les images, données, secrets et réservations historiques ; sauvegarde quiescente fraîche avant `0016`–`0018`. Aucun snapshot, arrêt ni migration exécuté ici |
 | Hors scope | D10 assistant ; D11 connecteurs ; D12 coédition/offline ; D13 complétude FR/EN globale ; D10 non commencé |
 

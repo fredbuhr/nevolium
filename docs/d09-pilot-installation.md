@@ -15,8 +15,11 @@ matière. D09 reste le lot actif ; D10 n'est pas commencé.
 La PR #93 est fusionnée dans `main` au commit
 `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76`. Son arbre est identique à celui de
 `7d748797c6accc8a6c5115abe634c24d3d5dee29`, qualifié par 9/9 workflows PR.
-La référence de déploiement ci-dessous est ce merge immuable ; l'actualisation du suivi
-après fusion ne modifie ni le renderer ni l'inventaire.
+Le correctif Docker 29.8 est fusionné par #94 au commit
+`fb755c238408f940ab3e7e25c3d3f65abf9948e6`. Son arbre est identique à la tête finale
+`19f5b7f96e1cdd121f83f1e03207ea4a1dcee4f6`, qualifiée par 9/9 workflows PR.
+La référence opérateur ci-dessous est ce second merge immuable ; il contient le même renderer
+et l'inventaire corrigé.
 
 ## Point de départ à vérifier sur Netcup
 
@@ -35,7 +38,7 @@ Il récupère le script au merge qualifié sans changer le checkout actif :
 (
 set -Eeuo pipefail
 cd /opt/nevolium/source
-d09_target='7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76'
+d09_target='fb755c238408f940ab3e7e25c3d3f65abf9948e6'
 git fetch --no-tags origin main
 git cat-file -e "${d09_target}^{commit}"
 d09_probe="$(mktemp /tmp/nevolium-d09-preflight.XXXXXX.py)"
@@ -75,7 +78,8 @@ Le document JSON sans santé fonctionne aussi, tandis que le même document avec
 Go template `.State.Health` échoue. Le correctif interroge donc le document autorisé et la santé
 dans deux commandes `docker inspect` séparées, puis les associe en mémoire. Il ne lit toujours
 jamais le document brut, `.Config.Env` ou `.State.Error`, et ne transforme pas ce relevé partiel
-en preuve du schéma ou des conteneurs complets.
+en preuve du schéma ou des conteneurs complets. #94 et ses neuf workflows sont réussis ; son
+merge et son arbre ont été vérifiés avant d'épingler la commande ci-dessus.
 
 ## Séquence d'installation après examen de cet inventaire
 
