@@ -67,7 +67,8 @@ try {
     const image = new Image(); image.src = source; await image.decode()
     const probe = document.createElement('canvas'); probe.width = image.width; probe.height = image.height
     const context = probe.getContext('2d'); context.drawImage(image, 0, 0)
-    return [[4, 4], [image.width - 5, 4], [4, image.height - 5], [image.width - 5, image.height - 5]]
+    // Stay inside the viewport's rounded clipping boundary.
+    return [[32, 32], [image.width - 33, 32], [32, image.height - 33], [image.width - 33, image.height - 33]]
       .map(([x, y]) => Array.from(context.getImageData(x, y, 1, 1).data))
   }, `data:image/png;base64,${opaqueFrame.toString('base64')}`)
   for (const pixel of corners) assert(pixel.every((value, i) => Math.abs(value - [6, 18, 22, 255][i]) < 4),
