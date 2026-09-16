@@ -22,9 +22,9 @@
 .home-network-area { min-width: 0; }
 .home-legend { font-size: .82rem; }
 .home-browser .spatial-viewport { min-height: 340px; height: clamp(340px, calc(100svh - 370px), 720px); }
-.home-browser .spatial-home { display: flex; flex-wrap: wrap; align-items: end; column-gap: 20px; }
+.home-browser .spatial-home { display: flex; flex-direction: row; flex-wrap: wrap; align-items: end; column-gap: 20px; }
 .home-browser .spatial-toolbar, .home-browser .spatial-navigation { margin: 6px 0 12px; }
-.home-browser .spatial-viewport, .home-browser .spatial-home > .home-simple-list, .home-browser .spatial-home > p { flex-basis: 100%; }
+.home-browser .spatial-viewport, .home-browser .spatial-home > .home-simple-list, .home-browser .spatial-home > p { flex: 0 0 100%; width: 100%; }
 .home-browser .spatial-labels button { background: #07171ee0; border-color: transparent; font-size: 12px; }
 .home-browse-list { margin: 12px 0; }
 .home-simple-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; list-style: none; margin: 12px 0; padding: 0; }

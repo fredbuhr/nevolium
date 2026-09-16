@@ -24,6 +24,10 @@ try{
   else{
    await home.locator('.spatial-viewport canvas').waitFor()
    await eventually(async()=>JSON.parse(await home.locator('.spatial-viewport').getAttribute('data-spatial-metrics')||'{}').frames>1,'3D frames missing')
+   const area=await home.locator('.home-network-area').boundingBox(),surface=await home.locator('.spatial-viewport').boundingBox()
+   assert(surface.width>=area.width*.95&&surface.height>=340,`${name}: Mycelium must fill the central network area`)
+   const canvas=await home.locator('.spatial-viewport canvas').boundingBox()
+   assert(Math.abs(canvas.width-surface.width)<4&&Math.abs(canvas.height-surface.height)<4,`${name}: renderer must fill its viewport`)
    assert.equal(await spatial.getAttribute('data-spatial-view'),'3d')
    await home.getByRole('button',{name:'Animer le réseau',exact:true}).click()
    assert.equal(await home.locator('.spatial-viewport').getAttribute('data-spatial-reduced-motion'),'true')
