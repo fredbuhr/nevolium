@@ -102,6 +102,26 @@ restent explicitement conservées. La configuration modèle active est unique. C
 une fenêtre calme pour préparer le retour et la migration `0016` à `0018`, pas encore une
 autorisation de migrer.
 
+### Points de retour qualifiés
+
+Le snapshot Netcup hors système `d09-pre-migration-20260916` est confirmé terminé/READY après un
+arrêt propre. Au redémarrage, OpenBao a été descellé avec deux parts fournies uniquement depuis le
+matériel Age hors serveur ; le JSON temporaire sous `/run` a ensuite été supprimé.
+
+Le runner fusionné par #95 a vérifié le checkout D05 exact, une activité `0|0|0|0`, puis créé et
+relu intégralement les snapshots Restic B2 suivants :
+
+- données quiescentes : `aaeebe1697d2867117752d2502571a01d37328bb22378d8a068af932860f700e` ;
+- trois parts OpenBao assainies, sans ancien jeton root :
+  `c7af600a989745b02b87a775b41ef41d2de17b33b251627b59411136e259c26c`.
+
+La restauration sur volumes et projet Compose isolés a retrouvé le marqueur PostgreSQL, la séquence
+JetStream, les octets SeaweedFS et l'identité workload OpenBao, puis a supprimé l'environnement
+isolé. Les compteurs avant/après `57|57|29|34|16|44|5` sont identiques, les marqueurs sources ont
+été retirés et les quatorze services du pilote sont revenus actifs, dont PostgreSQL, NATS, Temporal
+et OpenBao sains. Le rapport privé est
+`/var/lib/nevolium/qualification/d04-off-host-recovery-20260916T112539Z.d6a630/recovery.json`.
+
 ## Séquence d'installation après examen de cet inventaire
 
 1. **Figer la release et le retour.** Vérifier les références Git, les images actives, le
