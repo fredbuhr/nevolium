@@ -37,7 +37,7 @@ try{
    assert.equal(await spatial.getAttribute('data-spatial-view'),'2d')
    await chooseView('Vue 3D')
    await home.locator('.spatial-viewport canvas').waitFor()
-   await home.locator('.home-browser.is-phone-spatial').waitFor()
+   await eventually(async()=>(await home.getAttribute('class')).includes('is-phone-spatial'),'Phone 3D focus mode missing')
    assert.equal(await home.locator('.home-section-heading').isVisible(),false,'Phone 3D must hide the redundant introduction')
    assert.equal(await home.locator('.home-legend').isVisible(),false,'Phone 3D must hide the redundant legend')
    assert.equal(await home.locator('.home-browse-list').isVisible(),false,'Phone 3D must hide the duplicate browse list')
