@@ -100,4 +100,53 @@
   .home-browser .spatial-toolbar { z-index: 7; }
   .home-browser .spatial-display-panel { position: fixed; left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); width: auto; max-height: calc(100dvh - 100px); }
   .home-browser .spatial-save { flex-basis: 100%; max-width: 100%; }
+
+  /* A phone in 3D is an exploration surface: keep only compact navigation over the scene. */
+  .home-browser.is-phone-spatial {
+    padding: max(8px, env(safe-area-inset-top)) 8px calc(72px + env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+  .home-browser.is-phone-spatial .home-section-heading,
+  .home-browser.is-phone-spatial .home-legend,
+  .home-browser.is-phone-spatial .home-browse-list,
+  .home-browser.is-phone-spatial .home-save-status { display: none; }
+  .home-browser.is-phone-spatial .app-header { margin-bottom: 4px; }
+  .home-browser.is-phone-spatial .home-navigation { gap: 6px; margin: 4px 0; }
+  .home-browser.is-phone-spatial .home-navigation > button,
+  .home-browser.is-phone-spatial .home-tools > summary {
+    min-height: 38px;
+    padding: 5px 8px;
+    font-size: .78rem;
+  }
+  .home-browser.is-phone-spatial .home-topbar::before {
+    inset: -8px -8px -6px;
+    background: linear-gradient(#020b13f2, #020b13c8 76%, transparent);
+  }
+  .home-browser.is-phone-spatial .home-tools > div {
+    position: fixed;
+    z-index: 20;
+    top: 104px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: calc(100dvh - 184px);
+    overflow-y: auto;
+  }
+  .home-browser.is-phone-spatial .home-item-details {
+    position: fixed;
+    z-index: 8;
+    inset: auto 8px calc(72px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: min(42dvh, 360px);
+    margin: 0;
+    border-radius: 16px;
+    box-shadow: 0 -8px 34px #0009;
+  }
+  .home-browser.is-phone-spatial .spatial-labels button {
+    max-width: 120px;
+    min-height: 38px;
+    padding: 5px 8px;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+  }
 }
