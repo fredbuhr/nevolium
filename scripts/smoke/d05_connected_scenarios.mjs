@@ -136,7 +136,7 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     }
     await page.locator('.cockpit-home-button').click()
     if (await desktopScene.count()) {
-      await home.locator('.spatial-options > summary').click()
+      await home.locator('.spatial-display > summary').click()
       assert.equal(await home.getByRole('button', { name: 'Animer le réseau', exact: true }).isDisabled(), true, 'Reduced motion remains enforced after returning home')
     } else assert.equal(await home.locator('.spatial-workspace').getAttribute('data-spatial-view'), '2d')
     await context.close()

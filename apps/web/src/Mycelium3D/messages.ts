@@ -2,7 +2,7 @@ import { useI18n } from '../i18n'
 
 const messages = {
   fr: {
-    title: 'Mycelium 3D', view2d: 'Vue 2D', view3d: 'Vue 3D', quality: 'Qualité 3D', options: 'Réglages de la vue',
+    title: 'Mycelium 3D', display: 'Affichage', mode2d: '2D', mode3d: '3D', view2d: 'Vue 2D', view3d: 'Vue 3D', quality: 'Qualité 3D', options: 'Réglages de la vue',
     membership: 'Appartient au projet',
     membershipHint: 'Les rattachements au projet sont affichés automatiquement. Les liens de sens entre idées restent ceux que vous créez.',
     editLinks: 'Relier des idées et organiser les groupes',
@@ -21,7 +21,7 @@ const messages = {
     animate: 'Animer le réseau', lifeHint: 'La lumière exprime la vitalité du réseau, pas l’exécution d’une tâche.',
   },
   en: {
-    title: '3D Mycelium', view2d: '2D view', view3d: '3D view', quality: '3D quality', options: 'View settings',
+    title: '3D Mycelium', display: 'Display', mode2d: '2D', mode3d: '3D', view2d: '2D view', view3d: '3D view', quality: '3D quality', options: 'View settings',
     membership: 'Belongs to the project',
     membershipHint: 'Project membership is shown automatically. Meaningful links between ideas remain the ones you create.',
     editLinks: 'Connect ideas and organise groups',

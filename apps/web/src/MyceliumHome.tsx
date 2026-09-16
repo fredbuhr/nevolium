@@ -163,8 +163,7 @@ export default function MyceliumHome(props: Props) {
       <div className="app-header-actions"><span className={`connection-state ${props.online ? 'is-online' : 'is-offline'}`}><i aria-hidden="true" />{props.online ? w('online') : w('offline')}</span>
         <div className="session-summary"><span>{props.sessionName}</span><small>{props.isAdmin ? w('administrator') : w('regularUser')}</small></div><LanguageSwitcher /></div>
     </header>
-    <div className="home-section-heading"><div><h2 id="mycelium-home-title">{m('title')}</h2><p>{m('subtitle')}</p></div>
-      <button type="button" disabled={!layout.ready} aria-expanded={customizing} onClick={() => setCustomizing(value => !value)}>{m('customize')}</button></div>
+    <div className="home-section-heading"><div><h2 id="mycelium-home-title">{m('title')}</h2><p>{m('subtitle')}</p></div></div>
     {layout.error ? <p role="alert">{m('loadError')} <button type="button" onClick={layout.reload}>{m('retry')}</button></p> : null}
     <div className="home-navigation"><button type="button" disabled={!history.length} onClick={() => { setPlace(history.at(-1) || ROOT); setHistory(value => value.slice(0, -1)); setSelectedId('') }}>← {m('back')}</button>
       <button type="button" onClick={() => { setPlace(ROOT); setHistory([]); setSelectedId('') }}>{m('home')}</button>
@@ -191,8 +190,10 @@ export default function MyceliumHome(props: Props) {
     <div className={`home-browser-body${selected ? ' has-selection' : ''}`}>
       <div className="home-network-area">
         <p className="home-legend">{place.ref ? m('actualLinks') : m('shortcuts')}</p>
-        {graph.nodes.length ? <SpatialWorkspace key={place.ref || home.root} apiUrl={props.apiUrl} projectId="" workspaceKey={`mycelium.home.camera.${(place.ref || home.root).replaceAll(':', '.')}`}
-          rootId={place.ref || home.root} defaultView="3d" compact paused={!props.active || customizing || props.ambience !== 'neural'} interactive={props.active && !customizing} graph={graph} nodes={graph.nodes} selected={selectedId ? [selectedId] : []} groups={[]}
+        {graph.nodes.length ? <SpatialWorkspace key={place.ref || home.root} apiUrl={props.apiUrl} projectId="" workspaceKey={`mycelium.home.${props.deviceClass}.camera.${(place.ref || home.root).replaceAll(':', '.')}`}
+          rootId={place.ref || home.root} defaultView={props.deviceClass === 'phone' ? '2d' : '3d'} compact controlsVisible={props.active && !customizing}
+          compactActions={<button type="button" disabled={!layout.ready} aria-haspopup="dialog" onClick={() => setCustomizing(true)}>{m('customize')}</button>}
+          paused={!props.active || customizing || props.ambience !== 'neural'} interactive={props.active && !customizing} graph={graph} nodes={graph.nodes} selected={selectedId ? [selectedId] : []} groups={[]}
           positions={place.ref ? undefined : home.positions} onSelect={id => { const node = graph.nodes.find(item => item.id === id); if (node) activate(node); else setSelectedId('') }} onOpen={() => { if (selected) open(selected) }}>
           <ul className="home-simple-list" aria-label={m('browse')}>{neighbours.map(node => <li key={node.id}><button type="button" data-node={node.id}
             onClick={() => activate(node)}><span>{node.label}</span><small>{m(node.kind)}</small></button></li>)}</ul>
