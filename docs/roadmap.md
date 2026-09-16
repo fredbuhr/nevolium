@@ -3,9 +3,10 @@
 Révision : 2026-09-16. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
 et critères de sortie. [PROJECT_STATE](../PROJECT_STATE.md) seul indique le lot actif et les preuves.
 La table donne le séquencement ; elle ne déclare pas tous les lots livrés. **D01–D09 et H5 sont
-intégrés au dépôt** (#84–#93). **Lot actif : D09**, installation pilote et qualification physique
-du Mycelium 3D accepté. D10 n'est pas commencé.
-Le dernier runtime de production attesté reste D05 ; intégration et déploiement sont distincts.
+intégrés au dépôt**, avec correctif Accueil #96. **Lot actif : complément D09 KISS**,
+bureau transparent et navigation simplifiée selon l'[ADR-033](decisions/ADR-033-kiss-contextual-mycelium.md).
+D10 est planifié mais non commencé. Le dernier runtime attesté est le correctif `702c2a3` :
+stabilisation et import du corpus réussis, acceptation produit encore ouverte.
 Le détail opérationnel et les preuves restent dans le checkpoint.
 
 Décision du 13 septembre : génération et routage par API, OpenAI en premier. La qualification locale
@@ -18,9 +19,9 @@ Voir l'[ADR-031](decisions/ADR-031-api-first-pilot.md).
 | Phase | Lots, dans l'ordre nominal | Résultat |
 |---|---|---|
 | A — fiabilité | D01 Worker borné → D02 admission/budgets/données → D03 déploiement/topologie → D04 preuves réelles H5 | Socle utilisable et récupérable, limites connues |
-| B — produit visuel | D05 cockpit → D06 Gantt/calendrier → D07 connaissances → D08 mindmap 2D → D09 Mycelium 3D → D10 assistant contextuel | Un espace cohérent pour penser, planifier et agir |
-| C — vie quotidienne | D11 connecteurs → D12 attention/synchronisation → D13 pilote personnel à deux | Première version utilisable chaque jour |
-| D — présence/autonomie | D14 Desktop → D15 voix → D16 automatisations/browser → D17 agent dev | Assistant disponible sur les appareils, actions contrôlées |
+| B — parcours cohérent | D05–D08 existants → D09 bureau Mycelium transparent → D10 capture/liens, assistant/planning, voix Web et première mission récurrente | Capturer, relier et obtenir un résultat dans le même contexte |
+| C — vie quotidienne | D11 connecteur complet → D12 continuité/synchronisation → D13 pilote personnel à deux | Usage autonome quotidien ; simplicité et FR/EN déjà travaillés dès D09 |
+| D — présence/autonomie étendue | D14 Desktop → D15 voix enrichie → D16 automatisations/browser avancés → D17 agent dev | Accès locaux et capacités supplémentaires sous permissions |
 | E — extensions/exploitation | D18 finance/crypto lecture → D19 simulations → D20 maison/cartes → D21 capacité/coûts → D22 distribution | Modules utiles puis lancement maîtrisé |
 
 La [cible multi-appareil retenue](decisions/ADR-029-server-personal-and-offline-clients.md) privilégie
@@ -31,7 +32,8 @@ et D22 les installateurs/matrices de compatibilité. Aucun nouveau lot n'est cr�
 ## Jalons
 
 1. **Socle post-audit :** D04 terminé, tag H5 et rapport de vrais moteurs/récupération.
-2. **Expérience graphique intégrée :** D10 terminé, données partagées entre Today, Gantt et mindmaps 2D/3D.
+2. **Premier assistant utile :** D10 terminé, capture et relations explicables, planification,
+   voix Web et mission récurrente sur les mêmes données ; simplicité vérifiée par parcours.
 3. **Pilote personnel :** D13 terminé, deux comptes et parcours quotidien sur installation privée.
 4. **Assistant étendu :** D17 terminé, appareils/voix/automatisations sous permissions.
 5. **Offre distribuable :** D22 terminé pour un périmètre et une capacité explicitement validés.

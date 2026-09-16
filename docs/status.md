@@ -1,5 +1,10 @@
 # Nevolium : état fonctionnel vérifié
 
+**Gate actif au 16 septembre : D09 KISS.** L'utilisateur a accepté le bilan et la réorientation
+[ADR-033](decisions/ADR-033-kiss-contextual-mycelium.md). Le bureau transparent, son fond personnel
+et le parcours source/fiche/liens/retour sont en développement ; le checkpoint porte leurs preuves.
+La [mémoire de projet](product-memory.md) conserve les décisions pour les futures discussions.
+
 Extension d’usage D09 intégrée par la PR #96 au merge `702c2a3` : accueil utilisant le Mycelium
 3D partagé, raccourcis et dossiers privés, navigation transversale soumise aux droits et
 corpus fictif importable. Le code `9b6b01075fdc8b47e3f9a3eb14f6f3b14e71ffba` passe
@@ -36,7 +41,7 @@ Les parcours navigateur CI utilisent des réponses Core simulées à partir du c
 contrat de projection est testé séparément sur PostgreSQL réel. L'import complet est
 désormais qualifié sur le pilote. Il reste à qualifier les interactions et la fluidité
 sur les appareils de l'utilisateur.
-La traduction exhaustive des écrans historiques reste en D13.
+FR/EN et accessibilité s'appliquent maintenant à chaque parcours D09/D10 ; D13 consolidera les écrans historiques restants.
 
 Le modèle visuel `48d7be9` reste la référence adoptée. Les preuves antérieures du banc
 synthétique (13 scénarios spatiaux, 16 contrôles kit et mesures physiques des parents)

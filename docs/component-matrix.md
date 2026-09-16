@@ -11,8 +11,10 @@ validates the workspace shell. D06 is integrated by PR #90, merge commit
 `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; final PR head passed 9/9 workflows.
 D09 is integrated by PR #93, merge `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76`.
 Final head `7d748797` passed 9/9 workflows; its tree matches the merge. The user accepted the
-unchanged `48d7be9` visual model. Pilot installation and physical-device qualification remain open.
-Deployment remains separate; the last verified pilot runtime is D05.
+unchanged `48d7be9` visual model. Home correction #96 (`702c2a3`) is deployed and stabilized;
+the example corpus is imported and read back. Product acceptance remains open. ADR-033 starts
+the D09 KISS desktop correction; automatic semantic links, Web voice and simple recurring missions
+are planned for D10. They are not implied by a configured dependency.
 
 ## Maturity legend
 
@@ -25,7 +27,7 @@ Deployment remains separate; the last verified pilot runtime is D05.
 | Capability | Component | Mode/profile | Nevolium ownership rule | Current maturity |
 |---|---|---|---|---|
 | Canonical database | PostgreSQL + pgvector | service / core | authoritative domain state; vectors rebuildable | **Validated** |
-| Temporal context graph | Graphiti + Neo4j | worker library + service / core | derived projection only | **Integrated; real execution validated in D04** |
+| Temporal context graph | Graphiti + Neo4j | worker library + service / core | derived projection only | **Episode persistence validated in D04; generative relation extraction not active in this path** |
 | Cache/locks | Valkey | service / core | ephemeral only | **Configured** |
 | Event bus | NATS JetStream | service / core | events from transactional outbox | **Validated** |
 | Object storage | SeaweedFS | service / core | authoritative binary objects | **Validated** |

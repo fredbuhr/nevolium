@@ -9,6 +9,7 @@ Before proposing or making any change:
 1. read `PROJECT_STATE.md`;
 2. fetch the live `main` head from GitHub;
 3. fetch the active pull request/branch named in `PROJECT_STATE.md` and read the active Dxx lot in `docs/implementation-plan.md`;
+   if main's checkpoint names no active work, also inspect open PRs and their checkpoints before creating a branch;
 4. compare the live refs with the checkpoint;
 5. inspect existing code before creating files, branches, migrations, APIs or duplicate implementations.
 
@@ -50,6 +51,7 @@ Use these roles consistently:
 - `docs/implementation-plan.md` — stable Dxx delivery lots, dependencies and acceptance scenarios;
 - `docs/development-workflow.md` — checkpoint format and recovery after interruption or failed validation;
 - `docs/architecture.md` — architectural boundaries and system design;
+- `docs/product-memory.md` — accepted user vision and durable continuity across conversations;
 - `docs/component-matrix.md` — implementation/integration maturity by component;
 - `docs/decisions/` — durable architectural decisions;
 - historical audits/plans — evidence only, never the current source of truth.
