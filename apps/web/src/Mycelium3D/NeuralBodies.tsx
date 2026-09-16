@@ -179,7 +179,7 @@ export function NeuralBodies({ nodes, graph, poses, selected, reducedMotion, tie
 }) {
   const model = useMemo(() => formsFor(nodes, poses), [nodes, poses])
   const geometry = useMemo(() => instances(new THREE.SphereGeometry(1, tier === 'eco' ? 18 : 26, tier === 'eco' ? 12 : 18), model), [model, tier])
-  const coreGeometry = useMemo(() => instances(new THREE.SphereGeometry(1, 18, 12), model), [model])
+  const coreGeometry = useMemo(() => instances(new THREE.SphereGeometry(1, tier === 'eco' ? 12 : 18, tier === 'eco' ? 8 : 12), model), [model, tier])
   const uniforms = useMemo(() => ({ lifeTime: { value: 0 }, motion: { value: 0 }, nucleus: { value: 0 } }), [])
   const coreUniforms = useMemo(() => ({ ...uniforms, nucleus: { value: 1 } }), [uniforms])
   useEffect(() => () => geometry.dispose(), [geometry])

@@ -183,3 +183,20 @@ kit 201/300, comprenant pauses, interactions et calme, mesure 44,862 s sur 26 fe
 médiane 3/minimum 1 FPS et 2 longues interruptions ; export incomplet. Ce parcours ne permet
 pas une comparaison matérielle avec les 136 FPS du relevé physique d5c438e. La mémoire et
 les performances du futur affinage restent à mesurer sur appareil réel.
+
+## Budget économique après deux expirations de capture
+
+Le descendant `2402b254fe138655dc3ea250b902bf0540a2c643` passe les 7 autres workflows,
+mais le job navigateur du run 35045623464 échoue deux fois, à critères et source identiques,
+lors de l'attente de stabilité de la première capture stress (30 secondes, ligne 191).
+Aucune erreur JavaScript/shader ou requête réseau n'est enregistrée ; téléphone, gros plan,
+zoom et film avaient été produits. Aucun problème de boîte CSS n'a été établi par la revue.
+Le journal seul ne distingue pas une instabilité de boîte d'un manque de frames sous charge.
+
+Le présent descendant restaure le budget géométrique économique du candidat 3cf5c9f validé :
+18 segments par relation, noyau 12×8, avec sa nouvelle déformation douce. Les profils équilibré
+et maximal gardent 40/52 segments et noyau 18×12. Les enveloppes, l'AA latérale, les fibres en
+focus et l'énergie indépendante sont conservés. Les diagnostics avant la vue stress et après
+échec consignent boîte, viewport, visibilité, canvas et compteur ; aucun délai ni seuil de
+réussite n'est assoupli. Cette réduction traite une hausse concrète du budget de géométrie ;
+elle ne prétend pas démontrer à elle seule la cause du timeout. Une nouvelle exécution est requise.

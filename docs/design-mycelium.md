@@ -128,7 +128,7 @@ Une respiration asynchrone déforme légèrement les enveloppes autour des centr
 impulsions avec tête et traîne parcourent jusqu'à 32/48/72 relations selon le profil, en environ
 3,4–5,5 secondes avec un bref repos. Leur alpha est composé séparément de celui de la trame,
 après conversion colorimétrique : la densité atténue le fond sans effacer toute l'énergie. La
-sélection conserve une faible circulation périphérique. Les fibres secondaires ondulent en
+sélection conserve une faible circulation périphérique. Les courbes utilisent 18/40/52 segments et les noyaux un maillage adapté au profil. Les fibres secondaires ondulent en
 lumière, sans déplacement des centres ni recalcul géométrique à chaque image. Le fond WebGL
 reste opaque pour éviter les traits noirs de composition externe du canvas.
 

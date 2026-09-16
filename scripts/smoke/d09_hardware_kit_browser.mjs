@@ -12,7 +12,7 @@ const browser = await chromium.launch({ headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
 const file = pathToFileURL(path.join(root, 'artifacts/d09-hardware-kit/nevolium-d09-hardware.html')).href
 const errors = [], requests = []
-let activePage
+let activePage, stressBefore
 async function open(options = {}, unavailable = false) {
   const context = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1280, height: 1000 }, offline: true, ...options })
   if (unavailable) await context.addInitScript(() => {
@@ -32,6 +32,20 @@ async function open(options = {}, unavailable = false) {
 }
 async function waitMeasured(page, ms) {
   await page.waitForFunction(value => Number(document.querySelector('[data-active-ms]')?.getAttribute('data-active-ms')) >= value, ms, { timeout: 30000 })
+}
+// Read-only diagnostics for software-renderer capture stalls; no test criterion changes.
+async function surfaceState(page) {
+  return page.evaluate(() => {
+    const surface = document.querySelector('.spatial-viewport'), canvas = surface?.querySelector('canvas')
+    const box = surface?.getBoundingClientRect(), counter = document.querySelector('[data-recording]')
+    return { at: performance.now(), visibility: document.visibilityState,
+      viewport: { width: innerWidth, height: innerHeight, scroll_y: scrollY },
+      box: box ? { x: box.x, y: box.y, width: box.width, height: box.height } : null,
+      active: surface?.getAttribute('data-active'), recording: counter?.getAttribute('data-recording'),
+      measured_ms: counter?.getAttribute('data-active-ms'),
+      canvas: canvas ? { width: canvas.width, height: canvas.height } : null,
+      metrics: surface?.nextElementSibling?.textContent }
+  })
 }
 async function changedPixels(page, first, second) {
   return page.evaluate(async ([a, b]) => {
@@ -188,6 +202,8 @@ try {
   await dense.page.getByLabel('Jeu synthétique', { exact: true }).selectOption('stress')
   await dense.page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
   await dense.page.locator('canvas').waitFor(); await waitMeasured(dense.page, 1500)
+  stressBefore = await surfaceState(dense.page)
+  await fs.writeFile(path.join(output, 'stress-before.json'), JSON.stringify(stressBefore, null, 2))
   await dense.page.locator('.spatial-viewport').screenshot({ path: path.join(output, 'stress-overview.png') })
   await dense.page.getByLabel('Sélectionner un objet', { exact: true }).selectOption('task:hardware-1')
   await dense.page.getByRole('button', { name: 'Centrer', exact: true }).click()
@@ -211,6 +227,7 @@ try {
   console.log('D09 HARDWARE KIT PASS', result)
 } catch (error) {
   if (activePage && !activePage.isClosed()) await activePage.screenshot({ path: path.join(output, 'failure.png'), fullPage: true }).catch(() => {})
-  await fs.writeFile(path.join(output, 'failure.json'), JSON.stringify({ error: String(error), errors, requests }, null, 2))
+  await fs.writeFile(path.join(output, 'failure.json'), JSON.stringify({ error: String(error), errors, requests, stressBefore,
+    surface_after: activePage && !activePage.isClosed() ? await surfaceState(activePage).catch(() => null) : null }, null, 2))
   throw error
 } finally { await browser.close() }

@@ -27,7 +27,7 @@ export function organicPositions(layout: NevoliumSpatialLayout): PoseMap {
 }
 
 export const GROWTH_DETAIL = {
-  eco: { segments: 28, strands: 2, pulses: 32 },
+  eco: { segments: 18, strands: 2, pulses: 32 },
   balanced: { segments: 40, strands: 3, pulses: 48 },
   high: { segments: 52, strands: 4, pulses: 72 },
 } as const
