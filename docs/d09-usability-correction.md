@@ -1,7 +1,7 @@
 # D09 — correction du parcours réel
 
 16 septembre 2026. Base de travail : main `d345294b50aee93e57f3316821bfd8e6c97f21cc`.
-Branche unique : `fix/d09-guided-workspace`. Release pilote inchangée : `69f5926be72227a5fc1c4e3dff7c0e436099e51c`.
+Branche unique : `fix/d09-guided-workspace`, [PR #96 en brouillon](https://github.com/fredbuhr/nevolium/pull/96). Release pilote inchangée : `69f5926be72227a5fc1c4e3dff7c0e436099e51c`.
 
 ## Gate
 
@@ -62,6 +62,14 @@ Les suites Chromium GitHub et l’inspection de leurs captures sont obligatoires
 La complétude FR/EN des anciens modules (notamment Accueil/Projets/réglages métier) n’est pas
 revendiquée : elle reste à auditer. Les données réelles, l’authentification, le tactile physique
 et la lisibilité du pilote ne sont pas qualifiés par une API simulée.
+
+Premier run GitHub `35097464192`, tête `64311f9…` : contrats et intégrations PostgreSQL
+verts, kit graphique vert (3 186 pixels modifiés en animation, 0 en pause). Les captures
+cockpit bureau/téléphone sont produites ; le scénario connecté s’arrête en cherchant le
+panneau latéral fermé par défaut. Le test est adapté pour ouvrir les options puis le
+contexte et les sources. Les autres suites navigateur n’avaient pas été exécutées à cause
+de cet arrêt ; elles deviennent indépendantes de l’échec d’une suite précédente, sans
+masquer aucun échec ni retirer de contrôle. Nouvelle tête complète à requalifier.
 
 ## Reprise
 

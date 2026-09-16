@@ -247,6 +247,7 @@ async function qualifyDesktop(browser, state) {
   await editor.locator('.knowledge-create-row select').nth(1).selectOption('supported')
   await editor.getByRole('button', { name: 'Créer et ouvrir', exact: true }).click()
   await eventually(() => Boolean(state.createdId) && state.createdId !== simpleIdeaId, 'D07: authored item was not created')
+  await editor.getByRole('heading', { name: /^Décision navigateur D07/ }).waitFor()
   await editor.locator('[contenteditable="true"]').waitFor({ state: 'visible' })
   assert.equal(latest(state, state.createdId).content_text, 'Contenu capturé dès la création.', 'Initial content must be persisted in the create request')
   await editor.getByText('Sources et export', { exact: true }).click()

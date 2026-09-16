@@ -222,6 +222,8 @@ export default function KnowledgeEditor({
       )
       setNewTitle('')
       setNewContent('')
+      setNewKind('idea')
+      setNewEpistemic('')
       onChanged(created.id)
     } catch (cause) {
       setCreateError(cause instanceof Error ? cause.message : m('createError'))

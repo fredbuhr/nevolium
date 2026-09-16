@@ -176,6 +176,7 @@ jobs:
           NEVOLIUM_QUALIFICATION_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node apps/web/qualification.build.mjs
       - name: Install the ephemeral browser runner
+        id: browser-install
         run: |
           npm install \
             --prefix "$RUNNER_TEMP/nevolium-browser" \
@@ -203,18 +204,22 @@ jobs:
           path: artifacts/d09-hardware-browser
           if-no-files-found: warn
       - name: Qualify desktop, tablet, phone and panel popout
+        if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d05_browser_qualification.mjs
       - name: Qualify D06 planning on touch tablet and phone
+        if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d06_planning_browser_qualification.mjs
       - name: Qualify D07 editable knowledge, cross-space search and FR/EN
+        if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d07_knowledge_browser_qualification.mjs
       - name: Qualify D08 editable mindmap, persistence, provenance and touch
+        if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}
         env:
           NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
         run: node scripts/smoke/d08_mindmap_browser_qualification.mjs

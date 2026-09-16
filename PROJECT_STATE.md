@@ -8,7 +8,7 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 |---|---|
 | Base intégrée vérifiée | `main` = `d345294b50aee93e57f3316821bfd8e6c97f21cc`, relu sur GitHub le 16 septembre. Release pilote `69f5926be72227a5fc1c4e3dff7c0e436099e51c` ; ne pas confondre la tête documentaire et le code déployé |
 | D08 intégré | PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f`, 9/9 workflows PR verts, arbre identique au merge |
-| Branche / PR | Correctif unique `fix/d09-guided-workspace` à qualifier sur GitHub, base `d345294b…`. #95 reste fusionnée. Aucun merge ni déploiement du correctif |
+| Branche / PR | Correctif unique `fix/d09-guided-workspace`, [PR #96](https://github.com/fredbuhr/nevolium/pull/96) en brouillon, base `d345294b…`. #95 reste fusionnée. Aucun merge ni déploiement du correctif |
 | Tête finale qualifiée D09 | `7d748797c6accc8a6c5115abe634c24d3d5dee29` : **9/9 workflows PR verts**, UI run `35047879779` ; 13 scénarios spatiaux, 16 contrôles kit ; animation 1 978 pixels, calme 0. Contrat d’inventaire réussi dans Foundation |
 | Modèle adopté | Renderer `48d7be9752424e8cd4c3793ee5da58225ab2069b` inchangé ; acceptation utilisateur du 16 septembre et autorisation d’installer. Le pilote D09 est activé ; l’acceptation fonctionnelle et visuelle en production reste à effectuer |
 | Implémenté D09 | Projection pure ; renderer R3F/Three différé ; orbite/focus/zoom ; sélection 2D↔3D ; filaments/groupes/labels bornés ; activité réelle des Tasks ; navigation Planning/Knowledge |
@@ -32,7 +32,7 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Prochaine action | Exécuter les suites navigateur du correctif (capture d’idée avec contenu, FR/EN, projet sans relations, animation/pause, non-régressions D05–D09), inspecter les captures et corriger les échecs. Ensuite seulement proposer une nouvelle release ; D10 reste fermé |
 | Reprise / retour | Conserver les quatre images D05, le snapshot Netcup, les deux snapshots B2, les secrets et les 5 réservations historiques jusqu’au go/no-go fonctionnel. Aucun nettoyage Docker avant validation finale D09 ; un retour de données après écritures post-migration exige une décision explicite |
 | Correctif local | Capture directe titre+contenu (Idée par défaut, statut facultatif), options repliées, contexte/projet accessible, chrome/inspecteur FR/EN, appartenance au projet dérivée en 2D/3D, indication du mouvement réduit. API, migrations et matière 3D inchangées |
-| Validation du correctif | TypeScript et build Web réussis ; contrats cockpit/locale/éditeur/mindmap/spatial/matière/mesures et nouveau contrat d’appartenance réussis. Navigateur local indisponible : aucune preuve visuelle du correctif acquise ; tests Chromium GitHub requis |
+| Validation du correctif | TypeScript/build/contrats locaux réussis. Première tête `64311f9…`, UI run `35097464192` : intégrations PostgreSQL et kit graphique verts (3 186 pixels animés, 0 en pause), puis arrêt du scénario connecté D05 qui cherchait la sidebar désormais fermée. Test adapté pour ouvrir les options et les sources ; nouvelle tête à requalifier, D07/D08 réels non encore exécutés |
 | Hors scope | D10 assistant ; D11 connecteurs ; D12 coédition/offline ; D13 complétude FR/EN globale ; D10 non commencé |
 
 Réservoir `ed12d503…` inspecté sélectivement, aucune fusion globale. Les écarts D06/D07/FR-EN/PWA
