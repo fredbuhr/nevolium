@@ -41,6 +41,7 @@ for (const caseId of ['small', 'stress']) {
     }
     assert.equal(grown.fibres.attributes.position.count, data.edges.length * detail.segments * detail.strands * 2)
     assert.equal(grown.fibres.attributes.fibrePhase.count, grown.fibres.attributes.position.count)
+    assert.equal(grown.fibres.attributes.fibrePhase.itemSize, 3)
     assert([...grown.fibres.attributes.fibrePhase.array].every(value => Number.isFinite(value) && value >= 0 && value <= 1), 'Fibre illumination coordinates must be finite and bounded')
     for (const geometry of [grown.body, grown.fibres]) {
       assert([...geometry.attributes.position.array].every(Number.isFinite), 'Growth must not introduce invalid vertices')
@@ -53,6 +54,11 @@ for (const caseId of ['small', 'stress']) {
   for (const [index, id] of focused.edgeIds.entries()) {
     const edge = data.edges.find(item => item.id === id)
     const incident = [edge.source, edge.target].includes(selectedId)
+    const fibre = focused.fibres.attributes.fibrePhase
+    const verticesPerEdge = GROWTH_DETAIL.eco.segments * GROWTH_DETAIL.eco.strands * 2
+    for (let vertex = index * verticesPerEdge; vertex < (index + 1) * verticesPerEdge; vertex++) {
+      assert.equal(fibre.getZ(vertex), incident ? 1 : 0, 'Bright secondary fibres must belong to selected canonical relations')
+    }
     for (let segment = 0; segment < GROWTH_DETAIL.eco.segments; segment++) {
       const offset = index * GROWTH_DETAIL.eco.segments + segment
       assert.equal(focused.attention[offset], incident ? 1 : 0, 'Attention must follow selected canonical relations')

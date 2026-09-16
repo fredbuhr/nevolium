@@ -27,9 +27,9 @@ export function organicPositions(layout: NevoliumSpatialLayout): PoseMap {
 }
 
 export const GROWTH_DETAIL = {
-  eco: { segments: 18, strands: 2, pulses: 32 },
-  balanced: { segments: 26, strands: 3, pulses: 48 },
-  high: { segments: 34, strands: 4, pulses: 72 },
+  eco: { segments: 28, strands: 2, pulses: 32 },
+  balanced: { segments: 40, strands: 3, pulses: 48 },
+  high: { segments: 52, strands: 4, pulses: 72 },
 } as const
 
 export function growthHubs(graph: NevoliumGraphSnapshot, poses: PoseMap) {
@@ -139,12 +139,13 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
         const light = strength * (0.21 + 0.065 * Math.sin(i / settings.segments * 14 + phase + strand * 0.7)) / densityAt(i / settings.segments)
         vertex(fibres, trace[i - 1], tint, light); vertex(fibres, trace[i], tint, light)
         const strandPhase = seed(`${edge.id}:strand:${strand}`)
-        fibrePhase.push((i - 1) / settings.segments, strandPhase, i / settings.segments, strandPhase)
+        fibrePhase.push((i - 1) / settings.segments, strandPhase, highlighted ? 1 : 0,
+          i / settings.segments, strandPhase, highlighted ? 1 : 0)
       }
     }
   }
   const fibreGeometry = geometry(fibres)
-  fibreGeometry.setAttribute('fibrePhase', new THREE.Float32BufferAttribute(fibrePhase, 2))
+  fibreGeometry.setAttribute('fibrePhase', new THREE.Float32BufferAttribute(fibrePhase, 3))
   return { body: geometry(body), fibres: fibreGeometry, widths: new Float32Array(widths), flow: new Float32Array(flow), attention: new Float32Array(attention),
     edgeIds: edges.map(edge => edge.id), flowingIds: [...flowing] }
 }

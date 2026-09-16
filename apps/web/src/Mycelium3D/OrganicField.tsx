@@ -95,9 +95,9 @@ const circulation = `
 `
 const fibreVertex = `
   attribute vec3 color;
-  attribute vec2 fibrePhase;
+  attribute vec3 fibrePhase;
   varying vec3 vColor;
-  varying vec2 vFibre;
+  varying vec3 vFibre;
   void main() {
     vColor = color; vFibre = fibrePhase;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -106,14 +106,15 @@ const fibreVertex = `
 const fibreFragment = `
   uniform float lifeTime;
   uniform float motion;
-  uniform float opacity;
+  uniform float contextOpacity;
+  uniform float focusedOpacity;
   varying vec3 vColor;
-  varying vec2 vFibre;
+  varying vec3 vFibre;
   void main() {
     // Longitudinal illumination keeps the little strands alive without moving targets
     // or their welds, and needs only one time uniform for the entire fibre batch.
     float shimmer = 1.0 + motion * 0.18 * sin(vFibre.x * 23.0 - lifeTime * 1.2 + vFibre.y * 6.283185);
-    gl_FragColor = vec4(vColor, opacity * shimmer);
+    gl_FragColor = vec4(vColor, mix(contextOpacity, focusedOpacity, vFibre.z) * shimmer);
     #include <colorspace_fragment>
   }
 `
@@ -163,14 +164,18 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
         + line.fragmentShader.replace(output, output + `
           vec2 signal = vFlow.z > 0.0 ? neuralSignal(vFlow.x, vFlow.y) : vec2(0.0);
           float feather = mix(1.0, exp(-vUv.x * vUv.x * 3.5), halo);
-          float coverage = alpha / max(opacity, 0.0001) * feather;
+          // Cap coverage alone leaves hard lateral edges on a non-MSAA canvas.
+          // Bound the derivative band so even a thin fibre retains its luminous centre.
+          float sideAA = clamp(fwidth(vUv.x), 0.025, 0.9);
+          float lateral = 1.0 - smoothstep(1.0 - sideAA, 1.0 + sideAA, abs(vUv.x));
+          float coverage = alpha / max(opacity, 0.0001) * feather * lateral;
           float tide = 1.0 + motion * 0.10 * sin(lifeTime * 0.9 - vFlow.x * 18.0 + vFlow.y * 6.283185);
-          float strandAlpha = alpha * feather * mix(contextOpacity, focusedOpacity, vFlow.w) * tide;
+          float strandAlpha = alpha * feather * lateral * mix(contextOpacity, focusedOpacity, vFlow.w) * tide;
           float energyAlpha = coverage * pulseOpacity * (signal.x + signal.y * 0.30) * vFlow.z;
           vec3 energyColor = mix(vec3(0.22, 0.91, 1.0), vec3(0.40, 1.0, 0.70), step(0.64, fract(vFlow.y * 11.0)));
           // Rare amber flecks are decorative light; attention still records only real
           // selection incidence. Neither material colour nor circulation claims a job.
-          float amber = clamp((step(0.88, fract(vFlow.y * 31.0)) * 0.85 + vFlow.w * 0.22) * signal.x, 0.0, 1.0);
+          float amber = clamp((step(0.88, fract(vFlow.y * 31.0)) * 0.95 + vFlow.w * 0.70) * signal.x, 0.0, 1.0);
           energyColor = mix(energyColor, vec3(1.0, 0.61, 0.25), amber);
           float combinedAlpha = min(1.0, strandAlpha + energyAlpha);
           vec3 combinedLight = gl_FragColor.rgb * strandAlpha + energyColor * energyAlpha;
@@ -181,7 +186,8 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
     const core = new LineSegments2(geometry, makeMaterial(1.65, 0.58, 0.88, 0))
     const glow = new LineSegments2(geometry, makeMaterial(5.5, 0.018, 0.19, 1))
     const fibres = new THREE.ShaderMaterial({ vertexShader: fibreVertex, fragmentShader: fibreFragment,
-      uniforms: { lifeTime: { value: 0 }, motion: { value: 0 }, opacity: { value: 0.32 * contextOpacity } },
+      uniforms: { lifeTime: { value: 0 }, motion: { value: 0 },
+        contextOpacity: { value: 0.32 * contextOpacity }, focusedOpacity: { value: 0.22 } },
       transparent: true, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending })
     core.raycast = () => {}; glow.raycast = () => {}
     return { geometry, core, glow, fibres }

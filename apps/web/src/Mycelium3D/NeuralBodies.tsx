@@ -47,7 +47,7 @@ const somaVertex = common + `
       + 0.12 * sin(dot(p, axisB) * 4.5 - phase)
       + 0.07 * cos(dot(p, axisC) * 5.0 + phase);
     float shoulder = 0.16 * pow(max(0.0, dot(p, axisB)), 2.0);
-    vec3 shape = p * (0.82 + lobes + shoulder) * vec3(1.12, 0.86 + sin(phase) * 0.08, 0.96);
+    vec3 shape = p * (0.82 + (lobes + shoulder) * mix(1.0, 0.32, nucleus)) * vec3(1.12, 0.86 + sin(phase) * 0.08, 0.96);
     return shape * (1.0 + motion * 0.035 * sin(lifeTime * 0.95 + phase + p.y * 0.7));
   }
   void main() {
@@ -100,7 +100,7 @@ const tissueFragment = `
     float innerLight = exp(-dot(vPlane, vPlane) * 5.5);
     // A thin, interrupted membrane: no broad white specular or opaque painted fill.
     float opacity = 0.012 + rim * (0.09 + tissue * 0.11)
-      + fibres * detail * 0.052 + innerLight * (0.025 + motion * tide * 0.035);
+      + fibres * detail * 0.052 + innerLight * (0.065 + motion * tide * 0.025);
     opacity *= vState.x * (1.0 + vState.y * 0.18);
     opacity *= 1.0 - smoothstep(35.0, 110.0, vDepth) * 0.36;
     vec3 light = vTone * (0.52 + rim * 0.35 + fibres * 0.18);
@@ -127,8 +127,8 @@ const nucleusFragment = `
   void main() {
     float facing = max(0.0, dot(normalize(vNormal), normalize(vView)));
     float tide = 0.5 + 0.5 * sin(lifeTime * 0.95 + vPhase);
-    vec3 light = vTone * (0.26 + pow(facing, 1.5) * 0.46 + motion * tide * 0.09);
-    light += vec3(0.61, 0.95, 0.86) * pow(facing, 6.0) * (0.48 + vState.y * 0.25);
+    vec3 light = vTone * (0.34 + pow(facing, 1.3) * 0.40 + motion * tide * 0.09);
+    light += vec3(0.61, 0.95, 0.86) * pow(facing, 3.0) * (0.35 + vState.y * 0.16);
     float spot = pow(max(0.0, sin(vLocal.x * 12.0 + vLocal.y * 7.0 + vPhase)), 10.0);
     float ambientWarm = step(0.82, fract(vPhase * 3.17)) * 0.12;
     light += vec3(0.82, 0.25, 0.025) * spot * (ambientWarm + vState.y * 0.15 + vState.z * 0.36);
@@ -179,7 +179,7 @@ export function NeuralBodies({ nodes, graph, poses, selected, reducedMotion, tie
 }) {
   const model = useMemo(() => formsFor(nodes, poses), [nodes, poses])
   const geometry = useMemo(() => instances(new THREE.SphereGeometry(1, tier === 'eco' ? 18 : 26, tier === 'eco' ? 12 : 18), model), [model, tier])
-  const coreGeometry = useMemo(() => instances(new THREE.SphereGeometry(1, 12, 8), model), [model])
+  const coreGeometry = useMemo(() => instances(new THREE.SphereGeometry(1, 18, 12), model), [model])
   const uniforms = useMemo(() => ({ lifeTime: { value: 0 }, motion: { value: 0 }, nucleus: { value: 0 } }), [])
   const coreUniforms = useMemo(() => ({ ...uniforms, nucleus: { value: 1 } }), [uniforms])
   useEffect(() => () => geometry.dispose(), [geometry])

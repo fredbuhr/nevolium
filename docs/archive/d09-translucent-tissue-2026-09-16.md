@@ -146,3 +146,40 @@ Contrôles locaux du lot : build web (`tsc -b` et Vite), contrat géométrique o
 vérification syntaxique du runner navigateur et `git diff --check` réussis. La revue statique
 croisée ne trouve pas de blocage GLSL/lifecycle ; la vraie compilation des shaders et le jugement
 de matière restent à faire dans le navigateur CI.
+
+## Première qualification et affinage après captures
+
+Le candidat `3cf5c9fa3a7cad39e5bb541d4faf35842c7b4aa8` passe **8/8 workflows PR**.
+UI run [35045011382](https://github.com/fredbuhr/nevolium/actions/runs/35045011382) :
+13 scénarios spatiaux, 16 contrôles du kit ; 3 007 pixels changés entre images animées,
+0 en calme. Les shaders compilent réellement, sélection au volume, masquage/remontage,
+réduction du mouvement, téléphone et fallback passent. Le fond reste opaque.
+
+| Preuve | Référence | SHA-256 vérifié |
+|---|---|---|
+| Kit ZIP | `10426068713` | `8349100e0e5329cb4d206afd397c1520731c3a70f7c6b8bee1ea52d7ea8f62e1` |
+| Navigateur ZIP | `10427185081` | `22c021e1b0b8ba3d61308f95bf281b9d8ae7d7a07cc0b7907426c12c239f806b` |
+| Spatial ZIP | `10426737424` | `641f3212e9ae8e71a6fbdac72cc48d0e1ca26a7f6b86617493edb29121d39c4f` |
+| HTML | checkout `387ae72b6e44ff443c18ac3c2b4c68a0ff02e3e0`, dirty false | `2fd4348907c6a83a98a92098ecbf856779a2aea4a23ee060921a9a82004abf4b` |
+
+Gros plan, zoom proche, téléphone, réseau stress et images successives du film ont été examinés.
+La membrane laisse voir les raccords convergeant au noyau ; les pointes ne reviennent pas.
+Les impulsions changent de position sur les liaisons, notamment entre l'objet au bas-gauche
+et l'objet sélectionné puis sur la relation qui remonte vers la gauche : le mouvement ne se
+limite plus aux corps. Le réseau dense garde du contraste. Cette observation n'est pas une
+acceptation visuelle de l'utilisateur ni une preuve de fluidité physique.
+
+La revue relève des côtés de traits crénelés sur téléphone, quelques courbes polygonales,
+des noyaux encore trop cristallins et des fibres secondaires trop effacées en focus. Le
+présent affinage conserve les enveloppes, adoucit le noyau seul (déformation réduite, maillage
+18×12, lumière plus large), ajoute une couverture latérale analytique des lignes, affine leur
+échantillonnage à 28/40/52 segments et rétablit une faible opacité propre aux fibres incidentes.
+Les têtes ambrées deviennent plus distinctes localement. Aucune hausse globale du fond.
+Ces ajustements réclament leur propre nouvelle capture et qualification du head descendant.
+
+SwiftShader ponctuel du candidat 3cf5c9f : 51/201/501 objets, 50/200/500 liens, eco, 1280×900,
+19/14/12 FPS ; heap 17,1/20,5/50,4 Mo, 4 géométries, 5 appels, 0 texture. Le court parcours
+kit 201/300, comprenant pauses, interactions et calme, mesure 44,862 s sur 26 fenêtres,
+médiane 3/minimum 1 FPS et 2 longues interruptions ; export incomplet. Ce parcours ne permet
+pas une comparaison matérielle avec les 136 FPS du relevé physique d5c438e. La mémoire et
+les performances du futur affinage restent à mesurer sur appareil réel.
