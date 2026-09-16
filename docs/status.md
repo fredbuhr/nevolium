@@ -40,7 +40,7 @@ mesurée. La correction du dessin trop technologique est en cours de qualificati
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
 | Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
-| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; reprise neuronale en volume avec respiration et circulation lumineuse après retours utilisateur | Non intégré/déployé ; nouveau rendu/animation à qualifier, preuve mémoire/GPU intégré/cockpit à compléter |
+| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; corps arrondis sans cônes, raccords continus, respiration et circulation lumineuse hiérarchisée après retours utilisateur | Non intégré/déployé ; nouveau rendu/animation à qualifier, preuve mémoire/GPU intégré/cockpit à compléter |
 | Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
@@ -180,3 +180,5 @@ migrer ces données avant un rollback réel.
 
 [PROJECT_STATE](../PROJECT_STATE.md) reste le point de reprise opérationnel ; le
 [plan exécutable](implementation-plan.md) définit l'ordre D01–D22.
+
+Reprise visuelle du 16 septembre : [corps arrondis et raccords](archive/d09-smooth-junctions-2026-09-16.md). Le relevé matériel f6912bd (201/300 balanced, médiane/p10 165 FPS sur 600,881 s) concerne le parent ; il ne qualifie pas les changements suivants. Les preuves du descendant sont rattachées au head exact de #93.

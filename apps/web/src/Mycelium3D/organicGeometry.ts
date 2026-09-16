@@ -27,9 +27,9 @@ export function organicPositions(layout: NevoliumSpatialLayout): PoseMap {
 }
 
 export const GROWTH_DETAIL = {
-  eco: { segments: 18, strands: 2, pulses: 48 },
-  balanced: { segments: 26, strands: 3, pulses: 80 },
-  high: { segments: 34, strands: 4, pulses: 128 },
+  eco: { segments: 18, strands: 2, pulses: 24 },
+  balanced: { segments: 26, strands: 3, pulses: 36 },
+  high: { segments: 34, strands: 4, pulses: 52 },
 } as const
 
 export function growthHubs(graph: NevoliumGraphSnapshot, poses: PoseMap) {
@@ -67,10 +67,11 @@ function vertex(data: Batch, point: THREE.Vector3, tint: THREE.Color, light: num
 export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layout: NevoliumSpatialLayout, tier: Tier, selected: string[]) {
   const settings = GROWTH_DETAIL[tier]
   const body = batch(), fibres = batch()
-  const widths: number[] = [], flow: number[] = []
+  const widths: number[] = [], flow: number[] = [], attention: number[] = []
   const edges = [...graph.edges].filter(edge => poses.has(edge.source) && poses.has(edge.target)
     && edge.source !== edge.target).sort((a, b) => a.id.localeCompare(b.id))
   const parents = new Map(layout.placements.map(p => [p.id, p.parentId]))
+  const crowding = Math.max(0.3, Math.min(1, Math.sqrt(120 / Math.max(1, edges.length))))
   const hubs = growthHubs(graph, poses)
   const sector = (a: string, b: string) => growthSector(a, poses.get(b)!.clone().sub(poses.get(a)!))
   // Visual circulation is a bounded material animation, never evidence of data transfer.
@@ -95,8 +96,8 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
     const curve = new THREE.CatmullRomCurve3([from, start, middle, end, to], false, 'centripetal')
     const primary = parents.get(edge.target) === edge.source || parents.get(edge.source) === edge.target
     const highlighted = selected.includes(edge.source) || selected.includes(edge.target)
-    const strength = highlighted ? 0.95 : selected.length ? 0.018 : primary ? 0.45 : 0.035
-    const tint = new THREE.Color(edge.relation === 'contradicts' ? '#c89ac5' : seed(edge.id) > 0.7 ? '#72dbb3' : '#4bc6d5')
+    const strength = highlighted ? 0.48 : selected.length ? 0.022 : (primary ? 0.26 : 0.065) * crowding
+    const tint = new THREE.Color(edge.relation === 'contradicts' ? '#b79dbb' : seed(edge.id) > 0.7 ? '#80c9b1' : '#64b8c0')
     const points: THREE.Vector3[] = []
     const phase = seed(`${edge.id}:phase`) * Math.PI * 2
     for (let i = 0; i <= settings.segments; i++) {
@@ -105,17 +106,22 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
         .addScaledVector(side, Math.sin(t * 17 + phase) * envelope * Math.min(0.17, length * 0.012))
         .addScaledVector(up, Math.sin(t * 11 - phase) * envelope * Math.min(0.13, length * 0.01)))
     }
-    // Screen-bounded, tapered fibres avoid giant tube faces when the camera enters the graph.
+    const densityAt = (t: number) => 1 + (Math.sqrt(aHub.count) - 1) * Math.pow(1 - t, 5)
+      + (Math.sqrt(bHub.count) - 1) * Math.pow(t, 5)
+    // The actual connection enters the opaque soma. Depth testing masks its interior,
+    // so the visible join follows the breathing surface and its near-camera size cap.
+    // A short rounded widening belongs to the fibre, not to the object's silhouette.
     for (let i = 1; i < points.length; i++) {
       const t = i / settings.segments
-      const density = 1 + (Math.sqrt(aHub.count) - 1) * Math.pow(1 - t, 8)
-        + (Math.sqrt(bHub.count) - 1) * Math.pow(t, 8)
-      const variation = strength * (0.6 + 0.4 * Math.pow(Math.sin(t * 8 + phase), 2)) / density
+      const density = densityAt(t)
+      const variation = strength * (0.78 + 0.22 * Math.pow(Math.sin(t * 8 + phase), 2)) / density
       vertex(body, points[i - 1], tint, variation); vertex(body, points[i], tint, variation)
-      widths.push((primary || highlighted ? 0.8 : 0.5) * (0.7 + Math.abs(Math.cos(t * Math.PI)) * 0.55)
-        * (0.85 + seed(edge.id) * 0.3))
+      const distance = Math.min(points[i].distanceTo(from), points[i].distanceTo(to))
+      const junction = 1 + 0.65 * Math.exp(-Math.pow((distance - 0.7) / 0.65, 2))
+      widths.push((primary || highlighted ? 0.85 : 0.58) * junction * (0.9 + seed(edge.id) * 0.2))
       flow.push((i - 1) / settings.segments, t, seed(`${edge.id}:flow`),
-        flowing.has(edge.id) ? (selected.length && !highlighted ? 0.12 : 1) : 0)
+        flowing.has(edge.id) ? (highlighted ? 0.72 : selected.length ? 0.035 : 0.48 * crowding) / density : 0)
+      attention.push(highlighted ? 1 : 0)
     }
     for (let strand = 0; strand < settings.strands; strand++) {
       const trace = points.map((p, i) => {
@@ -127,11 +133,11 @@ export function growFilaments(graph: NevoliumGraphSnapshot, poses: PoseMap, layo
           .addScaledVector(up, Math.sin(t * 10 + strand * 2 + phase) * Math.sin(t * Math.PI) * spread * 0.7)
       })
       for (let i = 1; i < trace.length; i++) {
-        const light = strength * (0.22 + 0.22 * seed(`${edge.id}:${strand}:${i}`))
+        const light = strength * (0.16 + 0.10 * seed(`${edge.id}:${strand}:${i}`)) / densityAt(i / settings.segments)
         vertex(fibres, trace[i - 1], tint, light); vertex(fibres, trace[i], tint, light)
       }
     }
   }
-  return { body: geometry(body), fibres: geometry(fibres), widths: new Float32Array(widths), flow: new Float32Array(flow),
+  return { body: geometry(body), fibres: geometry(fibres), widths: new Float32Array(widths), flow: new Float32Array(flow), attention: new Float32Array(attention),
     edgeIds: edges.map(edge => edge.id), flowingIds: [...flowing] }
 }

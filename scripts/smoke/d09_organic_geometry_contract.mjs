@@ -26,7 +26,19 @@ for (const caseId of ['small', 'stress']) {
       assert(grown.flow[i] >= 0 && grown.flow[i + 1] <= 1 && grown.flow[i] < grown.flow[i + 1])
       assert(grown.flow[i + 2] >= 0 && grown.flow[i + 2] <= 1)
     }
-    assert([...grown.widths].every(width => width > 0 && width < 1.5), 'Near-camera fibres must retain a bounded pixel width')
+    assert([...grown.widths].every(width => width > 0 && width < 1.6), 'Near-camera fibre junctions must retain a bounded pixel width')
+    assert.equal(grown.attention.length, grown.widths.length)
+    assert([...grown.attention].every(value => value === 0), 'Warm focus must not invent a selection')
+    // Both ends must remain inside the moving soma, not terminate on a fixed-radius shell.
+    for (const [index, id] of grown.edgeIds.entries()) {
+      const edge = data.edges.find(item => item.id === id)
+      const values = grown.body.attributes.position.array
+      const start = index * detail.segments * 6, end = start + detail.segments * 6 - 3
+      for (let axis = 0; axis < 3; axis++) {
+        assert(Math.abs(values[start + axis] - poses.get(edge.source).toArray()[axis]) < 0.00001)
+        assert(Math.abs(values[end + axis] - poses.get(edge.target).toArray()[axis]) < 0.00001)
+      }
+    }
     assert.equal(grown.fibres.attributes.position.count, data.edges.length * detail.segments * detail.strands * 2)
     for (const geometry of [grown.body, grown.fibres]) {
       assert([...geometry.attributes.position.array].every(Number.isFinite), 'Growth must not introduce invalid vertices')
@@ -34,6 +46,18 @@ for (const caseId of ['small', 'stress']) {
       geometry.dispose()
     }
   }
+  const selectedId = 'task:hardware-1'
+  const focused = growFilaments(data, poses, layout, 'eco', [selectedId])
+  for (const [index, id] of focused.edgeIds.entries()) {
+    const edge = data.edges.find(item => item.id === id)
+    const incident = [edge.source, edge.target].includes(selectedId)
+    for (let segment = 0; segment < GROWTH_DETAIL.eco.segments; segment++) {
+      const offset = index * GROWTH_DETAIL.eco.segments + segment
+      assert.equal(focused.attention[offset], incident ? 1 : 0, 'Amber flow must follow selected canonical relations')
+      if (!incident) assert(focused.flow[offset * 4 + 3] <= 0.036, 'Unrelated pulses must respect selection dimming')
+    }
+  }
+  focused.body.dispose(); focused.fibres.dispose()
   assert.deepEqual(data, original, 'Material must not change canonical data')
 }
 const empty = { nodes: [], edges: [{ id: 'invalid', source: 'x', target: 'y', relation: 'related_to', directed: true }] }

@@ -79,6 +79,7 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
     geometry.setColors(material.body.attributes.color.array as Float32Array)
     geometry.setAttribute('instanceWidth', new THREE.InstancedBufferAttribute(material.widths, 1))
     geometry.setAttribute('instanceFlow', new THREE.InstancedBufferAttribute(material.flow, 4))
+    geometry.setAttribute('instanceAttention', new THREE.InstancedBufferAttribute(material.attention, 1))
     const makeMaterial = (linewidth: number, opacity: number) => {
       const line = new LineMaterial({ color: 0xffffff, vertexColors: true, linewidth, opacity,
         transparent: true, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending, alphaToCoverage: true })
@@ -92,26 +93,28 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
       line.fragmentShader = line.fragmentShader.replaceAll(coverage, 'alpha *= 1.0 - smoothstep')
       line.uniforms.lifeTime = { value: 0 }; line.uniforms.motion = { value: 0 }
       const shared = 'uniform float lifeTime; uniform float motion; varying vec4 vFlow;\n'
-      line.vertexShader = shared + 'attribute vec4 instanceFlow;\n' + line.vertexShader.replace('void main() {', `void main() {
-        vFlow = vec4(position.y < 0.5 ? instanceFlow.x : instanceFlow.y, instanceFlow.z, instanceFlow.w, 0.0);`)
+      line.vertexShader = shared + 'attribute vec4 instanceFlow; attribute float instanceAttention;\n' + line.vertexShader.replace('void main() {', `void main() {
+        vFlow = vec4(position.y < 0.5 ? instanceFlow.x : instanceFlow.y, instanceFlow.z, instanceFlow.w, instanceAttention);`)
       // The broad wave brightens the existing fibre itself, rather than orbiting dots.
       const color = '#include <color_fragment>'
       if (!line.fragmentShader.includes(color)) throw new Error('Neural flow shader contract changed')
       line.fragmentShader = shared + line.fragmentShader.replace(color, color + `
         float direction = fract(vFlow.y * 19.0) > 0.5 ? 1.0 : -1.0;
-        float front = fract(lifeTime * (0.105 + fract(vFlow.y * 7.0) * 0.055) + vFlow.y);
+        // Rest intervals and a shared density budget prevent a dense white web.
+        float front = fract(lifeTime * (0.042 + fract(vFlow.y * 7.0) * 0.022) + vFlow.y) * 2.3;
         float along = direction > 0.0 ? vFlow.x : 1.0 - vFlow.x;
         float delta = along - front;
         float head = exp(-delta * delta * 850.0);
         float wake = exp(-delta * delta * 65.0) * (1.0 - smoothstep(-0.015, 0.02, delta));
         float arrival = smoothstep(0.0, 0.06, front) * (1.0 - smoothstep(0.91, 1.0, front));
         float energy = (head * 0.82 + wake * 0.22) * arrival * vFlow.z * motion;
-        diffuseColor.rgb += vec3(0.27, 0.88, 0.58) * energy;
+        vec3 pulse = mix(vec3(0.20, 0.62, 0.43), vec3(0.95, 0.28, 0.065), vFlow.w);
+        diffuseColor.rgb += pulse * energy;
       `)
       return line
     }
-    const core = new LineSegments2(geometry, makeMaterial(1.5, 0.75))
-    const glow = new LineSegments2(geometry, makeMaterial(4.5, 0.075))
+    const core = new LineSegments2(geometry, makeMaterial(1.5, 0.62))
+    const glow = new LineSegments2(geometry, makeMaterial(4.0, 0.035))
     core.raycast = () => {}; glow.raycast = () => {}
     return { geometry, core, glow }
   }, [material])
@@ -129,7 +132,7 @@ export function OrganicFilaments({ graph, poses, layout, selected, tier, reduced
     <primitive object={lines.glow} dispose={null} />
     <primitive object={lines.core} dispose={null} />
     <lineSegments geometry={material.fibres} raycast={() => {}}>
-      <lineBasicMaterial vertexColors transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      <lineBasicMaterial vertexColors transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
     </lineSegments>
   </>
 }

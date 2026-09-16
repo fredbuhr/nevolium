@@ -58,6 +58,8 @@ try {
   await page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
   await page.locator('canvas').waitFor()
   await waitMeasured(page, 3000)
+  assert.equal(await page.locator('canvas').evaluate(canvas => canvas.getContext('webgl2').getContextAttributes().alpha), false,
+    'Additive fibres require an opaque backdrop to avoid dark compositing streaks')
   const surface = page.locator('.spatial-viewport')
   await surface.screenshot({ path: path.join(output, 'overview.png') })
   await page.getByLabel('Sélectionner un objet', { exact: true }).selectOption('task:hardware-1')
@@ -160,7 +162,24 @@ try {
   }))
   assert(film.length > 1000, 'Animated preview must contain recorded frames')
   await fs.writeFile(path.join(output, 'neural-life.webm'), Buffer.from(film))
+  // Inspect the same real object at the near-camera size cap, with motion stopped.
+  await demo.page.getByRole('button', { name: 'Animer le réseau', exact: true }).click()
+  for (let i = 0; i < 5; i++) await demo.page.getByRole('button', { name: 'Zoom avant', exact: true }).click()
+  await demo.page.locator('.spatial-viewport').scrollIntoViewIfNeeded()
+  await demo.page.waitForTimeout(500)
+  await demo.page.locator('.spatial-viewport').screenshot({ path: path.join(output, 'junction-near.png') })
   await demo.context.close()
+
+  const dense = await open()
+  await dense.page.getByLabel('Jeu synthétique', { exact: true }).selectOption('stress')
+  await dense.page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
+  await dense.page.locator('canvas').waitFor(); await waitMeasured(dense.page, 1500)
+  await dense.page.locator('.spatial-viewport').screenshot({ path: path.join(output, 'stress-overview.png') })
+  await dense.page.getByLabel('Sélectionner un objet', { exact: true }).selectOption('task:hardware-1')
+  await dense.page.getByRole('button', { name: 'Centrer', exact: true }).click()
+  await dense.page.locator('.spatial-viewport').scrollIntoViewIfNeeded()
+  await dense.page.locator('.spatial-viewport').screenshot({ path: path.join(output, 'stress-focus.png') })
+  await dense.context.close()
 
   const unavailable = await open({}, true)
   await unavailable.page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
@@ -171,7 +190,7 @@ try {
   assert.deepEqual(errors, [])
   assert.deepEqual(requests, [], 'Self-contained kit must make no HTTP requests')
   const result = { status: 'passed', scope: 'Offline file:// kit, Chromium SwiftShader; short software check, no hardware qualification',
-    checks: ['no-network', 'real-scene-render', 'neuron-volume-raycast', 'select-focus-orbit', 'pause-remount', 'partial-report-export', 'touch-viewport', 'effective-dpr', 'no-webgl', 'visible-neural-animation', 'calm-static', 'reduced-motion-control', 'recorded-neural-preview'],
+    checks: ['no-network', 'real-scene-render', 'neuron-volume-raycast', 'select-focus-orbit', 'pause-remount', 'partial-report-export', 'touch-viewport', 'effective-dpr', 'no-webgl', 'visible-neural-animation', 'calm-static', 'reduced-motion-control', 'recorded-neural-preview', 'opaque-compositing', 'near-junction-capture', 'dense-network-captures'],
     animation: { animated_changed_pixels: animatedPixels, calm_changed_pixels: calmPixels },
     source_commit: report.build.source_commit }
   await fs.writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2) + '\n')

@@ -113,26 +113,34 @@ Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
 
 ## Traduction spatiale D09
 
-Le second retour utilisateur du 15 septembre demande un organisme neuronal vivant, au-delà
-des membranes circulaires de la première reprise. D09 emploie désormais des corps 3D lobés,
-éclairés en volume, avec des surfaces nervurées et des dendrites effilées. Leur silhouette
-change avec l'orbite : aucun anneau ni panneau orienté vers la caméra ne représente l'objet.
-Les dendrites sont une partie locale du corps ; seuls les filaments canoniques relient les objets.
+Le retour du 16 septembre précise la direction : des corps 3D arrondis, légèrement asymétriques,
+éclairés en volume, sans pointes ni cônes décoratifs. La matière mêle un modelé large, un grain
+fin et des veinules interrompues dont le détail s'efface à distance. La silhouette change avec
+l'orbite ; aucun panneau orienté vers la caméra ne représente l'objet.
 
-Une respiration asynchrone déforme légèrement la matière autour des centres fixes. Les vagues
-lumineuses parcourent la fibre elle-même, avec un front et un sillage doux, selon un nombre borné
-de connexions. Elles expriment une vitalité visuelle même au repos, **pas une exécution de tâche
-ou un transfert de données**. L'activité réelle garde une nuance locale distincte, et son état
-textuel reste dans les surfaces métier. La sélection éclaire son voisinage.
+Les seuls prolongements sont les filaments des relations canoniques. Ils pénètrent dans le corps
+opaque : la profondeur masque leur intérieur et maintient un raccord continu lorsque le corps
+respire ou que son diamètre apparent est limité au zoom. Leur raccord s'élargit doucement, dans
+une largeur écran bornée. Il ne s'agit pas d'une fusion volumétrique anatomique.
 
-« Animer le réseau » permet de figer les animations ; le mouvement réduit système les supprime.
-Le panneau masqué démonte toujours le renderer. Les centres, la caméra et les identités restent
-stables ; la déformation ne déplace pas les cibles. Les branches locales et le diamètre apparent
-restent bornés près de la caméra. Les étiquettes sont décalées sous les volumes pour les dégager.
+Une respiration asynchrone déforme légèrement la matière autour des centres fixes. Des vagues
+lumineuses parcourent un nombre borné de fibres, avec des intervalles de repos. Leur intensité,
+comme celle des traits secondaires, tient compte de la densité et de la sélection pour éviter
+l'accumulation blanche. Le fond WebGL opaque supprime les traits noirs de composition alpha.
 
-La [première reprise](archive/d09-organic-revision-2026-09-15.md) et la
-[reprise neuronale vivante](archive/d09-neural-life-2026-09-15.md) distinguent les rapports reçus,
-l'implémentation, les preuves animées et l'acceptation visuelle encore attendue.
+La circulation exprime une vitalité visuelle, **pas une exécution de tâche ou un transfert réel**.
+L'ambre souligne l'objet sélectionné et les ondes de ses relations ; l'activité réelle
+queued/running garde une chaleur interne et son état textuel dans les surfaces métier. La couleur
+n'est jamais l'unique indication d'un état. La sélection rend ses voisins plus lisibles.
+
+« Animer le réseau » fige les animations ; le mouvement réduit système les supprime. Le panneau
+masqué démonte toujours le renderer. Centres, caméra et identités restent stables. Les cibles de
+sélection suivent l'enveloppe arrondie ; les étiquettes restent sous les volumes.
+
+Les suivis de [première reprise](archive/d09-organic-revision-2026-09-15.md),
+[reprise neuronale](archive/d09-neural-life-2026-09-15.md) et
+[raccords et lisibilité](archive/d09-smooth-junctions-2026-09-16.md) distinguent les rapports
+matériels, l'implémentation, les preuves et l'acceptation visuelle encore attendue.
 
 ## Personnalisation
 

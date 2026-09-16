@@ -170,10 +170,12 @@ export default function Scene(props: SceneProps) {
   return <Canvas
     camera={defaultCamera}
     dpr={Math.min(window.devicePixelRatio || 1, QUALITY_SETTINGS[tier].dpr)}
-    gl={{ antialias: false, alpha: true, powerPreference: 'low-power' }}
+    gl={{ antialias: false, alpha: false, powerPreference: 'low-power' }}
     frameloop={props.reducedMotion ? 'demand' : 'always'}
     onPointerMissed={() => props.onSelect('', false)}
   >
+    {/* An opaque backdrop keeps faint additive fibres from masking the CSS background. */}
+    <color attach="background" args={['#061216']} />
     <CameraAndMetrics {...props} poses={poses} tier={tier} onTier={setAutoTier} />
     <OrganicFilaments graph={visibleGraph} poses={poses} layout={spatial} selected={props.selected} tier={tier} reducedMotion={props.reducedMotion} />
     <OrganicGroups groups={props.groups} poses={poses} />
