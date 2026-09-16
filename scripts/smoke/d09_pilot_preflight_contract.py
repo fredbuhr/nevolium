@@ -21,6 +21,50 @@ class PreflightContract(unittest.TestCase):
         self.assertEqual(str(error.exception), "database-read-only")
         self.assertNotIn(".Config.Env", preflight.INSPECT)
         self.assertNotIn(".State.Error", preflight.INSPECT)
+        self.assertNotIn(".State.Health", preflight.INSPECT)
+        self.assertIn(".State.Health", preflight.INSPECT_HEALTH)
+
+    def test_docker_29_health_is_queried_outside_the_json_record(self):
+        commands = []
+        base = {
+            "id": "core",
+            "image_id": "sha256:image",
+            "service": "nevolium-core",
+            "project": "pilot",
+            "working_dir": "/opt/nevolium/source",
+            "config_files": "compose.yaml",
+            "status": "running",
+            "health": None,
+            "mounts": [{
+                "Type": "bind", "Name": "", "Source": "/safe/source",
+                "Destination": "/app/config", "RW": False, "Driver": "ignored",
+            }],
+        }
+
+        postgres = {**base, "id": "pg", "service": "postgres"}
+
+        def fake(stage, command, accepted=(0,)):
+            commands.append((stage, command))
+            values = [base, postgres] if stage == "docker-inspect" else [None, "healthy"]
+            output = "\n".join(json.dumps(value) for value in values)
+            return SimpleNamespace(returncode=0, stdout=output + "\n")
+
+        with patch.object(preflight, "run", side_effect=fake):
+            result = preflight.inspect(["docker"], ["core", "pg"])
+
+        self.assertEqual(
+            [stage for stage, _ in commands], ["docker-inspect", "docker-health"]
+        )
+        first_format = commands[0][1][commands[0][1].index("--format") + 1]
+        second_format = commands[1][1][commands[1][1].index("--format") + 1]
+        self.assertNotIn(".State.Health", first_format)
+        self.assertEqual(second_format, preflight.INSPECT_HEALTH)
+        self.assertIsNone(result[0]["health"])
+        self.assertEqual(result[1]["health"], "healthy")
+        self.assertEqual(result[0]["mounts"], [{
+            "Type": "bind", "Name": "", "Source": "/safe/source",
+            "Destination": "/app/config", "RW": False,
+        }])
 
     def test_ambiguous_running_core_stops_before_database(self):
         commands = []
