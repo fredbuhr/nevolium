@@ -55,7 +55,7 @@ contrats D05 cockpit, D06 locale, D07 éditeur, D08 Web, D09 spatial/présentati
 et nouveau contrat de projet sans relations (scope, idempotence, absence de mutation, filaments
 avec circulation dans les trois profils).
 
-Tests navigateur étendus, **suite complète pas encore verte sur une même tête** : capture d’idée sans
+Tests navigateur étendus, **suite complète verte sur `f7c4d04`** : capture d’idée sans
 ouvrir les options, contenu initial persistant, ancien parcours décision/citation/restauration,
 inspection inter-projets, chrome/contexte EN, téléphone, options avancées D05/D08 accessibles,
 projet sans relations en 2D/3D, différence de pixels caméra fixe, pause et mouvement réduit.
@@ -94,6 +94,139 @@ restauration et inspection inter-projets. Il s’arrête ensuite sur le repérag
 La capture FR d’idée et le graphe peu relié ont été inspectés ; le navigateur complet
 reste à requalifier sur la nouvelle tête, y compris la fin du scénario anglais/téléphone.
 
-Lancer/inspecter UI workspace validation sur la tête de cette branche, traiter les échecs,
-inspecter les captures d’idée et de graphe peu relié. Ne proposer une activation qu’après
-qualification cohérente et conservation des protections de reprise du pilote.
+## Reprise après interruption — 16 septembre
+
+La cause de l’interruption de la réponse ChatGPT n’est pas établie : aucun journal de session
+ne l’atteste. Les changements ont été conservés dans la branche et les cinq commits de la PR #96.
+Les erreurs historiques ci-dessus ont retardé la qualification ; elles ne prouvent pas la cause
+de l’interruption de conversation. Aucun redémarrage ni nouvelle activation de production.
+
+La tête `f7c4d04033a52e267aaa0e839286387bd7d9661e` passe les **8 workflows PR déclenchés**.
+Le workflow D04 à filtrage de chemins n’est pas déclenché pour ces changements Web ; ne pas
+annoncer 9/9. Le [run UI `35101172713`](https://github.com/fredbuhr/nevolium/actions/runs/35101172713)
+est vert dans ses quatre jobs, avec les suites D05, D06, D07 et D08/D09 toutes exécutées.
+Le cas sans relations affiche trois appartenances, 478 pixels animés et zéro en pause.
+Les 16 scénarios spatiaux et les 16 contrôles du kit passent ; le kit détecte 1 956 pixels
+animés et zéro en pause. Ces mesures SwiftShader ne mesurent pas le GPU du pilote.
+
+Archives récupérées et contrôlées :
+
+| Preuve | Artefact | SHA-256 du ZIP |
+|---|---|---|
+| Capture d’idée, EN, téléphone | `10449070683` | `8b91593c9d9c13e474f8cc23c45e13ab4e29afeb8d0741b3d1b9b6b5b719c9a8` |
+| Scènes spatiales dont projet peu relié | `10448587504` | `be57466f56cfec4f8a0212994f5f6cd8cd83e510a31d895107144e6e3f17ac4f` |
+
+L’inspection des PNG confirme la capture directe et les filaments, mais relève encore deux
+défauts réels : le sélecteur de langue fixé en surimpression masque le compte et la marque sur
+téléphone ; la devise du cockpit demeure française en EN. Le complément replace le sélecteur
+dans les en-têtes Accueil/cockpit, traduit la devise et réserve des cibles tactiles de 44 px.
+Le texte destiné au lecteur d’écran reçoit aussi son style global manquant. Les contrôles
+navigateur vérifient l’absence de recouvrement marque/compte/recherche et les cibles tactiles
+de 320 px au bureau, ainsi que la devise anglaise. Nouvelle tête à qualifier avant intégration.
+
+La traduction complète des contenus historiques d’Accueil, Projets et des réglages n’est
+toujours pas acquise. Les titres et contenus rédigés par l’utilisateur conservent leur langue.
+
+### Complément local et blocage de publication
+
+Le complément est committé localement dans `f07918db907c1f03cb9c3354f0657dbb0652dbd4`.
+TypeScript, build Vite, contrats D05/D06 locale, syntaxe des suites navigateur modifiées et
+contrôle de diff passent. Le build signale toujours ses chunks volumineux. Le lanceur pnpm
+local a d’abord refusé une réinstallation implicite sans TTY ; le build a ensuite utilisé
+directement les binaires installés, sans purge de dépendances. Aucun Chromium local disponible.
+
+L’auto-review a rejeté l’envoi Git du complément vers GitHub : destination jugée non vérifiée
+et absence d’autorisation explicite de divulgation. La PR #96 a été relue après le rejet : elle
+reste sur `f7c4d04`. Ce blocage observé pendant la reprise ne permet pas d’expliquer l’interruption
+antérieure de la conversation. Aucun contournement par le connecteur GitHub ni tentative de
+déploiement. Il faut l’autorisation explicite de pousser ces changements vers `fredbuhr/nevolium`
+avant la CI du nouveau commit ; les preuves vertes du parent ne qualifient pas ce complément.
+
+## Accueil Mycelium transversal — extension autorisée le 16 septembre
+
+L’utilisateur précise que Mycelium commence dès l’accueil et sert à naviguer entre les objets.
+Il autorise la poursuite, demande des exemples exploitables et impose KISS au backend et au
+frontend. Le correctif reste sur la branche de la PR #96, sans engager D10.
+
+L’ancien accueil fixe à six destinations et ses menus redondants sont remplacés par le renderer
+organique D09 partagé. L’ancien composant SVG, son générateur et ses styles d’accueil sont
+retirés ; leurs tests de géométrie historique sont remplacés par le contrat du modèle d’accueil
+et les parcours de cibles tactiles, tandis que les contrats du renderer organique restent actifs.
+La matière et les shaders adoptés sont conservés.
+
+L’accueil permet d’épingler des outils ou des objets réels, renommer les raccourcis, les ordonner,
+les regrouper dans des dossiers, retirer un raccourci et annuler la dernière modification.
+Ces dossiers ne déplacent pas les contenus. `WorkspaceLayout` assure la persistance par compte
+avec le writer sérialisé existant. L’accueil et ses caméras utilisent des clés distinctes des
+cartes des projets. Une disposition illisible reste protégée contre l’écrasement. Les raccourcis
+inaccessibles cachent leur ancien libellé ; le contexte est conservé à l’ouverture d’un espace.
+
+Une seule projection en lecture est ajoutée : `GET /v1/mycelium/{entity_type}/{entity_id}`,
+36 relations candidates par page, maximum 80, curseur lié au foyer. Elle relit PostgreSQL,
+sans nouvelle table, migration ni second graphe. Chaque extrémité est soumise aux droits du
+compte, y compris pour les relations devenues obsolètes et les citations historiques.
+
+| Objets | Relations projetées |
+| --- | --- |
+| Projets et sous-projets | Parent, tâches, documents, fichiers et résultats du projet |
+| Tâches | Hiérarchie, dépendances typées et décalages, exécutions, résultats, approbations |
+| Documents et idées | Appartenance, fichiers sources, pièces jointes, diagrammes, traitements, citations de chaque version |
+| Citations | Document citant, génération citante, document source et génération source |
+| Fichiers | Projet, documents source et documents auxquels ils sont joints |
+| Conversations | Tâches et exécutions liées par les commandes canoniques |
+| Exécutions, résultats, approbations | Références canoniques associées à la tâche et au projet |
+| Tous les types reconnus | `RelationshipRecord` explicites, aliases historiques normalisés, liens transversaux autorisés |
+
+Les filaments de l’accueil expriment des raccourcis privés. Les filaments d’un voisinage
+expriment les relations enregistrées, avec libellés et direction dans l’inspecteur. Le contrôle
+2D accessible reste disponible ; le téléphone démarre en 2D, avec choix explicite de la 3D.
+FR/EN couvre les nouvelles commandes. La langue d’un contenu rédigé reste inchangée.
+
+### Corpus et validation
+
+Le corpus versionné `examples/mycelium` contient 5 projets, 20 documents/idées/décisions,
+12 fichiers, 12 tâches dont 3 jalons, 9 dépendances, 32 relations explicites, 12 citations
+réparties sur les versions et 12 liens document/fichier. Trois accueils proposés correspondent
+à la crypto, au journalisme et à la recherche. Toutes les données sont fictives. Les cas vides,
+homonymes, sous-projet, idée sans lien sémantique et liens entre projets sont intentionnels.
+
+`scripts/examples/import_mycelium.py` affiche d’abord un inventaire sans accès réseau.
+L’import explicite passe par les API existantes, préserve un accueil déjà enregistré et relit
+les fichiers et les liens paginés. Son journal est lié au compte, serveur, corpus et profil,
+verrouillé contre les imports simultanés. Une écriture dont la réponse a été perdue reste
+bloquée pour réconciliation, sans répétition automatique. Aucun Task dispatch ni appel de
+modèle n’est émis par l’importateur. Aucune donnée d’exemple n’a été chargée dans le pilote.
+
+Preuves locales de cette extension : TypeScript et build Vite passent ; contrats D05 cockpit,
+D06 langue, matière organique D09, appartenance aux projets et modèle d’accueil passent ;
+Ruff F/E9 et compilation des neuf projections PostgreSQL passent. Le test HTTP de l’import
+valide les schémas canoniques des requêtes, les 12 fichiers relus, la pagination, une reprise
+sans écriture supplémentaire, le refus d’un autre compte, une réponse perdue et la conservation
+d’un accueil personnel. Ce test utilise un transport simulé ; ce n’est pas une preuve SQL.
+
+La CI est étendue avec un contrat PostgreSQL transactionnel couvrant les neuf types, les familles
+de relations, les aliases, les curseurs, les versions et les droits, et un parcours Chromium
+sur ordinateur/tablette/téléphone utilisant le même corpus. Le parcours couvre 3D par défaut
+sur grand écran, pause, traversée entre projets, téléchargement CSV, aperçu SVG, personnalisation,
+ordre, annulation, reprise de sauvegarde, rechargement et FR/EN. Ces nouvelles suites n’ont pas
+encore été exécutées : PostgreSQL absent localement ; les distributions officielles Chromium
+et headless-shell ont été téléchargées mais s’arrêtent avec `SIGTRAP` au lancement dans cet
+environnement. Aucun rendu final du nouvel accueil n’est encore visuellement attesté.
+
+La qualification verte du parent `f7c4d04` ne qualifie pas cette extension. La prochaine étape
+est la publication de la branche existante puis l’exécution et l’inspection de ces nouvelles
+preuves. Le déploiement ultérieur concernera **Core et Web**, avec vérification de la compatibilité
+de leurs versions. Les points de retour et le pilote restent inchangés.
+
+### Publication de l’extension bloquée
+
+Le développement Accueil/corpus est committé dans `1c00a18`. Une tentative d’envoi vers la même
+branche, après le message autorisant la poursuite des travaux, est de nouveau rejetée par
+l’auto-review : code, fixtures et documentation vers une destination GitHub classée non vérifiée ;
+autorisation de développement jugée insuffisante pour cette divulgation. Aucun contournement.
+La PR distante reste à `f7c4d04`. Il faut l’accord explicite de publication dans
+`fredbuhr/nevolium` pour lancer les nouvelles preuves CI et inspecter les captures.
+
+L’utilisateur a ensuite explicitement autorisé la publication et demandé de poursuivre.
+La commande Git ne dispose pas d’identifiants dans cet environnement ; la connexion GitHub
+authentifiée est utilisée pour publier le même arbre sur la même branche, sans forcer la ref.

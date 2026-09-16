@@ -4,8 +4,9 @@ import { nevoliumFetch } from '../lib/apiClient'
 import { getAuthSnapshot, subscribeAuthSession } from '../lib/authSession'
 import { DEFAULT_PRESENTATION, readPresentation, type SpatialPresentation } from './presentation'
 
-export function useSpatialPresentation(apiUrl: string, projectId: string) {
-  const workspaceKey = `mycelium3d.project.${projectId}`
+export function useSpatialPresentation(apiUrl: string, projectId: string, options?: { workspaceKey?: string; defaultView?: '2d' | '3d' }) {
+  const workspaceKey = options?.workspaceKey || `mycelium3d.project.${projectId}`
+  const defaultView = options?.defaultView || '2d'
   const persistence = useLayoutPersistence<SpatialPresentation>(apiUrl, workspaceKey)
   const [value, setValue] = useState(DEFAULT_PRESENTATION)
   const valueRef = useRef(value)
@@ -32,7 +33,7 @@ export function useSpatialPresentation(apiUrl: string, projectId: string) {
           `${apiUrl}/v1/ui/workspaces/${encodeURIComponent(workspaceKey)}/layout`,
           { signal: controller.signal },
         )
-        let next = DEFAULT_PRESENTATION
+        let next = { ...DEFAULT_PRESENTATION, view: defaultView }
         if (response.status !== 404) {
           if (!response.ok) throw new Error('Spatial layout unavailable')
           const saved = await response.json()
@@ -49,7 +50,7 @@ export function useSpatialPresentation(apiUrl: string, projectId: string) {
       }
     })()
     return () => { controller.abort(); unsubscribe() }
-  }, [apiUrl, workspaceKey, revision])
+  }, [apiUrl, workspaceKey, defaultView, revision])
 
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {

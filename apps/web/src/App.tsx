@@ -5,6 +5,7 @@ import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
 import InstanceModelSettings from './InstanceModelSettings'
 import KnowledgePanel from './KnowledgePanel'
+import LanguageSwitcher from './LanguageSwitcher'
 import MindMapWorkspace from './MindMapWorkspace'
 import MyceliumHome, { type MyceliumDestinationKey } from './MyceliumHome'
 import { MyceliumAtmosphere } from './MyceliumField'
@@ -39,6 +40,7 @@ import {
   type CockpitSurface,
   useCockpitDeviceClass,
 } from './lib/cockpitDevice'
+import { PanelVisibilityContext } from './lib/panelVisibility'
 import { readMindMapDeepLink } from './lib/mindmapDeepLink'
 import {
   type CapabilityTaskView,
@@ -454,8 +456,13 @@ export default function App() {
   return (
     <main className={`app-shell ambience-${ambience} surface-${surface}`}>
       {ambience !== 'minimal' ? <MyceliumAtmosphere /> : null}
-      {surface === 'home' ? (
+      <div hidden={surface !== 'home'}>
+      <PanelVisibilityContext.Provider value={surface === 'home'}>
         <MyceliumHome
+          key={`${auth.enabled}:${auth.subject || 'local'}`}
+          apiUrl={API_URL}
+          active={surface === 'home'}
+          onOpenConversation={id => { setConversationId(id); openSpace('command') }}
           ambience={ambience}
           deviceClass={deviceClass}
           installAvailable={Boolean(installPrompt)}
@@ -468,19 +475,24 @@ export default function App() {
           onOpenSpace={openSpace}
           onProfileChange={updateProfile}
         />
-      ) : (
+      </PanelVisibilityContext.Provider>
+      </div>
+      {surface !== 'home' ? (
         <>
           <header className="app-header cockpit-app-header">
             <button className="brand-lockup" type="button" onClick={openHome}>
               <img className="mycelium-mark" src="/icons/nevolium.svg" alt="" aria-hidden="true" />
               <div>
-                <span className="eyebrow">PENSER · RELIER · AVANCER</span>
+                <span className="eyebrow">{w('brandMotto')}</span>
                 <h1>Nevolium</h1>
               </div>
             </button>
-            <div className="session-summary">
-              <span>{auth.username || auth.email || w('sessionPrivate')}</span>
-              <small>{isAdmin ? w('administrator') : w('regularUser')}</small>
+            <div className="app-header-actions">
+              <div className="session-summary">
+                <span>{auth.username || auth.email || w('sessionPrivate')}</span>
+                <small>{isAdmin ? w('administrator') : w('regularUser')}</small>
+              </div>
+              <LanguageSwitcher />
             </div>
           </header>
 
@@ -603,7 +615,7 @@ export default function App() {
             ]}
           />
         </>
-      )}
+      ) : null}
     </main>
   )
 }

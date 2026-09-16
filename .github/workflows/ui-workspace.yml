@@ -19,6 +19,8 @@ jobs:
         run: uv lock --check
       - name: Prove canonical owner-scoped workspace layout contract
         run: uv run --locked --project services/core python scripts/smoke/workspace_layout_contract.py
+      - name: Prove import payloads, corpus readback, resume and home preservation
+        run: uv run --locked --project services/core python scripts/smoke/d09_example_import_contract.py
       - name: Prove D05 cockpit, keyboard, PWA and no-WebGL baseline
         run: python scripts/smoke/d05_cockpit_contract.py
       - name: Prove D06 FR/EN locale foundation
@@ -138,6 +140,8 @@ jobs:
       - name: Apply canonical migrations through D08 base
         working-directory: services/core
         run: uv run --locked alembic upgrade head
+      - name: Prove D09 transversal Mycelium provenance, pagination and isolation on PostgreSQL
+        run: uv run --locked --project services/core python scripts/smoke/d09_mycelium_db_contract.py
       - name: Prove D08 bounded project mindmap and isolation on PostgreSQL
         run: uv run --locked --project services/core python scripts/smoke/d08_mindmap_db_contract.py
 
@@ -152,6 +156,8 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Prove D09 personalized home identity and folder model
+        run: node --experimental-strip-types scripts/smoke/d09_home_model_contract.mjs
       - name: Prove D09 deterministic spatial graph projection
         run: node --experimental-strip-types scripts/smoke/d09_spatial_graph_contract.mjs
       - name: Prove D09 bounded camera and adaptive quality
@@ -169,8 +175,6 @@ jobs:
           VITE_NEVOLIUM_API_URL: http://127.0.0.1:8999
           VITE_NEVOLIUM_AUTH_ENABLED: "false"
         run: pnpm --filter @nevolium/web build
-      - name: Prove deterministic organic geometry and touch targets
-        run: node scripts/smoke/d05_mycelium_geometry.mjs
       - name: Build the self-contained D09 physical hardware kit
         env:
           NEVOLIUM_QUALIFICATION_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -202,6 +206,18 @@ jobs:
         with:
           name: d09-hardware-browser
           path: artifacts/d09-hardware-browser
+          if-no-files-found: warn
+      - name: Qualify shared Mycelium home, corpus traversal and personalization
+        if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}
+        env:
+          NEVOLIUM_PLAYWRIGHT_MODULE: ${{ runner.temp }}/nevolium-browser/node_modules/playwright/index.mjs
+        run: node scripts/smoke/d09_home_browser_qualification.mjs
+      - name: Preserve personalized Mycelium browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d09-home-browser
+          path: artifacts/d09-home-browser
           if-no-files-found: warn
       - name: Qualify desktop, tablet, phone and panel popout
         if: ${{ !cancelled() && steps.browser-install.outcome == 'success' }}

@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 
 import App from './App'
-import LanguageSwitcher from './LanguageSwitcher'
 import { LocaleProvider } from './i18n'
 import { initializeAuth } from './lib/authSession'
 import { ProjectSelectionProvider } from './lib/projectSelection'
@@ -21,7 +20,6 @@ function renderApp() {
       <LocaleProvider>
         <ProjectSelectionProvider>
           <App />
-          <LanguageSwitcher />
         </ProjectSelectionProvider>
       </LocaleProvider>
     </React.StrictMode>,

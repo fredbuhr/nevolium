@@ -3,6 +3,7 @@ import { useI18n } from './i18n'
 
 // One typed FR/EN catalogue for the shared workspace and guided capture path.
 const messages = {
+  brandMotto: ["PENSER · RELIER · AVANCER","THINK · CONNECT · MOVE FORWARD"],
   home: ["Accueil","Home"],
   quick: ["Accès rapide","Quick access"],
   news: ["Actualités","News"],

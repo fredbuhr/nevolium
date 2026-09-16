@@ -62,11 +62,11 @@ def main() -> None:
     styles = (WEB / "src/styles.css").read_text(encoding="utf-8")
     assert "Control+K Meta+K" in cockpit
     assert "Control+K Meta+K" in home
-    assert "mycelium-network" in field and "mycelium-space-node" in home
-    assert "createMyceliumGeometry" in home and "ResizeObserver" in home
-    assert "branched-bioluminescent-fibres" in field
-    assert "aria-hidden=\"true\"" in field and "mixBlendMode: 'screen'" in field
-    assert "Où reprendre le fil" in home
+    assert "quiet-atmosphere" in field and "SpatialWorkspace" in home
+    assert 'defaultView="3d"' in home and "useHomeLayout" in home
+    assert 'aria-hidden="true"' in field
+    home_messages = (WEB / "src/MyceliumHome/messages.ts").read_text(encoding="utf-8")
+    assert "Votre Mycelium" in home_messages
     for delivered_space in (
         "Assistant",
         "Actualités",
@@ -75,7 +75,7 @@ def main() -> None:
         "Projets",
         "Documents",
     ):
-        assert delivered_space in home, delivered_space
+        assert delivered_space in home_messages, delivered_space
     assert "model-settings" in home and "isAdmin" in home
     assert "role=\"dialog\"" in cockpit and "aria-modal=\"true\"" in cockpit
     assert "handlePaletteDialogKey" in cockpit and "paletteReturnFocusRef" in cockpit

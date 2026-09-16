@@ -27,6 +27,7 @@ from .db import get_session, ping_database
 from .documents import router as documents_router
 from .events import append_audit, enqueue_domain_event
 from .knowledge import router as knowledge_router
+from .mycelium import router as mycelium_router
 from .memory import router as memory_router
 from .models import OutboxEvent, Project, RelationshipRecord, Task
 from .model_admission import router as model_admission_router
@@ -114,6 +115,7 @@ app.include_router(workflow_router)
 app.include_router(memory_router)
 app.include_router(documents_router)
 app.include_router(knowledge_router)
+app.include_router(mycelium_router)
 app.include_router(tools_router)
 app.include_router(research_router)
 app.include_router(research_context_router)

@@ -1,0 +1,879 @@
+{
+  "schema_version": 1,
+  "id": "mycelium-example-v1",
+  "description": "Corpus fictif FR/EN. Aucun fait financier, scientifique ou journalistique réel. Aucun appel de modèle requis.",
+  "projects": [
+    {
+      "key": "crypto",
+      "name": "EXEMPLE — Veille crypto — atelier fictif",
+      "summary": "Comparer des observations synthétiques, leurs limites et les hypothèses. Données de démonstration uniquement."
+    },
+    {
+      "key": "journalisme",
+      "name": "EXEMPLE — Enquête — atelier fictif",
+      "summary": "Préparer une enquête imaginaire sur un service numérique communal. Données de démonstration uniquement."
+    },
+    {
+      "key": "recherche",
+      "name": "EXEMPLE — Recherche — atelier fictif",
+      "summary": "Évaluer un protocole fictif de navigation dans un réseau de connaissances. Données de démonstration uniquement."
+    },
+    {
+      "key": "archives",
+      "name": "EXEMPLE — Archives de l’enquête",
+      "summary": "Sous-projet conservant un brouillon.",
+      "parent": "journalisme"
+    },
+    {
+      "key": "vide",
+      "name": "EXEMPLE — Projet vide",
+      "summary": "Cas de navigation sans contenu."
+    }
+  ],
+  "assets": [
+    {
+      "key": "crypto-notes.md",
+      "project": "crypto",
+      "path": "crypto/notes.md",
+      "mime_type": "text/markdown"
+    },
+    {
+      "key": "crypto-observations.csv",
+      "project": "crypto",
+      "path": "crypto/observations.csv",
+      "mime_type": "text/csv"
+    },
+    {
+      "key": "crypto-parcours.svg",
+      "project": "crypto",
+      "path": "crypto/parcours.svg",
+      "mime_type": "image/svg+xml"
+    },
+    {
+      "key": "crypto-parcours.mmd",
+      "project": "crypto",
+      "path": "crypto/parcours.mmd",
+      "mime_type": "text/plain"
+    },
+    {
+      "key": "journalisme-notes.md",
+      "project": "journalisme",
+      "path": "journalisme/notes.md",
+      "mime_type": "text/markdown"
+    },
+    {
+      "key": "journalisme-observations.csv",
+      "project": "journalisme",
+      "path": "journalisme/observations.csv",
+      "mime_type": "text/csv"
+    },
+    {
+      "key": "journalisme-parcours.svg",
+      "project": "journalisme",
+      "path": "journalisme/parcours.svg",
+      "mime_type": "image/svg+xml"
+    },
+    {
+      "key": "journalisme-parcours.mmd",
+      "project": "journalisme",
+      "path": "journalisme/parcours.mmd",
+      "mime_type": "text/plain"
+    },
+    {
+      "key": "recherche-notes.md",
+      "project": "recherche",
+      "path": "recherche/notes.md",
+      "mime_type": "text/markdown"
+    },
+    {
+      "key": "recherche-observations.csv",
+      "project": "recherche",
+      "path": "recherche/observations.csv",
+      "mime_type": "text/csv"
+    },
+    {
+      "key": "recherche-parcours.svg",
+      "project": "recherche",
+      "path": "recherche/parcours.svg",
+      "mime_type": "image/svg+xml"
+    },
+    {
+      "key": "recherche-parcours.mmd",
+      "project": "recherche",
+      "path": "recherche/parcours.mmd",
+      "mime_type": "text/plain"
+    }
+  ],
+  "documents": [
+    {
+      "key": "crypto-1",
+      "project": "crypto",
+      "title": "Observations synthétiques",
+      "kind": "note",
+      "epistemic_status": "supported",
+      "content_text": "Observations fictives pour Veille crypto — atelier fictif. Les données CSV sont inventées pour tester les fichiers et leurs relations.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": [
+        {
+          "asset": "crypto-notes.md",
+          "role": "attachment"
+        },
+        {
+          "asset": "crypto-observations.csv",
+          "role": "attachment"
+        }
+      ]
+    },
+    {
+      "key": "crypto-2",
+      "project": "crypto",
+      "title": "Hypothèse de concentration",
+      "kind": "idea",
+      "epistemic_status": "hypothesis",
+      "content_text": "Hypothèse à explorer : hypothèse de concentration. Elle reste à vérifier et doit être confrontée aux contre-exemples.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "crypto-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": []
+    },
+    {
+      "key": "crypto-3",
+      "project": "crypto",
+      "title": "Contre-exemple : activité automatisée",
+      "kind": "note",
+      "epistemic_status": "contested",
+      "content_text": "Contre-exemple : activité automatisée. Ce cas synthétique limite la portée de l’hypothèse ; le lien « contredit » est intentionnel.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": []
+    },
+    {
+      "key": "crypto-4",
+      "project": "crypto",
+      "title": "Décision : compléter les observations",
+      "kind": "decision",
+      "epistemic_status": "supported",
+      "content_text": "Décision : compléter les observations. Cette décision provisoire repose sur une source citée et un contre-exemple. Réexaminer après la collecte.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "crypto-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": [],
+      "revision": "Décision : compléter les observations. Cette décision provisoire repose sur une source citée et un contre-exemple. Réexaminer après la collecte.\n\nVersion 2 : ajouter une séance de vérification. Les sources de la première version restent consultables."
+    },
+    {
+      "key": "crypto-5",
+      "project": "crypto",
+      "title": "Carte des flux",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Le diagramme joint décrit les étapes Observer → Relier → Vérifier. Le fichier Mermaid est modifiable ; le SVG fournit un aperçu.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": [
+        {
+          "asset": "crypto-parcours.svg",
+          "role": "whiteboard"
+        },
+        {
+          "asset": "crypto-parcours.mmd",
+          "role": "attachment"
+        }
+      ]
+    },
+    {
+      "key": "crypto-6",
+      "project": "crypto",
+      "title": "Synthèse",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Synthèse du projet Veille crypto — atelier fictif. Conserver les incertitudes, les sources et les décisions séparément.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "crypto-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": []
+    },
+    {
+      "key": "journalisme-1",
+      "project": "journalisme",
+      "title": "Notes d’entretien fictif",
+      "kind": "note",
+      "epistemic_status": "supported",
+      "content_text": "Observations fictives pour Enquête — atelier fictif. Les données CSV sont inventées pour tester les fichiers et leurs relations.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": [
+        {
+          "asset": "journalisme-notes.md",
+          "role": "attachment"
+        },
+        {
+          "asset": "journalisme-observations.csv",
+          "role": "attachment"
+        }
+      ]
+    },
+    {
+      "key": "journalisme-2",
+      "project": "journalisme",
+      "title": "Hypothèse : accès inégal",
+      "kind": "idea",
+      "epistemic_status": "hypothesis",
+      "content_text": "Hypothèse à explorer : hypothèse : accès inégal. Elle reste à vérifier et doit être confrontée aux contre-exemples.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "journalisme-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": []
+    },
+    {
+      "key": "journalisme-3",
+      "project": "journalisme",
+      "title": "Contre-exemple : accompagnement local",
+      "kind": "note",
+      "epistemic_status": "contested",
+      "content_text": "Contre-exemple : accompagnement local. Ce cas synthétique limite la portée de l’hypothèse ; le lien « contredit » est intentionnel.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": []
+    },
+    {
+      "key": "journalisme-4",
+      "project": "journalisme",
+      "title": "Décision : recouper les témoignages",
+      "kind": "decision",
+      "epistemic_status": "supported",
+      "content_text": "Décision : recouper les témoignages. Cette décision provisoire repose sur une source citée et un contre-exemple. Réexaminer après la collecte.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "journalisme-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": [],
+      "revision": "Décision : recouper les témoignages. Cette décision provisoire repose sur une source citée et un contre-exemple. Réexaminer après la collecte.\n\nVersion 2 : ajouter une séance de vérification. Les sources de la première version restent consultables."
+    },
+    {
+      "key": "journalisme-5",
+      "project": "journalisme",
+      "title": "Carte des acteurs",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Le diagramme joint décrit les étapes Observer → Relier → Vérifier. Le fichier Mermaid est modifiable ; le SVG fournit un aperçu.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": [
+        {
+          "asset": "journalisme-parcours.svg",
+          "role": "whiteboard"
+        },
+        {
+          "asset": "journalisme-parcours.mmd",
+          "role": "attachment"
+        }
+      ]
+    },
+    {
+      "key": "journalisme-6",
+      "project": "journalisme",
+      "title": "Synthèse",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Synthèse du projet Enquête — atelier fictif. Conserver les incertitudes, les sources et les décisions séparément.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "journalisme-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": []
+    },
+    {
+      "key": "recherche-1",
+      "project": "recherche",
+      "title": "Protocole de navigation",
+      "kind": "note",
+      "epistemic_status": "supported",
+      "content_text": "Observations fictives pour Recherche — atelier fictif. Les données CSV sont inventées pour tester les fichiers et leurs relations.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": [
+        {
+          "asset": "recherche-notes.md",
+          "role": "attachment"
+        },
+        {
+          "asset": "recherche-observations.csv",
+          "role": "attachment"
+        }
+      ]
+    },
+    {
+      "key": "recherche-2",
+      "project": "recherche",
+      "title": "Hypothèse : les liens facilitent la recherche",
+      "kind": "idea",
+      "epistemic_status": "hypothesis",
+      "content_text": "Hypothèse à explorer : hypothèse : les liens facilitent la recherche. Elle reste à vérifier et doit être confrontée aux contre-exemples.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "recherche-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": []
+    },
+    {
+      "key": "recherche-3",
+      "project": "recherche",
+      "title": "Contre-exemple : trop de liens désorientent",
+      "kind": "note",
+      "epistemic_status": "contested",
+      "content_text": "Contre-exemple : trop de liens désorientent. Ce cas synthétique limite la portée de l’hypothèse ; le lien « contredit » est intentionnel.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": []
+    },
+    {
+      "key": "recherche-4",
+      "project": "recherche",
+      "title": "Décision : limiter le voisinage visible",
+      "kind": "decision",
+      "epistemic_status": "supported",
+      "content_text": "Décision : limiter le voisinage visible. Cette décision provisoire repose sur une source citée et un contre-exemple. Réexaminer après la collecte.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "recherche-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": [],
+      "revision": "Décision : limiter le voisinage visible. Cette décision provisoire repose sur une source citée et un contre-exemple. Réexaminer après la collecte.\n\nVersion 2 : ajouter une séance de vérification. Les sources de la première version restent consultables."
+    },
+    {
+      "key": "recherche-5",
+      "project": "recherche",
+      "title": "Carte des étapes",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Le diagramme joint décrit les étapes Observer → Relier → Vérifier. Le fichier Mermaid est modifiable ; le SVG fournit un aperçu.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [],
+      "attachments": [
+        {
+          "asset": "recherche-parcours.svg",
+          "role": "whiteboard"
+        },
+        {
+          "asset": "recherche-parcours.mmd",
+          "role": "attachment"
+        }
+      ]
+    },
+    {
+      "key": "recherche-6",
+      "project": "recherche",
+      "title": "Synthèse",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Synthèse du projet Recherche — atelier fictif. Conserver les incertitudes, les sources et les décisions séparément.\n\nDÉMONSTRATION FICTIVE — This is synthetic test content.",
+      "citations": [
+        {
+          "document": "recherche-1",
+          "label": "Observations de l’atelier",
+          "excerpt": "Les données sont inventées pour les essais."
+        }
+      ],
+      "attachments": []
+    },
+    {
+      "key": "brouillon",
+      "project": "archives",
+      "title": "Synthèse",
+      "kind": "note",
+      "epistemic_status": "hypothesis",
+      "content_text": "Même titre que plusieurs autres documents, identifiant distinct. Ce brouillon appartient au sous-projet Archives.",
+      "citations": [],
+      "attachments": []
+    },
+    {
+      "key": "isole",
+      "project": "recherche",
+      "title": "Idée sans relation sémantique",
+      "kind": "idea",
+      "epistemic_status": "hypothesis",
+      "content_text": "Seule l’appartenance au projet doit apparaître. Aucun lien sémantique ne doit être inventé.",
+      "citations": [],
+      "attachments": []
+    }
+  ],
+  "tasks": [
+    {
+      "key": "crypto-t1",
+      "project": "crypto",
+      "title": "Collecter les exemples",
+      "description": "Travail manuel fictif : collecter. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": false
+    },
+    {
+      "key": "crypto-t2",
+      "project": "crypto",
+      "title": "Comparer les exemples",
+      "description": "Travail manuel fictif : comparer. Aucun agent ni appel payant à lancer.",
+      "parent": "crypto-t1",
+      "milestone": false
+    },
+    {
+      "key": "crypto-t3",
+      "project": "crypto",
+      "title": "Vérifier les exemples",
+      "description": "Travail manuel fictif : vérifier. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": false
+    },
+    {
+      "key": "crypto-t4",
+      "project": "crypto",
+      "title": "Rédiger les exemples",
+      "description": "Travail manuel fictif : rédiger. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": true
+    },
+    {
+      "key": "journalisme-t1",
+      "project": "journalisme",
+      "title": "Préparer les exemples",
+      "description": "Travail manuel fictif : préparer. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": false
+    },
+    {
+      "key": "journalisme-t2",
+      "project": "journalisme",
+      "title": "Interroger les exemples",
+      "description": "Travail manuel fictif : interroger. Aucun agent ni appel payant à lancer.",
+      "parent": "journalisme-t1",
+      "milestone": false
+    },
+    {
+      "key": "journalisme-t3",
+      "project": "journalisme",
+      "title": "Recouper les exemples",
+      "description": "Travail manuel fictif : recouper. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": false
+    },
+    {
+      "key": "journalisme-t4",
+      "project": "journalisme",
+      "title": "Publier les exemples",
+      "description": "Travail manuel fictif : publier. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": true
+    },
+    {
+      "key": "recherche-t1",
+      "project": "recherche",
+      "title": "Concevoir les exemples",
+      "description": "Travail manuel fictif : concevoir. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": false
+    },
+    {
+      "key": "recherche-t2",
+      "project": "recherche",
+      "title": "Observer les exemples",
+      "description": "Travail manuel fictif : observer. Aucun agent ni appel payant à lancer.",
+      "parent": "recherche-t1",
+      "milestone": false
+    },
+    {
+      "key": "recherche-t3",
+      "project": "recherche",
+      "title": "Analyser les exemples",
+      "description": "Travail manuel fictif : analyser. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": false
+    },
+    {
+      "key": "recherche-t4",
+      "project": "recherche",
+      "title": "Documenter les exemples",
+      "description": "Travail manuel fictif : documenter. Aucun agent ni appel payant à lancer.",
+      "parent": null,
+      "milestone": true
+    }
+  ],
+  "dependencies": [
+    {
+      "project": "crypto",
+      "predecessor": "crypto-t1",
+      "successor": "crypto-t2",
+      "dependency_type": "FS",
+      "lag_seconds": 0
+    },
+    {
+      "project": "crypto",
+      "predecessor": "crypto-t2",
+      "successor": "crypto-t3",
+      "dependency_type": "SS",
+      "lag_seconds": 0
+    },
+    {
+      "project": "crypto",
+      "predecessor": "crypto-t3",
+      "successor": "crypto-t4",
+      "dependency_type": "FF",
+      "lag_seconds": 0
+    },
+    {
+      "project": "journalisme",
+      "predecessor": "journalisme-t1",
+      "successor": "journalisme-t2",
+      "dependency_type": "FS",
+      "lag_seconds": 0
+    },
+    {
+      "project": "journalisme",
+      "predecessor": "journalisme-t2",
+      "successor": "journalisme-t3",
+      "dependency_type": "SS",
+      "lag_seconds": 0
+    },
+    {
+      "project": "journalisme",
+      "predecessor": "journalisme-t3",
+      "successor": "journalisme-t4",
+      "dependency_type": "FF",
+      "lag_seconds": 0
+    },
+    {
+      "project": "recherche",
+      "predecessor": "recherche-t1",
+      "successor": "recherche-t2",
+      "dependency_type": "FS",
+      "lag_seconds": 0
+    },
+    {
+      "project": "recherche",
+      "predecessor": "recherche-t2",
+      "successor": "recherche-t3",
+      "dependency_type": "SS",
+      "lag_seconds": 0
+    },
+    {
+      "project": "recherche",
+      "predecessor": "recherche-t3",
+      "successor": "recherche-t4",
+      "dependency_type": "FF",
+      "lag_seconds": 0
+    }
+  ],
+  "relationships": [
+    {
+      "source": "document:crypto-1",
+      "relation": "supports",
+      "target": "document:crypto-2"
+    },
+    {
+      "source": "document:crypto-3",
+      "relation": "contradicts",
+      "target": "document:crypto-2"
+    },
+    {
+      "source": "document:crypto-4",
+      "relation": "derived_from",
+      "target": "document:crypto-1"
+    },
+    {
+      "source": "document:crypto-6",
+      "relation": "references",
+      "target": "document:crypto-4"
+    },
+    {
+      "source": "document:crypto-5",
+      "relation": "related_to",
+      "target": "document:crypto-6"
+    },
+    {
+      "source": "task:crypto-t1",
+      "relation": "references",
+      "target": "document:crypto-1"
+    },
+    {
+      "source": "task:crypto-t2",
+      "relation": "references",
+      "target": "document:crypto-2"
+    },
+    {
+      "source": "task:crypto-t3",
+      "relation": "references",
+      "target": "document:crypto-3"
+    },
+    {
+      "source": "task:crypto-t4",
+      "relation": "references",
+      "target": "document:crypto-4"
+    },
+    {
+      "source": "document:journalisme-1",
+      "relation": "supports",
+      "target": "document:journalisme-2"
+    },
+    {
+      "source": "document:journalisme-3",
+      "relation": "contradicts",
+      "target": "document:journalisme-2"
+    },
+    {
+      "source": "document:journalisme-4",
+      "relation": "derived_from",
+      "target": "document:journalisme-1"
+    },
+    {
+      "source": "document:journalisme-6",
+      "relation": "references",
+      "target": "document:journalisme-4"
+    },
+    {
+      "source": "document:journalisme-5",
+      "relation": "related_to",
+      "target": "document:journalisme-6"
+    },
+    {
+      "source": "task:journalisme-t1",
+      "relation": "references",
+      "target": "document:journalisme-1"
+    },
+    {
+      "source": "task:journalisme-t2",
+      "relation": "references",
+      "target": "document:journalisme-2"
+    },
+    {
+      "source": "task:journalisme-t3",
+      "relation": "references",
+      "target": "document:journalisme-3"
+    },
+    {
+      "source": "task:journalisme-t4",
+      "relation": "references",
+      "target": "document:journalisme-4"
+    },
+    {
+      "source": "document:recherche-1",
+      "relation": "supports",
+      "target": "document:recherche-2"
+    },
+    {
+      "source": "document:recherche-3",
+      "relation": "contradicts",
+      "target": "document:recherche-2"
+    },
+    {
+      "source": "document:recherche-4",
+      "relation": "derived_from",
+      "target": "document:recherche-1"
+    },
+    {
+      "source": "document:recherche-6",
+      "relation": "references",
+      "target": "document:recherche-4"
+    },
+    {
+      "source": "document:recherche-5",
+      "relation": "related_to",
+      "target": "document:recherche-6"
+    },
+    {
+      "source": "task:recherche-t1",
+      "relation": "references",
+      "target": "document:recherche-1"
+    },
+    {
+      "source": "task:recherche-t2",
+      "relation": "references",
+      "target": "document:recherche-2"
+    },
+    {
+      "source": "task:recherche-t3",
+      "relation": "references",
+      "target": "document:recherche-3"
+    },
+    {
+      "source": "task:recherche-t4",
+      "relation": "references",
+      "target": "document:recherche-4"
+    },
+    {
+      "source": "document:crypto-2",
+      "relation": "related_to",
+      "target": "document:recherche-2"
+    },
+    {
+      "source": "document:journalisme-4",
+      "relation": "references",
+      "target": "document:recherche-4"
+    },
+    {
+      "source": "document:recherche-1",
+      "relation": "supports",
+      "target": "document:crypto-6"
+    },
+    {
+      "source": "document:crypto-3",
+      "relation": "related_to",
+      "target": "document:journalisme-2"
+    },
+    {
+      "source": "document:brouillon",
+      "relation": "derived_from",
+      "target": "document:journalisme-6"
+    }
+  ],
+  "home_profiles": {
+    "crypto": {
+      "folders": [
+        {
+          "id": "travail",
+          "label": "Mon atelier"
+        },
+        {
+          "id": "sources",
+          "label": "Sources et fichiers"
+        }
+      ],
+      "entries": [
+        {
+          "ref": "project:crypto",
+          "label": "",
+          "folder": ""
+        },
+        {
+          "ref": "document:crypto-2",
+          "label": "Mon hypothèse",
+          "folder": "travail"
+        },
+        {
+          "ref": "document:crypto-5",
+          "label": "Mon diagramme",
+          "folder": "travail"
+        },
+        {
+          "ref": "asset:crypto-observations.csv",
+          "label": "",
+          "folder": "sources"
+        },
+        {
+          "ref": "tool:knowledge",
+          "label": "",
+          "folder": ""
+        },
+        {
+          "ref": "tool:planning",
+          "label": "",
+          "folder": ""
+        }
+      ]
+    },
+    "journalisme": {
+      "folders": [
+        {
+          "id": "travail",
+          "label": "Mon atelier"
+        },
+        {
+          "id": "sources",
+          "label": "Sources et fichiers"
+        }
+      ],
+      "entries": [
+        {
+          "ref": "project:journalisme",
+          "label": "",
+          "folder": ""
+        },
+        {
+          "ref": "document:journalisme-2",
+          "label": "Mon hypothèse",
+          "folder": "travail"
+        },
+        {
+          "ref": "document:journalisme-5",
+          "label": "Mon diagramme",
+          "folder": "travail"
+        },
+        {
+          "ref": "asset:journalisme-observations.csv",
+          "label": "",
+          "folder": "sources"
+        },
+        {
+          "ref": "tool:knowledge",
+          "label": "",
+          "folder": ""
+        },
+        {
+          "ref": "tool:planning",
+          "label": "",
+          "folder": ""
+        }
+      ]
+    },
+    "recherche": {
+      "folders": [
+        {
+          "id": "travail",
+          "label": "Mon atelier"
+        },
+        {
+          "id": "sources",
+          "label": "Sources et fichiers"
+        }
+      ],
+      "entries": [
+        {
+          "ref": "project:recherche",
+          "label": "",
+          "folder": ""
+        },
+        {
+          "ref": "document:recherche-2",
+          "label": "Mon hypothèse",
+          "folder": "travail"
+        },
+        {
+          "ref": "document:recherche-5",
+          "label": "Mon diagramme",
+          "folder": "travail"
+        },
+        {
+          "ref": "asset:recherche-observations.csv",
+          "label": "",
+          "folder": "sources"
+        },
+        {
+          "ref": "tool:knowledge",
+          "label": "",
+          "folder": ""
+        },
+        {
+          "ref": "tool:planning",
+          "label": "",
+          "folder": ""
+        }
+      ]
+    }
+  }
+}

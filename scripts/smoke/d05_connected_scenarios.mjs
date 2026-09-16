@@ -126,7 +126,7 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     assert.deepEqual(unknownRequests, [])
     if (phone) {
       await page.locator('.cockpit-preferences summary').click()
-      await page.getByLabel('Ambiance', { exact: true }).selectOption('minimal')
+      await page.locator('.cockpit-preferences').getByLabel('Ambiance', { exact: true }).selectOption('minimal')
       assert.equal(await page.locator('.quiet-atmosphere').count(), 0)
     }
     await context.close()

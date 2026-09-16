@@ -22,6 +22,7 @@ export type SceneProps = {
   camera: CameraPose | null
   command: CameraCommand | null
   reducedMotion: boolean
+  positions?: Record<string, [number, number, number]>
   labels: RefObject<Map<string, HTMLButtonElement>>
   onSelect: (id: string, additive: boolean) => void
   onCamera: (pose: CameraPose) => void
@@ -158,7 +159,13 @@ export default function Scene(props: SceneProps) {
   ))
   const tier = props.quality === 'auto' ? autoTier : props.quality
   const spatial = useMemo(() => buildSpatialGraphLayout(props.graph, { rootId: props.rootId }), [props.graph, props.rootId])
-  const poses = useMemo(() => organicPositions(spatial), [spatial])
+  const poses = useMemo(() => {
+    const result = organicPositions(spatial)
+    for (const [id, value] of Object.entries(props.positions || {})) {
+      if (result.has(id) && value.length === 3 && value.every(Number.isFinite)) result.set(id, new THREE.Vector3(...value))
+    }
+    return result
+  }, [spatial, props.positions])
   const visibleGraph = useMemo(() => {
     const visible = new Set(props.nodes.map(node => node.id))
     return { nodes: props.nodes, edges: props.graph.edges.filter(edge => visible.has(edge.source) && visible.has(edge.target)) }

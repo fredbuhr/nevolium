@@ -216,7 +216,8 @@ async function openKnowledge(page) {
   diagnosticPage = page
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.locator('.mycelium-space-node[data-space="projects"]').click()
+  await page.locator('.home-tools summary').click()
+  await page.locator('.home-tools [data-space="projects"]').click()
   await page.getByRole('heading', { name: 'Donnez une forme concrète aux idées que vous choisissez de construire.' }).waitFor()
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Documents', exact: true }).click()
   await page.getByRole('heading', { name: 'Nouvelle idée' }).waitFor()
@@ -289,6 +290,8 @@ async function qualifyDesktop(browser, state) {
   await page.getByText('Connaissance autre espace', { exact: true }).last().waitFor({ state: 'visible' })
 
   await page.getByRole('button', { name: 'English', exact: true }).click()
+  await page.getByText('THINK · CONNECT · MOVE FORWARD', { exact: true }).waitFor()
+  assert.equal(await page.getByText('PENSER · RELIER · AVANCER', { exact: true }).count(), 0)
   await page.getByRole('heading', { name: 'New idea' }).waitFor()
   await page.getByRole('heading', { name: 'Find knowledge across all your spaces.' }).waitFor()
   await page.getByRole('button', { name: 'Home', exact: true }).waitFor()

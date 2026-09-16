@@ -9,6 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 
+import { getAuthSnapshot, subscribeAuthSession } from './authSession'
 import { nevoliumFetch } from './apiClient'
 import { readMindMapDeepLink } from './mindmapDeepLink'
 
@@ -17,6 +18,8 @@ const API_URL = (import.meta.env.VITE_NEVOLIUM_API_URL || 'http://localhost:8000
 type ProjectSelectionContextValue = {
   selectedProjectId: string
   setSelectedProjectId: Dispatch<SetStateAction<string>>
+  selectedTaskId: string
+  setSelectedTaskId: Dispatch<SetStateAction<string>>
   selectedDocumentId: string
   setSelectedDocumentId: Dispatch<SetStateAction<string>>
 }
@@ -26,7 +29,19 @@ const ProjectSelectionContext = createContext<ProjectSelectionContextValue | nul
 export function ProjectSelectionProvider({ children }: { children: ReactNode }) {
   const [deepLink] = useState(() => readMindMapDeepLink())
   const [selectedProjectId, setSelectedProjectId] = useState(() => deepLink?.projectId || '')
+  const [selectedTaskId, setSelectedTaskId] = useState('')
   const [selectedDocumentId, setSelectedDocumentId] = useState('')
+
+  useEffect(() => {
+    let origin = getAuthSnapshot()
+    return subscribeAuthSession(() => {
+      const current = getAuthSnapshot()
+      if (current.subject !== origin.subject || current.enabled !== origin.enabled || (origin.enabled && !current.authenticated)) {
+        setSelectedProjectId(''); setSelectedDocumentId(''); setSelectedTaskId('')
+      }
+      origin = current
+    })
+  }, [])
 
   useEffect(() => {
     if (!deepLink || deepLink.projectId || deepLink.entityType === 'project') return
@@ -52,8 +67,8 @@ export function ProjectSelectionProvider({ children }: { children: ReactNode }) 
   }, [deepLink])
 
   const value = useMemo(
-    () => ({ selectedProjectId, setSelectedProjectId, selectedDocumentId, setSelectedDocumentId }),
-    [selectedProjectId, selectedDocumentId],
+    () => ({ selectedProjectId, setSelectedProjectId, selectedDocumentId, setSelectedDocumentId, selectedTaskId, setSelectedTaskId }),
+    [selectedProjectId, selectedDocumentId, selectedTaskId],
   )
 
   return (

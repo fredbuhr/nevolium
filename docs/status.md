@@ -1,5 +1,11 @@
 # Nevolium : état fonctionnel vérifié
 
+Extension d’usage D09 en développement : l’accueil fixe est remplacé localement par le Mycelium
+3D partagé et personnalisable, avec projection transversale des objets autorisés. Corpus
+fictif et importateur disponibles dans `examples/mycelium`. Compilation et tests locaux de
+modèle/import passent ; nouvelles preuves PostgreSQL et navigateur encore à exécuter. Ces
+changements ne sont ni intégrés à main ni déployés. Voir le diagnostic D09 pour les limites.
+
 Révision : 2026-09-16.
 
 D04–D09 sont intégrés sur la ligne canonique. Le pilote a activé la release
@@ -12,6 +18,12 @@ Cette stabilité technique **ne vaut pas acceptation produit**. L’utilisateur 
 pilote des langues mélangées, un formulaire d’idée ambigu, des objets sans liens visibles et
 une animation non perceptible, ainsi qu’une surcharge de commandes. Le gate D09 est rouvert
 pour correction d’usage ; D10 ne commence pas. Voir [le diagnostic et le correctif](d09-usability-correction.md).
+
+La PR #96, tête `f7c4d04`, passe désormais ses huit workflows déclenchés, dont toutes les suites
+navigateur D05–D09. Les captures d’idée FR, de parcours EN, de téléphone et de petit réseau ont été
+inspectées. Un complément local `f07918d` corrige le recouvrement du sélecteur FR/EN et la devise
+non traduite ; compilation et contrôles statiques réussis, publication bloquée par l’auto-review
+en attente d’autorisation explicite. Ses nouveaux contrôles navigateur restent à exécuter.
 
 Le modèle visuel `48d7be9` reste la référence adoptée. Les preuves antérieures du banc
 synthétique (13 scénarios spatiaux, 16 contrôles kit et mesures physiques des parents)

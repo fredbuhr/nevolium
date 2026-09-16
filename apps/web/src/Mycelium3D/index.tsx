@@ -23,12 +23,17 @@ type Props = {
   onSelect: (id: string, additive: boolean) => void
   onOpen: () => void
   children: ReactNode
+  workspaceKey?: string
+  rootId?: string
+  defaultView?: '2d' | '3d'
+  positions?: Record<string, [number, number, number]>
+  compact?: boolean
 }
 
 export default function SpatialWorkspace(props: Props) {
   const m = useSpatialMessages()
   const { language } = useI18n()
-  const state = useSpatialPresentation(props.apiUrl, props.projectId)
+  const state = useSpatialPresentation(props.apiUrl, props.projectId, props)
   const panelVisible = usePanelVisibility()
   const viewport = useRef<HTMLDivElement>(null)
   const labels = useRef(new Map<string, HTMLButtonElement>())
@@ -60,21 +65,21 @@ export default function SpatialWorkspace(props: Props) {
   }, [state.view])
   useEffect(() => { if (!panelVisible || !documentVisible) setCommand(null) }, [panelVisible, documentVisible])
   const visibleLabels = useMemo(() => {
-    const limit = QUALITY_SETTINGS[metrics?.tier || 'eco'].labels
+    const limit = props.compact ? 12 : QUALITY_SETTINGS[metrics?.tier || 'eco'].labels
     return [...props.nodes].sort((a, b) => {
       const priority = (node: SpatialNode) => props.selected.includes(node.id) ? 0 : node.entityType === 'project' ? 1 : 2
       return priority(a) - priority(b) || a.id.localeCompare(b.id)
     }).slice(0, limit)
-  }, [props.nodes, props.selected, metrics?.tier])
+  }, [props.nodes, props.selected, props.compact, metrics?.tier])
   function issue(action: CameraCommand['action']) {
     setCommand({ sequence: ++commandSequence.current, action })
     viewport.current?.scrollIntoView({ block: 'nearest' })
   }
 
-  return <div className="spatial-workspace" data-spatial-view={state.view}>
+  return <div className={`spatial-workspace${props.compact ? ' spatial-home' : ''}`} data-spatial-view={state.view}>
     <div className="spatial-toolbar">
       <div className="spatial-tabs" aria-label={m.title}>
-        <button type="button" aria-pressed={state.view === '2d'} onClick={() => state.update({ view: '2d' })}>{m.view2d}</button>
+        <button type="button" aria-pressed={state.view === '2d'} disabled={!state.ready} onClick={() => state.update({ view: '2d' })}>{m.view2d}</button>
         <button type="button" aria-pressed={state.view === '3d'} disabled={!state.ready} onClick={state.retry3d}>{m.view3d}</button>
       </div>
       {state.view === '3d' ? <label>{m.quality}<select aria-label={m.quality} value={state.value.quality}
@@ -91,23 +96,25 @@ export default function SpatialWorkspace(props: Props) {
     {state.view === '3d' ? <>
       {reducedMotion || !animate ? <p role="status">{reducedMotion ? m.motionReduced : m.motionPaused}</p> : null}
       <div className="spatial-navigation">
+        {!props.compact ? <>
         <label>{m.select}<select aria-label={m.select} value={props.selected[0] || ''} onChange={event => props.onSelect(event.target.value, false)}>
           <option value="">{m.none}</option>
           {props.nodes.map(node => <option key={node.id} value={node.id}>{node.label}</option>)}
         </select></label>
+        </> : null}
         <button type="button" disabled={!props.selected.length} onClick={() => issue('focus')}>{m.focus}</button>
         <button type="button" onClick={() => issue('reset')}>{m.reset}</button>
         <button type="button" aria-label={m.zoomIn} onClick={() => issue('in')}>+</button>
         <button type="button" aria-label={m.zoomOut} onClick={() => issue('out')}>−</button>
-        <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button>
+        {!props.compact ? <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button> : null}
       </div>
-      <p className="spatial-hint">{m.hint} {m.lifeHint}</p>
+      {!props.compact ? <p className="spatial-hint">{m.hint} {m.lifeHint}</p> : null}
       <div ref={viewport} className="spatial-viewport" aria-label={m.title}
         data-spatial-active={active} data-spatial-reduced-motion={reducedMotion || !animate}
         data-spatial-metrics={metrics ? JSON.stringify(metrics) : ''} data-spatial-nodes={props.nodes.length}>
         {active ? <SceneBoundary onFailure={state.fail}>
           <Suspense fallback={<p className="spatial-placeholder">{m.loading}</p>}>
-            <Scene {...props} rootId={`project:${props.projectId}`} camera={state.value.camera}
+            <Scene {...props} rootId={props.rootId || `project:${props.projectId}`} camera={state.value.camera}
               command={command} onCommandHandled={commandHandled} quality={state.value.quality} reducedMotion={reducedMotion || !animate}
               labels={labels} onCamera={cameraSave} onFailure={state.fail} onMetrics={setMetrics} />
           </Suspense>
