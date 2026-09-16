@@ -134,8 +134,10 @@ L'[exploitation](operations.md#restore) et le
 [déploiement](deployment.md) portent les procédures de sauvegarde, d'activation et de retour arrière.
 Les scripts CI destructifs `recovery.py`/`local_services.py` restent réservés aux projets jetables.
 Ne jamais superposer un overlay de qualification et la production existante.
-Le runner privé `scripts/qualification/target_recovery.py` est distinct : il exige la branche D04
-propre, un dépôt B2 HTTPS/S3, les fichiers privés root `0600`, l'absence de travail/outbox et un
+Le runner privé `scripts/qualification/target_recovery.py` est distinct : par défaut il exige la
+branche D04 propre ; pour une release ultérieure, `--expected-commit` remplace ce garde par le SHA
+complet exact du checkout, qui doit toujours être propre. Il exige aussi un dépôt B2 HTTPS/S3, les
+fichiers privés root `0600`, l'absence de travail/outbox et un
 projet Compose de restauration aléatoire. L'export OpenBao déchiffré n'est fourni que temporairement
 dans `/run`, root `0600`. Le runner n'utilise que ses trois parts (seuil deux), ignore tout ancien
 jeton root révoqué et ne sauvegarde qu'une copie assainie sans jeton root dans Restic. Il réutilise
