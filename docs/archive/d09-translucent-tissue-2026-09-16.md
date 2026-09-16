@@ -259,3 +259,16 @@ distante reste conservée. Le suivi post-fusion est documentaire seulement.
 Aucune commande n'a été exécutée sur Netcup par cette session. La prochaine action reste
 l'inventaire SSH épinglé dans la procédure ; D09 reste actif jusqu'à l'installation et aux
 preuves physiques manquantes. D10 n'est pas commencé.
+
+## Premier inventaire Netcup et défaut Docker 29.8
+
+Le relevé en lecture seule lancé le 16 septembre à 09:56 UTC ne modifie rien et retourne
+`activation_performed: false`. Il confirme : checkout D05 `e275b7bb…` propre, cible merge D09
+présente et descendante, aucun lien `current`, aucun répertoire `releases`, 597 719 744 512 octets
+libres et exactement un Core découvert. Il s'arrête à `docker-inspect`, avant toute lecture SQL.
+
+Un diagnostic à sorties uniquement `OK/FAIL` sur Docker Server 29.8.0 établit que les champs ID,
+image, labels Compose, statut, santé et montages réussissent séparément. Le JSON combiné réussit
+sans santé et échoue avec la condition santé. Le correctif D09 sépare donc strictement ces deux
+gabarits autorisés ; aucun inspect brut, environnement de conteneur ou diagnostic privé n'est lu
+ou affiché. Un nouveau relevé réel reste nécessaire après qualification et fusion du correctif.

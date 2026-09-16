@@ -23,9 +23,10 @@ INSPECT = "{" + ",".join([
     '"working_dir":{{json (index .Config.Labels "com.docker.compose.project.working_dir")}}',
     '"config_files":{{json (index .Config.Labels "com.docker.compose.project.config_files")}}',
     '"status":{{json .State.Status}}',
-    '"health":{{if .State.Health}}{{json .State.Health.Status}}{{else}}null{{end}}',
+    '"health":null',
     '"mounts":{{json .Mounts}}',
 ]) + "}"
+INSPECT_HEALTH = '{{if .State.Health}}{{json .State.Health.Status}}{{else}}null{{end}}'
 SQL = """
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '5s';
@@ -63,12 +64,28 @@ def run(stage, command, accepted=(0,)):
 
 
 def inspect(docker, ids):
-    result = run("docker-inspect", [*docker, "inspect", "--format", INSPECT, *ids])
+    # Docker 29.8 accepts the bounded health expression by itself but rejects it
+    # when embedded in the larger JSON template. Keep both reads whitelisted and
+    # merge them locally; never fall back to a raw inspect containing Config.Env.
+    base_command = [*docker, "inspect", "--type", "container", "--format"]
+    result = run("docker-inspect", [*base_command, INSPECT, *ids])
+    health = run("docker-health", [*base_command, INSPECT_HEALTH, *ids])
     try:
         containers = [json.loads(line) for line in result.stdout.splitlines() if line]
-        for item in containers:
-            item["mounts"] = [{key: mount.get(key) for key in ("Type", "Name", "Source", "Destination", "RW")}
-                              for mount in item["mounts"]]
+        health_values = [json.loads(line) for line in health.stdout.splitlines() if line]
+        if len(containers) != len(ids) or len(health_values) != len(containers):
+            raise ValueError
+        for item, health_value in zip(containers, health_values, strict=True):
+            if health_value is not None and not isinstance(health_value, str):
+                raise ValueError
+            item["health"] = health_value
+            item["mounts"] = [
+                {
+                    key: mount.get(key)
+                    for key in ("Type", "Name", "Source", "Destination", "RW")
+                }
+                for mount in item["mounts"]
+            ]
         return containers
     except (KeyError, TypeError, ValueError):
         raise InventoryError("docker-format") from None

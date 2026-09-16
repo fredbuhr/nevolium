@@ -63,6 +63,20 @@ n'atteste pas à lui seul la version exécutée par les conteneurs. Les réserva
 ou une lecture impossible arrêtent l'inventaire ; aucun service n'est démarré pour contourner
 l'échec. Les tests à fixtures vérifient ces frontières, pas une installation sur Netcup.
 
+### Incident de compatibilité Docker 29.8
+
+Le premier relevé réel du 16 septembre à 09:56 UTC a confirmé un checkout D05 propre
+`e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, ancêtre de la cible D09, un seul Core actif,
+597 719 744 512 octets libres et l'absence de disposition `current`/`releases`. Il s'est arrêté
+à `docker-inspect`, avant la lecture SQL et sans activation.
+
+Le diagnostic borné sur Docker Server 29.8.0 montre que chaque champ autorisé fonctionne seul.
+Le document JSON sans santé fonctionne aussi, tandis que le même document avec la condition
+Go template `.State.Health` échoue. Le correctif interroge donc le document autorisé et la santé
+dans deux commandes `docker inspect` séparées, puis les associe en mémoire. Il ne lit toujours
+jamais le document brut, `.Config.Env` ou `.State.Error`, et ne transforme pas ce relevé partiel
+en preuve du schéma ou des conteneurs complets.
+
 ## Séquence d'installation après examen de cet inventaire
 
 1. **Figer la release et le retour.** Vérifier les références Git, les images actives, le
