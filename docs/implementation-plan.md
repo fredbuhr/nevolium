@@ -192,6 +192,15 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
 ### D09 — Mycelium 3D interactif et vue spatiale
 
 - **Prérequis :** D08.
+- **Clarification utilisateur du 16 septembre :** le moteur 3D adopté doit porter l’accueil
+  et la navigation transversale dès l’ouverture. L’accueil est personnalisable par utilisateur
+  (outils, objets épinglés, dossiers de raccourcis, ordre), FR/EN, avec présentation simplifiée
+  accessible. La carte projet et l’accueil réutilisent le même renderer. KISS : conserver les
+  modèles, les relations et la persistance existants ; ne pas dupliquer les objets métier.
+- **Exemples :** corpus fictif importable via les API canoniques, fichiers et diagrammes réels,
+  projets/sous-projets, idées/notes/décisions/tâches et relations inter-projets ; pagination,
+  isolation, références périmées et reprise de l’import doivent être testées. Pas d’import
+  automatique dans le pilote ni d’exécution IA induite par les exemples.
 - **Livraison :** caméra/focus/zoom/sélection, filaments/groupes, labels limités, activité et liens
   vers le cockpit. Mêmes identités 2D/3D ; positions distinctes des relations métier. Qualité
   adaptative, rendu du visible, arrêt quand masqué, fallback 2D et préférences persistantes.
@@ -199,7 +208,8 @@ restants de l'audit ; D04 est la sortie H5. G51 reste le dernier jalon produit.
   récupérable. 3D facultative sur mobile, profils économiques et mesures sur GPU intégré/tablette.
 - **Sortie :** passer 2D↔3D, modifier un objet et vérifier sa cohérence partout ; reconnexion sans
   événements dupliqués ; mesurer fluidité et mémoire sur des jeux de tailles annoncées.
-- **Limite :** bureau spatial et graphe de connaissances gardent leurs usages, avec composants/données partagés.
+- **Limite :** une navigation commune avec des périmètres progressifs ; ne pas charger tout le
+  compte dans une scène, ne pas inventer de relations sémantiques à partir des raccourcis.
 
 ### D10 — assistant opérant sur les espaces
 

@@ -198,7 +198,8 @@ async function casePage(browser, state, name, options) {
 async function openMindMap(page) {
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.locator('.mycelium-space-node[data-space="projects"]').click()
+  await page.locator('.home-tools summary').click()
+  await page.locator('.home-tools [data-space="projects"]').click()
   await page.getByRole('heading', { name: 'Donnez une forme concrète aux idées que vous choisissez de construire.' }).waitFor()
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Carte mentale', exact: true }).click()
   const map = page.locator('.mindmap-workspace:visible')
@@ -265,6 +266,7 @@ async function qualifyDesktop(browser, state) {
 
   stage = 'desktop:links-and-history'
   map = page.locator('.mindmap-workspace:visible')
+  await map.getByText('Relier des idées et organiser les groupes', { exact: true }).click()
   const editor = map.locator('.mindmap-editor-card').first(); const selects = editor.locator('select')
   await selects.nth(0).selectOption(`document:${ids.note}`); await selects.nth(1).selectOption('references'); await selects.nth(2).selectOption(`document:${ids.idea}`)
   await editor.getByRole('button', { name: 'Créer le lien', exact: true }).click(); await eventually(() => state.linkCreates === 1, 'D08: link mutation was not sent')
@@ -324,6 +326,7 @@ async function qualifyReload(browser, state) {
   await eventually(() => state.mindmapReads > beforeReads, 'D08: map was not reloaded')
   await map.locator(`.react-flow__node[data-id="document:${ids.idea}"]`).waitFor()
   await map.locator(`.react-flow__node[data-id="task:${ids.convertedTask}"]`).waitFor()
+  await map.getByText('Relier des idées et organiser les groupes', { exact: true }).click()
   await map.locator('.mindmap-group-row').filter({ hasText: 'Branche test' }).waitFor()
   assert(savedBeforeReload?.positions?.[`document:${ids.idea}`])
   stage = 'reload:export'
@@ -342,6 +345,7 @@ async function qualifyPhone(browser) {
   })
   const map = await openMindMap(page); const editor = map.locator('.mindmap-editor-card').first(); const selects = editor.locator('select')
   stage = 'phone:touch-link'
+  await map.getByText('Relier des idées et organiser les groupes', { exact: true }).click()
   await selects.nth(0).selectOption(`document:${ids.note}`); await selects.nth(2).selectOption(`document:${ids.idea}`)
   await editor.getByRole('button', { name: 'Créer le lien', exact: true }).tap()
   await eventually(() => state.linkCreates === 1, 'D08 phone: touch link creation failed')

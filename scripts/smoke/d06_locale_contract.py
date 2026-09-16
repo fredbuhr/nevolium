@@ -28,7 +28,8 @@ def main() -> None:
     assert "window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next)" in i18n
 
     assert "<LocaleProvider>" in entrypoint
-    assert "<LanguageSwitcher />" in entrypoint
+    assert "<LanguageSwitcher />" in app
+    assert "<LanguageSwitcher />" in (WEB / "src/MyceliumHome.tsx").read_text(encoding="utf-8")
     assert "const { language, locale, newsLanguage, t } = useI18n()" in app
     assert "locale," in app
     assert "language: newsLanguage" in app

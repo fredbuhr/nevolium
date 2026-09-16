@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict'
-import { readCamera, readPresentation, initialTier, observeQuality } from '../../apps/web/src/Mycelium3D/presentation.ts'
+import { readCamera, readPresentation, initialTier, observeQuality, overviewRadius } from '../../apps/web/src/Mycelium3D/presentation.ts'
+
+assert.equal(overviewRadius([]), 4)
+assert.equal(overviewRadius([0, 2.1, 3.7]), 4, 'Do not frame a tiny project as a ten-unit network')
+assert.equal(overviewRadius([0, 7]), 7)
+assert.equal(overviewRadius([0, 30]), 30, 'Larger networks must retain their bounding radius')
+assert.equal(overviewRadius([NaN, Infinity]), 4)
 
 assert.equal(readCamera({ position: [NaN, 2, 3], target: [0, 0, 0] }), null)
 assert.equal(readCamera({ position: [0, 0, 0], target: [0, 0, 0] }), null)

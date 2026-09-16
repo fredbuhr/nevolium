@@ -1,38 +1,49 @@
 # Nevolium : état fonctionnel vérifié
 
+Extension d’usage D09 publiée et qualifiée dans la PR #96 : accueil utilisant le Mycelium
+3D partagé, raccourcis et dossiers privés, navigation transversale soumise aux droits et
+corpus fictif importable. Le code `9b6b01075fdc8b47e3f9a3eb14f6f3b14e71ffba` passe
+**9/9 workflows**, dont PostgreSQL réel et les parcours navigateur D05–D09.
+Neuf captures d’accueil et les captures Knowledge ont été inspectées. Cette extension
+n’est ni intégrée à main ni déployée sur le pilote ; les exemples n’y sont pas importés.
+
 Révision : 2026-09-16.
 
-D04 est intégré par #88 et ses preuves H5 restent acquises. D05 est intégré par #89 ; le pilote
-exécute toujours le runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` avec le schéma
-`0015_model_configurations` et OpenAI `openai/gpt-4.1` qualifié/activé. D06 est intégré par #90,
-commit `20720774552418a6c9e7acbfbf069945ff0f57df`, mais n'est pas encore déployé sur le pilote.
+D04–D09 sont intégrés sur la ligne canonique. Le pilote a activé la release
+`69f5926be72227a5fc1c4e3dff7c0e436099e51c` le 16 septembre 2026, avec le schéma
+`0018_editable_knowledge`. La stabilisation opérateur après 6–7 minutes atteste les quatre
+images applicatives exactes, zéro redémarrage, les services de stockage sains, Core
+live/ready/trust et Web à 200, ainsi que des compteurs SQL inchangés.
 
-D07 est intégré par la PR #91, merge GitHub vérifié
-`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. Sa tête finale
-`0db6df6326b553136ab8a375b30fddbe5f6b27aa` passe **9/9 workflows PR**. D07 n'est pas encore
-déployé sur le pilote.
+Cette stabilité technique **ne vaut pas acceptation produit**. L’utilisateur signale dans le
+pilote des langues mélangées, un formulaire d’idée ambigu, des objets sans liens visibles et
+une animation non perceptible, ainsi qu’une surcharge de commandes. Le gate D09 est rouvert
+pour correction d’usage ; D10 ne commence pas. Voir [le diagnostic et le correctif](d09-usability-correction.md).
 
-D08 est intégré par la PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`.
-Sa tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f` passe **9/9 workflows PR**,
-avec un arbre identique au merge. Le handoff main `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`
-passe **8/8 workflows push**. D08 n'est pas déployé sur le pilote.
+Le contrôle UI `35112551196` valide les trois formats d’accueil, les raccourcis privés,
+les dossiers, l’ordre, l’annulation, la reprise après erreur de sauvegarde, le rechargement,
+les commandes FR/EN, la navigation entre projets, le téléchargement des octets d’origine
+et l’aperçu SVG. Le renderer occupe la largeur centrale ; les commandes FR/EN ne recouvrent
+plus l’en-tête. Sur téléphone, la liste 2D reste le défaut et la 3D un choix explicite.
+Le corpus contient 5 projets, 20 contenus, 12 fichiers, 12 tâches, 9 dépendances et
+32 relations explicites, avec citations versionnées et trois accueils métier.
 
-D09 est intégré par la PR #93, merge `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76`.
-Le modèle visuel `48d7be9`, accepté le 16 septembre avec autorisation d'installation, est conservé.
-La tête finale `7d748797c6accc8a6c5115abe634c24d3d5dee29` passe **9/9 workflows PR**, les
-13 scénarios spatiaux et les 16 contrôles du kit ; son arbre est identique au merge.
-L'installation pilote attend le relevé de la session SSH opérateur :
-voir [la procédure D09](d09-pilot-installation.md) et `PROJECT_STATE.md` pour l'état live.
-L'utilisateur rapporte un bon fonctionnement du banc sur ordinateur/tablette/téléphone et fournit
-un essai ordinateur de dix minutes, 501 objets/1 500 liens, médiane 165 FPS. La mémoire n'est pas
-mesurée ; ces résultats concernent des parents du modèle adopté. La référence finale et son
-acceptation sont dans [le suivi matière](archive/d09-translucent-tissue-2026-09-16.md).
+Les parcours navigateur utilisent des réponses Core simulées à partir du corpus ; le
+contrat de projection est testé séparément sur PostgreSQL réel. Il reste à qualifier
+l’import sur le pilote et les interactions/fluidité sur les appareils de l’utilisateur.
+La traduction exhaustive des écrans historiques reste en D13.
+
+Le modèle visuel `48d7be9` reste la référence adoptée. Les preuves antérieures du banc
+synthétique (13 scénarios spatiaux, 16 contrôles kit et mesures physiques des parents)
+restent historiques : elles ne qualifient ni le graphe réel peu relié ni ce correctif.
+La restauration B2 et le snapshot Netcup pré-migration sont conservés ; aucun nettoyage
+Docker ou rollback n’est autorisé par ce constat.
 
 ## Acquis canoniques
 
 | Domaine | État vérifié | Limite actuelle |
 |---|---|---|
-| Serveur et données | PostgreSQL/pgvector, Temporal, JetStream, SeaweedFS ; production jusqu'à `0015`; restauration B2 acquise | Premier serveur Linux x86_64 ; migrations D06/D07 non déployées |
+| Serveur et données | PostgreSQL/pgvector, Temporal, JetStream, SeaweedFS ; production `0018`; restauration B2 acquise | Premier serveur Linux x86_64 ; stabilité observée distincte du go fonctionnel |
 | Identité | TLS, OIDC/PKCE, comptes nominatifs/TOTP et isolation owner-scoped vérifiée | Requalifier les nouveaux parcours à chaque lot |
 | Worker / documents | Confinement, Temporal réel, Docling 2.126.0 et parsing borné ; ingestion historique verte avec `0018` en CI | Scans complexes/gros documents hors campagne |
 | Mémoire / graphe | Mem0/Graphiti réels, scope propriétaire et rejeu sans doublon | Qualité quotidienne à mesurer ; projections dérivées |
@@ -40,11 +51,11 @@ acceptation sont dans [le suivi matière](archive/d09-translucent-tissue-2026-09
 | Research | Recherche sourcée, crash/replay et ownership qualifiés | Pertinence générale non déduite des scénarios |
 | Secrets / reprise | OpenBao persistant, snapshots et matériel LiteLLM chiffré restaurés | Préserver snapshots et réservations historiques |
 | Cockpit D05 | Mycelium 2D, Dockview, recherche rapide, inspecteur, layouts privés, PWA, responsive et popout bureau | Revue humaine continue sur appareils physiques |
-| Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
+| Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Déployé dans D09 ; acceptation d’usage à terminer |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
-| Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
-| Mycelium 3D D09 | Renderer interactif et persistance intégrés par #93 ; enveloppes translucides irrégulières, petits noyaux cyan/menthe, raccords continus et circulation lumineuse après retours utilisateur | Design accepté et code intégré ; installation pilote, mémoire/GPU intégré/cockpit physique à compléter |
-| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
+| Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Déployé ; appartenance au projet absente du rendu initial, correctif en qualification |
+| Mycelium 3D D09 | Renderer interactif et persistance intégrés par #93 ; enveloppes translucides irrégulières, petits noyaux cyan/menthe, raccords continus et circulation lumineuse après retours utilisateur | Pilote installé ; lisibilité du graphe réel et animation à requalifier, mémoire/GPU intégré/cockpit physique à compléter |
+| Langues | Fondation FR/EN extensible mais cockpit et inspecteurs encore partiellement français en production | Correction ciblée D09 en cours ; complétude globale D13 et voix anglaise non qualifiées |
 
 ## Planification D06 intégrée
 

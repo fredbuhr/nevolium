@@ -55,6 +55,26 @@ async function waitForPreview() {
 const savedLayouts = new Map()
 const results = []
 
+async function verifyHeaderControls(page, label) {
+  const switcher = page.locator('.nevolium-language-switcher:visible')
+  assert.equal(await switcher.count(), 1, `${label}: one language selector is expected`)
+  const box = await switcher.boundingBox()
+  assert(box, `${label}: language selector must be visible`)
+  for (const selector of ['.brand-lockup', '.session-summary', '.home-brand-lockup', '.home-session', '.home-global-search']) {
+    const element = page.locator(selector + ':visible')
+    if (!await element.isVisible()) continue
+    const other = await element.boundingBox()
+    const overlap = box.x < other.x + other.width && box.x + box.width > other.x
+      && box.y < other.y + other.height && box.y + box.height > other.y
+    assert(!overlap, `${label}: language selector overlaps ${selector}`)
+  }
+  for (const button of await switcher.getByRole('button').all()) {
+    const target = await button.boundingBox()
+    assert(target && target.width >= 44 && target.height >= 44, `${label}: language touch target too small`)
+    await button.click({ trial: true })
+  }
+}
+
 function json(route, value, status = 200) {
   return route.fulfill({
     status,
@@ -147,41 +167,20 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.getByRole('heading', { name: 'Où reprendre le fil ?' }).waitFor()
+  await page.getByRole('heading', { name: 'Votre Mycelium' }).waitFor()
   const expectedDeviceLabel = viewport.width < 640 ? 'Téléphone' : viewport.width < 1024 ? 'Tablette' : 'Bureau'
-  const deviceLabel = page.getByText(expectedDeviceLabel, { exact: true })
-  await deviceLabel.waitFor({ state: 'visible' })
-  assert.equal(await page.locator('.mycelium-network').count(), 1, `${name}: réseau Mycelium absent`)
-  assert.equal(
-    await page.locator('.mycelium-space-node').count(),
-    6,
-    `${name}: les six espaces livrés doivent être accessibles`,
-  )
-  assert.equal(await page.locator('canvas').count(), 0, `${name}: l’accueil ne doit pas exiger WebGL`)
-
+  // D09 uses the shared 3D renderer by default; the accessible 2D view remains available.
+  await page.getByRole('button', { name: 'Vue 2D', exact: true }).click()
+  assert.equal(await page.locator('.home-network-area > .spatial-workspace .home-simple-list li').count(), 6)
+  assert.equal(await page.locator('canvas').count(), 0, `${name}: 2D must release WebGL`)
   async function verifyHomeTargets(label) {
-    await page.waitForFunction(() => {
-      const scene = document.querySelector('.mycelium-scene')
-      return scene && Math.abs(Number(scene.dataset.geometryWidth) - scene.clientWidth) <= 1
-        && Math.abs(Number(scene.dataset.geometryHeight) - scene.clientHeight) <= 1
-    })
-    const nodes = page.locator('.mycelium-space-node, .mycelium-core-node')
+    await verifyHeaderControls(page, label)
+    const nodes = page.locator('.spatial-workspace .home-simple-list button')
     for (const node of await nodes.all()) {
       const box = await node.boundingBox()
-      assert(box && box.width >= 44 && box.height >= 44, `${label}: cible tactile trop petite`)
+      assert(box && box.width >= 44 && box.height >= 44, `${label}: touch target too small`)
       await node.click({ trial: true })
-      const key = await node.getAttribute('data-node-key')
-      const membrane = await page.locator(`.neural-membrane-texture[data-node-key="${key}"]`).boundingBox()
-      assert(membrane && Math.abs(membrane.x + membrane.width / 2 - box.x - box.width / 2) < 1
-        && Math.abs(membrane.y + membrane.height / 2 - box.y - box.height / 2) < 1,
-      `${label}: membrane et commande ${key} désalignées`)
     }
-    const counts = await page.locator('.mycelium-network').evaluate(node => ({
-      elements: node.querySelectorAll('*').length,
-      animation: getComputedStyle(node.querySelector('.neural-junctions')).animationName,
-    }))
-    assert(counts.elements < 2000, `${label}: budget SVG dépassé`)
-    assert.equal(counts.animation, 'none', `${label}: mouvement réduit non respecté`)
   }
   await verifyHomeTargets(name)
   if (name === 'phone' || name === 'tablet') {
@@ -195,8 +194,8 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
     scrollWidth: document.documentElement.scrollWidth,
-    sceneWidth: document.querySelector('.mycelium-scene').clientWidth,
-    sceneHeight: document.querySelector('.mycelium-scene').clientHeight,
+    sceneWidth: document.querySelector('.home-network-area').clientWidth,
+    sceneHeight: document.querySelector('.home-network-area').clientHeight,
   }))
   assert(
     homeDimensions.scrollWidth <= homeDimensions.innerWidth + 1,
@@ -205,28 +204,24 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
 
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
-  await deviceLabel.waitFor({ state: 'visible' })
   await page.screenshot({
     path: path.join(outputDirectory, `nevolium-d05-${name}-home.png`),
     fullPage: false,
   })
   await verifyHomeTargets(`${name}-after-capture`)
 
-  const homeSearch = page.getByRole('button', { name: /Rechercher dans Nevolium/ })
-  await homeSearch.focus()
   await page.keyboard.press('Control+K')
-  await page.getByRole('dialog', { name: 'Ouvrir un espace' }).waitFor()
-  await page.getByRole('searchbox', { name: 'Rechercher un espace' }).fill('documents')
-  await page.getByRole('option', { name: /Documents/ }).waitFor()
+  await page.locator('.home-tools[open]').waitFor()
+  await page.locator('.home-tools [data-space="knowledge"]').waitFor()
   await page.keyboard.press('Escape')
-  await page.waitForFunction(() => document.activeElement?.classList.contains('home-global-search'))
-
-  await page.locator('.mycelium-space-node[data-space="command"]').click()
+  assert(await page.locator('.home-tools summary').evaluate(node => node === document.activeElement))
+  await page.locator('.spatial-workspace [data-node="tool:command"]').click()
   await page.getByRole('heading', {
     name: 'Dites ce que vous cherchez à comprendre ou à faire.',
   }).waitFor()
+  await verifyHeaderControls(page, `${name}-cockpit`)
 
-  const cockpitDeviceLabel = page.getByText(expectedDeviceLabel, { exact: true })
+  const cockpitDeviceLabel = page.locator('.cockpit-context').getByText(expectedDeviceLabel, { exact: true })
   await cockpitDeviceLabel.waitFor({ state: 'attached' })
   assert.equal(
     await cockpitDeviceLabel.isVisible(),
@@ -269,6 +264,7 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
     `${name}: disposition initiale inattendue`,
   )
   if (name === 'desktop' || name === 'desktop-admin' || name === 'compact-desktop') {
+    await page.getByText('Options de l’espace', { exact: true }).click()
     await page.getByRole('button', { name: 'Retrouver mes vues', exact: true }).click()
     await newsHeading.waitFor({ state: 'visible' })
     await page.getByRole('button', { name: 'Centrer l’activité', exact: true }).click()

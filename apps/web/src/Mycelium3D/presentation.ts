@@ -10,6 +10,12 @@ export type CameraCommand = { sequence: number; action: 'focus' | 'reset' | 'in'
 export type SceneMetrics = { frames: number; fps: number; geometries: number; textures: number; calls: number; triangles: number; tier: Tier }
 
 export const DEFAULT_PRESENTATION: SpatialPresentation = { view: '2d', quality: 'auto', camera: null }
+
+/** Small projects should fill the overview too; a ten-unit floor hid short filaments. */
+export function overviewRadius(distances: number[]): number {
+  return Math.max(4, ...distances.filter(Number.isFinite))
+}
+
 export const QUALITY_SETTINGS = {
   eco: { dpr: 1, detail: 1, segments: 6, strands: 1, labels: 3 },
   balanced: { dpr: 1.35, detail: 2, segments: 10, strands: 2, labels: 5 },

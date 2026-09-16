@@ -11,10 +11,6 @@ export default function LanguageSwitcher() {
       role="group"
       aria-label={t('language.change')}
       style={{
-        position: 'fixed',
-        zIndex: 1200,
-        top: 'max(12px, env(safe-area-inset-top))',
-        right: 'max(12px, env(safe-area-inset-right))',
         display: 'flex',
         alignItems: 'center',
         gap: 4,
@@ -38,8 +34,8 @@ export default function LanguageSwitcher() {
             title={config.label}
             onClick={() => setLanguage(candidate)}
             style={{
-              minWidth: 38,
-              minHeight: 32,
+              minWidth: 44,
+              minHeight: 44,
               border: active ? '1px solid rgba(202, 255, 223, 0.7)' : '1px solid transparent',
               borderRadius: 999,
               padding: '0 10px',

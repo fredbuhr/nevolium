@@ -62,11 +62,11 @@ def main() -> None:
     styles = (WEB / "src/styles.css").read_text(encoding="utf-8")
     assert "Control+K Meta+K" in cockpit
     assert "Control+K Meta+K" in home
-    assert "mycelium-network" in field and "mycelium-space-node" in home
-    assert "createMyceliumGeometry" in home and "ResizeObserver" in home
-    assert "branched-bioluminescent-fibres" in field
-    assert "aria-hidden=\"true\"" in field and "mixBlendMode: 'screen'" in field
-    assert "Où reprendre le fil" in home
+    assert "quiet-atmosphere" in field and "SpatialWorkspace" in home
+    assert 'defaultView="3d"' in home and "useHomeLayout" in home
+    assert 'aria-hidden="true"' in field
+    home_messages = (WEB / "src/MyceliumHome/messages.ts").read_text(encoding="utf-8")
+    assert "Votre Mycelium" in home_messages
     for delivered_space in (
         "Assistant",
         "Actualités",
@@ -75,13 +75,13 @@ def main() -> None:
         "Projets",
         "Documents",
     ):
-        assert delivered_space in home, delivered_space
+        assert delivered_space in home_messages, delivered_space
     assert "model-settings" in home and "isAdmin" in home
     assert "role=\"dialog\"" in cockpit and "aria-modal=\"true\"" in cockpit
     assert "handlePaletteDialogKey" in cockpit and "paletteReturnFocusRef" in cockpit
     assert "disableDnd={deviceClass === 'phone'}" in cockpit
     assert "api.addPopoutGroup(activePanel" in cockpit
-    assert "deviceClass === 'desktop'" in cockpit and "Détacher" in cockpit
+    assert "deviceClass === 'desktop'" in cockpit and "w('detach')" in cockpit
     assert cockpit.count("deviceClass !== 'desktop'") >= 3
     assert "layoutRetry === 'save'" in cockpit and "queueLayoutSave(api)" in cockpit
     assert "window.sessionStorage" in device
@@ -108,9 +108,9 @@ def main() -> None:
     assert "nevolium-web" in isolation_workflow
     assert "nevolium-dev-2" in authenticated_browser and "Réglages API" in authenticated_browser
 
-    catch_block = cockpit.split("} catch (error) {", 1)[1].split("} finally {", 1)[0]
+    catch_block = cockpit.split("} catch {", 1)[1].split("} finally {", 1)[0]
     assert "attachPersistence" not in catch_block
-    assert "synchronisation suspendue" in catch_block
+    assert "restoreFailed" in catch_block
 
     # D09 may load a 3D scene explicitly. The D05 baseline must still have no
     # WebGL dependency in the static import graph starting at the Web entrypoint.

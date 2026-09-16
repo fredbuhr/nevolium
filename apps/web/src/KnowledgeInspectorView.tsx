@@ -1,25 +1,29 @@
+import { useI18n } from './i18n'
+import { useKnowledgeMessages } from './knowledgeMessages'
+import { useWorkspaceMessages } from './workspaceMessages'
 import { MAX_CHUNK_PREVIEW_ITEMS } from './knowledgeChunkInspection'
 import type { CanonicalDocument, DocumentChunk, DocumentVersion } from './knowledgeTypes'
 
 const MAX_CHUNK_PREVIEW_CHARS = 1200
 
-function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    pending: 'en attente',
-    queued: 'en file',
-    processing: 'traitement',
-    completed: 'terminé',
-    ready: 'prêt',
-    failed: 'échec',
-  }
-  return labels[status] || status
+function useInspectorMessages() {
+  const w = useWorkspaceMessages()
+  const m = useKnowledgeMessages()
+  const { language } = useI18n()
+  const statusLabel = (status: string) => ({
+    pending: w('queuedState'), queued: w('queuedState'), processing: w('processingState'),
+    completed: w('completedState'), ready: w('readyState'), failed: w('failedState'),
+  }[status] || status)
+  const kindLabel = (kind: string) => ['note', 'idea', 'decision', 'hypothesis', 'supported', 'contested', 'verified'].includes(kind)
+    ? m(kind as 'note' | 'idea' | 'decision' | 'hypothesis' | 'supported' | 'contested' | 'verified') : kind
+  return { w, statusLabel, kindLabel, formatDate: (value?: string | null) => formatDate(value, language) }
 }
 
-function formatDate(value?: string | null) {
+function formatDate(value: string | null | undefined, language: string) {
   if (!value) return null
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return null
-  return new Intl.DateTimeFormat('fr-FR', {
+  return new Intl.DateTimeFormat(language === 'en' ? 'en-GB' : 'fr-FR', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date)
@@ -56,24 +60,25 @@ export function KnowledgeDocumentsView({
   onOpenSource,
   onReingest,
 }: DocumentsProps) {
+  const { w, statusLabel, kindLabel, formatDate } = useInspectorMessages()
   const selectedSource = Boolean(
     selectedDocument?.kind === 'source' && selectedDocument.asset_id,
   )
 
   return (
     <>
-      <section className="sources" aria-label="Documents du projet sélectionné">
+      <section className="sources" aria-label={w('selectedProjectDocuments')}>
         <div className="sources-title">
-          <strong>Documents du projet</strong>
-          <span>{documents.length} élément(s)</span>
+          <strong>{w('projectDocs')}</strong>
+          <span>{documents.length} {w('documentCount')}</span>
         </div>
         <div className="source-list">
           {documents.length === 0 && (
             <div className="source-card">
               <span className="source-id">0</span>
               <div>
-                <strong>Aucun document pour ce projet.</strong>
-                <small>Importez un fichier ou créez une connaissance éditable.</small>
+                <strong>{w('noDocuments')}</strong>
+                <small>{w('addDocumentHint')}</small>
               </div>
             </div>
           )}
@@ -83,13 +88,13 @@ export function KnowledgeDocumentsView({
               <span className="source-id">{statusLabel(document.status)}</span>
               <div>
                 <strong>{document.title}</strong>
-                <small>{document.kind === 'source' ? document.media_type || 'Type de média inconnu' : document.kind}</small>
+                <small>{document.kind === 'source' ? document.media_type || w('unknownMedia') : kindLabel(document.kind)}</small>
                 <small>
                   {formatDate(document.created_at)
-                    ? `Créé le ${formatDate(document.created_at)}`
-                    : 'Date de création indisponible'}
+                    ? `${w('createdOn')} ${formatDate(document.created_at)}`
+                    : w('noDate')}
                   {formatDate(document.updated_at)
-                    ? ` · mis à jour le ${formatDate(document.updated_at)}`
+                    ? ` · ${w('updatedOn')} ${formatDate(document.updated_at)}`
                     : ''}
                 </small>
                 {document.source_sha256 && (
@@ -105,7 +110,7 @@ export function KnowledgeDocumentsView({
         <>
           <div className="news-controls">
             <label>
-              <span>Document sélectionné</span>
+              <span>{w('currentDocument')}</span>
               <select
                 value={selectedDocument?.id || ''}
                 onChange={(event) => onSelectDocument(event.target.value)}
@@ -122,7 +127,7 @@ export function KnowledgeDocumentsView({
               onClick={() => onOpenSource()}
               disabled={openingSource || !selectedSource}
             >
-              {openingSource ? 'Ouverture…' : 'Ouvrir la source'}
+              {openingSource ? w('openingSource') : w('openSource')}
             </button>
             <button
               type="button"
@@ -134,7 +139,7 @@ export function KnowledgeDocumentsView({
                 ['pending', 'processing'].includes(selectedDocument?.status || '')
               }
             >
-              {reingesting ? 'Nouvelle lecture…' : 'Relire le document'}
+              {reingesting ? w('rereading') : w('rereadDocument')}
             </button>
           </div>
 
@@ -142,10 +147,10 @@ export function KnowledgeDocumentsView({
           {reingestError && <div className="error-panel">{reingestError}</div>}
 
           {selectedDocument && (
-            <article className="briefing" aria-label="Détail du Document sélectionné">
+            <article className="briefing" aria-label={w('documentDetails')}>
               <div className="briefing-topline">
                 <div>
-                  <span className="eyebrow">DOCUMENT SÉLECTIONNÉ</span>
+                  <span className="eyebrow">{w('selectedDocumentHeading')}</span>
                   <h3>{selectedDocument.title}</h3>
                 </div>
                 <span className={`run-state run-state-${selectedDocument.status}`}>
@@ -154,8 +159,8 @@ export function KnowledgeDocumentsView({
               </div>
               <div className="brief-summary">
                 {selectedDocument.kind === 'source'
-                  ? selectedDocument.media_type || 'Type de média inconnu'
-                  : `${selectedDocument.kind}${selectedDocument.epistemic_status ? ` · ${selectedDocument.epistemic_status}` : ''}`}
+                  ? selectedDocument.media_type || w('unknownMedia')
+                  : `${kindLabel(selectedDocument.kind)}${selectedDocument.epistemic_status ? ` · ${kindLabel(selectedDocument.epistemic_status)}` : ''}`}
               </div>
             </article>
           )}
@@ -186,30 +191,31 @@ export function KnowledgeVersionsView({
   onSelectVersion,
   onLoadChunks,
 }: VersionsProps) {
+  const { w, statusLabel, formatDate } = useInspectorMessages()
   return (
     <>
       {versionError && <div className="error-panel">{versionError}</div>}
 
       {loadingVersions && !versionError && (
         <div className="progress-panel">
-          <strong>Chargement des versions.</strong>
-          <span>Le contenu des passages est chargé uniquement à votre demande.</span>
+          <strong>{w('loadingVersions')}</strong>
+          <span>{w('loadExcerptsHint')}</span>
         </div>
       )}
 
       {!loadingVersions && !versionError && selectedDocument && (
-        <section className="sources" aria-label="Versions du Document sélectionné">
+        <section className="sources" aria-label={w('selectedDocVersions')}>
           <div className="sources-title">
-            <strong>Versions du document</strong>
-            <span>{versions.length} version(s)</span>
+            <strong>{w('documentVersions')}</strong>
+            <span>{versions.length} {w('versionsCount')}</span>
           </div>
           <div className="source-list">
             {versions.length === 0 && (
               <div className="source-card">
                 <span className="source-id">0</span>
                 <div>
-                  <strong>Aucune version disponible.</strong>
-                  <small>Le document ne possède pas encore de version prête.</small>
+                  <strong>{w('noVersions')}</strong>
+                  <small>{w('noReadyVersion')}</small>
                 </div>
               </div>
             )}
@@ -224,20 +230,20 @@ export function KnowledgeVersionsView({
                     {' · '}
                     {statusLabel(version.status)}
                   </strong>
-                  <small>{version.chunk_count} passage(s)</small>
+                  <small>{version.chunk_count} {w('passagesCount')}</small>
                   <small>
                     {formatDate(version.created_at)
-                      ? `Créée le ${formatDate(version.created_at)}`
-                      : 'Date de création indisponible'}
+                      ? `${w('createdOn')} ${formatDate(version.created_at)}`
+                      : w('noDate')}
                     {formatDate(version.completed_at)
-                      ? ` · terminée le ${formatDate(version.completed_at)}`
+                      ? ` · ${w('completedOn')} ${formatDate(version.completed_at)}`
                       : ''}
                   </small>
                   {version.source_sha256 && (
                     <small>Source SHA-256 · {version.source_sha256.slice(0, 16)}…</small>
                   )}
-                  {version.search_status && <small>Recherche · {statusLabel(version.search_status)}</small>}
-                  {version.last_error && <small>Erreur · {version.last_error}</small>}
+                  {version.search_status && <small>{w('research')} · {statusLabel(version.search_status)}</small>}
+                  {version.last_error && <small>{w('errorLabel')} · {version.last_error}</small>}
                   {version.search_error && <small>Index · {version.search_error}</small>}
                 </div>
               </div>
@@ -249,7 +255,7 @@ export function KnowledgeVersionsView({
       {versions.length > 0 && (
         <div className="news-controls">
           <label>
-            <span>Version sélectionnée</span>
+            <span>{w('selectedVersion')}</span>
             <select
               value={selectedVersion?.id || ''}
               onChange={(event) => onSelectVersion(event.target.value)}
@@ -266,7 +272,7 @@ export function KnowledgeVersionsView({
             onClick={() => onLoadChunks()}
             disabled={loadingChunks || !selectedVersion}
           >
-            {loadingChunks ? 'Chargement…' : 'Charger l’aperçu des passages'}
+            {loadingChunks ? w('loading') : w('loadExcerpt')}
           </button>
         </div>
       )}
@@ -303,53 +309,54 @@ export function KnowledgeChunksView({
   canNextChunkPage,
   onLoadPage,
 }: ChunksProps) {
+  const { w, statusLabel, kindLabel, formatDate } = useInspectorMessages()
   return (
     <>
       {chunkError && <div className="error-panel">{chunkError}</div>}
 
       {selectedVersion && !chunksLoaded && !loadingChunks && !chunkError && (
         <div className="progress-panel">
-          <strong>Passages non chargés.</strong>
-          <span>Sélectionnez une version, puis demandez son aperçu.</span>
+          <strong>{w('excerptsNotLoaded')}</strong>
+          <span>{w('chooseVersionHint')}</span>
         </div>
       )}
 
       {chunksLoaded && !chunkError && selectedVersion && (
         <>
-          <div className="news-controls" aria-label="Pages des passages">
+          <div className="news-controls" aria-label={w('passagePages')}>
             <button
               type="button"
               onClick={() => onLoadPage(chunkOffset - MAX_CHUNK_PREVIEW_ITEMS)}
               disabled={loadingChunks || !canPreviousChunkPage}
             >
-              ← Page précédente
+              {w('previousPage')}
             </button>
             <span className="route-chip">
               {chunkPageStart === 0
-                ? `0 passage sur ${selectedVersion.chunk_count}`
-                : `Passages ${chunkPageStart}–${chunkPageEnd} sur ${selectedVersion.chunk_count}`}
+                ? `${w('passages')} 0 ${w('of')} ${selectedVersion.chunk_count}`
+                : `${w('passages')} ${chunkPageStart}–${chunkPageEnd} ${w('of')} ${selectedVersion.chunk_count}`}
             </span>
             <button
               type="button"
               onClick={() => onLoadPage(chunkOffset + MAX_CHUNK_PREVIEW_ITEMS)}
               disabled={loadingChunks || !canNextChunkPage}
             >
-              Page suivante →
+              {w('nextPage')}
             </button>
           </div>
 
-          <section className="sources" aria-label="Aperçu des passages de la version sélectionnée">
+          <section className="sources" aria-label={w('passagePreview')}>
             <div className="sources-title">
-              <strong>Aperçu des passages · v{selectedVersion.generation}</strong>
-              <span>{chunks.length} passage(s) sur cette page</span>
+              <strong>{w('excerptHeading')} · v{selectedVersion.generation}</strong>
+              <span>{chunks.length} {w('passagesPage')}</span>
             </div>
             <div className="source-list">
               {chunks.length === 0 && (
                 <div className="source-card">
                   <span className="source-id">0</span>
                   <div>
-                    <strong>Aucun passage disponible.</strong>
-                    <small>Cette version ne contient aucun contenu à inspecter.</small>
+                    <strong>{w('noPassages')}</strong>
+                    <small>{w('noContent')}</small>
                   </div>
                 </div>
               )}
@@ -364,14 +371,14 @@ export function KnowledgeChunksView({
                   <div>
                     <strong>
                       {chunk.id === focusedChunkId
-                        ? `Passage ${chunk.ordinal} · résultat sélectionné`
-                        : `Passage ${chunk.ordinal}`}
+                        ? `${w('passage')} ${chunk.ordinal} · ${w('selectedResult')}`
+                        : `${w('passage')} ${chunk.ordinal}`}
                     </strong>
                     <small>{chunkExcerpt(chunk.text)}</small>
                     <small>
                       {formatDate(chunk.created_at)
-                        ? `Créé le ${formatDate(chunk.created_at)}`
-                        : 'Date de création indisponible'}
+                        ? `${w('createdOn')} ${formatDate(chunk.created_at)}`
+                        : w('noDate')}
                       {' · '}
                       SHA-256 {chunk.content_sha256.slice(0, 16)}…
                     </small>

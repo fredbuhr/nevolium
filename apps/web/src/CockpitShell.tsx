@@ -19,6 +19,7 @@ import 'dockview-react/dist/styles/dockview.css'
 import { nevoliumFetch } from './lib/apiClient'
 import { PanelNavigationContext, PanelVisibilityContext } from './lib/panelVisibility'
 import ContextNavigator from './ContextNavigator'
+import { useWorkspaceMessages, type WorkspaceMessage } from './workspaceMessages'
 
 export type CockpitSlots = {
   command: ReactNode
@@ -323,6 +324,7 @@ export default function CockpitShell({
   slots,
   workspaceKey,
 }: CockpitShellProps) {
+  const w = useWorkspaceMessages()
   const disposedRef = useRef(false)
   const cleanupRef = useRef<(() => void) | null>(null)
   const apiRef = useRef<CockpitApi | null>(null)
@@ -334,13 +336,13 @@ export default function CockpitShell({
   const [ready, setReady] = useState(false)
   const [layoutState, setLayoutState] = useState<LayoutState>('loading')
   const [layoutRetry, setLayoutRetry] = useState<LayoutRetry>(null)
-  const [layoutMessage, setLayoutMessage] = useState('Restauration de la disposition…')
+  const [layoutMessage, setLayoutMessage] = useState<WorkspaceMessage>('restoring')
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [paletteQuery, setPaletteQuery] = useState('')
   const [paletteIndex, setPaletteIndex] = useState(0)
   const [activeSpace, setActiveSpace] = useState(initialPanelKey || 'command')
   const [recentSpaces, setRecentSpaces] = useState<string[]>([])
-  const [linksVisible, setLinksVisible] = useState(deviceClass === 'desktop')
+  const [linksVisible, setLinksVisible] = useState(false)
   const [centered, setCentered] = useState(false)
 
   const normalizedExtras = useMemo(() => normalizeExtraPanels(extraPanels), [extraPanels])
@@ -357,7 +359,7 @@ export default function CockpitShell({
     () => [
       ...Object.entries(PANEL_DEFINITIONS).map(([key, definition]) => ({
         key,
-        title: definition.title,
+        title: key === 'news' ? w('news') : key === 'research' ? w('research') : definition.title,
         keywords: PANEL_KEYWORDS[key as CockpitPanelKey],
         open: (api: CockpitApi) => openPanel(api, key as CockpitPanelKey, deviceClass),
       })),
@@ -368,7 +370,7 @@ export default function CockpitShell({
         open: (api: CockpitApi) => openExtraPanel(api, panel, deviceClass),
       })),
     ],
-    [deviceClass, normalizedExtras],
+    [deviceClass, normalizedExtras, w],
   )
   const filteredPaletteItems = useMemo(() => {
     const query = paletteQuery.trim().toLocaleLowerCase('fr')
@@ -424,21 +426,21 @@ export default function CockpitShell({
       const snapshot = api.toJSON()
       setLayoutState('saving')
       setLayoutRetry(null)
-      setLayoutMessage('Synchronisation…')
+      setLayoutMessage('syncing')
       saveChainRef.current = saveChainRef.current
         .catch(() => undefined)
         .then(() => saveWorkspaceLayout(apiUrl, workspaceKey, snapshot))
         .then(() => {
           if (!disposedRef.current) {
             setLayoutState('saved')
-            setLayoutMessage('Disposition synchronisée')
+            setLayoutMessage('saved')
           }
         })
-        .catch((error: unknown) => {
+        .catch(() => {
           if (!disposedRef.current) {
             setLayoutState('error')
             setLayoutRetry('save')
-            setLayoutMessage(error instanceof Error ? error.message : 'sauvegarde impossible')
+            setLayoutMessage('saveFailed')
           }
         })
     },
@@ -465,7 +467,7 @@ export default function CockpitShell({
         if (saveTimer) window.clearTimeout(saveTimer)
         setLayoutState('saving')
         setLayoutRetry(null)
-        setLayoutMessage('Modifications en attente…')
+        setLayoutMessage('syncing')
         saveTimer = window.setTimeout(() => {
           saveTimer = undefined
           queueLayoutSave(api)
@@ -494,7 +496,7 @@ export default function CockpitShell({
       cleanupRef.current = null
       setLayoutState('loading')
       setLayoutRetry(null)
-      setLayoutMessage('Restauration de la disposition…')
+      setLayoutMessage('restoring')
       try {
         let saved = await loadWorkspaceLayout(apiUrl, workspaceKey)
         let restoredLegacyLayout = false
@@ -521,16 +523,16 @@ export default function CockpitShell({
           setLayoutState('ready')
           setLayoutRetry(null)
           setLayoutMessage(
-            saved.kind === 'found' ? 'Disposition restaurée' : 'Nouvelle disposition locale',
+            saved.kind === 'found' ? 'restored' : 'newLayout',
           )
         }
-      } catch (error) {
+      } catch {
         if (!isCurrent()) return
         if (!api.activePanel) createDefaultLayout(api, profile, deviceClass, normalizedExtras)
         setLayoutState('error')
         setLayoutRetry('restore')
         setLayoutMessage(
-          `${error instanceof Error ? error.message : 'lecture impossible'} — synchronisation suspendue`,
+          'restoreFailed',
         )
       } finally {
         if (isCurrent()) setReady(true)
@@ -564,11 +566,14 @@ export default function CockpitShell({
     if (!ready || !api) return
     // A locale change updates existing tabs in place; it never reloads the layout
     // or reopens the initial panel. Current project, editor and history stay mounted.
-    for (const definition of normalizedExtras) {
+    for (const definition of [
+      ...Object.entries(PANEL_DEFINITIONS).map(([key, item]) => ({ ...item, title: key === 'news' ? w('news') : key === 'research' ? w('research') : item.title })),
+      ...normalizedExtras,
+    ]) {
       const panel = api.getPanel(definition.id)
       if (panel && panel.title !== definition.title) panel.api.setTitle(definition.title)
     }
-  }, [normalizedExtras, ready])
+  }, [normalizedExtras, ready, w, activeSpace])
 
   const choosePaletteItem = (index: number) => {
     const api = apiRef.current
@@ -642,7 +647,7 @@ export default function CockpitShell({
     if (!api || !activePanel) {
       setLayoutState('error')
       setLayoutRetry(null)
-      setLayoutMessage('Sélectionnez un panneau avant de le détacher.')
+      setLayoutMessage('selectPanel')
       return
     }
     try {
@@ -650,12 +655,12 @@ export default function CockpitShell({
       if (!opened) throw new Error('La fenêtre a été refusée par le navigateur.')
       setLayoutState('ready')
       setLayoutRetry(null)
-      setLayoutMessage('Espace détaché. Vous pouvez déplacer sa fenêtre vers un autre écran.')
-    } catch (error) {
+      setLayoutMessage('detached')
+    } catch {
       setLayoutState('error')
       setLayoutRetry(null)
       setLayoutMessage(
-        error instanceof Error ? error.message : 'Impossible de détacher ce panneau.',
+        'detachFailed',
       )
     }
   }
@@ -664,10 +669,10 @@ export default function CockpitShell({
     <CockpitContentContext.Provider value={cockpitContent}>
       <PanelNavigationContext.Provider value={navigate}>
       <section className={`cockpit-shell ${linksVisible ? 'with-thread' : ''}`} aria-label="Cockpit Nevolium">
-        <nav className="cockpit-toolbar" aria-label="Navigation du cockpit">
+        <nav className="cockpit-toolbar" aria-label={w('navigation')}>
           <button className="cockpit-home-button" type="button" onClick={onOpenHome}>
             <span aria-hidden="true">⌂</span>
-            Accueil
+            {w('home')}
           </button>
           <button
             className="quick-access-button"
@@ -676,10 +681,10 @@ export default function CockpitShell({
             onClick={openPalette}
             aria-keyshortcuts="Control+K Meta+K"
           >
-            <span>Accès rapide</span>
+            <span>{w('quick')}</span>
             <kbd>⌘ K</kbd>
           </button>
-          <div className="cockpit-panel-buttons" aria-label="Panneaux principaux">
+          <div className="cockpit-panel-buttons" aria-label={w('panels')}>
             {paletteItems.map((item) => (
               <button
                 key={item.key}
@@ -692,8 +697,8 @@ export default function CockpitShell({
               </button>
             ))}
           </div>
-          <div className="toolbar-actions">
-            <button type="button" aria-expanded={linksVisible} aria-controls="context-thread" onClick={() => setLinksVisible(value => !value)}>Liens et contexte</button>
+          <details className="toolbar-actions workspace-details"><summary>{w('options')}</summary>
+            <button type="button" aria-expanded={linksVisible} aria-controls="context-thread" onClick={() => setLinksVisible(value => !value)}>{w('context')}</button>
             {deviceClass === 'desktop' ? (
               <>
               <button type="button" disabled={!ready} aria-pressed={centered} onClick={() => {
@@ -701,26 +706,26 @@ export default function CockpitShell({
                 if (!api?.activePanel) return
                 if (api.hasMaximizedGroup()) api.exitMaximizedGroup()
                 else api.maximizeGroup(api.activePanel)
-              }}>{centered ? 'Retrouver mes vues' : 'Centrer l’activité'}</button>
+              }}>{centered ? w('restoreViews') : w('focus')}</button>
               <button
                 type="button"
                 disabled={!ready}
                 onClick={() => void detachActivePanel()}
-                title="Ouvrir le panneau actif dans une fenêtre déplaçable sur un autre écran"
+                title={w('detachHint')}
               >
-                Détacher
+                {w('detach')}
               </button>
               </>
             ) : null}
             <button type="button" disabled={!ready} onClick={resetLayout}>
-              Réinitialiser
+              {w('reset')}
             </button>
-          </div>
+          </details>
         </nav>
 
         <div className={`layout-state layout-state-${layoutState}`} aria-live="polite">
           <span className="layout-state-dot" aria-hidden="true" />
-          <span>{layoutMessage}</span>
+          <span>{w(layoutMessage)}</span>
           {layoutState === 'error' && layoutRetry ? (
             <button
               type="button"
@@ -731,16 +736,16 @@ export default function CockpitShell({
                 else void restoreAndAttach(api)
               }}
             >
-              {layoutRetry === 'save' ? 'Réessayer la sauvegarde' : 'Réessayer la lecture'}
+              {layoutRetry === 'save' ? w('retrySave') : w('retryLoad')}
             </button>
           ) : null}
         </div>
 
-        <nav className="space-thread" aria-label="Fil de navigation">
-          <span className="eyebrow">VOUS ÊTES ICI</span>
+        {linksVisible && <nav className="space-thread" aria-label={w('thread')}>
+          <span className="eyebrow">{w('here')}</span>
           {recentSpaces.map((key, index) => <button key={`${key}:${index}`} type="button" aria-current={index === recentSpaces.length - 1 ? 'step' : undefined} onClick={() => navigate(key)}>{paletteItems.find(item => item.key === key)?.title || key}</button>)}
-          <small>Projets et Documents partagent le contexte choisi.</small>
-        </nav>
+          <small>{w('shared')}</small>
+        </nav>}
         <div className="connected-workspace">
         {linksVisible ? <div id="context-thread"><ContextNavigator apiUrl={apiUrl} onOpenSpace={navigate} /></div> : null}
         <div className="cockpit-dock">
@@ -774,11 +779,11 @@ export default function CockpitShell({
           >
             <div className="command-palette-heading">
               <div>
-                <span className="eyebrow">ACCÈS RAPIDE</span>
-                <h2 id="command-palette-title">Ouvrir un espace</h2>
+                <span className="eyebrow">{w('quick')}</span>
+                <h2 id="command-palette-title">{w('openSpace')}</h2>
               </div>
-              <button type="button" onClick={closePalette} aria-label="Fermer">
-                Échap
+              <button type="button" onClick={closePalette} aria-label={w('close')}>
+                {w('escape')}
               </button>
             </div>
             <input
@@ -790,8 +795,8 @@ export default function CockpitShell({
                 setPaletteIndex(0)
               }}
               onKeyDown={handlePaletteKey}
-              placeholder="Projet, conversation, journée, document…"
-              aria-label="Rechercher un espace"
+              placeholder={w('palettePlaceholder')}
+              aria-label={w('searchSpace')}
               aria-controls="command-palette-results"
               aria-activedescendant={
                 filteredPaletteItems.length
@@ -813,13 +818,12 @@ export default function CockpitShell({
                     onClick={() => choosePaletteItem(index)}
                   >
                     <span>{item.title}</span>
-                    <small>{item.keywords.slice(0, 2).join(' · ')}</small>
                   </button>
                 ))
               ) : (
                 <div className="state-panel state-panel-empty">
-                  <strong>Aucun espace trouvé</strong>
-                  <span>Essayez un nom de module ou une action plus courte.</span>
+                  <strong>{w('noSpace')}</strong>
+                  <span>{w('noSpaceHint')}</span>
                 </div>
               )}
             </div>

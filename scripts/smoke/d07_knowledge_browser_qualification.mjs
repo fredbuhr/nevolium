@@ -10,6 +10,7 @@ const previewOrigin = 'http://127.0.0.1:4173'
 const apiOrigin = 'http://127.0.0.1:8999'
 const playwrightModule = process.env.NEVOLIUM_PLAYWRIGHT_MODULE
 const chromiumExecutable = process.env.NEVOLIUM_CHROMIUM_EXECUTABLE
+let diagnosticPage = null
 assert(playwrightModule, 'NEVOLIUM_PLAYWRIGHT_MODULE is required')
 const { chromium } = await import(pathToFileURL(playwrightModule).href)
 await fs.mkdir(output, { recursive: true })
@@ -212,13 +213,14 @@ async function installApiMock(context, state) {
 }
 
 async function openKnowledge(page) {
+  diagnosticPage = page
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.locator('.mycelium-space-node[data-space="projects"]').click()
+  await page.locator('.home-tools summary').click()
+  await page.locator('.home-tools [data-space="projects"]').click()
   await page.getByRole('heading', { name: 'Donnez une forme concrète aux idées que vous choisissez de construire.' }).waitFor()
   await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Documents', exact: true }).click()
-  await page.getByRole('heading', { name: 'Retrouvez une connaissance dans tous vos espaces.' }).waitFor()
-  await page.getByRole('heading', { name: 'Écrivez, sourcez et versionnez vos idées et décisions.' }).waitFor()
+  await page.getByRole('heading', { name: 'Nouvelle idée' }).waitFor()
   return page.locator('.knowledge-editor-shell:visible')
 }
 
@@ -230,16 +232,36 @@ async function qualifyDesktop(browser, state) {
   page.on('pageerror', error => errors.push(error.message))
   const editor = await openKnowledge(page)
 
-  await editor.locator('.knowledge-create-row input').first().fill('Décision navigateur D07')
+  assert.equal(await page.locator('.context-navigator:visible').count(), 0, 'Context tools must be optional')
+  assert.equal(await editor.locator('.knowledge-create-row:visible').count(), 0, 'Advanced capture fields must start collapsed')
+  await editor.getByLabel('Titre', { exact: true }).first().fill('Idée simple')
+  await editor.getByLabel('Votre idée', { exact: true }).fill('Une idée enregistrée sans choisir un type ou un statut.')
+  await editor.locator('.knowledge-capture').screenshot({ path: path.join(output, 'guided-idea-fr.png') })
+  await editor.getByRole('button', { name: 'Enregistrer l’idée', exact: true }).click()
+  await eventually(() => Boolean(state.createdId), 'Simple idea capture was not submitted')
+  const simpleIdeaId = state.createdId
+  assert.equal(state.documents.find(item => item.id === simpleIdeaId).kind, 'idea')
+  assert.equal(state.documents.find(item => item.id === simpleIdeaId).epistemic_status, null)
+  assert.equal(latest(state, simpleIdeaId).content_text, 'Une idée enregistrée sans choisir un type ou un statut.')
+  await editor.locator('[contenteditable="true"]').waitFor({ state: 'visible' })
+  await editor.getByLabel('Titre', { exact: true }).first().fill('Décision navigateur D07')
+  await editor.getByLabel('Votre idée', { exact: true }).fill('Contenu capturé dès la création.')
+  await editor.getByText('Type et statut — facultatifs', { exact: true }).click()
   await editor.locator('.knowledge-create-row select').nth(0).selectOption('decision')
   await editor.locator('.knowledge-create-row select').nth(1).selectOption('supported')
   await editor.getByRole('button', { name: 'Créer et ouvrir', exact: true }).click()
-  await eventually(() => Boolean(state.createdId), 'D07: authored item was not created')
+  await eventually(() => Boolean(state.createdId) && state.createdId !== simpleIdeaId, 'D07: authored item was not created')
+  await editor.getByRole('heading', { name: /^Décision navigateur D07/ }).waitFor()
   await editor.locator('[contenteditable="true"]').waitFor({ state: 'visible' })
+  assert.equal(latest(state, state.createdId).content_text, 'Contenu capturé dès la création.', 'Initial content must be persisted in the create request')
+  await editor.getByText('Sources et export', { exact: true }).click()
   await editor.locator('[contenteditable="true"]').fill('Décision D07 avec provenance vérifiable.')
   await editor.getByLabel('URL de la source').fill('https://example.com/source-d07')
   await editor.getByLabel('Libellé').fill('Source D07')
   await editor.getByRole('button', { name: 'Ajouter la citation', exact: true }).click()
+  await editor.evaluate(element => { window.__d09CaptureBeforeSave = element })
+  await editor.getByLabel('Titre', { exact: true }).first().fill('Brouillon suivant conservé')
+  await editor.getByLabel('Votre idée', { exact: true }).fill('Cette saisie ne doit pas disparaître pendant la sauvegarde du document ouvert.')
   await editor.getByRole('button', { name: 'Enregistrer une nouvelle version', exact: true }).click()
   await eventually(() => state.saveCount === 1 && latest(state, state.createdId)?.generation === 2,
     'D07: new canonical generation was not saved')
@@ -247,12 +269,17 @@ async function qualifyDesktop(browser, state) {
   assert(saved.content_json?.root, 'D07: Lexical EditorState JSON was not sent')
   assert.match(saved.content_text, /Décision D07 avec provenance/)
   assert.equal((state.citations.get(saved.id) || []).length, 1, 'D07: citation was not version-bound')
+  await editor.getByRole('heading', { name: 'Décision navigateur D07 v2', exact: true }).waitFor()
+  assert.equal(await editor.evaluate(element => element === window.__d09CaptureBeforeSave), true,
+    'Saving must not remount the capture form or collapse the open source tools')
+  assert.equal(await editor.getByLabel('Titre', { exact: true }).first().inputValue(), 'Brouillon suivant conservé')
 
   await editor.getByRole('button', { name: 'Restaurer la version sélectionnée', exact: true }).waitFor({ state: 'visible' })
   await editor.getByRole('button', { name: 'Restaurer la version sélectionnée', exact: true }).click()
   await eventually(() => state.restoreCount === 1 && latest(state, state.createdId)?.generation === 3,
     'D07: restore did not create a new generation')
 
+  await page.locator('.knowledge-search-disclosure > summary').click()
   const search = page.locator('section[aria-labelledby="knowledge-search-heading"]:visible')
   await search.getByLabel('Recherche').fill('autre espace architecture')
   await search.getByRole('button', { name: 'Rechercher', exact: true }).click()
@@ -263,12 +290,20 @@ async function qualifyDesktop(browser, state) {
   await page.getByText('Connaissance autre espace', { exact: true }).last().waitFor({ state: 'visible' })
 
   await page.getByRole('button', { name: 'English', exact: true }).click()
-  await page.getByRole('heading', { name: 'Write, source and version your ideas and decisions.' }).waitFor()
+  await page.locator('.cockpit-app-header').getByText('THINK · CONNECT · MOVE FORWARD', { exact: true }).waitFor()
+  assert.equal(await page.getByText('PENSER · RELIER · AVANCER', { exact: true }).count(), 0)
+  await page.getByRole('heading', { name: 'New idea' }).waitFor()
   await page.getByRole('heading', { name: 'Find knowledge across all your spaces.' }).waitFor()
+  await page.getByRole('button', { name: 'Home', exact: true }).waitFor()
+  await page.getByText('Workspace options', { exact: true }).click()
+  await page.getByRole('button', { name: 'Links and context', exact: true }).click()
+  await page.locator('.context-navigator').getByLabel('Your context', { exact: true }).waitFor()
+  assert.equal(await page.getByText('Votre contexte', { exact: true }).count(), 0)
+  assert.equal(await page.getByText('Sources et versions du projet sélectionné.', { exact: true }).count(), 0)
   await page.screenshot({ path: path.join(output, 'd07-desktop-editor-search-en.png'), fullPage: false })
   assert.deepEqual(errors, [], `D07 desktop page errors: ${errors.join(' | ')}`)
   await context.close()
-  return { created: true, savedGeneration: 2, restoredGeneration: 3, crossSpace: true, bilingual: true }
+  return { created: true, guidedIdeaCapture: true, savedGeneration: 2, restoredGeneration: 3, crossSpace: true, bilingual: true }
 }
 
 async function qualifyPhone(browser, state) {
@@ -301,6 +336,9 @@ try {
   await fs.writeFile(path.join(output, 'qualification.json'), `${JSON.stringify(evidence, null, 2)}\n`)
   console.log('D07 KNOWLEDGE BROWSER PASS:', JSON.stringify(evidence))
 } catch (error) {
+  if (diagnosticPage && !diagnosticPage.isClosed()) {
+    await diagnosticPage.screenshot({ path: path.join(output, 'failure.png'), timeout: 5000 }).catch(() => {})
+  }
   const diagnostic = error instanceof Error ? `${error.stack ?? error.message}\n` : `${String(error)}\n`
   await fs.writeFile(path.join(output, 'failure.txt'), diagnostic)
   throw error

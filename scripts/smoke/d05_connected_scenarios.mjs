@@ -56,10 +56,12 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
     await page.goto(previewOrigin, { waitUntil: 'networkidle' })
-    await page.locator('.mycelium-space-node[data-space="command"]').click()
+    await page.locator('.home-tools summary').click()
+    await page.locator('.home-tools [data-space="command"]').click()
     const phone = viewport.width < 640
     const toggle = page.getByRole('button', { name: 'Liens et contexte', exact: true })
-    if (phone) await toggle.click()
+    await page.getByText('Options de l’espace', { exact: true }).click()
+    await toggle.click()
     const navigator = page.getByRole('complementary', { name: 'Fil relié' })
     await navigator.getByLabel('Votre contexte').selectOption('p1')
     await navigator.getByRole('button', { name: /Les besoins des habitants/ }).waitFor()
@@ -78,6 +80,7 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     await page.waitForFunction(() => document.querySelector('.thread-focus strong')?.textContent === 'Notes de terrain')
     assert.equal(await navigator.getByLabel('Votre contexte').inputValue(), 'p2', 'A transversal follows the canonical document project')
     await navigator.getByRole('button', { name: 'Ouvrir cet élément' }).click()
+    await page.getByText('Importer un fichier et consulter les versions', { exact: true }).click()
     await page.getByRole('heading', { name: 'Notes de terrain', exact: true }).waitFor()
     if (!phone) await toggle.click()
     await page.locator('.cockpit-panel-buttons').getByRole('button', { name: 'Réglages API', exact: true }).click()
@@ -124,7 +127,7 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     assert.deepEqual(unknownRequests, [])
     if (phone) {
       await page.locator('.cockpit-preferences summary').click()
-      await page.getByLabel('Ambiance', { exact: true }).selectOption('minimal')
+      await page.locator('.cockpit-preferences').getByLabel('Ambiance', { exact: true }).selectOption('minimal')
       assert.equal(await page.locator('.quiet-atmosphere').count(), 0)
     }
     await context.close()

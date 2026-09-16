@@ -213,7 +213,8 @@ async function installApiMock(context, state) {
 async function openPlanning(page, state) {
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
-  await page.locator('.mycelium-space-node[data-space="projects"]').click()
+  await page.locator('.home-tools summary').click()
+  await page.locator('.home-tools [data-space="projects"]').click()
   await page.getByRole('heading', {
     name: 'Donnez une forme concrète aux idées que vous choisissez de construire.',
   }).waitFor()

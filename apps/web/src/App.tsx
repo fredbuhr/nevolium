@@ -1,9 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
+import { useWorkspaceMessages } from './workspaceMessages'
 import CockpitShell, { type CockpitProfile } from './CockpitShell'
 import CommandCenterPanel from './CommandCenterPanel'
 import InstanceModelSettings from './InstanceModelSettings'
 import KnowledgePanel from './KnowledgePanel'
+import LanguageSwitcher from './LanguageSwitcher'
 import MindMapWorkspace from './MindMapWorkspace'
 import MyceliumHome, { type MyceliumDestinationKey } from './MyceliumHome'
 import { MyceliumAtmosphere } from './MyceliumField'
@@ -38,6 +40,7 @@ import {
   type CockpitSurface,
   useCockpitDeviceClass,
 } from './lib/cockpitDevice'
+import { PanelVisibilityContext } from './lib/panelVisibility'
 import { readMindMapDeepLink } from './lib/mindmapDeepLink'
 import {
   type CapabilityTaskView,
@@ -93,6 +96,7 @@ type CommandState = {
 
 export default function App() {
   const { language, locale, newsLanguage, t } = useI18n()
+  const w = useWorkspaceMessages()
   const initialMindMapDeepLink = useMemo(() => readMindMapDeepLink(), [])
   const [auth, setAuth] = useState<NevoliumAuthSnapshot>(() => getAuthSnapshot())
   const [online, setOnline] = useState(() => navigator.onLine)
@@ -452,8 +456,13 @@ export default function App() {
   return (
     <main className={`app-shell ambience-${ambience} surface-${surface}`}>
       {ambience !== 'minimal' ? <MyceliumAtmosphere /> : null}
-      {surface === 'home' ? (
+      <div hidden={surface !== 'home'}>
+      <PanelVisibilityContext.Provider value={surface === 'home'}>
         <MyceliumHome
+          key={`${auth.enabled}:${auth.subject || 'local'}`}
+          apiUrl={API_URL}
+          active={surface === 'home'}
+          onOpenConversation={id => { setConversationId(id); openSpace('command') }}
           ambience={ambience}
           deviceClass={deviceClass}
           installAvailable={Boolean(installPrompt)}
@@ -466,61 +475,66 @@ export default function App() {
           onOpenSpace={openSpace}
           onProfileChange={updateProfile}
         />
-      ) : (
+      </PanelVisibilityContext.Provider>
+      </div>
+      {surface !== 'home' ? (
         <>
           <header className="app-header cockpit-app-header">
             <button className="brand-lockup" type="button" onClick={openHome}>
               <img className="mycelium-mark" src="/icons/nevolium.svg" alt="" aria-hidden="true" />
               <div>
-                <span className="eyebrow">PENSER · RELIER · AVANCER</span>
+                <span className="eyebrow">{w('brandMotto')}</span>
                 <h1>Nevolium</h1>
               </div>
             </button>
-            <div className="session-summary">
-              <span>{auth.username || auth.email || 'Session privée'}</span>
-              <small>{isAdmin ? 'administrateur' : 'utilisateur'}</small>
+            <div className="app-header-actions">
+              <div className="session-summary">
+                <span>{auth.username || auth.email || w('sessionPrivate')}</span>
+                <small>{isAdmin ? w('administrator') : w('regularUser')}</small>
+              </div>
+              <LanguageSwitcher />
             </div>
           </header>
 
-          <section className="cockpit-context" aria-label="Contexte du cockpit">
+          <section className="cockpit-context" aria-label={w('cockpitContext')}>
             <div>
               <span className={`connection-state ${online ? 'is-online' : 'is-offline'}`}>
                 <i aria-hidden="true" />
-                {online ? 'En ligne' : 'Hors connexion'}
+                {online ? w('online') : w('offline')}
               </span>
-              <span>{{ phone: 'Téléphone', tablet: 'Tablette', desktop: 'Bureau' }[deviceClass]}</span>
-              <span>Disposition privée</span>
+              <span>{{ phone: w('phone'), tablet: w('tablet'), desktop: w('desktop') }[deviceClass]}</span>
+              <span>{w('privateLayout')}</span>
             </div>
             <details className="cockpit-preferences" open={deviceClass === 'desktop'}>
-              <summary>Personnaliser</summary>
+              <summary>{w('customize')}</summary>
               <div>
               <label>
-                Profil
+                {w('profile')}
                 <select
-                  aria-label="Profil"
+                  aria-label={w('profile')}
                   value={profile}
                   onChange={(event) => updateProfile(event.target.value as CockpitProfile)}
                 >
-                  <option value="balanced">Équilibré</option>
-                  <option value="focus">Concentration</option>
-                  <option value="review">Revue</option>
+                  <option value="balanced">{w('balanced')}</option>
+                  <option value="focus">{w('focusProfile')}</option>
+                  <option value="review">{w('review')}</option>
                 </select>
               </label>
               <label>
-                Ambiance
+                {w('ambience')}
                 <select
-                  aria-label="Ambiance"
+                  aria-label={w('ambience')}
                   value={ambience}
                   onChange={(event) => updateAmbience(event.target.value as CockpitAmbience)}
                 >
-                  <option value="neural">Neurale</option>
-                  <option value="calm">Calme</option>
-                  <option value="minimal">Minimale</option>
+                  <option value="neural">{w('neural')}</option>
+                  <option value="calm">{w('calm')}</option>
+                  <option value="minimal">{w('minimal')}</option>
                 </select>
               </label>
               {installPrompt ? (
                 <button type="button" onClick={requestInstallation}>
-                  Installer l’app
+                  {w('installApp')}
                 </button>
               ) : null}
               </div>
@@ -529,7 +543,7 @@ export default function App() {
 
           {!online ? (
             <div className="offline-banner" role="status">
-              Vos espaces restent visibles, mais les données et les actions nécessitent une connexion.
+              {w('offlineHint')}
             </div>
           ) : null}
 
@@ -551,7 +565,7 @@ export default function App() {
               {
                 key: 'today',
                 id: 'today-workspace',
-                title: 'Aujourd’hui',
+                title: language === 'en' ? 'Today' : 'Aujourd’hui',
                 keywords: ['journée', 'tâches', 'priorités'],
                 content: <TodayWorkspace apiUrl={API_URL} />,
                 minimumWidth: 280,
@@ -559,7 +573,7 @@ export default function App() {
               {
                 key: 'projects',
                 id: 'projects-workspace',
-                title: 'Projets',
+                title: language === 'en' ? 'Projects' : 'Projets',
                 keywords: ['projet', 'ouvrir', 'tâches'],
                 content: <ProjectsWorkspace apiUrl={API_URL} />,
               },
@@ -591,8 +605,8 @@ export default function App() {
                     {
                       key: 'model-settings',
                       id: 'model-settings-workspace',
-                      title: 'Réglages API',
-                      keywords: ['fournisseur', 'modèle', 'clé', 'administrateur'],
+                      title: language === 'en' ? 'API settings' : 'Réglages API',
+                      keywords: ['fournisseur', 'modèle', 'clé', w('administrator')],
                       content: <InstanceModelSettings apiUrl={API_URL} />,
                       minimumWidth: 300,
                     },
@@ -601,7 +615,7 @@ export default function App() {
             ]}
           />
         </>
-      )}
+      ) : null}
     </main>
   )
 }

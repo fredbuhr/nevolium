@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   DndContext,
   KeyboardSensor,
@@ -162,7 +162,7 @@ function KanbanColumn({
 }
 
 export default function PlanningWorkspace({ apiUrl }: Props) {
-  const { selectedProjectId } = useProjectSelection()
+  const { selectedProjectId, selectedTaskId, setSelectedTaskId } = useProjectSelection()
   const { t, formatDateTime } = useI18n()
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
@@ -176,6 +176,12 @@ export default function PlanningWorkspace({ apiUrl }: Props) {
       ? `${apiUrl}/v1/projects/${encodeURIComponent(selectedProjectId)}/planning/tasks`
       : null,
   )
+  useEffect(() => {
+    if (!selectedTaskId || page.loading || page.error) return
+    if (page.items.some(item => item.id === selectedTaskId)) {
+      setEditingTaskId(selectedTaskId); setSelectedTaskId('')
+    } else if (page.hasMore) void page.loadMore()
+  }, [selectedTaskId, page.items, page.loading, page.error, page.hasMore, page.loadMore, setSelectedTaskId])
   const dependencyPage = usePagedCollection<TaskDependency>(
     selectedProjectId
       ? `${apiUrl}/v1/projects/${encodeURIComponent(selectedProjectId)}/task-dependencies?limit=100`

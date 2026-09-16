@@ -1,0 +1,13 @@
+id,session,observation_synthetique,score_fictif
+1,S2,observation-1,7
+2,S3,observation-2,1
+3,S1,observation-3,8
+4,S2,observation-4,2
+5,S3,observation-5,9
+6,S1,observation-6,3
+7,S2,observation-7,10
+8,S3,observation-8,4
+9,S1,observation-9,11
+10,S2,observation-10,5
+11,S3,observation-11,12
+12,S1,observation-12,6
