@@ -57,6 +57,7 @@ def main() -> None:
     cockpit = (WEB / "src/CockpitShell.tsx").read_text(encoding="utf-8")
     home = (WEB / "src/MyceliumHome.tsx").read_text(encoding="utf-8")
     field = (WEB / "src/MyceliumField.tsx").read_text(encoding="utf-8")
+    home_styles = (WEB / "src/MyceliumHome/home.css").read_text(encoding="utf-8")
     settings = (WEB / "src/InstanceModelSettings.tsx").read_text(encoding="utf-8")
     device = (WEB / "src/lib/cockpitDevice.ts").read_text(encoding="utf-8")
     styles = (WEB / "src/styles.css").read_text(encoding="utf-8")
@@ -66,6 +67,9 @@ def main() -> None:
     assert "defaultView={props.deviceClass === 'phone' ? '2d' : '3d'}" in home
     assert "mycelium.home.${props.deviceClass}.camera." in home
     assert "controlsVisible={props.active && !customizing}" in home
+    assert "onViewChange={setSpatialView}" in home and "is-phone-spatial" in home
+    assert ".home-browser.is-phone-spatial" in home_styles
+    assert "max-height: min(42dvh, 360px)" in home_styles
     assert "compactActions=" in home and "useHomeLayout" in home
     assert 'aria-hidden="true"' in field
     home_messages = (WEB / "src/MyceliumHome/messages.ts").read_text(encoding="utf-8")
