@@ -28,6 +28,8 @@ type Props = {
   defaultView?: '2d' | '3d'
   positions?: Record<string, [number, number, number]>
   compact?: boolean
+  compactActions?: ReactNode
+  controlsVisible?: boolean
   paused?: boolean
   interactive?: boolean
 }
@@ -98,17 +100,32 @@ export default function SpatialWorkspace(props: Props) {
     {!props.compact ? <button type="button" disabled={!props.selected.length} onClick={props.onOpen}>{m.open}</button> : null}
   </div>
 
+  const viewTabs = <div className="spatial-tabs" aria-label={m.title}>
+    <button type="button" aria-pressed={state.view === '2d'} disabled={!state.ready} onClick={() => state.update({ view: '2d' })}>{m.view2d}</button>
+    <button type="button" aria-pressed={state.view === '3d'} disabled={!state.ready} onClick={state.retry3d}>{m.view3d}</button>
+  </div>
+  const saveControls = <>
+    <span className="spatial-save" data-spatial-save={state.persistence.status} aria-live="polite">{saveCopy[state.persistence.status]}</span>
+    {state.persistence.status === 'error' ? <button type="button" onClick={state.persistence.retry}>{saveCopy.retry}</button> : null}
+  </>
+
   return <div className={`spatial-workspace${props.compact ? ' spatial-home' : ''}`} data-spatial-view={state.view}>
-    <div className="spatial-toolbar">
-      <div className="spatial-tabs" aria-label={m.title}>
-        <button type="button" aria-pressed={state.view === '2d'} disabled={!state.ready} onClick={() => state.update({ view: '2d' })}>{m.view2d}</button>
-        <button type="button" aria-pressed={state.view === '3d'} disabled={!state.ready} onClick={state.retry3d}>{m.view3d}</button>
-      </div>
-      {props.compact && state.view === '3d' ? <details className="spatial-options"><summary>{m.options}</summary>
-        <div>{qualityControls}{navigation}</div></details> : qualityControls}
-      <span className="spatial-save" data-spatial-save={state.persistence.status} aria-live="polite">{saveCopy[state.persistence.status]}</span>
-      {state.persistence.status === 'error' ? <button type="button" onClick={state.persistence.retry}>{saveCopy.retry}</button> : null}
-    </div>
+    {props.controlsVisible === false ? null : props.compact ? <div className="spatial-toolbar">
+      <details className="spatial-display">
+        <summary aria-label={`${m.display} : ${state.view === '3d' ? m.mode3d : m.mode2d}`}>
+          <span>{m.display}</span><strong>{state.view === '3d' ? m.mode3d : m.mode2d}</strong>
+        </summary>
+        <div className="spatial-display-panel">
+          {viewTabs}
+          {qualityControls}
+          {state.view === '3d' ? navigation : null}
+          {props.compactActions ? <div className="spatial-display-actions">{props.compactActions}</div> : null}
+          <div className="spatial-display-status">{saveControls}</div>
+        </div>
+      </details>
+    </div> : <div className="spatial-toolbar">
+      {viewTabs}{qualityControls}{saveControls}
+    </div>}
     {state.loadError ? <p role="alert">{m.loadError} <button type="button" onClick={state.restore}>{m.restore}</button></p> : null}
     {state.unavailable ? <p role="status">{m.fallback} <button type="button" onClick={state.retry3d}>{m.retry}</button></p> : null}
     {state.view === '3d' ? <>
