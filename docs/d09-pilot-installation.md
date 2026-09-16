@@ -81,6 +81,27 @@ jamais le document brut, `.Config.Env` ou `.State.Error`, et ne transforme pas c
 en preuve du schéma ou des conteneurs complets. #94 et ses neuf workflows sont réussis ; son
 merge et son arbre ont été vérifiés avant d'épingler la commande ci-dessus.
 
+### Inventaire corrigé accepté pour préparer la fenêtre
+
+Le second relevé du 16 septembre à 10:16 UTC est complet et reste volontairement
+`needs_review` : il n'a exécuté aucune activation. Il atteste le checkout D05 propre
+`e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, ancêtre de la cible, le projet Compose
+`nevolium`, un seul Core et 597 717 602 304 octets libres. Les quatre fichiers Compose actifs
+sont les bases, production, Web MCP et Web MCP production sous `/opt/nevolium/source`.
+
+Les quatorze services actifs attendus sont présents et sains selon leur contrat. `ollama` reste
+arrêté avec son volume préservé, comme les deux conteneurs utilitaires Temporal terminés. Les
+volumes nommés PostgreSQL, NATS, OpenBao, Neo4j, Valkey, SeaweedFS, SearXNG et Ollama sont
+présents ; les montages privés et de configuration restent inchangés et en lecture seule lorsque
+prévu. Le checkout n'utilise encore ni répertoire `releases` ni lien `current`.
+
+PostgreSQL est au schéma `0015_model_configurations`, avec 7 projets, 57 tâches et 2 documents.
+Il n'existe aucun workflow non terminal, aucune Task en file ou en cours, aucun événement outbox
+non publié et aucune réservation de modèle active. Les 5 réservations historiques `uncertain`
+restent explicitement conservées. La configuration modèle active est unique. Cet état constitue
+une fenêtre calme pour préparer le retour et la migration `0016` à `0018`, pas encore une
+autorisation de migrer.
+
 ## Séquence d'installation après examen de cet inventaire
 
 1. **Figer la release et le retour.** Vérifier les références Git, les images actives, le
@@ -95,6 +116,9 @@ merge et son arbre ont été vérifiés avant d'épingler la commande ci-dessus.
    `scripts/ops/backup.sh` et les overlays du pilote. Vérifier le snapshot obtenu et conserver
    son identifiant exact ; ne jamais considérer une sauvegarde historique comme le point
    de retour des données actuelles. Préserver les clés et le sel existants sans les afficher.
+   Exécuter le runner de récupération avec `--expected-commit` égal au SHA D05 inventorié :
+   ce garde permet une release épinglée et refuse un checkout différent ou sale, sans imposer
+   un changement artificiel de branche sur le serveur.
 4. **Arrêter les écrivains et migrer.** Vérifier les travaux actifs, arrêter les anciens
    Core/Workers et autres écrivains concernés, puis appliquer les migrations nécessaires
    avec `nevolium-migrate`. Ne lancer aucune nouvelle Task ni appel fournisseur de validation

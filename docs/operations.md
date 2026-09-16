@@ -299,6 +299,18 @@ sudo python3 scripts/qualification/target_recovery.py \
   --openbao-recovery-file /run/nevolium/openbao-recovery.json
 ```
 
+Lors d'une sauvegarde de release ulterieure a D04, epingler le checkout de production inventorie
+plutot que de changer sa branche pour satisfaire l'ancien garde D04 :
+
+```bash
+sudo python3 scripts/qualification/target_recovery.py \
+  --expected-commit "$(git rev-parse HEAD)" \
+  --openbao-recovery-file /run/nevolium/openbao-recovery.json
+```
+
+Le SHA doit comporter 40 caracteres et correspondre exactement a `HEAD`. Le checkout doit rester
+propre ; le runner refuse l'execution avant toute ecriture si l'une de ces deux conditions echoue.
+
 The runner uses disposable markers rather than private user content in PostgreSQL, JetStream and
 SeaweedFS. OpenBao is not modified with a privileged test secret: the existing periodic
 `nevolium-core` token performs `lookup-self`, and the runner fingerprints its stable persisted
