@@ -85,9 +85,9 @@
   .home-navigation .home-save-status { margin-left: 0; flex-basis: 100%; }
   .home-customize, .home-item-details { padding: 12px; }
   .home-browser-body { display: flex; flex-direction: column; }
-  .home-item-details { position: relative; inset: auto; order: -1; width: 100%; max-height: 55dvh; margin: 12px 0; }
+  .home-item-details { position: relative; inset: auto; order: -1; width: 100%; max-height: max(180px, calc(100dvh - 480px)); margin: 12px 0; }
   .home-entry-editor li { grid-template-columns: 1fr; }
-  .home-browser .spatial-toolbar { gap: 6px; padding: 6px; }
+  .home-browser .spatial-toolbar { z-index: 7; gap: 6px; padding: 6px; }
   .home-browser .spatial-save { flex-basis: 100%; max-width: 100%; }
   .spatial-options > div { position: fixed; left: 12px; right: 12px; bottom: 128px; width: auto; }
 }

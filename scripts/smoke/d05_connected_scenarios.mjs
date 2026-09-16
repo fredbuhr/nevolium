@@ -132,6 +132,7 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
       await page.locator('.cockpit-preferences summary').click()
       await page.locator('.cockpit-preferences').getByLabel('Ambiance', { exact: true }).selectOption('minimal')
       assert.equal(await page.locator('.app-shell.ambience-minimal').count(), 1)
+      await page.locator('.cockpit-preferences summary').click()
     }
     await page.locator('.cockpit-home-button').click()
     if (await desktopScene.count()) {

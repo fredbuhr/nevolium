@@ -169,8 +169,9 @@ export default function MyceliumHome(props: Props) {
     <div className="home-navigation"><button type="button" disabled={!history.length} onClick={() => { setPlace(history.at(-1) || ROOT); setHistory(value => value.slice(0, -1)); setSelectedId('') }}>← {m('back')}</button>
       <button type="button" onClick={() => { setPlace(ROOT); setHistory([]); setSelectedId('') }}>{m('home')}</button>
       <details ref={toolsMenu} className="home-tools"><summary aria-keyshortcuts="Control+K Meta+K">{m('browseTools')}</summary><div>{[...TOOLS, ...(props.isAdmin ? ['model-settings' as const] : [])].map(key =>
-        <button type="button" key={key} data-space={key} onClick={() => props.onOpenSpace(key)}>{m(key)}</button>)}</div></details>
-      <button type="button" onClick={() => setRevision(value => value + 1)}>{m('refresh')}</button>
+        <button type="button" key={key} data-space={key} onClick={() => props.onOpenSpace(key)}>{m(key)}</button>)}
+        <button type="button" onClick={() => { setRevision(value => value + 1); if (toolsMenu.current) toolsMenu.current.open = false }}>{m('refresh')}</button>
+      </div></details>
       {saveStatus}
     </div>
     {backgroundError ? <p role="status">{m('backgroundUnavailable')}</p> : null}
