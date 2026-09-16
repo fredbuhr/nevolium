@@ -150,8 +150,28 @@ et OpenBao sains. Le rapport privé est
    sauvegarde du layout, reconnexion et usage tactile. Compléter fluidité/mémoire sur les
    appareils ; enregistrer la release effectivement activée et son snapshot de retour.
 
-Ces étapes décrivent la suite à rendre concrète à partir du relevé. Aucun snapshot,
-arrêt, migration ou déploiement n'est déclaré exécuté par ce document.
+### Activation réalisée
+
+Le 16 septembre, la séquence ci-dessus a été exécutée avec les gardes prévues. La release
+`69f5926be72227a5fc1c4e3dff7c0e436099e51c` a été préparée séparément, puis sélectionnée par
+`/opt/nevolium/current`. Les quatre anciennes images D05 ont été conservées par digest avant
+l'arrêt des écrivains.
+
+`nevolium-db-provision` a réussi, puis Alembic a appliqué successivement
+`0015_model_configurations → 0016_planning_structure → 0017_project_work_calendar →
+0018_editable_knowledge`. Le Core D09 a ensuite satisfait les contrôles live, ready et trust
+avant le démarrage de Web-MCP, Worker et Web. Les conteneurs actifs utilisent les images exactes :
+
+- Web : `sha256:79e606139f59f603da5f626badea439d62778c13cc586b59bd024eeb38441eec` ;
+- Core : `sha256:d69c565761f6f4f2e504a19b815c689e89a7d9d3f52fc38fb5fe4877df2bc004` ;
+- Worker : `sha256:dcbc682b00ed1292bfb00c81ae1fad6638f47423f465d6511b5602cc6cf5fbf7` ;
+- Web-MCP : `sha256:125dc53d049c6a6337c73c3fe6e403208967bfee680c87815d98a35e2e4b1840`.
+
+L'inventaire post-activation atteste le schéma `0018_editable_knowledge`, 7 projets, 57 tâches,
+2 documents, zéro Task queued/running, zéro workflow non terminal, zéro événement outbox non
+publié et zéro réservation active. Les 5 réservations historiques `uncertain` sont conservées et
+la configuration modèle active reste unique. L'activation technique est donc réussie ; le go final
+reste soumis au contrôle après stabilisation et aux parcours fonctionnels/visuels réels.
 
 ## Retour arrière
 
