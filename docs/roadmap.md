@@ -1,9 +1,10 @@
 # Nevolium — ordre des livraisons
 
-Révision : 2026-09-15. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
+Révision : 2026-09-16. Le [plan détaillé](implementation-plan.md) porte périmètres, dépendances
 et critères de sortie. [PROJECT_STATE](../PROJECT_STATE.md) seul indique le lot actif et les preuves.
-La table donne le séquencement ; elle ne déclare pas tous les lots livrés. **D01–D08 et H5 sont
-intégrés** (#84–#92). **Lot actif : D09 (#93 draft)**, Mycelium 3D en qualification.
+La table donne le séquencement ; elle ne déclare pas tous les lots livrés. **D01–D09 et H5 sont
+intégrés au dépôt** (#84–#93). **Lot actif : D09**, installation pilote et qualification physique
+du Mycelium 3D accepté. D10 n'est pas commencé.
 Le dernier runtime de production attesté reste D05 ; intégration et déploiement sont distincts.
 Le détail opérationnel et les preuves restent dans le checkpoint.
 

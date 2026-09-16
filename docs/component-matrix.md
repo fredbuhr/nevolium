@@ -9,7 +9,9 @@ validates the workspace shell. D06 is integrated by PR #90, merge commit
 `20720774552418a6c9e7acbfbf069945ff0f57df`. D07 is integrated by PR #91, merge
 `f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. D08 is integrated by PR #92, merge
 `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; final PR head passed 9/9 workflows.
-D09 is implemented in draft PR #93, with browser qualification passed at `825cee7` (8/8 workflows) and physical-device qualification still open.
+D09 is integrated by PR #93, merge `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76`.
+Final head `7d748797` passed 9/9 workflows; its tree matches the merge. The user accepted the
+unchanged `48d7be9` visual model. Pilot installation and physical-device qualification remain open.
 Deployment remains separate; the last verified pilot runtime is D05.
 
 ## Maturity legend
@@ -62,7 +64,7 @@ Deployment remains separate; the last verified pilot runtime is D05.
 | Dashboards | Apache ECharts | web library | view only | **Configured** |
 | Maps | MapLibre GL JS | web library | view over place/location state | **Configured** |
 | 2D graph | React Flow (`@xyflow/react`) | web library / D08 | renderer/input over canonical Documents/Tasks/Relationships; layout in WorkspaceLayout | **Validated in integrated D08** |
-| 3D graph | React Three Fiber + Three.js | web libraries / D09 | canonical D08 snapshot; separate presentation layout, bounded rendering, 2D fallback | **Validated in Chromium on PR #93; physical gate open** |
+| 3D graph | React Three Fiber + Three.js | web libraries / D09 | canonical D08 snapshot; separate presentation layout, bounded rendering, 2D fallback | **Integrated by #93, validated in Chromium; pilot/physical gate open** |
 | Gantt | SVAR React Gantt 2.7.3 | web library / D06 | renderer/input only; Core/PostgreSQL own plan state | **Validated in D06** |
 | Crypto accounting | rotki | service / `finance` | portfolio source/adapter, private network only | **Configured** |
 | Exchange APIs | CCXT | integration library / finance | no raw secret exposure to models | **Declared** |

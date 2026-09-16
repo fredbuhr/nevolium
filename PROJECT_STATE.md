@@ -2,15 +2,15 @@
 
 Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant toute action.
 
-## D09 actif — design accepté, intégration et installation pilote
+## D09 actif — design intégré, installation pilote à exécuter
 
 | Champ | État attesté |
 |---|---|
-| Base intégrée | `main` = `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`, 8/8 workflows push verts |
+| Base intégrée vérifiée | Merge D09 sur `main` = `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76` ; arbre `43cce3911a70f3e3f6645df939a550affc11c894`, identique à la tête PR qualifiée. Le présent suivi est un descendant documentaire |
 | D08 intégré | PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`; tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f`, 9/9 workflows PR verts, arbre identique au merge |
-| Branche / PR active | `feat/d09-mycelium-3d`, **PR #93 draft** ; aucune autre branche normale ouverte par ce travail |
-| Référence qualifiée D09 | `48d7be9752424e8cd4c3793ee5da58225ab2069b` : **8/8 workflows PR verts**, UI run `35046479283` ; 13 scénarios spatiaux, 16 contrôles kit ; animation 2 388 pixels, calme 0 |
-| Présent descendant | Modèle visuel conservé ; acceptation utilisateur du 16 septembre et autorisation d’installer. Ajout d’un inventaire serveur en lecture seule et d’un plan D05→D09 ; pas d’activation serveur depuis cette session |
+| Branche / PR | **#93 fusionnée**, aucune branche de développement active ; `feat/d09-mycelium-3d` retirée du travail actif, branche locale supprimée, référence distante conservée |
+| Tête finale qualifiée D09 | `7d748797c6accc8a6c5115abe634c24d3d5dee29` : **9/9 workflows PR verts**, UI run `35047879779` ; 13 scénarios spatiaux, 16 contrôles kit ; animation 1 978 pixels, calme 0. Contrat d’inventaire réussi dans Foundation |
+| Modèle adopté | Renderer `48d7be9752424e8cd4c3793ee5da58225ab2069b` inchangé ; acceptation utilisateur du 16 septembre et autorisation d’installer. Inventaire serveur en lecture seule et plan D05→D09 intégrés ; aucune activation serveur depuis cette session |
 | Implémenté D09 | Projection pure ; renderer R3F/Three différé ; orbite/focus/zoom ; sélection 2D↔3D ; filaments/groupes/labels bornés ; activité réelle des Tasks ; navigation Planning/Knowledge |
 | Canon | Snapshot D08 owner-scoped, mêmes `project`/`task`/`document` et `RelationshipRecord`; aucune nouvelle migration ou API métier |
 | Présentation | `WorkspaceLayout` distinct `mycelium3d.project.{project_id}` : vue/qualité/caméra, PUT sérialisés/retry/garde de session ; positions spatiales dérivées, positions 2D conservées |
@@ -19,11 +19,12 @@ Dernière revue : 2026-09-16. Lire `AGENTS.md`, puis vérifier GitHub live avant
 | Compatibilité | React/DOM 19.2.8 fixés dans la plage supportée par R3F 9.7.0 ; types Three 0.180.0 |
 | Retours utilisateur | « C’est bon on valide ce modèle pour l’instant tu peux installer ce design et continuer » : référence adoptée, sans nouvelle itération esthétique demandée |
 | Rapport physique récent | Build d5c438e, maximum 401/1000, high, 60,281 s, 41 fenêtres : médiane 136/p10 125/minimum 116 FPS, 0 sous90 ; 5 appels, 4 géométries sur39 fenêtres et2 sur2, mémoire inconnue. Mesure du parent uniquement |
-| Preuves | Head visuel 48d7be9 : kit `10427526848`, navigateur `10427477105`, spatial `10427278203`. HTML SHA-256 `48d7537f3e716f6d4135f473d2c1978c97a8fc4f1e8cef4438e6489150efbb59`. Preuves exactes du descendant dans #93 |
+| Preuves finales | Head 7d748797 : kit `10428130673`, navigateur `10428195369`, spatial `10428360099`. HTML SHA-256 `eab1ad272c6453b906a7bea86e6ff45b59e566813e0f85a7a5c68494603213f0`. Source/arbre, anciens livrables et digests archivés dans le suivi matière |
 | Banc matériel | `node apps/web/qualification.build.mjs` ; artefact CI `d09-hardware-kit`, HTML autonome. Renderer réel, graphes synthétiques 51/50, 201/300, 401/1000, stress 501/1500. Aucune API ; campagne 10 minutes, interruptions distinctes, mémoire inconnue conservée comme inconnue, export local `needs_review` |
 | Limites | API navigateur simulée distincte des contrats PostgreSQL ; mémoire longue durée/GPU intégré/cockpit physique à compléter. Acceptation visuelle acquise pour l’instant ; aucune preuve serveur D06–D09 nouvelle |
-| Production | Dernier runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations`; D06–D09 non déployés |
-| Prochaine action | Intégrer #93 après CI de sa tête finale ; exécuter l’inventaire D09 depuis la session SSH opérateur, examiner versions/images/Compose/SQL, puis préparer sauvegarde et release compatible avant activation |
+| Production | Dernier runtime attesté D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`, schéma `0015_model_configurations`; aucun déploiement D06–D09 attesté |
+| Prochaine action | Depuis la session SSH opérateur, exécuter le bloc d’inventaire épinglé dans `docs/d09-pilot-installation.md` et examiner son JSON : checkout, images/montages/projet Compose, schéma et activité. Ce relevé permet de fixer la release, sa sauvegarde et son activation |
+| Reprise / retour | Ne pas activer Web seul contre Core D05. Préserver les images, données, secrets et réservations historiques ; sauvegarde quiescente fraîche avant `0016`–`0018`. Aucun snapshot, arrêt ni migration exécuté ici |
 | Hors scope | D10 assistant ; D11 connecteurs ; D12 coédition/offline ; D13 complétude FR/EN globale ; D10 non commencé |
 
 Réservoir `ed12d503…` inspecté sélectivement, aucune fusion globale. Les écarts D06/D07/FR-EN/PWA

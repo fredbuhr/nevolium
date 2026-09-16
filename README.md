@@ -15,8 +15,9 @@ listed capability is delivered.
 
 Repository Reset R0–R7 is complete; G51 planning foundations, H1–H3 and the H4 Task-dispatch
 isolation repair are integrated. D01–D08 (#84–#92) and H5 are integrated. The cockpit, planning
-workspace, editable knowledge and 2D mindmap are implemented. D09 Mycelium 3D is being qualified in
-[draft PR #93](https://github.com/fredbuhr/nevolium/pull/93); physical GPU/tablet validation remains open.
+workspace, editable knowledge and 2D mindmap are implemented. The accepted D09 Mycelium 3D design
+is integrated by [PR #93](https://github.com/fredbuhr/nevolium/pull/93); pilot installation and
+physical GPU/tablet validation remain open.
 The last verified production runtime is D05 with database revision `0015_model_configurations`.
 D06–D09 have not been deployed to that pilot.
 

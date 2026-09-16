@@ -12,6 +12,12 @@ L'acceptation du design permet son intégration au dépôt et l'ouverture de l'i
 pilote. Elle n'invente pas une mesure mémoire ou une qualification physique de la nouvelle
 matière. D09 reste le lot actif ; D10 n'est pas commencé.
 
+La PR #93 est fusionnée dans `main` au commit
+`7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76`. Son arbre est identique à celui de
+`7d748797c6accc8a6c5115abe634c24d3d5dee29`, qualifié par 9/9 workflows PR.
+La référence de déploiement ci-dessous est ce merge immuable ; l'actualisation du suivi
+après fusion ne modifie ni le renderer ni l'inventaire.
+
 ## Point de départ à vérifier sur Netcup
 
 Dernier état attesté : runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5`,
@@ -22,13 +28,27 @@ l'ancien Core D05 ne constitue donc pas une mise à jour cohérente.
 
 L'utilisateur exécute les commandes dans sa session SSH `nevolium-admin@node-01` ;
 l'agent prépare les blocs et examine les sorties. Aucun accès SSH direct n'est établi
-dans cette session de développement. La commande remise après intégration fige un SHA,
-récupère le script depuis Git sans changer le checkout actif, et lance :
+dans cette session de développement. Exécuter ce bloc avec le compte opérateur habituel.
+Il récupère le script au merge qualifié sans changer le checkout actif :
 
-```sh
-python3 /CHEMIN_TEMPORAIRE/d09_pilot_preflight.py \
-  --source /opt/nevolium/source --target SHA_COMPLET_DE_LA_RELEASE
+```bash
+(
+set -Eeuo pipefail
+cd /opt/nevolium/source
+d09_target='7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76'
+git fetch --no-tags origin main
+git cat-file -e "${d09_target}^{commit}"
+d09_probe="$(mktemp /tmp/nevolium-d09-preflight.XXXXXX.py)"
+trap 'rm -f "$d09_probe"' EXIT
+git show "${d09_target}:scripts/ops/d09_pilot_preflight.py" > "$d09_probe"
+sudo -v
+python3 "$d09_probe" --source "$PWD" --target "$d09_target"
+)
 ```
+
+Transmettre le JSON pour examen avant de construire ou d'activer la release. `git fetch`
+actualise les références Git et le script temporaire est supprimé à la sortie ; les services
+et les données actives ne sont pas modifiés. En cas d'échec, conserver l'étape fixe signalée.
 
 Le script requiert un ticket `sudo` déjà obtenu pour lire Docker. Il ne modifie ni les
 conteneurs, ni le checkout, ni SQL, ni les secrets. Le JSON relève le projet Compose réel,

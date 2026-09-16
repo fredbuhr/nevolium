@@ -1,6 +1,6 @@
 # Nevolium : état fonctionnel vérifié
 
-Révision : 2026-09-15.
+Révision : 2026-09-16.
 
 D04 est intégré par #88 et ses preuves H5 restent acquises. D05 est intégré par #89 ; le pilote
 exécute toujours le runtime D05 `e275b7bb860dccb0ab02c1ae0ee0c549f69e10d5` avec le schéma
@@ -17,14 +17,16 @@ Sa tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f` passe **9/9 workflows
 avec un arbre identique au merge. Le handoff main `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`
 passe **8/8 workflows push**. D08 n'est pas déployé sur le pilote.
 
-D09 est implémenté sur la PR #93 ; le modèle visuel `48d7be9` est accepté par l'utilisateur
-le 16 septembre avec autorisation d'installation. Cette tête passe **8/8 workflows PR**, les
-13 scénarios spatiaux et les 16 contrôles du kit. Intégration puis installation pilote en cours :
+D09 est intégré par la PR #93, merge `7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76`.
+Le modèle visuel `48d7be9`, accepté le 16 septembre avec autorisation d'installation, est conservé.
+La tête finale `7d748797c6accc8a6c5115abe634c24d3d5dee29` passe **9/9 workflows PR**, les
+13 scénarios spatiaux et les 16 contrôles du kit ; son arbre est identique au merge.
+L'installation pilote attend le relevé de la session SSH opérateur :
 voir [la procédure D09](d09-pilot-installation.md) et `PROJECT_STATE.md` pour l'état live.
 L'utilisateur rapporte un bon fonctionnement du banc sur ordinateur/tablette/téléphone et fournit
 un essai ordinateur de dix minutes, 501 objets/1 500 liens, médiane 165 FPS. La mémoire n'est pas
-mesurée. La correction du dessin trop technologique est en cours de qualification :
-[membranes et ramifications organiques](archive/d09-organic-revision-2026-09-15.md).
+mesurée ; ces résultats concernent des parents du modèle adopté. La référence finale et son
+acceptation sont dans [le suivi matière](archive/d09-translucent-tissue-2026-09-16.md).
 
 ## Acquis canoniques
 
@@ -41,7 +43,7 @@ mesurée. La correction du dessin trop technologique est en cours de qualificati
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
 | Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
-| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; enveloppes translucides irrégulières, petits noyaux cyan/menthe, raccords continus et circulation lumineuse après retours utilisateur | Design accepté ; intégration/installation en cours ; mémoire/GPU intégré/cockpit physique à compléter |
+| Mycelium 3D D09 | Renderer interactif et persistance intégrés par #93 ; enveloppes translucides irrégulières, petits noyaux cyan/menthe, raccords continus et circulation lumineuse après retours utilisateur | Design accepté et code intégré ; installation pilote, mémoire/GPU intégré/cockpit physique à compléter |
 | Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
@@ -127,7 +129,7 @@ Artefact navigateur final : `10413396962`, digest
 Le détail des preuves, limites et rollback est dans le
 [checkpoint D08](archive/d08-editable-mindmap-progress-2026-09-15.md).
 
-## D09 — Mycelium 3D en qualification
+## D09 — Mycelium 3D intégré, qualification pilote ouverte
 
 Le rendu R3F/Three est chargé à l'ouverture de la vue 3D. Il projette le snapshot D08 sur les mêmes
 identités : nœuds instanciés, filaments batchés sur les relations existantes, groupes de présentation,
@@ -144,8 +146,9 @@ Le téléphone commence en 2D même si une préférence 3D a été enregistrée 
 
 Les nouveaux scénarios Chromium utilisent une API simulée ; les contrats PostgreSQL existants sont
 une preuve distincte. Ils ne constituent pas une preuve de déploiement, ni une mesure sur tablette
-physique ou GPU intégré. Le head fonctionnel `825cee7` passe les 13 scénarios D09 ; le checkpoint documente son descendant
-et le gate matériel encore ouvert. Mesures et captures sont conservées dans le suivi D09.
+physique ou GPU intégré. La tête finale `7d748797` passe les 13 scénarios D09 et les 16 contrôles
+du kit (UI run `35047879779`). Son inventaire serveur en lecture seule passe trois tests à fixtures
+dans Foundation ; il n'a pas été exécuté sur Netcup. Mesures, captures et limites restent archivées.
 
 ## Écarts à conserver dans la suite
 
@@ -164,7 +167,7 @@ et le gate matériel encore ouvert. Mesures et captures sont conservées dans le
 |---|---|---|
 | Cockpit | D05 intégré : Mycelium 2D, espaces réels, Dockview, clavier, PWA, responsive et popout bureau | Raffinement continu et fonctions spécialisées |
 | Planification | D06 intégré : Liste/Kanban/Gantt/Calendrier, hiérarchie/jalons/dépendances, récurrences, work calendar, CPM et replanification | Déploiement distinct ; calendriers externes D11 ; offline D12 |
-| Connaissances/graphes | D07 et D08 intégrés : Documents authored/versionnés et mindmap 2D sur identités/relations canoniques | D09 Mycelium 3D implémenté sur #93, qualification en cours |
+| Connaissances/graphes | D07–D09 intégrés : Documents authored/versionnés, mindmap 2D et Mycelium 3D sur identités/relations canoniques | Installation pilote et qualification physique D09 ; assistant D10 ensuite |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
 | Finance/Crypto/Home/Dev | Profils optionnels déclarés | Adaptateurs, policy, workspaces et parcours réels |
 | Langues | Fondation FR/EN extensible, D06–D08 raccordés | D13 : complétude produit FR/EN puis langues supplémentaires |

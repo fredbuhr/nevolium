@@ -1,6 +1,7 @@
 # D09 — essai du moteur 3D sur les appareils physiques
 
-Télécharger l’artefact `d09-hardware-kit` du workflow UI de la PR #93, le décompresser,
+Télécharger l’artefact `d09-hardware-kit` du [run UI qualifié de #93](https://github.com/fredbuhr/nevolium/actions/runs/35047879779)
+(source `7d748797`, code intégré par `7c6d39ea`), le décompresser,
 puis ouvrir **nevolium-d09-hardware.html** dans un navigateur. Le fichier contient son code
 et ses styles : aucune installation Nevolium, clé API, connexion ou donnée personnelle du
 pilote n’est nécessaire. Aucune requête réseau n’est autorisée par cette page.

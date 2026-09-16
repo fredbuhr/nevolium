@@ -214,3 +214,48 @@ Git, projet Compose, images/montages et compteurs SQL. Il ne déclenche aucune s
 migration ou activation. La [procédure D09](../d09-pilot-installation.md) conserve le point
 de départ D05/0015 attesté et organise la transition compatible jusqu'à 0018, avec sauvegarde
 et retour cohérents. Le prochain résultat requis est le relevé réel du serveur Netcup.
+
+## Intégration vérifiée après acceptation
+
+La tête finale `7d748797c6accc8a6c5115abe634c24d3d5dee29` conserve exactement les fichiers
+Web/renderer/graphe et le lockfile de `48d7be9`. Elle ajoute l'inventaire, son contrat et le
+handoff d'installation. Les neuf workflows PR ont réussi avant fusion :
+
+| Workflow | Run |
+|---|---|
+| Baseline reproducibility | 35047879789 |
+| UI workspace | 35047879779 |
+| Code quality | 35047879735 |
+| MCP tool registry | 35047879746 |
+| Document ingestion | 35047879748 |
+| Multi-user isolation | 35047879718 |
+| Foundation | 35047879727 |
+| Autonomous research | 35047879719 |
+| D04 real engine qualification | 35047879724 |
+
+Le nouveau contrat d'inventaire a réussi dans Foundation. UI couvre les 13 scénarios spatiaux
+et les 16 contrôles kit ; l'animation change 1 978 pixels et le mode calme en change 0.
+Ce sont des contrôles Chromium/SwiftShader et API simulée, distincts des intégrations PostgreSQL.
+Le job optionnel `real-local-services` reste sauté : aucun moteur local nouvellement qualifié.
+
+| Artefact final | Identifiant | SHA-256 du ZIP |
+|---|---|---|
+| Kit | 10428130673 | `0d630038f22228fd96ca1d745215521987f2552f9d5b2f7f4f017c29c109493f` |
+| Navigateur kit | 10428195369 | `67bdacb022416f01319121f95502e994519e395f47c78e7413ca9eb2df491b38` |
+| Scénarios spatiaux | 10428360099 | `adf92846f2a860a036a395245aeedb70d695ab91d38265ab7979c7571c4052be` |
+
+Le HTML final fait 1 142 734 octets, SHA-256
+`eab1ad272c6453b906a7bea86e6ff45b59e566813e0f85a7a5c68494603213f0` ; source `7d748797`,
+checkout CI `ec6fcd75f997917421a76751ef300e7eab9bf182`, `dirty: false`.
+Les anciens HTML/film remis à l'utilisateur gardent leurs identités historiques ci-dessus.
+
+La PR #93 est fusionnée avec tête attendue explicite. Le merge
+`7c6d39ea9abc2856a7fec4bfc2d4c10f36761f76` a pour parents `b68e1e8…` et `7d748797…` ;
+`main` pointe sur ce merge lors de la vérification. Son arbre
+`43cce3911a70f3e3f6645df939a550affc11c894` est identique à celui de la tête qualifiée.
+La branche locale est supprimée et la branche D09 retirée du travail actif ; sa référence
+distante reste conservée. Le suivi post-fusion est documentaire seulement.
+
+Aucune commande n'a été exécutée sur Netcup par cette session. La prochaine action reste
+l'inventaire SSH épinglé dans la procédure ; D09 reste actif jusqu'à l'installation et aux
+preuves physiques manquantes. D10 n'est pas commencé.
