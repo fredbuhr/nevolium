@@ -63,7 +63,10 @@ def main() -> None:
     assert "Control+K Meta+K" in cockpit
     assert "Control+K Meta+K" in home
     assert "quiet-atmosphere" in field and "SpatialWorkspace" in home
-    assert 'defaultView="3d"' in home and "useHomeLayout" in home
+    assert "defaultView={props.deviceClass === 'phone' ? '2d' : '3d'}" in home
+    assert "mycelium.home.${props.deviceClass}.camera." in home
+    assert "controlsVisible={props.active && !customizing}" in home
+    assert "compactActions=" in home and "useHomeLayout" in home
     assert 'aria-hidden="true"' in field
     home_messages = (WEB / "src/MyceliumHome/messages.ts").read_text(encoding="utf-8")
     assert "Votre Mycelium" in home_messages
