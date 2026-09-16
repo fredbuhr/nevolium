@@ -40,6 +40,9 @@ Le modèle translucide validé n’est pas remplacé.
   et non éditables ; la légende distingue appartenance et lien sémantique.
 - Le renderer existant anime ces filaments. Il respecte toujours le mouvement réduit
   et la pause ; une indication explique pourquoi l’animation est suspendue.
+- La capture du cas peu relié montrait un réseau trop petit : le cadrage initial et
+  « Vue d’ensemble » utilisent son étendue organique avec un plancher de quatre unités,
+  au lieu de dix. Les caméras enregistrées et déplacées par l’utilisateur restent préservées.
 
 Ces liaisons ne sont pas des relations de sens inventées entre idées. Aucun
 RelationshipRecord, export canonique, permission, API, migration, shader ni palette 3D
