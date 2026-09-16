@@ -169,7 +169,8 @@ async function qualify(browser, name, viewport, { detach = false, inspectAdmin =
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
   await page.getByRole('heading', { name: 'Votre Mycelium' }).waitFor()
   const expectedDeviceLabel = viewport.width < 640 ? 'Téléphone' : viewport.width < 1024 ? 'Tablette' : 'Bureau'
-  // D09 uses the shared 3D renderer by default; the accessible 2D view remains available.
+  // D09 uses the shared 3D renderer by default; the accessible 2D view remains available from the compact display menu.
+  await page.locator('.spatial-display > summary').click()
   await page.getByRole('button', { name: 'Vue 2D', exact: true }).click()
   assert.equal(await page.locator('.home-network-area > .spatial-workspace .home-simple-list li').count(), 6)
   assert.equal(await page.locator('canvas').count(), 0, `${name}: 2D must release WebGL`)
