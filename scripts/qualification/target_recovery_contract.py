@@ -20,7 +20,28 @@ class Contract(unittest.TestCase):
             restic_env_file=root / "restic.env",
             openbao_recovery_file=root / "openbao-recovery.json",
             report_dir=root / "reports",
+            expected_commit=None,
         ))
+
+    def test_checkout_guard_accepts_only_the_exact_pinned_release(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self.runner(Path(directory))
+            current = "1" * 40
+            runner.expected_commit = current
+            runner.validate_checkout("main", current)
+            runner.validate_checkout("detached", current)
+            with self.assertRaisesRegex(RuntimeError, "commit attendu"):
+                runner.validate_checkout("main", "2" * 40)
+            runner.expected_commit = "short"
+            with self.assertRaisesRegex(RuntimeError, "SHA Git complet"):
+                runner.validate_checkout("main", current)
+
+    def test_legacy_d04_checkout_guard_remains_the_default(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runner = self.runner(Path(directory))
+            runner.validate_checkout("hardening/d04-real-engine-qualification", "1" * 40)
+            with self.assertRaisesRegex(RuntimeError, "branche D04"):
+                runner.validate_checkout("main", "1" * 40)
 
     @unittest.skipUnless(os.environ.get("NEVOLIUM_RECOVERY_SQL_TEST") == "1", "disposable PostgreSQL required")
     def test_postgres_returning_has_no_command_tags(self):
@@ -290,6 +311,7 @@ ROLLBACK;
         self.assertIn('"--cap-drop", "ALL"', runner)
         self.assertNotIn("NEVOLIUM_RECOVERY_PROBE_IMAGE", runner)
         self.assertIn('GIT_OPTIONAL_LOCKS="0"', runner)
+        self.assertIn('"--expected-commit"', runner)
         self.assertIn('allowed=(0, 10)', runner)
         self.assertIn('default=Path("/run/nevolium/openbao-recovery.json")', runner)
         self.assertIn('self.workload_record(self.isolated)', runner)
