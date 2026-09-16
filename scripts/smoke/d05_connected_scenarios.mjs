@@ -56,7 +56,8 @@ export async function qualifyConnectedScenarios(browser, { previewOrigin, apiOri
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
     await page.goto(previewOrigin, { waitUntil: 'networkidle' })
-    await page.locator('.mycelium-space-node[data-space="command"]').click()
+    await page.locator('.home-tools summary').click()
+    await page.locator('.home-tools [data-space="command"]').click()
     const phone = viewport.width < 640
     const toggle = page.getByRole('button', { name: 'Liens et contexte', exact: true })
     await page.getByText('Options de l’espace', { exact: true }).click()

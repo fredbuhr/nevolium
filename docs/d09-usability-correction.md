@@ -230,3 +230,18 @@ La PR distante reste à `f7c4d04`. Il faut l’accord explicite de publication d
 L’utilisateur a ensuite explicitement autorisé la publication et demandé de poursuivre.
 La commande Git ne dispose pas d’identifiants dans cet environnement ; la connexion GitHub
 authentifiée est utilisée pour publier le même arbre sur la même branche, sans forcer la ref.
+
+## Première qualification de l’accueil publié — 16 septembre 2026
+
+Publication explicitement autorisée, tête `6f20fdca42101d2798e547d47fcc7d91c9ae177b`,
+arbre `130419107fad684e1dc01df3702133f7e0086f10`. Huit workflows non-UI verts.
+UI run `35110283457` : PostgreSQL réel (neuf types, provenance, pagination et
+isolation), import HTTP, modèle privé, Planning et kit matériel verts.
+La qualification navigateur révèle quatre problèmes de contrôle : texte de
+raccourci non isolé du sous-libellé, ancien sélecteur SVG dans le parcours
+connecté, devise présente aussi dans l’accueil masqué, et attente du viewport
+alors que le secours sans WebGL l’a déjà retiré. Correction des sélecteurs et
+de cette attente, séparation du titre des raccourcis, boutons harmonisés,
+hauteur de scène adaptée à l’écran et pagination limitée au contexte actif.
+Les captures initiales montrent le renderer partagé ; elles ne valent pas
+validation visuelle finale. Aucun import ni déploiement sur le pilote.

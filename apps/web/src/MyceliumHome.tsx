@@ -165,16 +165,16 @@ export default function MyceliumHome(props: Props) {
           rootId={place.ref || home.root} defaultView="3d" compact graph={graph} nodes={graph.nodes} selected={selectedId ? [selectedId] : []} groups={[]}
           positions={place.ref ? undefined : home.positions} onSelect={id => { const node = graph.nodes.find(item => item.id === id); if (node) activate(node); else setSelectedId('') }} onOpen={() => { if (selected) open(selected) }}>
           <ul className="home-simple-list" aria-label={m('browse')}>{neighbours.map(node => <li key={node.id}><button type="button" data-node={node.id}
-            onClick={() => activate(node)}>{node.label}<small>{m(node.kind)}</small></button></li>)}</ul>
+            onClick={() => activate(node)}><span>{node.label}</span><small>{m(node.kind)}</small></button></li>)}</ul>
         </SpatialWorkspace> : null}
         <details className="home-browse-list"><summary>{m('browse')} · {neighbours.length}</summary>
           <label>{m('search')}<input value={filter} onChange={event => setFilter(event.target.value)} /></label>
           <ul className="home-simple-list">{neighbours.filter(node => node.label.toLocaleLowerCase().includes(filter.toLocaleLowerCase())).map(node => <li key={node.id}>
-            <button type="button" onClick={() => activate(node)}>{node.label}<small>{m(node.kind)}</small></button></li>)}</ul>
+            <button type="button" onClick={() => activate(node)}><span>{node.label}</span><small>{m(node.kind)}</small></button></li>)}</ul>
         </details>
         {place.ref && page && !page.edges.length && !page.next_cursor ? <p>{m('noLinks')}</p> : null}
         {!place.ref && !neighbours.length ? <p>{m('noPins')}</p> : null}
-        {page?.next_cursor ? <button type="button" onClick={() => visit({ ...place, cursor: page.next_cursor })}>{m('more')}</button> : null}
+        {place.ref && page?.focus === place.ref && page.next_cursor ? <button type="button" onClick={() => visit({ ...place, cursor: page.next_cursor })}>{m('more')}</button> : null}
       </div>
       {selected ? <aside className="home-item-details" aria-label={selected.label}>
         <span className="eyebrow">{m(selected.kind)}</span><h2>{selected.label}</h2>

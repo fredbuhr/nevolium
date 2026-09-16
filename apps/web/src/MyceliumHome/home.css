@@ -1,5 +1,5 @@
 .home-browser { display: block; max-width: 1800px; margin: auto; padding: 18px clamp(12px, 3vw, 48px); }
-.home-browser .app-header { margin-bottom: 24px; }
+.home-browser .app-header { margin-bottom: 12px; }
 .home-browser .app-header-actions { flex-wrap: wrap; }
 .home-section-heading, .home-navigation, .home-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .home-section-heading { justify-content: space-between; margin: 16px 0; }
@@ -8,6 +8,9 @@
 .home-navigation { margin: 16px 0; }
 .home-navigation > [role=status] { font-size: .8rem; margin-left: auto; }
 .home-browser button, .home-browser summary { min-height: 44px; cursor: pointer; }
+.home-browser button, .home-browser input, .home-browser select { border: 1px solid #345653; border-radius: 10px; padding: 8px 12px; background: #0a202a; color: #d4e6e6; font: inherit; font-size: .875rem; }
+.home-browser button:hover:not(:disabled) { background: #164b46; border-color: #5ba595; }
+.home-browser button:focus-visible, .home-browser input:focus-visible, .home-browser select:focus-visible, .home-browser summary:focus-visible { outline: 2px solid #b4ffe7; outline-offset: 3px; }
 .home-browser button:disabled { cursor: default; opacity: .5; }
 .home-browser summary { padding: 10px 0; }
 .home-browser input, .home-browser select { min-height: 44px; max-width: 100%; }
@@ -18,7 +21,11 @@
 .home-browser-body.has-selection { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
 .home-network-area { min-width: 0; }
 .home-legend { font-size: .82rem; }
-.home-browser .spatial-viewport { min-height: 420px; height: min(64vh, 720px); }
+.home-browser .spatial-viewport { min-height: 340px; height: clamp(340px, calc(100svh - 370px), 720px); }
+.home-browser .spatial-home { display: flex; flex-wrap: wrap; align-items: end; column-gap: 20px; }
+.home-browser .spatial-toolbar, .home-browser .spatial-navigation { margin: 6px 0 12px; }
+.home-browser .spatial-viewport, .home-browser .spatial-home > .home-simple-list, .home-browser .spatial-home > p { flex-basis: 100%; }
+.home-browser .spatial-labels button { background: #07171ee0; border-color: transparent; font-size: 12px; }
 .home-browse-list { margin: 12px 0; }
 .home-simple-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; list-style: none; margin: 12px 0; padding: 0; }
 .home-simple-list button { display: grid; text-align: left; gap: 4px; width: 100%; overflow-wrap: anywhere; }

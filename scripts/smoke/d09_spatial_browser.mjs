@@ -245,8 +245,9 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
     }
   })
   const fallbackMap = await openMindMap(unavailable.page)
+  await fallbackMap.locator('.spatial-workspace').scrollIntoViewIfNeeded()
   await fallbackMap.getByRole('button', { name: 'Vue 3D', exact: true }).click()
-  await fallbackMap.locator('.spatial-viewport').scrollIntoViewIfNeeded()
+  // WebGL failure may already have removed the viewport; the fallback is the observable result.
   await fallbackMap.getByText('La vue 3D est indisponible.', { exact: false }).waitFor()
   await fallbackMap.locator('.react-flow__node').first().waitFor()
   await unavailable.context.close()

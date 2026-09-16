@@ -44,6 +44,7 @@ try{
   await eventually(async()=>(await home.locator('.home-item-details h2').textContent())==='Hypothèse de concentration','cross-project focus missing')
   await home.getByRole('button',{name:'Épingler à l’accueil',exact:true}).click()
   await eventually(()=>state.layouts.get('mycelium.home.navigation').layout.entries.some(e=>e.ref===ref('document:crypto-2')),'pin not persisted')
+  if(name!=='phone')await eventually(async()=>JSON.parse(await home.locator('.spatial-viewport').getAttribute('data-spatial-metrics')||'{}').frames>1,'transversal 3D frames missing')
   await page.screenshot({path:path.join(output,`${name}-transversal.png`)})
   await home.getByRole('button',{name:'Accueil',exact:true}).click()
   stage=name+':file';console.log(stage)
@@ -102,5 +103,10 @@ try{
  }
  await fs.writeFile(path.join(output,'qualification.json'),JSON.stringify({status:'passed',corpus:'mycelium-example-v1',results},null,2))
  console.log('D09 HOME BROWSER PASS',JSON.stringify(results))
-}catch(error){await fs.writeFile(path.join(output,'failure.json'),JSON.stringify({stage,error:String(error)},null,2));throw error}
+}catch(error){
+ await fs.writeFile(path.join(output,'failure.json'),JSON.stringify({stage,error:String(error)},null,2))
+ const page=browser?.contexts().at(-1)?.pages().at(-1)
+ if(page){await page.screenshot({path:path.join(output,'failure.png'),fullPage:true});await fs.writeFile(path.join(output,'failure.html'),await page.content())}
+ throw error
+}
 finally{await browser?.close();server.kill()}

@@ -290,7 +290,7 @@ async function qualifyDesktop(browser, state) {
   await page.getByText('Connaissance autre espace', { exact: true }).last().waitFor({ state: 'visible' })
 
   await page.getByRole('button', { name: 'English', exact: true }).click()
-  await page.getByText('THINK · CONNECT · MOVE FORWARD', { exact: true }).waitFor()
+  await page.locator('.cockpit-app-header').getByText('THINK · CONNECT · MOVE FORWARD', { exact: true }).waitFor()
   assert.equal(await page.getByText('PENSER · RELIER · AVANCER', { exact: true }).count(), 0)
   await page.getByRole('heading', { name: 'New idea' }).waitFor()
   await page.getByRole('heading', { name: 'Find knowledge across all your spaces.' }).waitFor()
