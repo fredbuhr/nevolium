@@ -30,6 +30,7 @@ type Props = {
   compact?: boolean
   compactActions?: ReactNode
   controlsVisible?: boolean
+  onViewChange?: (view: '2d' | '3d') => void
   paused?: boolean
   interactive?: boolean
 }
@@ -70,6 +71,7 @@ export default function SpatialWorkspace(props: Props) {
     return () => observer.disconnect()
   }, [state.view])
   useEffect(() => { if (!panelVisible || !documentVisible) setCommand(null) }, [panelVisible, documentVisible])
+  useEffect(() => { props.onViewChange?.(state.view) }, [props.onViewChange, state.view])
   const visibleLabels = useMemo(() => {
     const limit = props.compact ? 12 : QUALITY_SETTINGS[metrics?.tier || 'eco'].labels
     return [...props.nodes].sort((a, b) => {

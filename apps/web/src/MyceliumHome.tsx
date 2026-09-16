@@ -36,6 +36,7 @@ export default function MyceliumHome(props: Props) {
   const layout = useHomeLayout(props.apiUrl)
   const panelVisible = usePanelVisibility()
   const [customizing, setCustomizing] = useState(false)
+  const [spatialView, setSpatialView] = useState<'2d' | '3d'>(() => props.deviceClass === 'phone' ? '2d' : '3d')
   const [backgroundError, setBackgroundError] = useState(false)
   const [place, setPlace] = useState<Place>(ROOT), [history, setHistory] = useState<Place[]>([])
   const [selectedId, setSelectedId] = useState('')
@@ -155,7 +156,8 @@ export default function MyceliumHome(props: Props) {
     } catch { if (!controller.signal.aborted) setFileError(true) }
     finally { if (!controller.signal.aborted) setFileBusy(false) }
   }
-  return <section className={`mycelium-home home-browser${props.active ? '' : ' is-background'}`} aria-labelledby="mycelium-home-title" inert={!props.active} aria-hidden={!props.active || undefined}>
+  const phoneSpatial = props.deviceClass === 'phone' && spatialView === '3d'
+  return <section className={`mycelium-home home-browser${props.active ? '' : ' is-background'}${phoneSpatial ? ' is-phone-spatial' : ''}`} aria-labelledby="mycelium-home-title" inert={!props.active} aria-hidden={!props.active || undefined}>
     <DesktopBackground apiUrl={props.apiUrl} value={background} onError={setBackgroundError} />
     <div className="home-interface home-topbar">
     <header className="app-header">
@@ -192,7 +194,7 @@ export default function MyceliumHome(props: Props) {
         <p className="home-legend">{place.ref ? m('actualLinks') : m('shortcuts')}</p>
         {graph.nodes.length ? <SpatialWorkspace key={place.ref || home.root} apiUrl={props.apiUrl} projectId="" workspaceKey={`mycelium.home.${props.deviceClass}.camera.${(place.ref || home.root).replaceAll(':', '.')}`}
           rootId={place.ref || home.root} defaultView={props.deviceClass === 'phone' ? '2d' : '3d'} compact controlsVisible={props.active && !customizing}
-          compactActions={<button type="button" disabled={!layout.ready} aria-haspopup="dialog" onClick={() => setCustomizing(true)}>{m('customize')}</button>}
+          onViewChange={setSpatialView} compactActions={<button type="button" disabled={!layout.ready} aria-haspopup="dialog" onClick={() => setCustomizing(true)}>{m('customize')}</button>}
           paused={!props.active || customizing || props.ambience !== 'neural'} interactive={props.active && !customizing} graph={graph} nodes={graph.nodes} selected={selectedId ? [selectedId] : []} groups={[]}
           positions={place.ref ? undefined : home.positions} onSelect={id => { const node = graph.nodes.find(item => item.id === id); if (node) activate(node); else setSelectedId('') }} onOpen={() => { if (selected) open(selected) }}>
           <ul className="home-simple-list" aria-label={m('browse')}>{neighbours.map(node => <li key={node.id}><button type="button" data-node={node.id}
