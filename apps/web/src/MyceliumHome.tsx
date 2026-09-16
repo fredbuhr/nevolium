@@ -110,8 +110,8 @@ export default function MyceliumHome(props: Props) {
   useEffect(() => () => { if (fileUrl) URL.revokeObjectURL(fileUrl) }, [fileUrl])
   useEffect(() => () => fileRequest.current?.abort(), [])
   useEffect(() => {
-    if (selectedId && props.active) detailsPanel.current?.focus({ preventScroll: true })
-  }, [selectedId, props.active])
+    if (selectedId && props.active) detailsPanel.current?.focus({ preventScroll: props.deviceClass !== 'phone' })
+  }, [selectedId, props.active, props.deviceClass])
 
   const home = useMemo(() => homeGraph(layout.value, resolved, key => m(key), place.folder), [layout.value, resolved, place.folder, language])
   const graph = place.ref ? (page?.focus === place.ref ? page : { nodes: [], edges: [] }) : home
