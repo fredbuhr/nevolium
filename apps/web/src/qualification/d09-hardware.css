@@ -1,0 +1,19 @@
+:root { color-scheme: dark; font: 15px/1.5 system-ui, sans-serif; color: #d3e8e2; background: #071014; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.hardware { max-width: 1180px; margin: auto; padding: 24px; }
+.hardware h1 { font-size: clamp(25px, 4vw, 36px); line-height: 1.2; margin: 8px 0 16px; }
+.hardware .eyebrow { letter-spacing: .18em; color: #8dddcc; font-size: 12px; }
+.hardware .muted { color: #9bb5b0; font-size: 13px; overflow-wrap: anywhere; }
+.hardware details, .hardware fieldset { min-width: 0; border: 1px solid #304744; border-radius: 14px; padding: 14px; margin: 12px 0; }
+.hardware summary { cursor: pointer; min-height: 32px; }
+.hardware-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+.hardware label { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
+.hardware input, .hardware textarea { font: inherit; color: inherit; background: #0a202a; border: 1px solid #345653; border-radius: 10px; padding: 10px; width: 100%; min-width: 0; }
+.hardware button { min-height: 44px; }
+.hardware .spatial-viewport { height: min(55vh, 560px); min-height: 280px; }
+.hardware .hardware-live { color: #a9c6be; font-size: 13px; min-height: 40px; }
+.hardware output { font-size: 13px; }
+.hardware-stage { min-width: 0; }
+.hardware textarea { margin-top: 6px; }
+@media (max-width: 600px) { .hardware { padding: 14px; } .hardware fieldset { padding: 10px; } }

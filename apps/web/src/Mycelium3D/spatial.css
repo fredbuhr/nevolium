@@ -1,0 +1,28 @@
+.spatial-workspace { min-width: 0; display: flex; flex-direction: column; flex: 1 0 auto; }
+/* React Flow needs a definite height after the 2D/3D wrapper changes its flex parent. */
+.spatial-workspace .mindmap-canvas { height: clamp(360px, 56vh, 700px); flex: 1 0 auto; }
+.spatial-toolbar, .spatial-navigation { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 12px 0; }
+.spatial-toolbar label, .spatial-navigation label { display: grid; gap: 5px; min-width: 0; max-width: 100%; color: #b8d0cf; font-size: 12px; }
+.spatial-navigation label { flex: 1 1 210px; }
+.spatial-workspace select { min-width: 0; width: 100%; max-width: 100%; }
+.spatial-workspace button, .spatial-workspace select { min-height: 44px; border: 1px solid #345653; border-radius: 10px; padding: 8px 12px; background: #0a202a; color: #c8dfdf; font: inherit; font-size: 13px; }
+.spatial-workspace button { cursor: pointer; }
+.spatial-workspace button:disabled { cursor: default; opacity: 0.45; }
+.spatial-tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid #345653; border-radius: 12px; }
+.spatial-tabs button[aria-pressed="true"] { color: #d6fff4; background: #164b46; border-color: #5ba595; }
+.spatial-toolbar > button[aria-pressed="true"], .spatial-navigation > button[aria-pressed="true"] { background: #133e39; border-color: #548f7c; color: #dcf8e9; }
+.spatial-save, .spatial-hint, .spatial-group-summary { font-size: 12px; color: #aec4c4; }
+.spatial-save[data-spatial-save="error"] { color: #f5c295; }
+.spatial-viewport { position: relative; height: clamp(380px, 56vh, 700px); min-width: 0; overflow: hidden; border-radius: 20px; border: 1px solid #274440; background: radial-gradient(ellipse at 46% 48%, #122525 0%, #071115 42%, #02080d 85%); }
+.spatial-viewport canvas { touch-action: none; }
+.spatial-placeholder { position: absolute; inset: 45% 8% auto; text-align: center; color: #b3d6cf; }
+.spatial-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.spatial-labels button { position: absolute; top: 0; left: 0; visibility: hidden; pointer-events: auto; max-width: min(200px, 55%); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid transparent; border-radius: 10px; background: #07171ee0; color: #c0dcd5; font-size: 12px; box-shadow: 0 4px 16px #0005; }
+.spatial-labels button[aria-pressed="true"] { color: #ecfff7; border-color: #8ddbce; }
+.spatial-workspace button:focus-visible, .spatial-workspace select:focus-visible { outline: 2px solid #b4ffe7; outline-offset: 3px; }
+@media (max-width: 600px) {
+  .spatial-viewport { height: 430px; border-radius: 14px; }
+  .spatial-navigation button { flex: 1 1 auto; }
+  .spatial-navigation label { flex-basis: 100%; }
+  .spatial-toolbar { align-items: center; }
+}

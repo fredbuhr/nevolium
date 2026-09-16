@@ -1,6 +1,6 @@
 # Nevolium — langage visuel Mycelium
 
-Révision : 2026-09-14. Ce contrat traduit les références visuelles fournies pendant D05,
+Révision : 2026-09-15. Ce contrat traduit les références visuelles fournies pendant D05,
 y compris les huit images de la reprise « matière organique ».
 Les images restent des inspirations de conversation ; elles ne sont pas attribuées au dépôt et
 ne constituent pas des captures de l'interface livrée.
@@ -15,7 +15,7 @@ Nevolium relie des objets de travail sous contrôle de l'utilisateur. Son interf
 mycélium neural vivant sans transformer chaque écran en graphe ni masquer l'information utile.
 La bioluminescence de fond appartient à la matière décorative, pas à un état métier. Un signal
 d'activité, de sélection ou d'alerte reste distinct, explicite et compréhensible. Les mouvements
-restent rares, réversibles et supprimés quand l'utilisateur réduit les animations.
+restent lents, localisés, réversibles et supprimés quand l'utilisateur réduit les animations.
 
 Visuellement, « organique » désigne une matière fibreuse irrégulière, ramifiée, avec une lumière
 localisée ; une courbe mathématique lisse et un halo uniforme ne suffisent pas. Dans l'usage,
@@ -110,6 +110,37 @@ signale aucune activité métier et s’arrête en mode calme/minimal ou mouveme
 La [note de réalisation](archive/d05-organic-material-2026-09-14.md) conserve les références,
 la provenance des deux textures, les instructions de génération et les limites de qualification.
 Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
+
+## Traduction spatiale D09
+
+Le retour du 16 septembre précise la direction : des corps 3D arrondis, légèrement asymétriques,
+éclairés en volume, sans pointes ni cônes décoratifs. La matière mêle un modelé large, un grain
+fin et des veinules interrompues dont le détail s'efface à distance. La silhouette change avec
+l'orbite ; aucun panneau orienté vers la caméra ne représente l'objet.
+
+Les seuls prolongements sont les filaments des relations canoniques. Ils pénètrent dans le corps
+opaque : la profondeur masque leur intérieur et maintient un raccord continu lorsque le corps
+respire ou que son diamètre apparent est limité au zoom. Leur raccord s'élargit doucement, dans
+une largeur écran bornée. Il ne s'agit pas d'une fusion volumétrique anatomique.
+
+Une respiration asynchrone déforme légèrement la matière autour des centres fixes. Des vagues
+lumineuses parcourent un nombre borné de fibres, avec des intervalles de repos. Leur intensité,
+comme celle des traits secondaires, tient compte de la densité et de la sélection pour éviter
+l'accumulation blanche. Le fond WebGL opaque supprime les traits noirs de composition alpha.
+
+La circulation exprime une vitalité visuelle, **pas une exécution de tâche ou un transfert réel**.
+L'ambre souligne l'objet sélectionné et les ondes de ses relations ; l'activité réelle
+queued/running garde une chaleur interne et son état textuel dans les surfaces métier. La couleur
+n'est jamais l'unique indication d'un état. La sélection rend ses voisins plus lisibles.
+
+« Animer le réseau » fige les animations ; le mouvement réduit système les supprime. Le panneau
+masqué démonte toujours le renderer. Centres, caméra et identités restent stables. Les cibles de
+sélection suivent l'enveloppe arrondie ; les étiquettes restent sous les volumes.
+
+Les suivis de [première reprise](archive/d09-organic-revision-2026-09-15.md),
+[reprise neuronale](archive/d09-neural-life-2026-09-15.md) et
+[raccords et lisibilité](archive/d09-smooth-junctions-2026-09-16.md) distinguent les rapports
+matériels, l'implémentation, les preuves et l'acceptation visuelle encore attendue.
 
 ## Personnalisation
 

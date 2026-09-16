@@ -12,10 +12,18 @@ D07 est intégré par la PR #91, merge GitHub vérifié
 `0db6df6326b553136ab8a375b30fddbe5f6b27aa` passe **9/9 workflows PR**. D07 n'est pas encore
 déployé sur le pilote.
 
-D08 est **candidat à l'intégration** dans la PR #92. Le head fonctionnel
-`1576e8f73bc48b058ec0c7981853b80d40e7e93a` passe **9/9 workflows PR** et couvre le scénario de
-sortie du lot. Le présent état documentaire est descendant de ce head et doit lui-même être qualifié
-avant merge. D08 n'est ni fusionné ni déployé à ce stade.
+D08 est intégré par la PR #92, merge `2ded338ed4e0b619a7b2bae4d732e56771151e3c`.
+Sa tête finale `b4d9db62bf2b3e4891bcc7699a23b81bddeb452f` passe **9/9 workflows PR**,
+avec un arbre identique au merge. Le handoff main `b68e1e8b15577c4b80e98c9431713bdcaf6fdd3d`
+passe **8/8 workflows push**. D08 n'est pas déployé sur le pilote.
+
+D09 est implémenté sur la branche de la PR #93 draft, en qualification. La référence fonctionnelle `81f4cf2f163dd314684dc312d90ab5dbba749315` passe **8/8 workflows PR**.
+Ses preuves exactes et les limites matérielles restent dans [PROJECT_STATE](../PROJECT_STATE.md) et le
+[suivi D09](archive/d09-spatial-progress-2026-09-15.md). Ce statut ne déclare pas D09 intégré.
+L'utilisateur rapporte un bon fonctionnement du banc sur ordinateur/tablette/téléphone et fournit
+un essai ordinateur de dix minutes, 501 objets/1 500 liens, médiane 165 FPS. La mémoire n'est pas
+mesurée. La correction du dessin trop technologique est en cours de qualification :
+[membranes et ramifications organiques](archive/d09-organic-revision-2026-09-15.md).
 
 ## Acquis canoniques
 
@@ -31,8 +39,9 @@ avant merge. D08 n'est ni fusionné ni déployé à ce stade.
 | Cockpit D05 | Mycelium 2D, Dockview, recherche rapide, inspecteur, layouts privés, PWA, responsive et popout bureau | Revue humaine continue sur appareils physiques |
 | Planification D06 | Structure/version, sous-tâches, jalons, dépendances, calendrier de travail, récurrences virtuelles, CPM, replan preview/apply, Liste/Kanban/Gantt/Calendrier et cohérence Today | Intégré au code ; déploiement pilote distinct |
 | Connaissances D07 | Documents authored versionnés, notes/idées/décisions, provenance/citations, recherche universelle, import/export, Lexical et restauration | Intégré au code ; coédition D12 |
-| Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | PR #92 candidate ; pas encore intégrée/déployée ; 3D en D09 |
-| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D08 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
+| Mindmap D08 | Vue 2D éditable sur identités D06/D07, liens typés, groupes/layouts, recherche, deep links, undo/redo, export et idée→Task | Intégré par #92 ; non déployé ; 3D en qualification D09 |
+| Mycelium 3D D09 | Renderer interactif et persistance sur #93 ; corps arrondis sans cônes, raccords continus, respiration et circulation lumineuse hiérarchisée après retours utilisateur | Non intégré/déployé ; nouveau rendu/animation à qualifier, preuve mémoire/GPU intégré/cockpit à compléter |
+| Langues | Fondation FR/EN extensible ; nouvelles surfaces D06–D09 raccordées | D13 reste la complétude FR/EN globale ; voix anglaise non qualifiée |
 
 ## Planification D06 intégrée
 
@@ -83,7 +92,7 @@ utilisation téléphone tactile. Artefact navigateur : `10405706103`, digest
 Le détail des preuves et du rollback est dans le
 [checkpoint D07](archive/d07-editable-knowledge-progress-2026-09-15.md).
 
-## D08 — mindmap 2D candidate
+## D08 — mindmap 2D intégrée
 
 D08 ne crée aucun modèle de nœud parallèle. Le snapshot d'un projet regroupe les mêmes identités
 `project`, `task` et `document`; `RelationshipRecord` reste le canon des liens. Les idées, décisions
@@ -117,13 +126,44 @@ Artefact navigateur final : `10413396962`, digest
 Le détail des preuves, limites et rollback est dans le
 [checkpoint D08](archive/d08-editable-mindmap-progress-2026-09-15.md).
 
+## D09 — Mycelium 3D en qualification
+
+Le rendu R3F/Three est chargé à l'ouverture de la vue 3D. Il projette le snapshot D08 sur les mêmes
+identités : nœuds instanciés, filaments batchés sur les relations existantes, groupes de présentation,
+labels limités et activité issue des statuts des Tasks. Sélection, conversion idée→Task et navigation
+vers Planning/Knowledge utilisent les actions et objets existants. Un rafraîchissement au retour au
+panneau, au focus ou à la reconnexion relit le canon sans rejouer de mutation.
+
+Caméra, choix 2D/3D et qualité sont sauvegardés sous `mycelium3d.project.{project_id}` via
+`WorkspaceLayout`, avec la sérialisation/reprise D08 et les contrôles de session. Les positions 2D
+restent séparées. La géométrie spatiale est déterministe et dérivée, sans nouvelle migration.
+La scène est démontée lorsque son panneau, document ou viewport est masqué. Qualité adaptative,
+profils économiques, mouvement réduit, commandes tactiles et fallback 2D sont implémentés.
+Le téléphone commence en 2D même si une préférence 3D a été enregistrée sur bureau.
+
+Les nouveaux scénarios Chromium utilisent une API simulée ; les contrats PostgreSQL existants sont
+une preuve distincte. Ils ne constituent pas une preuve de déploiement, ni une mesure sur tablette
+physique ou GPU intégré. Le head fonctionnel `825cee7` passe les 13 scénarios D09 ; le checkpoint documente son descendant
+et le gate matériel encore ouvert. Mesures et captures sont conservées dans le suivi D09.
+
+## Écarts à conserver dans la suite
+
+- D06 : modèles/API de sous-tâches, jalons, dépendances, récurrences et calendrier de travail présents ;
+  formulaires Web complets de création/édition de ces structures encore à livrer. Le Kanban manuel
+  couvre `todo`↔`completed`; `queued`/`running` restent pilotés par les workflows.
+- D07 : liens Asset/pièces jointes/whiteboards côté canon ; éditeur Excalidraw non intégré.
+- Langues : fondation et nouvelles surfaces FR/EN ; plusieurs écrans historiques restent en français.
+  La préférence de langue reste locale au navigateur ; complétude produit prévue en D13.
+- PWA : shell installable ; données métier hors ligne et synchronisation restent D12.
+- Exploitation : restauration et sauvegardes manuelles prouvées ; automatisation planifiée à qualifier.
+
 ## Produit présent et fonctions futures
 
 | Domaine | Présent | Suite planifiée |
 |---|---|---|
 | Cockpit | D05 intégré : Mycelium 2D, espaces réels, Dockview, clavier, PWA, responsive et popout bureau | Raffinement continu et fonctions spécialisées |
 | Planification | D06 intégré : Liste/Kanban/Gantt/Calendrier, hiérarchie/jalons/dépendances, récurrences, work calendar, CPM et replanification | Déploiement distinct ; calendriers externes D11 ; offline D12 |
-| Connaissances/graphes | D07 intégré + D08 candidat : Documents authored/versionnés et mindmap 2D sur identités/relations canoniques | Après intégration D08 : D09 Mycelium 3D sur les mêmes identités |
+| Connaissances/graphes | D07 et D08 intégrés : Documents authored/versionnés et mindmap 2D sur identités/relations canoniques | D09 Mycelium 3D implémenté sur #93, qualification en cours |
 | Realtime/Desktop/voix | Scaffolds ou moteurs configurés | Parcours authentifiés, collaboration, permissions appareil et voix |
 | Finance/Crypto/Home/Dev | Profils optionnels déclarés | Adaptateurs, policy, workspaces et parcours réels |
 | Langues | Fondation FR/EN extensible, D06–D08 raccordés | D13 : complétude produit FR/EN puis langues supplémentaires |
@@ -140,3 +180,5 @@ migrer ces données avant un rollback réel.
 
 [PROJECT_STATE](../PROJECT_STATE.md) reste le point de reprise opérationnel ; le
 [plan exécutable](implementation-plan.md) définit l'ordre D01–D22.
+
+Reprise visuelle du 16 septembre : [corps arrondis et raccords](archive/d09-smooth-junctions-2026-09-16.md). Le relevé matériel f6912bd (201/300 balanced, médiane/p10 165 FPS sur 600,881 s) concerne le parent ; il ne qualifie pas les changements suivants. Les preuves du descendant sont rattachées au head exact de #93.
