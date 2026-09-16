@@ -58,8 +58,21 @@ try {
   await page.getByRole('button', { name: 'Démarrer la mesure', exact: true }).click()
   await page.locator('canvas').waitFor()
   await waitMeasured(page, 3000)
-  assert.equal(await page.locator('canvas').evaluate(canvas => canvas.getContext('webgl2').getContextAttributes().alpha), false,
-    'Additive fibres require an opaque backdrop to avoid dark compositing streaks')
+  // Three 0.180 allocates an alpha-capable context even when renderer alpha:false.
+  // Verify the visible behaviour: an opaque scene must hide a magenta CSS backdrop.
+  const renderedCanvas = page.locator('canvas')
+  await renderedCanvas.evaluate(canvas => { canvas.style.backgroundColor = '#ff00ff' })
+  const opaqueFrame = await renderedCanvas.screenshot()
+  const corners = await page.evaluate(async source => {
+    const image = new Image(); image.src = source; await image.decode()
+    const probe = document.createElement('canvas'); probe.width = image.width; probe.height = image.height
+    const context = probe.getContext('2d'); context.drawImage(image, 0, 0)
+    return [[4, 4], [image.width - 5, 4], [4, image.height - 5], [image.width - 5, image.height - 5]]
+      .map(([x, y]) => Array.from(context.getImageData(x, y, 1, 1).data))
+  }, `data:image/png;base64,${opaqueFrame.toString('base64')}`)
+  for (const pixel of corners) assert(pixel.every((value, i) => Math.abs(value - [6, 18, 22, 255][i]) < 4),
+    `The scene must obscure its CSS backdrop (${pixel})`)
+  await renderedCanvas.evaluate(canvas => { canvas.style.backgroundColor = '' })
   const surface = page.locator('.spatial-viewport')
   await surface.screenshot({ path: path.join(output, 'overview.png') })
   await page.getByLabel('Sélectionner un objet', { exact: true }).selectOption('task:hardware-1')

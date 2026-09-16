@@ -112,8 +112,23 @@ préserver la lecture. Les géométries et shaders restent bornés selon les pro
 
 ## Validation du descendant à renseigner
 
-Aucun résultat nouveau n'est attesté dans cette archive au moment de sa rédaction. Après
-publication du descendant sur #93, consigner son SHA exact, ses workflows, les identifiants et
+Premier descendant `748755ed7adaa1a7bacac9e5457d3e103376b24b`, UI run `35040770233` :
+les 13 scénarios spatiaux ont passé après une relance. La première tentative s'était arrêtée
+dans une capture D08 : les requêtes montrent un changement desktop→phone→desktop et la capture
+finale l'onglet Projets actif. Le code préexistant remonte le cockpit au changement de classe et
+réouvre l'espace initial. L'origine exacte de ce redimensionnement transitoire n'est pas attestée ;
+un vrai redimensionnement franchissant les seuils mérite également une reproduction ciblée.
+
+Le nouveau test du kit a ensuite révélé une mauvaise hypothèse de test : Three 0.180 crée un
+contexte capable de transparence même avec le paramètre constructeur `alpha:false`
+(`WebGLRenderer.js`, `contextAttributes.alpha: true`). Le fond `Color` de la scène est toutefois
+effacé avec alpha=1 (`WebGLBackground.js`). Le contrôle est corrigé pour vérifier le résultat
+visible : un fond CSS magenta ne doit pas apparaître derrière le rendu. Il conserve la vérification
+de l'opacité sans confondre capacité du contexte et pixels rendus. Aucun changement du renderer
+n'est nécessaire pour cette correction du test.
+
+La qualification complète du descendant suivant reste à vérifier. Après
+publication sur #93, consigner son SHA exact, ses workflows, les identifiants et
 empreintes des artefacts, les captures/vidéo examinées et les limites constatées.
 
 La revue doit couvrir la vue générale dense, la sélection locale, le gros plan à plusieurs angles
