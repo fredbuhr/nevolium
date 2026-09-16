@@ -287,3 +287,21 @@ pilote, le ressenti et la fluidité sur matériel physique restent à contrôler
 installation. Le suivi documentaire qui suit cette qualification ne modifie aucun
 code, test, fichier d’exemple ni workflow. Aucun merge, déploiement, import pilote,
 nettoyage Docker ou début de D10 n’a été effectué.
+
+
+## Reprise et intégration — 16 septembre 2026, 15:21 UTC
+
+La tête finale `d9eff70dbcea3c40f0513fabfeee35b5eaf63e07` a terminé ses neuf
+workflows avec succès, dont [UI 35113871065](https://github.com/fredbuhr/nevolium/actions/runs/35113871065).
+La PR #96 est sortie du brouillon puis fusionnée sous la garde de ce SHA au commit
+`702c2a3de4b4bd2219e27bf12c5b5286624d4bd8`. Arbre du merge et de la tête PR :
+`53f204d33f828274bc16dd85a856105f272d358b`, identité vérifiée via GitHub.
+
+Le point d'arrêt était la PR publiée, encore en brouillon, avec la CI documentaire
+inachevée. Les anciennes erreurs navigateur décrites plus haut étaient corrigées.
+Aucun journal accessible ne permet de diagnostiquer la cause d'un arrêt ChatGPT.
+L'autorisation de poursuite/intégration est explicite ; aucune nouvelle confirmation
+n'a été demandée. Le [bloc de préparation serveur](d09-home-pilot-update.md) est
+rédigé et sa syntaxe Bash vérifiée. Il reste à l'exécuter via l'opérateur SSH,
+puis à activer Core/Web, importer les exemples et valider les parcours réels.
+Aucune migration supplémentaire, aucun import ni déploiement pilote effectué ici.

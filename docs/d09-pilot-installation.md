@@ -1,5 +1,9 @@
 # D09 — installation pilote du modèle validé
 
+> L’installation initiale ci-dessous est historique et terminée. Pour le correctif
+> Accueil/Mycelium intégré par #96, reprendre la [préparation Core + Web](d09-home-pilot-update.md).
+> Ne pas rejouer la migration D05 → D09.
+
 Le 16 septembre 2026, l'utilisateur valide pour l'instant le modèle présenté dans
 `nevolium-d09-tissu-vivant.html` et autorise son installation puis la poursuite du travail.
 La référence visuelle est le code `48d7be9752424e8cd4c3793ee5da58225ab2069b` :
