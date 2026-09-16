@@ -88,7 +88,10 @@ export async function qualifyMindMapStability(harness) {
   await waitSaved()
   assert.equal(protectedReads(), readsBeforeLocale, 'D08: editing after locale change triggered a hidden restore')
   await map.locator('.mindmap-canvas').screenshot({ path: path.join(output, 'stability-en-canvas.png') })
-  await page.screenshot({ path: path.join(output, 'stability-en.png'), fullPage: true })
+  // Keep the viewport fixed during this state-preservation scenario. Expanding a
+  // full-page capture can emit transient resizes and switch responsive layouts.
+  await page.screenshot({ path: path.join(output, 'stability-en.png'), fullPage: false })
+  assert.equal(protectedReads(), readsBeforeLocale, 'D08: capture changed the workspace being qualified')
 
   setStage('stability:save-failure-retains-local-layout')
   await selectOnlyNode(map, ideaKey)
