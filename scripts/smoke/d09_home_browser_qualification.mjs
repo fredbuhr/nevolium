@@ -38,6 +38,10 @@ try{
    const canvas=await home.locator('.spatial-viewport canvas').boundingBox()
    assert(Math.abs(canvas.width-surface.width)<4&&Math.abs(canvas.height-surface.height)<4,`${name}: renderer must fill its viewport`)
    assert.equal(await spatial.getAttribute('data-spatial-view'),'3d')
+   await eventually(async()=>{
+    const labels=await home.locator('.spatial-labels button').all()
+    return labels.length===6&&(await Promise.all(labels.map(label=>label.isVisible()))).every(Boolean)
+   },`${name}: the initial overview must show every entry point in the six-node home fixture`)
    await home.locator('.spatial-options > summary').click()
    await home.getByRole('button',{name:'Animer le réseau',exact:true}).click()
    assert.equal(await home.locator('.spatial-viewport').getAttribute('data-spatial-reduced-motion'),'true')

@@ -53,6 +53,10 @@ function CameraAndMetrics(props: SceneProps & { poses: PoseMap; tier: Tier; onTi
     const initial = current.current.camera
     if (initial) {
       camera.position.fromArray(initial.position); controls.target.fromArray(initial.target)
+    } else if (current.current.transparent) {
+      const radius = overviewRadius([...current.current.poses.values()].map(point => point.length()))
+      const portrait = Math.max(1, size.height / Math.max(1, size.width))
+      camera.position.set(0, radius * 0.55 * portrait, radius * 2.8 * portrait)
     }
     controls.update(); controlsRef.current = controls
     const changed = () => invalidate()
@@ -64,8 +68,11 @@ function CameraAndMetrics(props: SceneProps & { poses: PoseMap; tier: Tier; onTi
     controls.addEventListener('change', changed)
     controls.addEventListener('end', save)
     gl.domElement.addEventListener('webglcontextlost', lost)
+    // A mounted canvas can precede R3F's asynchronous renderer initialization.
+    gl.domElement.dataset.spatialReady = 'true'
     invalidate()
     return () => {
+      delete gl.domElement.dataset.spatialReady
       gl.domElement.removeEventListener('webglcontextlost', lost)
       controls.removeEventListener('change', changed); controls.removeEventListener('end', save)
       controls.dispose(); controlsRef.current = null
@@ -83,7 +90,8 @@ function CameraAndMetrics(props: SceneProps & { poses: PoseMap; tier: Tier; onTi
     const p = current.current
     if (command.action === 'reset') {
       const radius = overviewRadius([...p.poses.values()].map(point => point.length()))
-      controls.target.set(0, 0, 0); camera.position.set(0, radius * 0.55, radius * 2.8)
+      const portrait = p.transparent ? Math.max(1, size.height / Math.max(1, size.width)) : 1
+      controls.target.set(0, 0, 0); camera.position.set(0, radius * 0.55 * portrait, radius * 2.8 * portrait)
     } else if (command.action === 'focus') {
       const target = p.poses.get(p.selected[0])
       if (!target) { p.onCommandHandled(); return }

@@ -106,6 +106,7 @@ export async function qualifySpatial({ browser, makeState, casePage, openMindMap
   await page.emulateMedia({ reducedMotion: 'no-preference' })
 
   setStage('d09:webgl-loss-fallback')
+  await viewport.locator('canvas[data-spatial-ready="true"]').waitFor()
   await viewport.locator('canvas').evaluate(canvas => {
     const gl = canvas.getContext('webgl2')
     const extension = gl?.getExtension('WEBGL_lose_context')
