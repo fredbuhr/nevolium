@@ -10,6 +10,7 @@ const previewOrigin = 'http://127.0.0.1:4173'
 const apiOrigin = 'http://127.0.0.1:8999'
 const playwrightModule = process.env.NEVOLIUM_PLAYWRIGHT_MODULE
 const chromiumExecutable = process.env.NEVOLIUM_CHROMIUM_EXECUTABLE
+let diagnosticPage = null
 assert(playwrightModule, 'NEVOLIUM_PLAYWRIGHT_MODULE is required')
 const { chromium } = await import(pathToFileURL(playwrightModule).href)
 await fs.mkdir(output, { recursive: true })
@@ -212,6 +213,7 @@ async function installApiMock(context, state) {
 }
 
 async function openKnowledge(page) {
+  diagnosticPage = page
   await page.goto(previewOrigin, { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: 'Nevolium', exact: true }).waitFor()
   await page.locator('.mycelium-space-node[data-space="projects"]').click()
@@ -331,6 +333,9 @@ try {
   await fs.writeFile(path.join(output, 'qualification.json'), `${JSON.stringify(evidence, null, 2)}\n`)
   console.log('D07 KNOWLEDGE BROWSER PASS:', JSON.stringify(evidence))
 } catch (error) {
+  if (diagnosticPage && !diagnosticPage.isClosed()) {
+    await diagnosticPage.screenshot({ path: path.join(output, 'failure.png'), timeout: 5000 }).catch(() => {})
+  }
   const diagnostic = error instanceof Error ? `${error.stack ?? error.message}\n` : `${String(error)}\n`
   await fs.writeFile(path.join(output, 'failure.txt'), diagnostic)
   throw error

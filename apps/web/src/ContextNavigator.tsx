@@ -86,7 +86,7 @@ export default function ContextNavigator({ apiUrl, onOpenSpace }: {
     <aside className="context-navigator" aria-label={w('linkedThread')}>
       <div className="thread-heading"><span className="eyebrow">{w('keepThread')}</span><h2>{w('aroundYou')}</h2><p>{w('contextHint')}</p></div>
       <label className="thread-project-picker">{w('yourContext')}
-        <select value={selectedProjectId} onChange={event => { setSelectedProjectId(event.target.value); setFocus(null); setTrail([]) }}>
+        <select aria-label={w('yourContext')} value={selectedProjectId} onChange={event => { setSelectedProjectId(event.target.value); setFocus(null); setTrail([]) }}>
           <option value="">{w('noSelectedProject')}</option>
           {projects.items.map(item => <option key={item.id} value={item.id}>{title(item)}</option>)}
         </select>

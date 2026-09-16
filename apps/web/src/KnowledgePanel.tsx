@@ -27,7 +27,7 @@ export default function KnowledgePanel({ apiUrl }: Props) {
   return (
     <>
       <label className="knowledge-document-picker">{w('yourContext')}
-        <select value={selectedProjectId} onChange={event => { setSelectedProjectId(event.target.value); setInspectionTarget(null) }}>
+        <select aria-label={w('yourContext')} value={selectedProjectId} onChange={event => { setSelectedProjectId(event.target.value); setInspectionTarget(null) }}>
           <option value="">{w('chooseProject')}</option>
           {projects.items.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
         </select>

@@ -55,7 +55,7 @@ contrats D05 cockpit, D06 locale, D07 éditeur, D08 Web, D09 spatial/présentati
 et nouveau contrat de projet sans relations (scope, idempotence, absence de mutation, filaments
 avec circulation dans les trois profils).
 
-Tests navigateur étendus mais **pas encore exécutés avec succès** : capture d’idée sans
+Tests navigateur étendus, **suite complète pas encore verte sur une même tête** : capture d’idée sans
 ouvrir les options, contenu initial persistant, ancien parcours décision/citation/restauration,
 inspection inter-projets, chrome/contexte EN, téléphone, options avancées D05/D08 accessibles,
 projet sans relations en 2D/3D, différence de pixels caméra fixe, pause et mouvement réduit.
@@ -84,6 +84,15 @@ sauvegarde, le rafraîchissement des documents démontait l’éditeur et referm
 des sources, masquant la restauration. Le correctif maintient l’éditeur pendant une
 relecture du même projet déjà chargé et filtre ses versions par document ; un test garde
 un brouillon de l’idée suivante pendant cette sauvegarde. Requalification requise.
+
+Tête `2911d5d…`, UI run `35099526070` : D05/D06/D08/3D restent verts, sept autres workflows
+verts ; cadrage corrigé, 489 pixels animés et 0 en pause pour le projet sans relations.
+D07 passe création avec contenu, sauvegarde en conservant le brouillon suivant, citations,
+restauration et inspection inter-projets. Il s’arrête ensuite sur le repérage exact de
+« Your context » : les sélecteurs de projet reçoivent un aria-label explicite identique
+à leur libellé visible, sans relâcher l’assertion. Une capture sur échec est ajoutée.
+La capture FR d’idée et le graphe peu relié ont été inspectés ; le navigateur complet
+reste à requalifier sur la nouvelle tête, y compris la fin du scénario anglais/téléphone.
 
 Lancer/inspecter UI workspace validation sur la tête de cette branche, traiter les échecs,
 inspecter les captures d’idée et de graphe peu relié. Ne proposer une activation qu’après
