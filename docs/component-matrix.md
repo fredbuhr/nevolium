@@ -7,9 +7,10 @@ The maturity column describes the Nevolium integration, not the upstream project
 D04 supplies bounded real-engine evidence for Docling/Mem0/Graphiti and the API-first pilot. D05
 validates the workspace shell. D06 is integrated by PR #90, merge commit
 `20720774552418a6c9e7acbfbf069945ff0f57df`. D07 is integrated by PR #91, merge
-`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. D08 is the current candidate in PR #92; functional
-head `1576e8f73bc48b058ec0c7981853b80d40e7e93a` passed 9/9 workflows before the final documentation
-head. Deployment remains separate.
+`f4390a5cdbd1e2b3ef512ad728983f001f2fd8b4`. D08 is integrated by PR #92, merge
+`2ded338ed4e0b619a7b2bae4d732e56771151e3c`; final PR head passed 9/9 workflows.
+D09 is implemented in draft PR #93, with browser qualification passed at `825cee7` (8/8 workflows) and physical-device qualification still open.
+Deployment remains separate; the last verified pilot runtime is D05.
 
 ## Maturity legend
 
@@ -60,8 +61,8 @@ head. Deployment remains separate.
 | Calendar library target | Schedule-X | web library | optional renderer only; never canonical truth | **Configured; not used by qualified D06 calendar** |
 | Dashboards | Apache ECharts | web library | view only | **Configured** |
 | Maps | MapLibre GL JS | web library | view over place/location state | **Configured** |
-| 2D graph | React Flow (`@xyflow/react`) | web library / D08 | renderer/input over canonical Documents/Tasks/Relationships; layout in WorkspaceLayout | **Validated in D08 candidate** |
-| 3D graph | React Three Fiber + react-force-graph-3d | web libraries | view over Nevolium graph | **Configured** |
+| 2D graph | React Flow (`@xyflow/react`) | web library / D08 | renderer/input over canonical Documents/Tasks/Relationships; layout in WorkspaceLayout | **Validated in integrated D08** |
+| 3D graph | React Three Fiber + Three.js | web libraries / D09 | canonical D08 snapshot; separate presentation layout, bounded rendering, 2D fallback | **Validated in Chromium on PR #93; physical gate open** |
 | Gantt | SVAR React Gantt 2.7.3 | web library / D06 | renderer/input only; Core/PostgreSQL own plan state | **Validated in D06** |
 | Crypto accounting | rotki | service / `finance` | portfolio source/adapter, private network only | **Configured** |
 | Exchange APIs | CCXT | integration library / finance | no raw secret exposure to models | **Declared** |
@@ -93,7 +94,8 @@ while positions/viewport/groups live in `WorkspaceLayout`. Its browser proof inc
 layout persistence, save failure/retry, a fresh owner-scoped deep link and an idea branch converted
 and planned through D06 until both Tasks render in Gantt.
 
-The 3D libraries remain future D09 targets. Hocuspocus/Yjs, Tauri and voice dependencies remain
+D09 uses R3F/Three with instanced nodes and batched filaments; `react-force-graph-3d` remains an
+unused installed option. Physical GPU/tablet qualification remains open. Hocuspocus/Yjs, Tauri and voice dependencies remain
 future boundaries. Finance, crypto, Home Assistant and OpenHands profiles may exist without
 stabilized Nevolium adapters, policy flows and UX.
 

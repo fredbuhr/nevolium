@@ -1,6 +1,6 @@
 # Nevolium — langage visuel Mycelium
 
-Révision : 2026-09-14. Ce contrat traduit les références visuelles fournies pendant D05,
+Révision : 2026-09-15. Ce contrat traduit les références visuelles fournies pendant D05,
 y compris les huit images de la reprise « matière organique ».
 Les images restent des inspirations de conversation ; elles ne sont pas attribuées au dépôt et
 ne constituent pas des captures de l'interface livrée.
@@ -15,7 +15,7 @@ Nevolium relie des objets de travail sous contrôle de l'utilisateur. Son interf
 mycélium neural vivant sans transformer chaque écran en graphe ni masquer l'information utile.
 La bioluminescence de fond appartient à la matière décorative, pas à un état métier. Un signal
 d'activité, de sélection ou d'alerte reste distinct, explicite et compréhensible. Les mouvements
-restent rares, réversibles et supprimés quand l'utilisateur réduit les animations.
+restent lents, localisés, réversibles et supprimés quand l'utilisateur réduit les animations.
 
 Visuellement, « organique » désigne une matière fibreuse irrégulière, ramifiée, avec une lumière
 localisée ; une courbe mathématique lisse et un halo uniforme ne suffisent pas. Dans l'usage,
@@ -110,6 +110,46 @@ signale aucune activité métier et s’arrête en mode calme/minimal ou mouveme
 La [note de réalisation](archive/d05-organic-material-2026-09-14.md) conserve les références,
 la provenance des deux textures, les instructions de génération et les limites de qualification.
 Une texture générée n'est jamais une preuve de fonctionnement de l'interface.
+
+## Traduction spatiale D09
+
+Le second retour du 16 septembre corrige la direction trop mate : une enveloppe translucide
+aux lobes larges et irréguliers entoure un petit noyau lumineux. Les deux couches sont des volumes
+3D, pas des panneaux orientés vers la caméra. Le noyau occupe environ un quart du rayon de
+l'enveloppe ; les veinules interrompues et la lumière de bord laissent lire une matière fine.
+La dominante revient au cyan et au vert menthe, avec quelques lueurs ambrées locales.
+
+Les seuls prolongements sont les filaments des relations canoniques. Ils convergent dans le
+petit noyau opaque, qui masque leurs extrémités par profondeur, à l'intérieur de l'enveloppe
+transparente. Les fibres secondaires se resserrent à l'approche. Le raccord s'élargit doucement,
+dans une largeur écran bornée ; il ne s'agit pas d'une fusion volumétrique anatomique.
+
+Une respiration asynchrone déforme légèrement les enveloppes autour des centres fixes. Des
+impulsions avec tête et traîne parcourent jusqu'à 32/48/72 relations selon le profil, en environ
+3,4–5,5 secondes avec un bref repos. Leur alpha est composé séparément de celui de la trame,
+après conversion colorimétrique : la densité atténue le fond sans effacer toute l'énergie. La
+sélection conserve une faible circulation périphérique. Les courbes utilisent 18/40/52 segments et les noyaux un maillage adapté au profil. Les fibres secondaires ondulent en
+lumière, sans déplacement des centres ni recalcul géométrique à chaque image. Le fond WebGL
+reste opaque pour éviter les traits noirs de composition externe du canvas.
+
+La circulation exprime une vitalité visuelle, **pas une exécution de tâche ou un transfert réel**.
+Quelques têtes et zones de tissu portent une nuance ambrée décorative. L'activité réelle
+queued/running et la sélection renforcent localement la chaleur ; les états textuels restent
+l'autorité métier, jamais la couleur seule. La sélection rend ses voisins plus lisibles.
+
+« Animer le réseau » fige les animations ; le mouvement réduit système les supprime. Le panneau
+masqué démonte toujours le renderer. Centres, caméra et identités restent stables. Les cibles de
+sélection englobent l'enveloppe irrégulière ; les étiquettes restent sous les volumes.
+
+Les suivis de [première reprise](archive/d09-organic-revision-2026-09-15.md),
+[reprise neuronale](archive/d09-neural-life-2026-09-15.md),
+[raccords et lisibilité](archive/d09-smooth-junctions-2026-09-16.md) et
+[matière translucide](archive/d09-translucent-tissue-2026-09-16.md) distinguent les rapports
+matériels, l'implémentation, les preuves et l'acceptation visuelle encore attendue.
+
+Le modèle `48d7be9` est accepté pour l'instant par l'utilisateur le 16 septembre 2026.
+Cette référence est adoptée pour l'installation ; les prochaines étapes portent sur l'usage
+et la qualification du pilote, sans relancer une recherche esthétique non demandée.
 
 ## Personnalisation
 

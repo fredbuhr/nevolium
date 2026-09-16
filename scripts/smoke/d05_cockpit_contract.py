@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import struct
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -111,11 +112,37 @@ def main() -> None:
     assert "attachPersistence" not in catch_block
     assert "synchronisation suspendue" in catch_block
 
-    reachable_source = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in sorted((WEB / "src").rglob("*"))
-        if path.suffix in {".ts", ".tsx"}
+    # D09 may load a 3D scene explicitly. The D05 baseline must still have no
+    # WebGL dependency in the static import graph starting at the Web entrypoint.
+    # Follow relative runtime imports/re-exports; exclude type-only and dynamic imports.
+    visited: set[Path] = set()
+    pending = [WEB / "src/main.tsx"]
+    sources: list[str] = []
+    static_import = re.compile(
+        r"^\s*(?:import|export)\s+(?!type\b)(?:[^;'\"]+?\s+from\s+)?['\"]([^'\"]+)['\"]",
+        re.MULTILINE,
     )
+    while pending:
+        current = pending.pop().resolve()
+        if current in visited:
+            continue
+        visited.add(current)
+        source = current.read_text(encoding="utf-8")
+        sources.append(source)
+        for specifier in static_import.findall(source):
+            assert specifier not in {"three", "@react-three/fiber", "react-force-graph-3d"}, specifier
+            if not specifier.startswith("."):
+                continue
+            base = current.parent / specifier
+            candidates = [base, Path(f"{base}.tsx"), Path(f"{base}.ts"), base / "index.tsx", base / "index.ts"]
+            for candidate in candidates:
+                if candidate.is_file() and candidate.suffix in {".ts", ".tsx"}:
+                    pending.append(candidate)
+                    break
+    assert (WEB / "src/MyceliumHome.tsx").resolve() in visited
+    assert (WEB / "src/MindMapWorkspace/index.tsx").resolve() in visited
+    assert (WEB / "src/Mycelium3D/Scene.tsx").resolve() not in visited
+    reachable_source = "\n".join(sources)
     for forbidden in ("react-force-graph-3d", "@react-three/fiber", "WebGLRenderingContext"):
         assert forbidden not in reachable_source, forbidden
 
